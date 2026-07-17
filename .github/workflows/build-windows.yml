@@ -5,8 +5,9 @@ name: Build Windows App
 # 수동 실행(Actions 탭 → Run workflow) 또는 태그 푸시(v*) 시 동작.
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Actions 탭에서 수동 실행
   push:
+    branches: [master, main] # 푸시 시 자동 빌드
     tags:
       - "v*"
 
