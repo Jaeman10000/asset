@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+server*.log
+
+# data/ 안에서 개인 데이터(보유종목, DB 스냅샷)는 제외하되,
+# 템플릿(holdings.example.json)은 커밋한다
+data/holdings.json
+data/vitality.db

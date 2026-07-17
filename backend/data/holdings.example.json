@@ -1,0 +1,43 @@
+{
+  "_comment": "이 파일을 holdings.json으로 복사해서 본인 보유 종목으로 채우세요. API 키가 없어도(미지원 증권사 포함) 이 파일만으로 대시보드가 채워집니다. 암호화폐는 업비트/빗썸 공개 시세, 주식은 Yahoo Finance로 현재가가 자동 갱신됩니다. 미국 주식은 USD→KRW 환율이 자동 적용됩니다.",
+  "_note_kosdaq": "코스닥 종목은 Yahoo 심볼이 .KQ 이므로 'yahoo' 필드로 직접 지정하세요. 예: \"symbol\":\"247540\", \"yahoo\":\"247540.KQ\". 코스피는 자동으로 .KS가 붙습니다.",
+  "positions": [
+    {
+      "exchange": "manual",
+      "assetType": "crypto",
+      "market": "upbit",
+      "symbol": "BTC",
+      "name": "비트코인",
+      "qty": 0.1,
+      "avg": 90000000
+    },
+    {
+      "exchange": "manual",
+      "assetType": "crypto",
+      "market": "bithumb",
+      "symbol": "ETH",
+      "name": "이더리움",
+      "qty": 2,
+      "avg": 2500000
+    },
+    {
+      "exchange": "manual",
+      "assetType": "stock",
+      "region": "KR",
+      "symbol": "005930",
+      "name": "삼성전자",
+      "qty": 10,
+      "avg": 70000,
+      "sector": "반도체"
+    },
+    {
+      "exchange": "manual",
+      "assetType": "stock",
+      "region": "US",
+      "symbol": "AAPL",
+      "name": "애플",
+      "qty": 5,
+      "avg": 300
+    }
+  ]
+}

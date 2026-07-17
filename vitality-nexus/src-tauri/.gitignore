@@ -1,0 +1,7 @@
+# Rust 빌드 산출물
+/target/
+# tauri가 생성하는 스키마/타입
+/gen/schemas/
+# 개발 중 복사해온 사이드카 exe (backend/scripts/build_sidecar.py 산출물)
+/vitality-backend.exe
+/vitality-backend

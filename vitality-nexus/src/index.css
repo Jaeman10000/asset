@@ -1,0 +1,586 @@
+/* Vitality Nexus — 기본 레이아웃/배경.
+   색은 glass-cards.css의 --life/--event 변수(injectLifeColorsToCSS가 주입)를 공유한다. */
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #dfe9ea;
+  /* 대리석 톤의 어두운 배경 (스펙: radial gradient + 미세 노이즈) */
+  background:
+    radial-gradient(1200px 800px at 50% 42%, #0b1217 0%, #06090c 55%, #030507 100%)
+    #06090c;
+}
+
+.dashboard {
+  position: fixed;
+  inset: 0;
+}
+
+.scene-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.scene-layer canvas {
+  display: block;
+}
+
+/* ── 상단 자산군 총합 4개 ── */
+.totals-row {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  right: 24px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(223, 233, 234, 0.55);
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #eef7f6;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-pct,
+.stat-sub {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-sub {
+  color: rgba(223, 233, 234, 0.55);
+}
+
+/* ── 우측 WATCHLIST 슬롯 2개 ── */
+.watchlist-col {
+  position: absolute;
+  right: 24px;
+  top: 140px;
+  width: 232px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.watch-card {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.spark {
+  width: 100%;
+  height: 34px;
+}
+
+.watch-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 좌하단 BPM 카드 ── */
+.bpm-card {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── 개발용 오버레이 ── */
+.stage-badge {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(223, 233, 234, 0.45);
+  background: rgba(6, 10, 12, 0.55);
+  border: 1px solid rgba(43, 230, 200, 0.15);
+  padding: 6px 14px;
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+}
+
+.fps-meter {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  font: 12px/1 ui-monospace, Consolas, monospace;
+  color: rgba(43, 230, 200, 0.5);
+  background: rgba(6, 10, 12, 0.55);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(43, 230, 200, 0.15);
+  pointer-events: none;
+}
+
+/* ── 오버레이 래퍼: isEstimate면 전체를 살짝 흐리게 (스펙: "캐시된 값이면 흐리게") ── */
+.overlay.estimate {
+  opacity: 0.6;
+  transition: opacity 0.4s ease;
+}
+
+/* ── 좌/우 상세 리스트 (국내주식 / 암호화폐) ── */
+.detail-col {
+  position: absolute;
+  width: 240px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+.detail-left {
+  left: 24px;
+  top: 140px;
+}
+.detail-right {
+  right: 24px;
+  bottom: 120px;
+}
+
+.pos-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pos-row {
+  display: grid;
+  grid-template-columns: 1fr 48px auto auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.pos-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eef7f6;
+}
+.pos-value {
+  color: rgba(223, 233, 234, 0.75);
+  text-align: right;
+}
+.pos-row .spark {
+  width: 48px;
+  height: 16px;
+}
+
+/* ── 중앙 하단: 미국 섹터 흐름 ── */
+.sector-flow {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(440px, 40vw);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sector-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sector-bar-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sector-name {
+  color: rgba(223, 233, 234, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sector-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.sector-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.sector-pct {
+  text-align: right;
+}
+
+/* ── 상태 바 (우하단, fps-meter 옆) ──
+   totals-row가 상단 전체를 쓰므로 상태바는 아래쪽에 배치 */
+.status-bar {
+  position: absolute;
+  bottom: 24px;
+  right: 90px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 260px;
+}
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(223, 233, 234, 0.7);
+  background: rgba(6, 10, 12, 0.6);
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 230, 200, 0.15);
+  backdrop-filter: blur(8px);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.status-estimate {
+  color: var(--event);
+  font-weight: 600;
+}
+.status-edit-btn {
+  background: rgba(43, 230, 200, 0.12);
+  border: 1px solid rgba(43, 230, 200, 0.3);
+  color: var(--life);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.status-edit-btn:hover {
+  background: rgba(43, 230, 200, 0.22);
+}
+.source-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.source-chip {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.source-chip.on {
+  color: var(--life);
+  background: rgba(43, 230, 200, 0.12);
+  border-color: rgba(43, 230, 200, 0.3);
+}
+.source-chip.off {
+  color: rgba(223, 233, 234, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+.status-help {
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(223, 233, 234, 0.6);
+  background: rgba(6, 10, 12, 0.7);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(242, 214, 117, 0.25);
+  text-align: right;
+}
+.status-help code {
+  color: var(--event);
+  font-family: ui-monospace, Consolas, monospace;
+}
+.status-errors {
+  font-size: 11px;
+  color: rgba(223, 233, 234, 0.5);
+  max-width: 260px;
+}
+.status-errors summary {
+  cursor: pointer;
+  text-align: right;
+}
+.status-errors ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  text-align: left;
+}
+.status-errors b {
+  color: rgba(223, 233, 234, 0.75);
+}
+
+/* ── 빈 상태 (보유종목 0) ── */
+.empty-state {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 32px 40px;
+  text-align: center;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+.empty-state h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  color: #eef7f6;
+}
+.empty-state p {
+  margin: 0;
+  color: rgba(223, 233, 234, 0.65);
+  line-height: 1.6;
+}
+
+/* ── 버튼 ── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--life), var(--life-deep));
+  color: #04140f;
+  font-weight: 600;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(223, 233, 234, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ── 보유종목 편집 모달 ── */
+.editor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(3, 5, 7, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.editor-panel {
+  width: min(720px, 92vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.editor-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #eef7f6;
+}
+.editor-close {
+  background: none;
+  border: none;
+  color: rgba(223, 233, 234, 0.6);
+  font-size: 18px;
+  cursor: pointer;
+}
+.editor-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(223, 233, 234, 0.6);
+}
+.editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor-row {
+  display: grid;
+  grid-template-columns: 84px 84px 1fr 1.2fr 88px 100px 28px;
+  gap: 6px;
+  align-items: center;
+}
+.editor-row select,
+.editor-row input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #eef7f6;
+  padding: 7px 8px;
+  font-size: 13px;
+  min-width: 0;
+}
+.editor-row input::placeholder {
+  color: rgba(223, 233, 234, 0.3);
+}
+.row-remove {
+  background: rgba(127, 163, 201, 0.1);
+  border: 1px solid rgba(127, 163, 201, 0.25);
+  color: var(--down);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px;
+}
+.editor-add {
+  align-self: flex-start;
+  background: rgba(43, 230, 200, 0.1);
+  border: 1px dashed rgba(43, 230, 200, 0.35);
+  color: var(--life);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.editor-error {
+  color: var(--down);
+  font-size: 12px;
+}
+.editor-loading {
+  color: rgba(223, 233, 234, 0.6);
+  padding: 20px 0;
+  text-align: center;
+}
+.editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── 데스크톱 설정 패널 ── */
+.settings-panel {
+  width: min(460px, 92vw);
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(223, 233, 234, 0.75);
+  cursor: pointer;
+}
+.mode-btn strong {
+  color: #eef7f6;
+  font-size: 14px;
+}
+.mode-btn span {
+  font-size: 12px;
+  color: rgba(223, 233, 234, 0.5);
+}
+.mode-btn.active {
+  background: rgba(43, 230, 200, 0.12);
+  border-color: rgba(43, 230, 200, 0.4);
+}
+.mode-btn.active strong {
+  color: var(--life);
+}
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.settings-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--life);
+}
+.settings-toggle span {
+  display: flex;
+  flex-direction: column;
+}
+.settings-toggle strong {
+  color: #eef7f6;
+  font-size: 14px;
+}
+.settings-hint {
+  font-size: 12px;
+  color: rgba(223, 233, 234, 0.5);
+}
+.settings-note {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(223, 233, 234, 0.45);
+  line-height: 1.5;
+}

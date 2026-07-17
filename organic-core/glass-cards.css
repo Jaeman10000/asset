@@ -1,0 +1,101 @@
+/*
+ * glass-cards.css — 홀로그램 유리 카드 (그 AI 진단 ④ 반영)
+ *
+ * 지금 프로토타입의 딱딱한 유리 카드를:
+ *   - 테두리를 하드 스트로크 → 청록 box-shadow glow (빛이 번짐)
+ *   - 격자 정렬 → 카드마다 미세하게 떠 있는 float 애니메이션
+ *   - 갱신 순간에만 금색 플래시 (평상시 청록, 사건 금색 = 하이브리드 색 규칙)
+ *
+ * 전제: lifeColors.ts의 injectLifeColorsToCSS()가 호출되어
+ *       --life, --event 변수가 :root에 있어야 함.
+ */
+
+:root {
+  /* injectLifeColorsToCSS()가 덮어씀. 폴백값. */
+  --life: #2be6c8;
+  --life-deep: #1a9e8c;
+  --event: #f2d675;
+}
+
+/* 홀로그램 유리 카드 기본 */
+.glass-card {
+  position: relative;
+  border-radius: 18px;               /* 더 부드러운 라운드 */
+  background: linear-gradient(
+    135deg,
+    rgba(43, 230, 200, 0.04) 0%,     /* 청록 극미량 틴트 */
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  /* 하드 테두리 대신 청록 glow로 번지게 */
+  border: 1px solid rgba(43, 230, 200, 0.12);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.5),           /* 아래 그림자 (부상) */
+    0 0 24px -4px rgba(43, 230, 200, 0.15),        /* 청록 외곽 glow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);       /* 상단 하이라이트 */
+  backdrop-filter: blur(24px) saturate(1.1);
+  transition:
+    box-shadow 0.8s ease-out,
+    border-color 0.8s ease-out,
+    transform 0.8s ease-out;
+}
+
+/* 카드 안쪽 미세 노이즈 텍스처 (평평함 제거) */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  opacity: 0.03;
+  /* 미세 노이즈 — 실제로는 base64 노이즈 PNG 또는 SVG feTurbulence 권장 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 부유 애니메이션 — 카드마다 다른 지연/속도로 살짝 떠오름.
+   격자에 칼같이 정렬되지 않고 "떠 있는" 느낌. */
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-4px); }
+}
+
+.glass-card.float-a { animation: cardFloat 6.0s ease-in-out infinite; }
+.glass-card.float-b { animation: cardFloat 7.5s ease-in-out infinite 0.8s; }
+.glass-card.float-c { animation: cardFloat 8.2s ease-in-out infinite 1.6s; }
+.glass-card.float-d { animation: cardFloat 6.8s ease-in-out infinite 2.4s; }
+
+/* 데이터 갱신 순간 = 금색 플래시 (EVENT_COLOR).
+   평상시 청록 생명력 위에 금색 사건이 확 뜬다 = Von Restorff. */
+.glass-card.event-flash {
+  border-color: rgba(242, 214, 117, 0.5);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 32px -2px rgba(242, 214, 117, 0.4),        /* 금색 glow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    box-shadow 0.12s ease-out,   /* 빠른 attack */
+    border-color 0.12s ease-out;
+  /* release는 위 .glass-card 기본 transition의 0.8s가 담당 (클래스 제거 시) */
+}
+
+/* 심장 파장이 도착하는 순간 = 청록 맥동 (LIFE_COLOR).
+   심장에서 나온 생명력이 카드에 닿는 순간. */
+.glass-card.pulse-hit {
+  border-color: rgba(43, 230, 200, 0.35);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 28px -2px rgba(43, 230, 200, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: box-shadow 0.1s ease-out, border-color 0.1s ease-out;
+}
+
+/*
+ * reduced-motion 대응: 부유 애니메이션 끄기
+ */
+@media (prefers-reduced-motion: reduce) {
+  .glass-card.float-a,
+  .glass-card.float-b,
+  .glass-card.float-c,
+  .glass-card.float-d {
+    animation: none;
+  }
+}

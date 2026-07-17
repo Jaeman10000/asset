@@ -1,0 +1,70 @@
+name: Build Windows App
+
+# 로컬 Smart App Control이 Rust 빌드 스크립트 실행을 막기 때문에,
+# Tauri 인스톨러(MSI/NSIS)는 SAC가 없는 GitHub 클라우드 러너에서 빌드한다.
+# 수동 실행(Actions 탭 → Run workflow) 또는 태그 푸시(v*) 시 동작.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vitality-nexus/src-tauri
+
+      # ── 백엔드를 단일 exe(사이드카)로 빌드 → Python 없는 PC에서도 동작 ──
+      - name: Build backend sidecar (PyInstaller)
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+          python scripts/build_sidecar.py
+          mkdir -p ../vitality-nexus/src-tauri/binaries
+          cp dist/vitality-backend.exe ../vitality-nexus/src-tauri/binaries/vitality-backend-x86_64-pc-windows-msvc.exe
+
+      # ── 프론트엔드 + Tauri 빌드 ──
+      - name: Install frontend deps
+        run: |
+          cd vitality-nexus
+          npm ci
+
+      - name: Build Tauri app (MSI + NSIS)
+        run: |
+          cd vitality-nexus
+          npx tauri build --config src-tauri/tauri.ci.conf.json
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitality-nexus-windows
+          path: |
+            vitality-nexus/src-tauri/target/release/bundle/msi/*.msi
+            vitality-nexus/src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error

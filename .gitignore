@@ -1,0 +1,33 @@
+# ── Node / 프론트엔드 ──
+node_modules/
+vitality-nexus/dist/
+vitality-nexus/scripts/shots/
+vitality-nexus/scripts/*.png
+*.local
+
+# ── Rust / Tauri ──
+vitality-nexus/src-tauri/target/
+vitality-nexus/src-tauri/gen/schemas/
+vitality-nexus/src-tauri/binaries/
+vitality-nexus/src-tauri/vitality-backend*.exe
+
+# ── Python / 백엔드 ──
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+backend/data/holdings.json
+backend/data/vitality.db
+backend/dist/
+backend/build/
+backend/*.spec
+backend/sidecar_entry.py
+backend/server*.log
+
+# ── 개인 데이터 / 시크릿 ──
+.env
+*.env.local
+
+# ── OS ──
+Thumbs.db
+.DS_Store

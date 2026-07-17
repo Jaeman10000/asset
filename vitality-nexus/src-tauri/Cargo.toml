@@ -1,0 +1,33 @@
+[package]
+name = "vitality-nexus"
+version = "0.1.0"
+description = "Vitality Nexus — 살아있는 인터페이스 트레이딩 위젯"
+authors = ["JJ"]
+edition = "2021"
+
+# Cargo가 워크스페이스 루트로 오해하지 않도록 (상위에 다른 Cargo.toml 없음 보장)
+[lib]
+name = "vitality_nexus_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-autostart = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# Tauri 커스텀 프로토콜(프로덕션)에서 개발용 기능 비활성화
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+# 배포 바이너리 크기/성능 최적화
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
