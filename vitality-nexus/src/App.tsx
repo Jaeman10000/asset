@@ -4,6 +4,7 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
+import { SceneBoundary } from './components/SceneBoundary';
 import { usePortfolio } from './store/portfolio';
 import { portfolioBpm } from './util/heart';
 
@@ -52,7 +53,9 @@ export default function App() {
   return (
     <div className="dashboard">
       <div className="scene-layer">
-        <OrganicCoreScene bpm={bpm} beatEnergy={undefined} />
+        <SceneBoundary>
+          <OrganicCoreScene bpm={bpm} beatEnergy={undefined} />
+        </SceneBoundary>
       </div>
 
       {!debugSceneOnly && (

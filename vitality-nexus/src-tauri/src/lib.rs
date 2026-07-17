@@ -104,6 +104,13 @@ pub fn run() {
             let state = app.state::<BackendProcess>();
             spawn_backend(&state);
 
+            // 진단 빌드: 웹뷰 콘솔을 자동으로 연다 (화면이 멈추거나 비어도
+            // 콘솔/에러를 바로 볼 수 있게). 안정화되면 이 블록을 제거.
+            #[cfg(feature = "devtools")]
+            if let Some(w) = app.get_webview_window("main") {
+                w.open_devtools();
+            }
+
             // ── 시스템 트레이 메뉴 ──
             let show_i = MenuItem::with_id(app, "show", "열기", true, None::<&str>)?;
             let hide_i = MenuItem::with_id(app, "hide", "숨기기", true, None::<&str>)?;

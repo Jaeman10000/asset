@@ -22,11 +22,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Vitality Nexus Backend", version="0.1.0", lifespan=lifespan)
 
-# Tauri/Vite 프론트엔드(localhost:5173, 개발 시) origin만 허용.
-# 프로덕션 Tauri 빌드는 tauri:// origin이라 별도 처리 필요 (Week 2에서 조정).
+# CORS: 개발(Vite localhost:5173)과 배포(Tauri WebView) origin을 모두 허용.
+# 배포 앱의 WebView origin은 플랫폼마다 다르다:
+#   Windows: http://tauri.localhost, macOS/Linux: tauri://localhost
+# 이 백엔드는 127.0.0.1에만 바인딩되어 외부 네트워크에 노출되지 않고
+# 쿠키/자격증명도 쓰지 않으므로, origin 전체 허용(*)이 안전하다.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

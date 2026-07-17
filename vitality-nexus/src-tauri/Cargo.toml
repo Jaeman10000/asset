@@ -14,7 +14,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon"] }
+# devtools: 릴리스 빌드에서도 웹뷰 콘솔을 열 수 있게 (배포 앱 디버깅용).
+# 안정화되면 이 feature를 빼서 배포 크기를 줄여도 된다.
+tauri = { version = "2", features = ["tray-icon", "devtools"] }
 tauri-plugin-shell = "2"
 tauri-plugin-autostart = "2"
 serde = { version = "1", features = ["derive"] }
