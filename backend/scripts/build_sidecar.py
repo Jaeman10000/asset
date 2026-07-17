@@ -17,6 +17,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+# CI Windows 콘솔 기본 인코딩(cp1252)에서 비ASCII 출력이 죽지 않도록 UTF-8로 고정
+try:
+    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+except Exception:
+    pass
+
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -53,10 +59,12 @@ def main() -> None:
         "keyring.backends.Windows",
         str(launcher),
     ]
-    print("실행:", " ".join(cmd))
+    # 로그는 ASCII로 — CI Windows 콘솔 기본 인코딩(cp1252)에서 한글 print가
+    # UnicodeEncodeError로 죽는 것을 방지
+    print("Running:", " ".join(cmd))
     subprocess.run(cmd, cwd=BACKEND_DIR, check=True)
-    print("\n완료: backend/dist/vitality-backend.exe")
-    print("→ vitality-nexus/src-tauri/ 로 복사 후 tauri.conf.json에 등록하세요.")
+    print("\nDone: backend/dist/vitality-backend.exe")
+    print("-> copy to vitality-nexus/src-tauri/ and register in tauri.conf.json")
 
 
 if __name__ == "__main__":
