@@ -5,7 +5,8 @@
       "name": "vitality-nexus",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "vitality-nexus", "run", "dev"],
-      "port": 5173
+      "port": 5173,
+      "autoPort": false
     }
   ]
 }

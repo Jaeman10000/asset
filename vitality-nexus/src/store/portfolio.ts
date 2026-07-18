@@ -29,15 +29,21 @@ interface PortfolioStore {
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let inFlight: AbortController | null = null;
 
-export const usePortfolio = create<PortfolioStore>((set, get) => ({
-  snapshot: null,
-  sources: null,
-  conn: 'connecting',
-  lastError: null,
-  updateTick: 0,
-
-  refresh: async () => {
-    inFlight?.abort();
+export const usePortfolio = create<PortfolioStore>((set, get) => {
+  /**
+   * 스냅샷 1회 폴링.
+   *   force=false(주기 폴링): 이미 요청이 진행 중이면 스킵한다. 스냅샷이 폴링
+   *     간격(7초)보다 오래 걸려도(콜드 캐시에서 업비트/빗썸/야후 실시세 조회)
+   *     매 틱마다 이전 요청을 취소하다 영영 완료 못 하는 abort 루프를 방지 →
+   *     첫 요청이 끝까지 돌아 캐시를 데우면 이후 폴링은 캐시 히트로 빨라진다.
+   *   force=true(수동 새로고침, 예: 보유종목 저장 후): 진행 중 요청을 취소하고
+   *     즉시 새 데이터를 받는다.
+   */
+  const poll = async (force: boolean) => {
+    if (inFlight) {
+      if (!force) return;
+      inFlight.abort();
+    }
     const ctrl = new AbortController();
     inFlight = ctrl;
     try {
@@ -54,30 +60,42 @@ export const usePortfolio = create<PortfolioStore>((set, get) => ({
     } catch (err) {
       if (ctrl.signal.aborted) return;
       set({ conn: 'offline', lastError: err instanceof Error ? err.message : String(err) });
+    } finally {
+      if (inFlight === ctrl) inFlight = null;
     }
-  },
+  };
 
-  start: () => {
-    if (pollTimer) return; // 이미 폴링 중
-    void get().refresh();
-    // 소스 상태는 자주 안 바뀌므로 시작 시 1회 + 폴링마다 가볍게 재확인
-    void fetchSourceStatus()
-      .then((sources) => set({ sources }))
-      .catch(() => {});
-    pollTimer = setInterval(() => {
-      void get().refresh();
+  return {
+    snapshot: null,
+    sources: null,
+    conn: 'connecting',
+    lastError: null,
+    updateTick: 0,
+
+    refresh: () => poll(true),
+
+    start: () => {
+      if (pollTimer) return; // 이미 폴링 중
+      void poll(false);
+      // 소스 상태는 자주 안 바뀌므로 시작 시 1회 + 폴링마다 가볍게 재확인
       void fetchSourceStatus()
         .then((sources) => set({ sources }))
         .catch(() => {});
-    }, POLL_INTERVAL_MS);
-  },
+      pollTimer = setInterval(() => {
+        void poll(false);
+        void fetchSourceStatus()
+          .then((sources) => set({ sources }))
+          .catch(() => {});
+      }, POLL_INTERVAL_MS);
+    },
 
-  stop: () => {
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-    inFlight?.abort();
-    inFlight = null;
-  },
-}));
+    stop: () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+      inFlight?.abort();
+      inFlight = null;
+    },
+  };
+});

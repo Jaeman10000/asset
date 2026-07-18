@@ -137,9 +137,10 @@ function HeartGlow({ color, bpm, scale }: { color: string; bpm: number; scale: n
     c.width = c.height = 128;
     const ctx = c.getContext('2d')!;
     const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    g.addColorStop(0, 'rgba(255,255,255,0.9)');
-    g.addColorStop(0.25, 'rgba(200,255,246,0.5)');
-    g.addColorStop(0.6, 'rgba(43,230,200,0.18)');
+    // 아주 부드러운 확산 — 딱딱한 코어 없이 심장 주위로 은은하게 번지게
+    g.addColorStop(0, 'rgba(220,255,248,0.5)');
+    g.addColorStop(0.3, 'rgba(120,240,220,0.24)');
+    g.addColorStop(0.65, 'rgba(43,230,200,0.09)');
     g.addColorStop(1, 'rgba(43,230,200,0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 128, 128);
@@ -152,7 +153,7 @@ function HeartGlow({ color, bpm, scale }: { color: string; bpm: number; scale: n
     const t = clock.getElapsedTime();
     const phase = ((t * bpm) / 60) % 1;
     const beat = Math.exp(-Math.pow((phase - 0.08) / 0.07, 2)); // 심박과 같은 위상
-    const s = scale * (5.6 + 0.5 * beat); // halo는 심장보다 크게
+    const s = scale * (7 + 0.6 * beat); // halo는 심장보다 크고 넓게(은은한 대기감)
     spriteRef.current.scale.set(s, s, 1);
   });
 
@@ -162,7 +163,7 @@ function HeartGlow({ color, bpm, scale }: { color: string; bpm: number; scale: n
         map={tex}
         color={color}
         transparent
-        opacity={0.32}
+        opacity={0.3}
         depthWrite={false}
         depthTest={false}
         blending={THREE.AdditiveBlending}

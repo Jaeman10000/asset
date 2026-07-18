@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { MOUSE } from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { HeartCore } from './HeartCore';
 import { AuroraBackground } from './AuroraBackground';
@@ -150,17 +151,23 @@ export function OrganicCoreScene({
         </EffectComposer>
       )}
 
-      {/* 사용자 드래그로 심장(=카메라 오빗) 회전. 카메라가 도므로 궤도·섹터가
-          심장과 함께 움직인다. 줌/팬은 끔. 상하 각도는 제한(심장이 뒤집히지 않게).
-          drag는 사용자 이벤트라 demand 모드의 fps 캡을 깨지 않는다(자가 루프 없음). */}
+      {/* 사용자가 심장을 자유롭게 배치: 좌클릭 드래그=회전, 휠클릭 드래그=이동(팬),
+          휠 스크롤=확대/축소. 카메라가 도므로 궤도·섹터가 심장과 함께 움직인다.
+          drag/zoom은 사용자 이벤트라 demand 모드의 fps 캡을 깨지 않는다(자가 루프 없음). */}
       <OrbitControls
         makeDefault
-        enablePan={false}
-        enableZoom={false}
+        enableRotate
+        enablePan
+        enableZoom
+        mouseButtons={{ LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.PAN }}
         rotateSpeed={0.8}
+        panSpeed={0.7}
+        zoomSpeed={0.9}
         target={[0, 0.5, 0]}
-        minPolarAngle={Math.PI / 2.8}
-        maxPolarAngle={Math.PI / 1.7}
+        minDistance={2.5}
+        maxDistance={9}
+        minPolarAngle={Math.PI / 5}
+        maxPolarAngle={Math.PI / 1.5}
       />
     </Canvas>
   );

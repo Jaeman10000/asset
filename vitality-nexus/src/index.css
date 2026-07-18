@@ -227,6 +227,8 @@ body {
     0 0 24px -6px rgba(43, 230, 200, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
+  isolation: isolate; /* ::before 스포트라이트를 카드 내부(내용 아래)에 가둠 */
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
 }
 .card::after {
   content: '';
@@ -237,6 +239,41 @@ body {
   height: 1px;
   pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(43, 230, 200, 0.4), transparent);
+}
+/* ── 커서 추종 스포트라이트 — 마우스가 카드 위를 지날 때 청록빛이 따라다니며
+   "살아있는" 반응을 준다. transform(translate)만 갱신 → 컴포지터 전용(리페인트 0).
+   z-index:-1 + isolation으로 카드 배경 위·내용 아래에 깔린다. */
+.card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px; /* 블롭 중심을 카드 원점에 */
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    rgba(43, 230, 200, 0.14),
+    rgba(43, 230, 200, 0.05) 45%,
+    transparent 72%
+  );
+  opacity: 0;
+  transform: translate(var(--mx, 50%), var(--my, 50%));
+  transition: opacity 0.3s ease;
+  will-change: transform;
+}
+.card:hover::before {
+  opacity: 1;
+}
+.card:hover {
+  border-color: rgba(43, 230, 200, 0.34);
+  box-shadow:
+    0 14px 42px -10px rgba(0, 0, 0, 0.62),
+    0 0 32px -6px rgba(43, 230, 200, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .card h3 {
   font-family: var(--mono);
@@ -314,10 +351,55 @@ body {
   font-family: var(--mono);
   transition: background 0.3s, border-color 0.3s;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 .mini-holding:hover {
   background: rgba(43, 230, 200, 0.06);
   border-color: rgba(43, 230, 200, 0.25);
+}
+
+/* ── 살아있는 호버 물결 — 행 위에 마우스가 오면 청록빛 파도가 좌→우로 훑는다.
+   기존 배경/테두리 변화에 더해 "물결이 치는" 생명감을 준다.
+   transform:translateX만 애니(컴포지터 전용), 호버된 행만 = O(1). */
+.mini-holding::before,
+.rank-row::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 36%,
+    rgba(43, 230, 200, 0.09) 46%,
+    rgba(120, 245, 224, 0.28) 50%,
+    rgba(43, 230, 200, 0.09) 54%,
+    transparent 64%
+  );
+  transform: translateX(-130%);
+  opacity: 0;
+}
+.mini-holding:hover::before,
+.rank-row:hover::before {
+  opacity: 1;
+  animation: rowWave 1.9s ease-in-out infinite;
+}
+@keyframes rowWave {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mini-holding:hover::before,
+  .rank-row:hover::before {
+    animation: none;
+    opacity: 0;
+  }
 }
 .mini-holding .spark {
   width: 56px;
@@ -658,15 +740,19 @@ body {
 }
 .fl-belt-i {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -16px;
-  right: -16px;
+  top: -5px;
+  bottom: -5px;
+  left: -30px;
+  right: -30px;
+  /* 대각(66deg)의 부드러운 빛줄기 — 딱딱한 눈금이 아니라 물살처럼 번져 흐른다.
+     한 주기 40px(투명→은은→밝게→은은→투명), drift도 40px라 이음매 없음. */
   background: repeating-linear-gradient(
-    90deg,
-    transparent 0 7px,
-    rgba(214, 255, 247, 0.82) 8px 9px,
-    transparent 10px 16px
+    66deg,
+    transparent 0 9px,
+    rgba(214, 255, 247, 0.08) 14px,
+    rgba(214, 255, 247, 0.5) 19px,
+    rgba(214, 255, 247, 0.08) 24px,
+    transparent 30px 40px
   );
   opacity: var(--bright, 0.4);
   animation: flDrift var(--dur, 1.8s) linear infinite;
@@ -675,9 +761,9 @@ body {
   animation-direction: reverse;
 }
 @keyframes flDrift {
-  /* 한 주기(16px)만 이동 → 폭 무관 이음매 없는 흐름 */
+  /* 한 주기(40px)만 이동 → 폭 무관 이음매 없는 흐름 */
   to {
-    transform: translate3d(16px, 0, 0);
+    transform: translate3d(40px, 0, 0);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -745,6 +831,9 @@ body {
   font-family: var(--mono);
   cursor: pointer;
   transition: background 0.3s, border-color 0.3s;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 .rank-row:hover {
   background: rgba(43, 230, 200, 0.06);

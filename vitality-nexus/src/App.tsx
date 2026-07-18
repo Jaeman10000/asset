@@ -41,6 +41,31 @@ export default function App() {
     return () => stop();
   }, [start, stop]);
 
+  // 커서 추종 스포트라이트 — 마우스가 카드 위를 지날 때 청록빛이 따라오게
+  // (.card::before의 --mx/--my를 갱신). rAF 스로틀 + transform만 갱신 → 저부담.
+  useEffect(() => {
+    let raf = 0;
+    let pending: { card: HTMLElement; x: number; y: number } | null = null;
+    const apply = () => {
+      raf = 0;
+      if (!pending) return;
+      pending.card.style.setProperty('--mx', `${pending.x}px`);
+      pending.card.style.setProperty('--my', `${pending.y}px`);
+    };
+    const onMove = (e: MouseEvent) => {
+      const el = e.target instanceof Element ? e.target.closest<HTMLElement>('.card') : null;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      pending = { card: el, x: e.clientX - r.left, y: e.clientY - r.top };
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const bpm = snapshot ? portfolioBpm(snapshot.totals.total.pnlPct) : 72;
 
   // 홀로그램 섹터 링 + 하단 리드아웃 공용 데이터.
