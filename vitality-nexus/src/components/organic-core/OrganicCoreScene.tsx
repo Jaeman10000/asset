@@ -55,9 +55,12 @@ interface OrganicCoreSceneProps {
 export function OrganicCoreScene({
   bpm,
   beatEnergy,
-  aurora = true,
+  // 기본값을 "가벼운 위젯"으로 조정 (Intel 내장그래픽 등 약한 GPU 대응):
+  //  - 오로라(풀스크린 안개 셰이더)와 바닥 반사(매 프레임 반사 렌더)는 렉의 주범 → 기본 끔
+  //  - 심장 유리 재질도 굴절 패스를 반으로 줄임 (아래 HeartCore backside=false)
+  aurora = false,
   particles = true,
-  floor = true,
+  floor = false,
   bloom = true,
   adaptive = true,
   frameloop = 'always',
@@ -111,11 +114,15 @@ export function OrganicCoreScene({
           <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
         )}
 
-        {/* 해부학적 유리질 심장 (주인공) */}
+        {/* 해부학적 유리질 심장 (주인공) — 스펙: "작고 상징적으로".
+            scale 축소 + 굴절 backside 끄기 + 해상도↓ 로 크기/성능 둘 다 개선 */}
         <HeartCore
           modelPath="/models/heart.glb"
           bpm={bpm}
           attenuationColor={LIFE_COLOR}
+          scale={0.62}
+          transmissionRes={384}
+          backside={false}
         />
       </SlowOrbit>
 

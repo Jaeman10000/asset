@@ -18,6 +18,11 @@ interface HeartCoreProps {
    * 유리 굴절 특성상 1024로 낮춰도 시각 차이가 거의 없다.
    */
   transmissionRes?: number;
+  /**
+   * backside=true면 뒷면 굴절까지 계산해 더 사실적이지만 매 프레임 씬을 한 번 더
+   * 렌더한다(2배 비용). 약한 GPU에서는 false로 두면 렉이 크게 준다 (앞면 굴절만).
+   */
+  backside?: boolean;
 }
 
 interface HeartMeshProps {
@@ -25,6 +30,7 @@ interface HeartMeshProps {
   attenuationColor: string;
   scale: number;
   transmissionRes: number;
+  backside: boolean;
 }
 
 /**
@@ -43,9 +49,10 @@ export function HeartCore({
   bpm = 72,
   attenuationColor = '#2be6c8', // teal — matches the reference mood image
   scale = 1,
-  transmissionRes = 1024,
+  transmissionRes = 512,
+  backside = true,
 }: HeartCoreProps) {
-  const meshProps: HeartMeshProps = { bpm, attenuationColor, scale, transmissionRes };
+  const meshProps: HeartMeshProps = { bpm, attenuationColor, scale, transmissionRes, backside };
 
   return (
     <>
@@ -128,6 +135,7 @@ function HeartMesh({
   attenuationColor,
   scale,
   transmissionRes,
+  backside,
 }: HeartMeshProps & { geometry: THREE.BufferGeometry }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -165,10 +173,10 @@ function HeartMesh({
         // 생겨 매 프레임 씬을 2회 추가 렌더하는 것이 지배 비용이 된다
         resolution={transmissionRes}
         backsideResolution={Math.max(256, transmissionRes / 2)}
-        // 굴절 왜곡을 키워 뒤 오로라가 유리 내부에서 일렁이게 (평평함 방지)
-        distortion={0.35}
-        distortionScale={0.5}
-        temporalDistortion={0.1}
+        // 오로라 배경을 제거했으므로 굴절 왜곡은 약하게 (성능 + 깔끔함)
+        distortion={0.15}
+        distortionScale={0.3}
+        temporalDistortion={0}
         attenuationColor={attenuationColor}
         // 0.9는 두께 전체가 청록으로 포화되어 평평해 보임 — 가장자리만 물들게
         attenuationDistance={1.6}
@@ -180,7 +188,7 @@ function HeartMesh({
         // (너무 높이면 균일하게 떠서 유리 깊이감이 죽는다)
         emissive={attenuationColor}
         emissiveIntensity={0.04}
-        backside
+        backside={backside}
       />
     </mesh>
   );
