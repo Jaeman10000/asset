@@ -68,7 +68,9 @@ function useHover() {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     // enter가 연속 발생해도 같은 종목이면 리렌더하지 않는다 (불필요한 setState 방지).
     setTarget((prev) =>
-      prev && prev.info.symbol === info.symbol ? prev : { info, x: r.right, y: r.top },
+      prev && prev.info.symbol === info.symbol
+        ? prev
+        : { info, x: r.right, left: r.left, y: r.top },
     );
   };
   const onLeave = () => setTarget(null);

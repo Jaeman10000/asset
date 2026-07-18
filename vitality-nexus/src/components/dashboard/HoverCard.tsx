@@ -55,7 +55,10 @@ export function fromMarket(m: MarketStock, held: boolean): HoverInfo {
 
 export interface HoverTarget {
   info: HoverInfo;
+  /** 행의 오른쪽 끝 (카드를 오른쪽에 놓을 기준) */
   x: number;
+  /** 행의 왼쪽 끝 (오른쪽에 못 놓을 때 카드를 이 왼쪽에 놓음) */
+  left: number;
   y: number;
 }
 
@@ -112,7 +115,12 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
     minute: '2-digit',
   });
 
-  const left = target.x + 300 > window.innerWidth ? target.x - 292 : target.x + 14;
+  // 카드를 행 오른쪽에 놓되(기본), 화면을 넘으면(랭킹처럼 우측 컬럼) 행 왼쪽에 놓아
+  // 종목을 가리지 않게 한다. 왼쪽으로도 화면 밖이면 최소 8px로 클램프.
+  const W = 272;
+  const GAP = 14;
+  const placeRight = target.x + GAP + W <= window.innerWidth;
+  const left = Math.max(8, placeRight ? target.x + GAP : target.left - GAP - W);
   const top = Math.min(target.y, window.innerHeight - 280);
 
   return (
