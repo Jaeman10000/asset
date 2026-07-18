@@ -8,10 +8,45 @@ import { injectLifeColorsToCSS } from './components/organic-core/lifeColors'
 import App from './App.tsx'
 
 /**
+ * 진단 보고 — WebView 화면이 멈춰도 원인을 알 수 있게 백엔드로 전송.
+ * sendBeacon은 no-cors 파이어앤포겟이라 CORS/멈춤과 무관하게 전달된다.
+ * 백엔드 data/clientlog.txt 에 쌓인다.
+ */
+function report(msg: string) {
+  try {
+    const url = 'http://127.0.0.1:8787/clientlog';
+    const body = `[${location.href}] ${msg}`;
+    if (navigator.sendBeacon) navigator.sendBeacon(url, body);
+    else fetch(url, { method: 'POST', body, mode: 'no-cors' }).catch(() => {});
+  } catch {
+    /* noop */
+  }
+}
+
+// 스크립트가 실행되기 시작한 시점 (JS 번들 자체가 도는지 확인)
+report('boot: script start, UA=' + navigator.userAgent);
+
+// WebGL이 이 WebView에서 생성되는지 확인 (검은 화면의 흔한 원인)
+try {
+  const c = document.createElement('canvas');
+  const gl = c.getContext('webgl2') || c.getContext('webgl');
+  if (gl) {
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'unknown';
+    report('webgl: OK renderer=' + renderer);
+  } else {
+    report('webgl: FAILED to create context (검은 화면 원인 가능)');
+  }
+} catch (e) {
+  report('webgl: exception ' + String(e));
+}
+
+/**
  * 화면에 에러를 직접 띄우는 오버레이 — Tauri 패키지 앱은 devtools가 없어서
  * JS 에러가 나면 흰/검은 빈 화면("먹통")만 보인다. 그걸 진단 가능하게 만든다.
  */
 function showFatalOverlay(title: string, detail: string) {
+  report('FATAL: ' + title + ' :: ' + detail.slice(0, 500));
   const existing = document.getElementById('fatal-overlay')
   if (existing) return // 첫 에러만 표시
   const el = document.createElement('div')
@@ -62,6 +97,13 @@ try {
       </RootErrorBoundary>
     </StrictMode>,
   )
+  report('react: createRoot().render() 호출 완료')
+  // 마운트 후 실제로 DOM이 채워졌는지 (빈 화면 감지)
+  setTimeout(() => {
+    const root = document.getElementById('root')
+    report('mount-check: root children=' + (root?.children.length ?? -1) +
+      ' canvas=' + document.querySelectorAll('canvas').length)
+  }, 3000)
 } catch (err) {
   showFatalOverlay('마운트 실패', err instanceof Error ? `${err.message}\n${err.stack}` : String(err))
 }

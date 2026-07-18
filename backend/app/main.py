@@ -4,14 +4,20 @@ Vitality Nexus 로컬 백엔드 — FastAPI, localhost:8787.
 Tauri 프론트엔드가 이 포트를 폴링한다. 외부에 노출하지 않는다
 (스펙: "HTTP (localhost only)").
 """
+import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db
 from .routes.holdings import router as holdings_router
 from .routes.portfolio import router as portfolio_router
+
+# 프론트(WebView)에서 발생한 에러를 받아 파일로 남기는 진단 로그.
+# WebView 화면이 멈춰도 원인을 파일에서 읽을 수 있게 하기 위함.
+_CLIENTLOG = Path(__file__).resolve().parent.parent / "data" / "clientlog.txt"
 
 
 @asynccontextmanager
@@ -41,3 +47,16 @@ app.include_router(holdings_router)
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/clientlog")
+async def clientlog(request: Request) -> dict[str, str]:
+    """프론트(WebView) 진단 로그 수신 — sendBeacon으로 오는 텍스트를 파일에 append."""
+    try:
+        body = (await request.body()).decode("utf-8", errors="replace")
+        _CLIENTLOG.parent.mkdir(parents=True, exist_ok=True)
+        with _CLIENTLOG.open("a", encoding="utf-8") as f:
+            f.write(f"[{int(time.time())}] {body}\n")
+    except Exception:
+        pass
+    return {"ok": "1"}

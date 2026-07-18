@@ -46,8 +46,5 @@
         "type": "downloadBootstrapper"
       }
     }
-  },
-  "plugins": {
-    "autostart": {}
   }
 }

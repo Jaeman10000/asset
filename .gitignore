@@ -31,3 +31,7 @@ backend/server*.log
 # ── OS ──
 Thumbs.db
 .DS_Store
+
+# 진단 로그 (런타임 생성)
+backend/data/clientlog.txt
+vitality-nexus/tauri-dev.log

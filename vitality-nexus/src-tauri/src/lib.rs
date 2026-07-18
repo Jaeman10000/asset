@@ -104,9 +104,9 @@ pub fn run() {
             let state = app.state::<BackendProcess>();
             spawn_backend(&state);
 
-            // 진단 빌드: 웹뷰 콘솔을 자동으로 연다 (화면이 멈추거나 비어도
-            // 콘솔/에러를 바로 볼 수 있게). 안정화되면 이 블록을 제거.
-            #[cfg(feature = "devtools")]
+            // 로컬 개발(debug) 빌드에서만 웹뷰 콘솔 자동 오픈.
+            // 배포(release) 빌드에서는 열리지 않는다.
+            #[cfg(debug_assertions)]
             if let Some(w) = app.get_webview_window("main") {
                 w.open_devtools();
             }

@@ -14,5 +14,10 @@ export default defineConfig({
         rewrite: (p) => p.replace(/^\/api/, ''),
       },
     },
+    watch: {
+      // Rust 빌드 산출물(src-tauri/target)을 감시하면 잠긴 .dll에서 EBUSY로
+      // vite가 죽는다 (tauri dev 실패 원인). 감시 대상에서 제외.
+      ignored: ['**/src-tauri/**'],
+    },
   },
 })
