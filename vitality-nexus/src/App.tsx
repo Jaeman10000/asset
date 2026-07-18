@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
 import { AuroraVeil } from './components/dashboard/AuroraVeil';
 import { OrganicCoreScene } from './components/organic-core/OrganicCoreScene';
+import type { RingSector } from './components/organic-core/HoloSectorRings';
 import { usePortfolio } from './store/portfolio';
 import { portfolioBpm } from './util/heart';
 
@@ -42,14 +43,36 @@ export default function App() {
 
   const bpm = snapshot ? portfolioBpm(snapshot.totals.total.pnlPct) : 72;
 
+  // 홀로그램 섹터 링 + 하단 리드아웃 공용 데이터
+  const krSectors: RingSector[] = useMemo(
+    () =>
+      (snapshot?.sectorFlows ?? [])
+        .filter((s) => s.region === 'KR')
+        .map((s) => ({
+          name: s.name,
+          ret: s.ret ?? 0,
+          foreign: s.foreign ?? 0,
+          inst: s.inst ?? 0,
+          individual: s.individual ?? 0,
+        })),
+    [snapshot],
+  );
+  const usSectors: RingSector[] = useMemo(
+    () =>
+      (snapshot?.sectorFlows ?? [])
+        .filter((s) => s.region === 'US' && typeof s.ret === 'number')
+        .map((s) => ({ name: s.name, ret: s.ret ?? 0 })),
+    [snapshot],
+  );
+
   return (
     <div className={snapshot?.isEstimate ? 'dashboard estimate' : 'dashboard'}>
       {/* 배경 1: 안개 (초저해상도 셰이더 + CSS 블러 → 렉 없이 고급 안개)
           디버그: ?noveil 로 끄고 격리 가능 */}
       {!new URLSearchParams(window.location.search).has('noveil') && <AuroraVeil />}
-      {/* 배경 2: 3D 심장 + 생명 파티클 + Bloom (투명 캔버스) */}
+      {/* 배경 2: 3D 심장 + 홀로그램 섹터 링 + 파티클 + Bloom (투명 캔버스) */}
       <div className="scene-bg">
-        <OrganicCoreScene bpm={bpm} />
+        <OrganicCoreScene bpm={bpm} krSectors={krSectors} usSectors={usSectors} />
       </div>
 
       {/* 상단 바 (프로토타입: 브랜드 + 마켓 상태 필) */}
@@ -70,7 +93,7 @@ export default function App() {
       </header>
 
       {snapshot ? (
-        <Dashboard snapshot={snapshot} bpm={bpm} />
+        <Dashboard snapshot={snapshot} bpm={bpm} krSectors={krSectors} usSectors={usSectors} />
       ) : (
         <div className="boot-msg">{conn === 'offline' ? '백엔드 연결 대기 중…' : '불러오는 중…'}</div>
       )}

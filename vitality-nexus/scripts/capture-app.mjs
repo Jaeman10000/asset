@@ -39,11 +39,28 @@ try {
   await page.screenshot({ path: out });
   const info = await page.evaluate(() => ({
     status: document.querySelector('.status-line')?.textContent,
-    cards: document.querySelectorAll('.glass-card').length,
-    totals: [...document.querySelectorAll('.totals-row .stat-value')].map((e) => e.textContent),
-    posRows: document.querySelectorAll('.pos-row').length,
+    totals: [...document.querySelectorAll('.totals-row .total-card .amt')].map((e) => e.textContent),
+    holdings: document.querySelectorAll('.mini-holding').length,
+    sparks: document.querySelectorAll('.mini-holding .spark').length,
+    rankRows: document.querySelectorAll('.rank-row').length,
+    readoutRows: document.querySelectorAll('.readout-row').length,
+    totalText: document.querySelector('.heart-center-info .total')?.textContent,
   }));
   console.log(JSON.stringify(info), '->', out);
+
+  // 호버 검증: 첫 KR 종목 위에 마우스 → Truth Layer 수급 4바 확인
+  const row = await page.$('.mini-holding');
+  if (row) {
+    await row.hover();
+    await new Promise((r) => setTimeout(r, 400));
+    const hoverInfo = await page.evaluate(() => ({
+      truthCard: !!document.querySelector('.truth-card'),
+      invBars: document.querySelectorAll('.truth-card .inv-row').length,
+      head: document.querySelector('.truth-card .truth-head')?.textContent,
+    }));
+    console.log('hover:', JSON.stringify(hoverInfo));
+    await page.screenshot({ path: out.replace(/\.png$/, '-hover.png') });
+  }
 } finally {
   await browser.close();
 }

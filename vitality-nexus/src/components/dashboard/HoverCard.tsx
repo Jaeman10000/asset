@@ -86,7 +86,11 @@ function InvestorBars({ inv }: { inv: InvestorFlow }) {
               {r.label}
             </span>
             <div className="inv-bar">
-              <div className="inv-fill" style={{ width: `${w}%`, background: r.color }} />
+              {/* color도 지정 — CSS 글로우가 box-shadow: currentColor 로 참조 */}
+              <div
+                className="inv-fill"
+                style={{ width: `${w}%`, background: r.color, color: r.color }}
+              />
             </div>
             <span className="inv-val" style={{ color: v >= 0 ? 'var(--up)' : 'var(--down)' }}>
               {fmtEok(v)}

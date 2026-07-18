@@ -15,7 +15,9 @@ from dataclasses import dataclass
 import httpx
 
 UPBIT_TICKER = "https://api.upbit.com/v1/ticker"
+UPBIT_CANDLES = "https://api.upbit.com/v1/candles/minutes/60"
 BITHUMB_TICKER_ALL = "https://api.bithumb.com/public/ticker/ALL_KRW"
+BITHUMB_CANDLES = "https://api.bithumb.com/public/candlestick/{symbol}_KRW/1h"
 
 _TIMEOUT = httpx.Timeout(8.0)
 _HEADERS = {"Accept": "application/json"}
@@ -70,6 +72,37 @@ async def fetch_upbit_quotes(symbols: list[str]) -> dict[str, Quote]:
         if not any_ok:
             resp.raise_for_status()  # 전부 실패 → 원래 배치 에러를 던짐
         return quotes
+
+
+async def fetch_upbit_history(symbol: str, count: int = 32) -> list[float]:
+    """업비트 60분봉 종가 최근 count개 (오래된 것→최신 순). 스파크라인용.
+    실패는 빈 리스트 (스파크라인만 빠지고 나머지는 정상)."""
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT, headers=_HEADERS) as client:
+            resp = await client.get(
+                UPBIT_CANDLES,
+                params={"market": f"KRW-{symbol.upper()}", "count": count},
+            )
+            resp.raise_for_status()
+            rows = resp.json()  # 최신이 먼저 오는 배열
+        return [float(r["trade_price"]) for r in reversed(rows)]
+    except Exception:
+        return []
+
+
+async def fetch_bithumb_history(symbol: str, count: int = 32) -> list[float]:
+    """빗썸 1시간봉 종가 최근 count개. 실패는 빈 리스트."""
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT, headers=_HEADERS) as client:
+            resp = await client.get(BITHUMB_CANDLES.format(symbol=symbol.upper()))
+            resp.raise_for_status()
+            payload = resp.json()
+        if payload.get("status") != "0000":
+            return []
+        rows = payload.get("data", [])  # [ts, 시가, 종가, 고가, 저가, 거래량], 오래된→최신
+        return [float(r[2]) for r in rows[-count:]]
+    except Exception:
+        return []
 
 
 async def fetch_bithumb_quotes(symbols: list[str]) -> dict[str, Quote]:

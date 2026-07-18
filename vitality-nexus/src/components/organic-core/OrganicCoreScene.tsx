@@ -5,6 +5,7 @@ import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { HeartCore } from './HeartCore';
 import { AuroraBackground } from './AuroraBackground';
+import { HoloSectorRings, type RingSector } from './HoloSectorRings';
 import { LifeParticles } from './LifeParticles';
 import { ReflectiveFloor } from './ReflectiveFloor';
 import { useAdaptiveQuality, QUALITY_LEVELS } from './useAdaptiveQuality';
@@ -50,6 +51,9 @@ interface OrganicCoreSceneProps {
   frameloop?: 'always' | 'never';
   /** 렌더 상한 fps — 상시 위젯의 배터리/발열 대책. 0이면 캡 없음 */
   maxFps?: number;
+  /** 홀로그램 섹터 링 데이터 (심장 주위 궤도) — 없으면 링 생략 */
+  krSectors?: RingSector[];
+  usSectors?: RingSector[];
 }
 
 export function OrganicCoreScene({
@@ -64,6 +68,8 @@ export function OrganicCoreScene({
   adaptive = true,
   frameloop = 'always',
   maxFps = 60,
+  krSectors = [],
+  usSectors = [],
 }: OrganicCoreSceneProps) {
   // 수동 구동(never) 중에는 측정이 무의미하므로 (idle RAF 주기를 재게 됨) 끔
   const { level, config: adaptiveConfig } = useAdaptiveQuality(
@@ -107,9 +113,11 @@ export function OrganicCoreScene({
       {/* 심장+파티클을 그룹으로 묶어 천천히 자전 = 정지 안 함 = 살아있음.
           OrbitControls autoRotate는 demand 모드에서 change→invalidate 자가 루프를
           만들어 프레임 캡을 무력화하므로, 이벤트 없는 useFrame 그룹 회전으로 대체 */}
-      {/* 심장을 살짝 위로 올려 중앙-상단(SYSTEM PULSE 영역)에 오게 함.
-          하단은 섹터 오브/카드가 오므로 심장과 겹치지 않는다 */}
+      {/* 심장을 살짝 위로 올려 중앙-상단(SYSTEM PULSE 영역)에 오게 함 */}
       <group position={[0, 0.9, 0]}>
+        {/* 홀로그램 섹터 궤도 (안 KR / 밖 US) + 프로젝터 디스크 —
+            심장과 같은 씬·같은 Bloom이라 질감이 일치한다 */}
+        <HoloSectorRings kr={krSectors} us={usSectors} />
         <SlowOrbit>
           {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼) */}
           {particles && config.particleCount > 0 && (

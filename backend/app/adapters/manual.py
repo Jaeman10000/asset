@@ -12,9 +12,17 @@ from __future__ import annotations
 import time
 from typing import Any
 
+import asyncio
+
 from ..schemas import Position, SourceError
 from ..services.holdings import load_manual_holdings
-from ..services.quotes import Quote, fetch_bithumb_quotes, fetch_upbit_quotes
+from ..services.quotes import (
+    Quote,
+    fetch_bithumb_history,
+    fetch_bithumb_quotes,
+    fetch_upbit_history,
+    fetch_upbit_quotes,
+)
 from ..services.stock_quotes import StockQuote, fetch_stock_quotes, fetch_usdkrw
 from .base import AdapterResult, BaseAdapter
 
@@ -70,6 +78,20 @@ class ManualAdapter(BaseAdapter):
             except Exception as exc:
                 errors.append(f"빗썸 시세 실패: {exc}")
 
+        # --- 암호화폐 스파크라인 히스토리 (60분봉 종가, 실데이터) ---
+        crypto_histories: dict[str, list[float]] = {}
+        if crypto_rows:
+            hist_syms = [str(r["symbol"]).upper() for r in crypto_rows]
+            hist_results = await asyncio.gather(
+                *(
+                    fetch_bithumb_history(sym)
+                    if r.get("market") == "bithumb"
+                    else fetch_upbit_history(sym)
+                    for r, sym in zip(crypto_rows, hist_syms)
+                )
+            )
+            crypto_histories = dict(zip(hist_syms, hist_results))
+
         # --- 주식 시세 (Yahoo) + 환율 ---
         if stock_rows:
             yahoo_symbols = [_yahoo_symbol(r) for r in stock_rows]
@@ -88,7 +110,7 @@ class ManualAdapter(BaseAdapter):
         now = int(time.time() * 1000)
         positions: list[Position] = []
         for r in raw:
-            pos = self._to_position(r, crypto_quotes, stock_quotes, fx, now)
+            pos = self._to_position(r, crypto_quotes, stock_quotes, crypto_histories, fx, now)
             if pos is not None:
                 positions.append(pos)
 
@@ -105,6 +127,7 @@ class ManualAdapter(BaseAdapter):
         r: dict[str, Any],
         crypto_quotes: dict[str, Quote],
         stock_quotes: dict[str, StockQuote],
+        crypto_histories: dict[str, list[float]],
         fx: float,
         now: int,
     ) -> Position | None:
@@ -129,6 +152,7 @@ class ManualAdapter(BaseAdapter):
             q = crypto_quotes.get(symbol.upper())
             if q is not None:
                 price = q.price
+            history = crypto_histories.get(symbol.upper(), [])
         elif asset_type == "stock":
             sq = stock_quotes.get(_yahoo_symbol(r))
             if sq is not None:
