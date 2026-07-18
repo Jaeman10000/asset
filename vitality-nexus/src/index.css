@@ -360,45 +360,56 @@ body {
   border-color: rgba(43, 230, 200, 0.25);
 }
 
-/* ── 살아있는 호버 물결 — 행 위에 마우스가 오면 청록빛 파도가 좌→우로 훑는다.
-   기존 배경/테두리 변화에 더해 "물결이 치는" 생명감을 준다.
-   transform:translateX만 애니(컴포지터 전용), 호버된 행만 = O(1). */
-.mini-holding::before,
-.rank-row::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(
-    110deg,
-    transparent 36%,
-    rgba(43, 230, 200, 0.09) 46%,
-    rgba(120, 245, 224, 0.28) 50%,
-    rgba(43, 230, 200, 0.09) 54%,
-    transparent 64%
-  );
-  transform: translateX(-130%);
-  opacity: 0;
+/* ── 살아있는 호버 — 마우스가 종목에 "들어오는 순간" 반응 ──
+   ① 들어온 지점에서 물결이 퍼진다(.ripple, 돌 던진 잔잔한 물).
+   ② 행 자체가 젤리처럼 잠깐 꿈틀한다(rowWobble). 둘 다 transform만 = 컴포지터 전용,
+      레이아웃 영향 없음. 진입 시 1회 재생(연속 루프 아님). */
+.mini-holding:hover,
+.rank-row:hover {
+  animation: rowWobble 0.55s cubic-bezier(0.34, 1.45, 0.64, 1);
 }
-.mini-holding:hover::before,
-.rank-row:hover::before {
-  opacity: 1;
-  animation: rowWave 1.9s ease-in-out infinite;
-}
-@keyframes rowWave {
+@keyframes rowWobble {
   0% {
-    transform: translateX(-130%);
+    transform: scale(1, 1);
+  }
+  32% {
+    transform: scale(1.022, 0.9); /* squash — 눌리는 순간 */
+  }
+  60% {
+    transform: scale(0.994, 1.035); /* stretch — 되튀어 늘어남 */
   }
   100% {
-    transform: translateX(130%);
+    transform: scale(1, 1);
   }
 }
+
+/* 진입 지점에서 퍼지는 물결 링 — React가 커서 위치(left/top)를 넣어준다.
+   행의 overflow:hidden에 클립되어 그 칸 안에서 파문이 번진다. */
+.ripple {
+  position: absolute;
+  z-index: -1; /* 내용 아래로 번짐 */
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px; /* 원 중심을 (left,top)에 */
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    transparent 20%,
+    rgba(160, 252, 235, 0.72) 40%,
+    rgba(43, 230, 200, 0.24) 54%,
+    transparent 70%
+  );
+  /* 애니메이션은 Web Animations API(useRipple)가 구동 — 여기선 초기 상태만 */
+  transform: scale(0);
+  opacity: 0;
+}
 @media (prefers-reduced-motion: reduce) {
-  .mini-holding:hover::before,
-  .rank-row:hover::before {
+  .mini-holding:hover,
+  .rank-row:hover {
     animation: none;
-    opacity: 0;
   }
 }
 .mini-holding .spark {

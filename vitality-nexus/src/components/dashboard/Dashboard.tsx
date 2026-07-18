@@ -66,10 +66,44 @@ function useHover() {
   const [target, setTarget] = useState<HoverTarget | null>(null);
   const onEnter = (info: HoverInfo) => (e: React.MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setTarget({ info, x: r.right, y: r.top });
+    // enter가 연속 발생해도 같은 종목이면 리렌더하지 않는다 (불필요한 setState 방지).
+    setTarget((prev) =>
+      prev && prev.info.symbol === info.symbol ? prev : { info, x: r.right, y: r.top },
+    );
   };
   const onLeave = () => setTarget(null);
   return { target, onEnter, onLeave };
+}
+
+/**
+ * useRipple — 마우스가 행에 "들어온 지점"에서 물결이 퍼지게 한다(돌 던진 잔잔한 물).
+ * DOM에 ripple span을 직접 붙이고 Web Animations API로 1회 재생 후 제거한다.
+ * (React 리렌더에 애니메이션이 리셋되던 문제를 피하려고 명령형으로 구동 — 진입할
+ * 때마다 확실히 처음부터 퍼진다.) 행의 rowWobble(꿈틀)과 함께 작동.
+ */
+function useRipple() {
+  const trigger = (e: React.MouseEvent) => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const host = e.currentTarget as HTMLElement;
+    // 진행 중인 물결이 있으면 교체하지 않는다 — enter가 연속 발생해도(리렌더/히트테스트)
+    // 첫 물결이 끝까지 퍼지도록 보장 (교체되어 0%에 갇히는 것 방지).
+    if (host.querySelector('.ripple')) return;
+    const r = host.getBoundingClientRect();
+    const span = document.createElement('span');
+    span.className = 'ripple';
+    span.style.left = `${e.clientX - r.left}px`;
+    span.style.top = `${e.clientY - r.top}px`;
+    host.appendChild(span);
+    const anim = span.animate(
+      [
+        { transform: 'scale(0)', opacity: 0.9 },
+        { transform: 'scale(15)', opacity: 0 },
+      ],
+      { duration: 700, easing: 'ease-out' },
+    );
+    anim.onfinish = () => span.remove();
+  };
+  return { trigger };
 }
 
 /** 리스트 행 — 캡처 레퍼런스처럼 이름 · 라인그래프 · 값 · 등락% */
@@ -83,8 +117,16 @@ function MiniRow({
   onLeave: () => void;
 }) {
   const up = p.ret >= 0;
+  const { trigger } = useRipple();
   return (
-    <div className="mini-holding" onMouseEnter={onEnter} onMouseLeave={onLeave}>
+    <div
+      className="mini-holding"
+      onMouseEnter={(e) => {
+        trigger(e);
+        onEnter(e);
+      }}
+      onMouseLeave={onLeave}
+    >
       <div className="n">
         {p.name}
         <small>{p.symbol}</small>
@@ -129,6 +171,52 @@ function ListCard({
             />
           ))
         )}
+      </div>
+    </div>
+  );
+}
+
+/** 랭킹 행 — 진입 물결(ripple) + 꿈틀(wobble) + 수급 호버 */
+function RankRow({
+  m,
+  rank,
+  held,
+  tab,
+  onEnter,
+  onLeave,
+}: {
+  m: MarketStock;
+  rank: number;
+  held: boolean;
+  tab: RankTabKey;
+  onEnter: (e: React.MouseEvent) => void;
+  onLeave: () => void;
+}) {
+  const metric = rankMetric(m, tab);
+  const { trigger } = useRipple();
+  const topClass = rank <= 3 ? `rank-top rank-${rank}` : '';
+  return (
+    <div
+      className={`rank-row ${topClass}`}
+      onMouseEnter={(e) => {
+        trigger(e);
+        onEnter(e);
+      }}
+      onMouseLeave={onLeave}
+    >
+      <span className="rank-no">{rank}</span>
+      <div className="rank-mid">
+        <div className="n">
+          {m.name}
+          <small>{m.symbol}</small>
+          {held && <span className="held-chip">보유</span>}
+        </div>
+        <div className="v">
+          ₩{m.price.toLocaleString('ko-KR')} · {(m.volume / 1e6).toFixed(1)}M
+        </div>
+      </div>
+      <div className="p" style={{ color: metric.color }}>
+        {metric.text}
       </div>
     </div>
   );
@@ -342,31 +430,17 @@ export function Dashboard({
           </div>
           <div className="ranking-list">
             {ranking.map((m, i) => {
-              const metric = rankMetric(m, rankTab);
               const held = heldSymbols.has(m.symbol);
-              const topClass = i < 3 ? `rank-top rank-${i + 1}` : '';
               return (
-                <div
+                <RankRow
                   key={m.symbol}
-                  className={`rank-row ${topClass}`}
-                  onMouseEnter={hover.onEnter(fromMarket(m, held))}
-                  onMouseLeave={hover.onLeave}
-                >
-                  <span className="rank-no">{i + 1}</span>
-                  <div className="rank-mid">
-                    <div className="n">
-                      {m.name}
-                      <small>{m.symbol}</small>
-                      {held && <span className="held-chip">보유</span>}
-                    </div>
-                    <div className="v">
-                      ₩{m.price.toLocaleString('ko-KR')} · {(m.volume / 1e6).toFixed(1)}M
-                    </div>
-                  </div>
-                  <div className="p" style={{ color: metric.color }}>
-                    {metric.text}
-                  </div>
-                </div>
+                  m={m}
+                  rank={i + 1}
+                  held={held}
+                  tab={rankTab}
+                  onEnter={hover.onEnter(fromMarket(m, held))}
+                  onLeave={hover.onLeave}
+                />
               );
             })}
             {ranking.length === 0 && <div className="list-empty">랭킹 로딩…</div>}
