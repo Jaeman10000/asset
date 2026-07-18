@@ -1,13 +1,19 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * SectorFlowOrbs — 프로토타입 full-dashboard-v2.html의 drawFlow 오브 시각화 이식.
- * 좌: 한국(warm), 우: 미국(cool). 각 오브에서 섹터 노드로 파티클이 흘러가고,
- * 받은 섹터가 발광한다. 파티클 색: 상승 시안 / 하락 보라 (US), warm 계열 (KR).
+ * SectorFlowOrbs — 프로토타입 drawFlow의 오브 "레이아웃/움직임"만 가져오고,
+ * 색은 이 프로젝트의 청록(생명력) 단일 컨셉으로 통일한다.
+ *   - 오브/노드/파티클 기본 = 청록(LIFE). 한국은 살짝 초록-청록, 미국은 살짝 시안-청록.
+ *   - 등락 큰 "사건" 섹터의 파티클만 금색(EVENT)으로 (하이브리드 색 규칙).
+ * 프로토타입의 warm(빨강/금)·cool(파랑/보라) 팔레트는 청록 컨셉을 깨므로 쓰지 않는다.
  *
  * 데이터: US는 실 SPDR 섹터 등락률, KR은 보유 종목 섹터별 평균 등락률.
- * (프로토타입의 외국인/기관/개인 3색 파티클은 KRX 투자자 데이터가 필요 → 추후)
  */
+
+// 청록(생명력) / 금색(사건) — lifeColors와 같은 색을 HSL로
+const LIFE_HUE_KR = 166; // 한국: 초록빛 청록
+const LIFE_HUE_US = 184; // 미국: 시안빛 청록
+const EVENT_HUE = 46; // 금색 (강한 등락 = 사건)
 
 export interface OrbSector {
   name: string;
@@ -43,18 +49,13 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
     let lastSpawn = 0;
     let raf = 0;
 
-    const drawAuroraOrb = (cx: number, cy: number, R: number, now: number, warm: boolean, beat: number) => {
-      const auroras = warm
-        ? [
-            { hue: 30, phase: 0, speed: 0.00032, ampl: 0.35 },
-            { hue: 15, phase: 1.5, speed: 0.00044, ampl: 0.42 },
-            { hue: 45, phase: 3.2, speed: 0.00024, ampl: 0.28 },
-          ]
-        : [
-            { hue: 190, phase: 0, speed: 0.00032, ampl: 0.35 },
-            { hue: 210, phase: 1.5, speed: 0.00044, ampl: 0.42 },
-            { hue: 280, phase: 3.2, speed: 0.00024, ampl: 0.28 },
-          ];
+    // 오브 전체를 청록(hue) 톤으로. 한 색상의 명도/채도만 흔들어 오로라 느낌.
+    const drawAuroraOrb = (cx: number, cy: number, R: number, now: number, hue: number, beat: number) => {
+      const auroras = [
+        { dh: -6, phase: 0, speed: 0.00032, ampl: 0.35 },
+        { dh: 4, phase: 1.5, speed: 0.00044, ampl: 0.42 },
+        { dh: 10, phase: 3.2, speed: 0.00024, ampl: 0.28 },
+      ];
       auroras.forEach((a) => {
         const t = now * a.speed + a.phase;
         ctx.save();
@@ -62,7 +63,7 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
         for (let ring = 0; ring < 2; ring++) {
           const ringOff = ring * 6;
           const alpha = (0.2 - ring * 0.05) * (1 + beat * 0.3);
-          ctx.strokeStyle = `hsla(${a.hue + Math.sin(t) * 30}, 75%, 65%, ${alpha})`;
+          ctx.strokeStyle = `hsla(${hue + a.dh + Math.sin(t) * 8}, 78%, 62%, ${alpha})`;
           ctx.lineWidth = 1.5 + ring * 0.5;
           ctx.beginPath();
           for (let i = 0; i <= 48; i++) {
@@ -78,27 +79,21 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
         }
         ctx.restore();
       });
-      // 외곽 글로우
+      // 외곽 글로우 (청록)
       const glowR = R * 3;
       const outer = ctx.createRadialGradient(cx, cy, R * 0.5, cx, cy, glowR);
-      outer.addColorStop(0, warm ? `hsla(30,70%,60%,${0.14 + beat * 0.08})` : `hsla(200,70%,60%,${0.14 + beat * 0.08})`);
-      outer.addColorStop(0.4, warm ? 'hsla(340,60%,55%,0.06)' : 'hsla(240,60%,55%,0.06)');
-      outer.addColorStop(1, warm ? 'hsla(15,50%,50%,0)' : 'hsla(280,50%,50%,0)');
+      outer.addColorStop(0, `hsla(${hue},72%,55%,${0.14 + beat * 0.08})`);
+      outer.addColorStop(0.45, `hsla(${hue + 8},60%,48%,0.06)`);
+      outer.addColorStop(1, `hsla(${hue},50%,45%,0)`);
       ctx.fillStyle = outer;
       ctx.beginPath();
       ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
       ctx.fill();
-      // 본체
+      // 본체 (밝은 청록 → 깊은 청록)
       const body = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.35, 0, cx, cy, R);
-      if (warm) {
-        body.addColorStop(0, 'hsla(40,60%,75%,0.65)');
-        body.addColorStop(0.5, 'hsla(20,55%,52%,0.5)');
-        body.addColorStop(1, 'hsla(345,55%,28%,0.7)');
-      } else {
-        body.addColorStop(0, 'hsla(190,60%,75%,0.65)');
-        body.addColorStop(0.5, 'hsla(210,55%,52%,0.5)');
-        body.addColorStop(1, 'hsla(265,55%,28%,0.7)');
-      }
+      body.addColorStop(0, `hsla(${hue},70%,72%,0.7)`);
+      body.addColorStop(0.5, `hsla(${hue},62%,45%,0.5)`);
+      body.addColorStop(1, `hsla(${hue + 6},58%,20%,0.7)`);
       ctx.fillStyle = body;
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -106,9 +101,8 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
       // 코어 하이라이트
       const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.5);
       core.addColorStop(0, `rgba(255,255,255,${0.85 + beat * 0.15})`);
-      const midHue = warm ? 40 : 180;
-      core.addColorStop(0.6, `hsla(${midHue},90%,85%,0.4)`);
-      core.addColorStop(1, `hsla(${midHue + 20},85%,70%,0)`);
+      core.addColorStop(0.6, `hsla(${hue},90%,85%,0.4)`);
+      core.addColorStop(1, `hsla(${hue},85%,70%,0)`);
       ctx.fillStyle = core;
       ctx.beginPath();
       ctx.arc(cx, cy, R * 0.5, 0, Math.PI * 2);
@@ -122,7 +116,7 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
       ringR: number,
       sectors: OrbSector[],
       side: 'kr' | 'us',
-      warm: boolean,
+      orbHue: number,
       now: number,
       beat: number,
     ) => {
@@ -131,12 +125,15 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
         const angle = -Math.PI / 2 + (i / Math.max(sectors.length, 1)) * Math.PI * 2;
         return { ...s, x: cx + Math.cos(angle) * ringR, y: cy + Math.sin(angle) * ringR, angle };
       });
+      const maxRet = Math.max(...sectors.map((x) => Math.abs(x.ret)), 0.1);
       // 노드 발광(aura)
       positions.forEach((s) => {
         let glow = glows[side][s.name] ?? 0;
         glow = Math.max(0, glow - 0.006); // 서서히 감쇠
         glows[side][s.name] = glow;
-        const hue = warm ? (s.ret >= 0 ? 40 : 15) : s.ret >= 0 ? 195 : 240;
+        // 기본 청록. 등락이 큰 "사건" 섹터만 금색 쪽으로 (하이브리드 색 규칙)
+        const strong = Math.abs(s.ret) / maxRet;
+        const hue = strong > 0.75 ? EVENT_HUE : orbHue;
         if (glow > 0.05) {
           const auraR = sr + 16 + glow * 22;
           const aura = ctx.createRadialGradient(s.x, s.y, sr * 0.9, s.x, s.y, auraR);
@@ -167,7 +164,7 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
         ctx.textBaseline = 'middle';
         ctx.fillText(s.name.slice(0, 4), s.x, s.y);
       });
-      drawAuroraOrb(cx, cy, orbR, now, warm, beat);
+      drawAuroraOrb(cx, cy, orbR, now, orbHue, beat);
       return positions;
     };
 
@@ -196,10 +193,10 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
         usCy = H * 0.52;
 
       const { kr: krS, us: usS } = dataRef.current;
-      const krPos = drawOrb(krCx, krCy, orbR, ringR, krS, 'kr', true, now, beat);
-      const usPos = drawOrb(usCx, usCy, orbR, ringR, usS, 'us', false, now, beat);
+      const krPos = drawOrb(krCx, krCy, orbR, ringR, krS, 'kr', LIFE_HUE_KR, now, beat);
+      const usPos = drawOrb(usCx, usCy, orbR, ringR, usS, 'us', LIFE_HUE_US, now, beat);
 
-      // 파티클 스폰 (등락률 클수록 자주)
+      // 파티클 스폰 (등락률 클수록 자주). 색은 청록, 강한 등락(사건)만 금색.
       if (now - lastSpawn > 420) {
         lastSpawn = now;
         const spawn = (
@@ -207,7 +204,7 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
           cx: number,
           cy: number,
           side: 'kr' | 'us',
-          warm: boolean,
+          orbHue: number,
         ) => {
           const maxRet = Math.max(...pos.map((s) => Math.abs(s.ret)), 0.1);
           pos.forEach((s) => {
@@ -228,14 +225,14 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
                 dur: 1600 + Math.random() * 500,
                 key: s.name,
                 side,
-                hue: warm ? (s.ret >= 0 ? 45 : 15) : s.ret >= 0 ? 195 : 240,
+                hue: intensity > 0.75 ? EVENT_HUE : orbHue,
                 strength: intensity,
               });
             }
           });
         };
-        spawn(krPos, krCx, krCy, 'kr', true);
-        spawn(usPos, usCx, usCy, 'us', false);
+        spawn(krPos, krCx, krCy, 'kr', LIFE_HUE_KR);
+        spawn(usPos, usCx, usCy, 'us', LIFE_HUE_US);
         if (particles.length > 120) particles.splice(0, particles.length - 120);
       }
 
