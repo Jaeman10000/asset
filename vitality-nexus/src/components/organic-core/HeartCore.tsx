@@ -88,7 +88,7 @@ export function HeartCore({
       <pointLight
         position={[0, 0, 0]}
         color={attenuationColor}
-        intensity={3.5}
+        intensity={2.3}
         distance={8}
         decay={2}
       />
@@ -183,11 +183,11 @@ function HeartMesh({
         color={attenuationColor}
         // 나이트 스튜디오 환경은 원래 어두워서 줄무늬 하이라이트만 남는다 —
         // 여기서 더 줄이면 유리가 죽고, 올리면 은색으로 뜬다
-        envMapIntensity={0.8}
+        envMapIntensity={0.6}
         // 생체발광 씨앗: Bloom이 물고 번질 은은한 내부 발광
-        // (너무 높이면 균일하게 떠서 유리 깊이감이 죽는다)
+        // (너무 높이면 균일하게 떠서 유리 깊이감이 죽고 심박마다 하얗게 터진다)
         emissive={attenuationColor}
-        emissiveIntensity={0.04}
+        emissiveIntensity={0.028}
         backside={backside}
       />
     </mesh>

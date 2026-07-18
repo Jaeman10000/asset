@@ -115,7 +115,7 @@ export function OrganicCoreScene({
           OrbitControls로 카메라를 돌릴 때만 일어난다 (심장·궤도·섹터가 한 덩어리로
           같이 움직임 = 카메라 오빗). 살아있는 느낌은 심박 스케일·섹터 파티클·
           프로젝터 디스크·beat-rings가 담당한다. */}
-      <group position={[0, 0.35, 0]}>
+      <group position={[0, 0.62, 0]}>
         {/* 홀로그램 섹터 궤도 (안 KR / 밖 US) + 프로젝터 디스크 —
             심장과 같은 씬·같은 Bloom이라 질감이 일치한다 */}
         <HoloSectorRings kr={krSectors} us={usSectors} />
@@ -136,15 +136,15 @@ export function OrganicCoreScene({
         />
       </group>
 
-      {/* 발광 번짐 — 홀로그램 느낌의 핵심 */}
+      {/* 발광 번짐 — 홀로그램 느낌의 핵심. 단, 심박마다 심장이 하얗게 터지지
+          않도록 강도를 낮추고 컷오프를 올려 "가장 밝은 하이라이트만" 물게 한다. */}
       {bloom && (
         <EffectComposer multisampling={4}>
           <Bloom
-            intensity={0.75}
-            // 0.2는 어두운 배경까지 물들여 화면 전체에 초록 베일이 낀다 —
-            // 심장/오로라 하이라이트만 물도록 컷오프를 올림
-            luminanceThreshold={0.32}
-            luminanceSmoothing={0.9}
+            intensity={0.42}
+            // 컷오프를 올릴수록 어두운 부분은 안 물고 하이라이트만 은은히 번진다
+            luminanceThreshold={0.5}
+            luminanceSmoothing={0.85}
             mipmapBlur
           />
         </EffectComposer>
@@ -158,7 +158,7 @@ export function OrganicCoreScene({
         enablePan={false}
         enableZoom={false}
         rotateSpeed={0.8}
-        target={[0, 0.3, 0]}
+        target={[0, 0.5, 0]}
         minPolarAngle={Math.PI / 2.8}
         maxPolarAngle={Math.PI / 1.7}
       />
