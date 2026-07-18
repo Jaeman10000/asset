@@ -20,6 +20,20 @@ class InvestorFlow(BaseModel):
     program: float = 0.0  # 프로그램 매매
 
 
+class InvestorPeriod(BaseModel):
+    """기간 누적 순매수 (억원). 키움/KRX의 당일 외 5/20/60일 누적 뷰에 대응.
+
+    당일(InvestorFlow)이 기본이고, 이건 옆에 작게 보여줄 기간 누적치다.
+    실 키움 연동 시 이 값이 실제 일자별 누적으로 대체된다.
+    """
+
+    label: str  # '20일', '60일'
+    foreign: float = 0.0
+    inst: float = 0.0
+    individual: float = 0.0
+    program: float = 0.0
+
+
 class Position(BaseModel):
     id: str  # "kiwoom:005930" | "upbit:KRW-BTC" | "manual:BTC"
     # "manual" = 수동입력(어떤 증권사든 커버하는 폴백). 스펙 4장 원본에는 없지만,
@@ -40,6 +54,8 @@ class Position(BaseModel):
     sector: str | None = None  # KR 주식만
     # 종목별 수급 (KR 주식만, 키움 연동 전엔 모의) — 호버 Truth Layer에 표시
     investors: InvestorFlow | None = None
+    # 기간 누적 수급 (20일/60일 등) — 호버에서 당일 옆에 작게
+    investorPeriods: list[InvestorPeriod] = Field(default_factory=list)
     lastUpdated: int  # epoch ms
 
 
@@ -52,6 +68,7 @@ class MarketStock(BaseModel):
     ret: float  # 등락률 %
     volume: int  # 거래량 (주)
     investors: InvestorFlow  # 수급 (외국인/기관/개인/프로그램, 억원)
+    investorPeriods: list[InvestorPeriod] = Field(default_factory=list)  # 20일/60일 누적
 
 
 class SectorFlow(BaseModel):

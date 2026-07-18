@@ -78,6 +78,7 @@ async def _build_snapshot() -> PortfolioSnapshot:
     for p in positions:
         if p.assetType == "stock" and p.region == "KR" and p.investors is None:
             p.investors = mock_market.investors_for(p.symbol)
+            p.investorPeriods = mock_market.investor_periods_for(p.symbol)
     market_ranking = mock_market.market_ranking()
     errors.append(
         SourceError(

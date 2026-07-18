@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 from datetime import date
 
-from ..schemas import InvestorFlow, MarketStock, SectorFlow
+from ..schemas import InvestorFlow, InvestorPeriod, MarketStock, SectorFlow
 
 
 def _rand(seed: str) -> float:
@@ -70,7 +70,7 @@ def kr_sector_flows() -> list[SectorFlow]:
 
 
 def investors_for(symbol: str) -> InvestorFlow:
-    """종목별 수급 (억원). 개인은 외국인+기관+프로그램의 반대쪽으로 흐르는 경향."""
+    """종목별 당일 수급 (억원). 개인은 외국인+기관+프로그램의 반대쪽으로 흐르는 경향."""
     day = _today()
     s = f"{day}:{symbol}"
     foreign = round(_signed(s + ":f", 180))
@@ -78,6 +78,28 @@ def investors_for(symbol: str) -> InvestorFlow:
     program = round(_signed(s + ":g", 40))
     individual = round(-(foreign + inst + program) * 0.9)
     return InvestorFlow(foreign=foreign, inst=inst, individual=individual, program=program)
+
+
+def investor_periods_for(symbol: str) -> list[InvestorPeriod]:
+    """기간 누적 순매수 (억원) 모의 — 당일보다 큰 20일/60일 누적. 키움 표준 프리셋.
+
+    실 키움/KRX 연동 시 일자별 순매수 누적으로 대체된다. 여기선 당일과 별도 시드의
+    결정적 값(기간이 길수록 스케일 큼)으로 채운다.
+    """
+    day = _today()
+    out: list[InvestorPeriod] = []
+    for label, fs, is_, ps in (("20일", 1400, 700, 320), ("60일", 3800, 1900, 760)):
+        s = f"{day}:{symbol}:{label}"
+        foreign = round(_signed(s + ":f", fs))
+        inst = round(_signed(s + ":i", is_))
+        program = round(_signed(s + ":g", ps))
+        individual = round(-(foreign + inst + program) * 0.9)
+        out.append(
+            InvestorPeriod(
+                label=label, foreign=foreign, inst=inst, individual=individual, program=program
+            )
+        )
+    return out
 
 
 # 시장 랭킹 풀 (이름, 심볼, 기준가). 가격/등락/거래량은 날마다 모의 변동.
@@ -116,6 +138,7 @@ def market_ranking() -> list[MarketStock]:
                 ret=ret,
                 volume=volume,
                 investors=investors_for(symbol),
+                investorPeriods=investor_periods_for(symbol),
             )
         )
     return out

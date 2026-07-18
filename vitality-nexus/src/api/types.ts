@@ -16,6 +16,15 @@ export interface InvestorFlow {
   program: number; // 프로그램
 }
 
+/** 기간 누적 순매수 (억원) — 당일 옆에 작게 표시 (20일/60일 등) */
+export interface InvestorPeriod {
+  label: string;
+  foreign: number;
+  inst: number;
+  individual: number;
+  program: number;
+}
+
 export interface Position {
   id: string;
   exchange: Exchange;
@@ -33,6 +42,7 @@ export interface Position {
   history: number[];
   sector?: string | null;
   investors?: InvestorFlow | null; // KR 주식 수급 (호버 표시)
+  investorPeriods?: InvestorPeriod[]; // 20일/60일 누적 수급
   lastUpdated: number;
 }
 
@@ -44,6 +54,7 @@ export interface MarketStock {
   ret: number;
   volume: number;
   investors: InvestorFlow;
+  investorPeriods?: InvestorPeriod[]; // 20일/60일 누적 수급
 }
 
 export interface SectorFlow {

@@ -1,4 +1,4 @@
-import type { InvestorFlow, MarketStock, Position } from '../../api/types';
+import type { InvestorFlow, InvestorPeriod, MarketStock, Position } from '../../api/types';
 import { krwCompact, pct } from '../../util/format';
 
 /**
@@ -20,6 +20,7 @@ export interface HoverInfo {
   value?: number; // KRW 평가금액
   volume?: number | null;
   investors?: InvestorFlow | null;
+  periods?: InvestorPeriod[]; // 20일/60일 누적 수급
   lastUpdated?: number;
 }
 
@@ -36,6 +37,7 @@ export function fromPosition(p: Position): HoverInfo {
     avg: p.avg,
     value: p.value,
     investors: p.investors,
+    periods: p.investorPeriods,
     lastUpdated: p.lastUpdated,
   };
 }
@@ -50,6 +52,7 @@ export function fromMarket(m: MarketStock, held: boolean): HoverInfo {
     ret: m.ret,
     volume: m.volume,
     investors: m.investors,
+    periods: m.investorPeriods,
   };
 }
 
@@ -74,11 +77,29 @@ function fmtEok(v: number): string {
   return (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR') + '억';
 }
 
-function InvestorBars({ inv }: { inv: InvestorFlow }) {
+/** 기간 누적치는 억 단위 없이 숫자만 (헤더에 '억원' 표기) */
+function fmtNum(v: number): string {
+  return (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR');
+}
+
+function InvestorBars({ inv, periods }: { inv: InvestorFlow; periods?: InvestorPeriod[] }) {
   const maxAbs = Math.max(...INVESTOR_ROWS.map((r) => Math.abs(inv[r.key])), 1);
+  const hasP = !!periods && periods.length > 0;
   return (
-    <div className="inv-section">
-      <div className="inv-title">수급 · 당일 순매수</div>
+    <div className={`inv-section ${hasP ? 'has-periods' : ''}`}>
+      <div className="inv-title">
+        수급 · 순매수 <span className="inv-unit">억원</span>
+      </div>
+      {hasP && (
+        <div className="inv-head-row">
+          <span />
+          <span />
+          <em>당일</em>
+          {periods!.map((p) => (
+            <em key={p.label}>{p.label}</em>
+          ))}
+        </div>
+      )}
       {INVESTOR_ROWS.map((r) => {
         const v = inv[r.key];
         const w = (Math.abs(v) / maxAbs) * 100;
@@ -96,12 +117,29 @@ function InvestorBars({ inv }: { inv: InvestorFlow }) {
               />
             </div>
             <span className="inv-val" style={{ color: v >= 0 ? 'var(--up)' : 'var(--down)' }}>
-              {fmtEok(v)}
+              {hasP ? fmtNum(v) : fmtEok(v)}
             </span>
+            {hasP &&
+              periods!.map((p) => {
+                const pv = p[r.key];
+                return (
+                  <span
+                    key={p.label}
+                    className="inv-pv"
+                    style={{ color: pv >= 0 ? 'var(--up)' : 'var(--down)' }}
+                  >
+                    {fmtNum(pv)}
+                  </span>
+                );
+              })}
           </div>
         );
       })}
-      <div className="inv-note">외국인·기관은 당일 장중 잠정치 · 모의 데이터</div>
+      <div className="inv-note">
+        {hasP
+          ? '당일=장중 잠정 · 20/60일=누적 순매수 · 모의 데이터'
+          : '외국인·기관은 당일 장중 잠정치 · 모의 데이터'}
+      </div>
     </div>
   );
 }
@@ -117,7 +155,7 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
 
   // 카드를 행 오른쪽에 놓되(기본), 화면을 넘으면(랭킹처럼 우측 컬럼) 행 왼쪽에 놓아
   // 종목을 가리지 않게 한다. 왼쪽으로도 화면 밖이면 최소 8px로 클램프.
-  const W = 272;
+  const W = 300;
   const GAP = 14;
   const placeRight = target.x + GAP + W <= window.innerWidth;
   const left = Math.max(8, placeRight ? target.x + GAP : target.left - GAP - W);
@@ -163,8 +201,8 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
         </div>
       )}
 
-      {/* 수급현황 — 이 카드의 주인공 */}
-      {h.investors && <InvestorBars inv={h.investors} />}
+      {/* 수급현황 — 이 카드의 주인공 (당일 + 20/60일 누적) */}
+      {h.investors && <InvestorBars inv={h.investors} periods={h.periods} />}
 
       <div className="truth-foot">기준 {time}</div>
     </div>
