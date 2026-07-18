@@ -296,12 +296,14 @@ export function HoloSectorRings({ kr, us }: { kr: RingSector[]; us: RingSector[]
   return (
     <group>
       {/* 반경을 줄여 바깥 US 링까지 화면 안에 다 들어오게 (기존 2.3은 화면 반폭
-          ~2.07을 넘겨 잘려서 커 보였다). tilt를 키워 세로 footprint도 압축. */}
+          ~2.07을 넘겨 잘려서 커 보였다). tilt를 키워 세로 footprint도 압축.
+          speed=0 = 자동회전 없음 → 12시가 항상 1위(수급 최상위). 회전은
+          사용자가 OrbitControls로 카메라를 돌릴 때만 (심장과 함께 움직임). */}
       {kr.length > 0 && (
-        <Ring sectors={kr} side="kr" radius={1.15} tiltX={0.5} tiltZ={0.08} speed={0.07} glowTex={glowTex} />
+        <Ring sectors={kr} side="kr" radius={1.15} tiltX={0.5} tiltZ={0.08} speed={0} glowTex={glowTex} />
       )}
       {us.length > 0 && (
-        <Ring sectors={us} side="us" radius={1.6} tiltX={0.5} tiltZ={-0.06} speed={-0.05} glowTex={glowTex} />
+        <Ring sectors={us} side="us" radius={1.6} tiltX={0.5} tiltZ={-0.06} speed={0} glowTex={glowTex} />
       )}
       <ProjectorBase glowTex={glowTex} />
     </group>

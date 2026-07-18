@@ -75,6 +75,18 @@ body {
   z-index: 1;
 }
 
+/* ── 심장 인터랙션: UI 레이어 전체를 이벤트 투과(pointer-events:none)로 두고
+   실제 상호작용이 필요한 카드만 다시 auto로 켠다. 그러면 심장 위/카드 사이 빈
+   공간의 마우스 드래그가 뒤(z-index:0)의 3D 캔버스까지 도달해 OrbitControls가
+   받는다. pointer-events는 상속되므로 stage-wrap=none이면 자식 전부 none이 되고,
+   .card에서만 auto로 되살린다. (심장 오버레이·궤도 영역 = 투과, 카드 = 호버/스크롤) */
+.stage-wrap {
+  pointer-events: none;
+}
+.stage-wrap .card {
+  pointer-events: auto;
+}
+
 /* ── 상단 바 ── */
 .topbar {
   display: flex;

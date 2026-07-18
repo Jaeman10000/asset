@@ -1,6 +1,5 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import type * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { HeartCore } from './HeartCore';
@@ -95,6 +94,7 @@ export function OrganicCoreScene({
     >
       {frameloop === 'always' && maxFps > 0 && <FramePacer fps={maxFps} />}
       <RenderCounter />
+      <CameraProbe />
 
       <ambientLight intensity={0.12} />
 
@@ -110,30 +110,30 @@ export function OrganicCoreScene({
         <ReflectiveFloor resolution={config.floorRes} blur={400} y={-2.2} />
       )}
 
-      {/* 심장+파티클을 그룹으로 묶어 천천히 자전 = 정지 안 함 = 살아있음.
-          OrbitControls autoRotate는 demand 모드에서 change→invalidate 자가 루프를
-          만들어 프레임 캡을 무력화하므로, 이벤트 없는 useFrame 그룹 회전으로 대체 */}
-      {/* 심장을 중앙에 배치 — 상단 총합 4카드에 위쪽이 가리지 않도록 y를 낮춤 */}
+      {/* 심장을 중앙에 배치 — 상단 총합 4카드에 위쪽이 가리지 않도록 y를 낮춤.
+          자동 자전은 제거: 궤도가 12시=1위로 고정되고, 회전은 사용자가
+          OrbitControls로 카메라를 돌릴 때만 일어난다 (심장·궤도·섹터가 한 덩어리로
+          같이 움직임 = 카메라 오빗). 살아있는 느낌은 심박 스케일·섹터 파티클·
+          프로젝터 디스크·beat-rings가 담당한다. */}
       <group position={[0, 0.35, 0]}>
         {/* 홀로그램 섹터 궤도 (안 KR / 밖 US) + 프로젝터 디스크 —
             심장과 같은 씬·같은 Bloom이라 질감이 일치한다 */}
         <HoloSectorRings kr={krSectors} us={usSectors} />
-        <SlowOrbit>
-          {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼) */}
-          {particles && config.particleCount > 0 && (
-            <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
-          )}
 
-          {/* 해부학적 유리질 심장 — 작고 상징적으로 (scale 축소 + 경량 유리) */}
-          <HeartCore
-            modelPath="/models/heart.glb"
-            bpm={bpm}
-            attenuationColor={LIFE_COLOR}
-            scale={0.5}
-            transmissionRes={384}
-            backside={false}
-          />
-        </SlowOrbit>
+        {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼) */}
+        {particles && config.particleCount > 0 && (
+          <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
+        )}
+
+        {/* 해부학적 유리질 심장 — 작고 상징적으로 (scale 축소 + 경량 유리) */}
+        <HeartCore
+          modelPath="/models/heart.glb"
+          bpm={bpm}
+          attenuationColor={LIFE_COLOR}
+          scale={0.5}
+          transmissionRes={384}
+          backside={false}
+        />
       </group>
 
       {/* 발광 번짐 — 홀로그램 느낌의 핵심 */}
@@ -150,12 +150,17 @@ export function OrganicCoreScene({
         </EffectComposer>
       )}
 
-      {/* 사용자 드래그 회전만 허용 (자동 회전은 SlowOrbit이 담당). 줌/팬은 끔 */}
+      {/* 사용자 드래그로 심장(=카메라 오빗) 회전. 카메라가 도므로 궤도·섹터가
+          심장과 함께 움직인다. 줌/팬은 끔. 상하 각도는 제한(심장이 뒤집히지 않게).
+          drag는 사용자 이벤트라 demand 모드의 fps 캡을 깨지 않는다(자가 루프 없음). */}
       <OrbitControls
+        makeDefault
         enablePan={false}
         enableZoom={false}
-        minPolarAngle={Math.PI / 2.6}
-        maxPolarAngle={Math.PI / 1.8}
+        rotateSpeed={0.8}
+        target={[0, 0.3, 0]}
+        minPolarAngle={Math.PI / 2.8}
+        maxPolarAngle={Math.PI / 1.7}
       />
     </Canvas>
   );
@@ -188,24 +193,23 @@ function FramePacer({ fps }: { fps: number }) {
   return null;
 }
 
-/**
- * SlowOrbit — 심장/파티클 그룹을 아주 느리게 자전시킨다 (기존 autoRotateSpeed 0.4
- * ≈ 150초/바퀴와 동일한 각속도). useFrame만 쓰므로 invalidate를 발행하지 않아
- * demand 모드의 프레임 캡과 공존한다.
- */
-function SlowOrbit({ children }: { children: ReactNode }) {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += 0.042 * delta;
-  });
-  return <group ref={groupRef}>{children}</group>;
-}
-
 /** 실제 렌더된 프레임 수를 window.__renderCount로 노출 (FPS 표시/검증용) */
 function RenderCounter() {
   useFrame(() => {
     const w = window as unknown as Record<string, number>;
     w.__renderCount = (w.__renderCount ?? 0) + 1;
+  });
+  return null;
+}
+
+/** 카메라 위치를 window.__camPos로 노출 (드래그 회전 자동 검증용) */
+function CameraProbe() {
+  useFrame(({ camera }) => {
+    (window as unknown as Record<string, unknown>).__camPos = [
+      +camera.position.x.toFixed(3),
+      +camera.position.y.toFixed(3),
+      +camera.position.z.toFixed(3),
+    ];
   });
   return null;
 }
