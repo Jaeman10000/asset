@@ -1,8 +1,12 @@
-/* Vitality Nexus — 기본 레이아웃/배경.
-   색은 glass-cards.css의 --life/--event 변수(injectLifeColorsToCSS가 주입)를 공유한다. */
+/* Vitality Nexus — 프로토타입(full-dashboard-v2.html) 3열 그리드 레이아웃 복원.
+   3D 심장·청록 색은 유지. 색 변수는 glass-cards.css의 --life/--event/--up/--down 공유. */
 
 :root {
   color-scheme: dark;
+  --sub: rgba(223, 233, 234, 0.4);
+  --dim: rgba(223, 233, 234, 0.62);
+  --line: rgba(255, 255, 255, 0.08);
+  --mono: ui-monospace, Consolas, 'D2Coding', monospace;
 }
 
 * {
@@ -20,7 +24,6 @@ body {
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #dfe9ea;
-  /* 대리석 톤의 어두운 배경 (스펙: radial gradient + 미세 노이즈) */
   background:
     radial-gradient(1200px 800px at 50% 42%, #0b1217 0%, #06090c 55%, #030507 100%)
     #06090c;
@@ -29,219 +32,337 @@ body {
 .dashboard {
   position: fixed;
   inset: 0;
-}
-
-.scene-layer {
-  position: absolute;
-  inset: 0;
-}
-
-.scene-layer canvas {
-  display: block;
-}
-
-/* ── 상단 자산군 총합 4개 ── */
-.totals-row {
-  position: absolute;
-  top: 20px;
-  left: 24px;
-  right: 24px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
-
-.stat-label {
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(223, 233, 234, 0.55);
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 600;
-  color: #eef7f6;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-pct,
-.stat-sub {
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-sub {
-  color: rgba(223, 233, 234, 0.55);
-}
-
-/* ── 우측 WATCHLIST 슬롯 2개 ── */
-.watchlist-col {
-  position: absolute;
-  right: 24px;
-  top: 140px;
-  width: 232px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.watch-card {
-  padding: 14px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.spark {
-  width: 100%;
-  height: 34px;
-}
-
-.watch-bottom {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── 좌하단 BPM 카드 ── */
-.bpm-card {
-  position: absolute;
-  left: 24px;
-  bottom: 24px;
-  padding: 14px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* ── 개발용 오버레이 ── */
-.stage-badge {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: rgba(223, 233, 234, 0.45);
-  background: rgba(6, 10, 12, 0.55);
-  border: 1px solid rgba(43, 230, 200, 0.15);
-  padding: 6px 14px;
-  border-radius: 999px;
-  backdrop-filter: blur(8px);
-}
-
-.fps-meter {
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-  font: 12px/1 ui-monospace, Consolas, monospace;
-  color: rgba(43, 230, 200, 0.5);
-  background: rgba(6, 10, 12, 0.55);
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(43, 230, 200, 0.15);
-  pointer-events: none;
-}
-
-/* ── 오버레이 래퍼: isEstimate면 전체를 살짝 흐리게 (스펙: "캐시된 값이면 흐리게") ── */
-.overlay.estimate {
-  opacity: 0.6;
+.dashboard.estimate .stage {
+  opacity: 0.72;
   transition: opacity 0.4s ease;
 }
 
-/* ── 좌/우 상세 리스트 (국내주식 / 암호화폐) ── */
-.detail-col {
-  position: absolute;
-  width: 240px;
-  padding: 14px 16px;
+/* ── 상단 바 ── */
+.topbar {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 42vh;
-  overflow-y: auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 20px 4px;
+  flex: 0 0 auto;
 }
-.detail-left {
-  left: 24px;
-  top: 140px;
+.brand {
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.26em;
+  color: #eef7f6;
+  font-weight: 600;
 }
-.detail-right {
-  right: 24px;
-  bottom: 120px;
+.brand-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--sub);
+  text-transform: uppercase;
 }
 
-.pos-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.boot-msg {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+/* ── 메인 3열 그리드 ── */
+.stage {
+  flex: 1;
+  min-height: 0;
+  padding: 8px 16px 14px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.05fr 2fr 1.3fr;
+  grid-template-rows: 1.8fr 1.2fr;
+}
+
+/* ── 카드 기본 ── */
+.card {
+  position: relative;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 100%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(43, 230, 200, 0.35), transparent);
+}
+.card h3 {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  position: relative;
+  z-index: 3;
+}
+.card h3 .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--life);
+  box-shadow: 0 0 6px var(--life);
+}
+.card h3 .exch {
+  margin-left: auto;
+  font-size: 8px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--sub);
+  letter-spacing: 0.06em;
+}
+
+/* ── 좌측: 3단 세로 리스트 ── */
+.col-left {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+.list-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  min-height: 0;
 }
-.pos-row {
+.list-card .list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 2px;
+}
+.list::-webkit-scrollbar {
+  width: 3px;
+}
+.list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+.list-empty {
+  color: var(--sub);
+  font-size: 11px;
+  padding: 10px 4px;
+}
+.mini-holding {
   display: grid;
-  grid-template-columns: 1fr 48px auto auto;
-  align-items: center;
+  grid-template-columns: auto 1fr auto;
   gap: 8px;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
+  align-items: center;
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: var(--mono);
+  transition: background 0.3s, border-color 0.3s;
+  cursor: pointer;
 }
-.pos-name {
+.mini-holding:hover {
+  background: rgba(43, 230, 200, 0.06);
+  border-color: rgba(43, 230, 200, 0.25);
+}
+.mini-donut {
+  display: block;
+}
+.mini-mid {
+  min-width: 0;
+}
+.mini-holding .n {
+  font-size: 11px;
+  color: #f0f4f8;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #eef7f6;
 }
-.pos-value {
-  color: rgba(223, 233, 234, 0.75);
+.mini-holding .n small {
+  color: var(--sub);
+  font-size: 8.5px;
+  margin-left: 4px;
+  letter-spacing: 0.06em;
+}
+.mini-holding .v {
+  font-size: 9px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.mini-holding .p {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
-.pos-row .spark {
-  width: 48px;
-  height: 16px;
+.mini-holding .p.up {
+  color: var(--up);
+}
+.mini-holding .p.down {
+  color: var(--down);
 }
 
-/* ── 중앙 하단: 미국 섹터 흐름 ── */
-.sector-flow {
+/* ── 중앙 상단: 심장 카드 ── */
+.heart-card {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  padding: 0;
+}
+.heart-canvas {
   position: absolute;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  width: min(440px, 40vw);
-  padding: 12px 16px;
+  inset: 0;
+  z-index: 1;
+}
+.heart-canvas canvas {
+  display: block;
+}
+.heart-label {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 3;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+.heart-label .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--life);
+  box-shadow: 0 0 6px var(--life);
+}
+.bpm-badge {
+  margin-left: 6px;
+  font-size: 9px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: var(--event);
+  border: 1px solid rgba(242, 214, 117, 0.4);
+  background: rgba(242, 214, 117, 0.08);
+}
+.heart-center-info {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  text-align: center;
+  pointer-events: none;
+}
+.heart-center-info .lbl {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.24em;
+  color: var(--sub);
+}
+.heart-center-info .total {
+  font-size: 30px;
+  font-weight: 700;
+  color: #eef7f6;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+}
+.heart-center-info .pnl {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.asset-totals {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
-.sector-bars {
+.asset-tile {
+  background: rgba(6, 10, 12, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 10px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+}
+.asset-tile .lbl {
+  font-size: 9px;
+  color: var(--sub);
+  letter-spacing: 0.06em;
+}
+.asset-tile .amt {
+  font-size: 15px;
+  font-weight: 600;
+  color: #eef7f6;
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0;
+}
+.asset-tile .pct {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 중앙 하단: 섹터 플로우 ── */
+.flow-card {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  min-height: 0;
+}
+.sector-cols {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(6, auto);
+  gap: 3px 18px;
+  align-content: start;
 }
 .sector-bar-row {
   display: grid;
-  grid-template-columns: 64px 1fr 40px;
+  grid-template-columns: 60px 1fr 34px;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11px;
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .sector-name {
-  color: rgba(223, 233, 234, 0.7);
+  color: var(--dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sector-track {
-  height: 6px;
+  height: 5px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
@@ -255,12 +376,179 @@ body {
   text-align: right;
 }
 
-/* ── 상태 바 (우하단, fps-meter 옆) ──
-   totals-row가 상단 전체를 쓰므로 상태바는 아래쪽에 배치 */
+/* ── 우측: 랭킹 ── */
+.ranking-card {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.ranking-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 2px;
+}
+.rank-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
+}
+.rank-row:hover {
+  background: rgba(43, 230, 200, 0.06);
+  border-color: rgba(43, 230, 200, 0.25);
+}
+.rank-row.rank-top {
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.rank-row.rank-1 {
+  border-color: rgba(242, 214, 117, 0.4);
+  background: rgba(242, 214, 117, 0.06);
+}
+.rank-no {
+  font-size: 12px;
+  color: var(--sub);
+  width: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.rank-1 .rank-no {
+  color: var(--event);
+  font-weight: 700;
+}
+.rank-mid {
+  min-width: 0;
+}
+.rank-mid .n {
+  font-size: 12px;
+  color: #f0f4f8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-mid .n small {
+  color: var(--sub);
+  font-size: 8.5px;
+  margin-left: 5px;
+}
+.rank-mid .v {
+  font-size: 10px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.rank-mid .spark {
+  width: 80px;
+  height: 16px;
+  margin-top: 2px;
+}
+.rank-row .p {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.rank-row .p.up {
+  color: var(--up);
+}
+.rank-row .p.down {
+  color: var(--down);
+}
+
+/* ── Truth Layer 호버 카드 ── */
+.truth-card {
+  position: fixed;
+  z-index: 200;
+  width: 272px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(8, 12, 15, 0.96);
+  border: 1px solid rgba(43, 230, 200, 0.3);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.8), 0 0 24px -8px rgba(43, 230, 200, 0.3);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  font-family: var(--mono);
+}
+.truth-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.truth-head strong {
+  font-size: 13px;
+  color: #eef7f6;
+  font-family: 'Segoe UI', sans-serif;
+}
+.truth-sym {
+  font-size: 9px;
+  color: var(--sub);
+}
+.truth-badge {
+  margin-left: auto;
+  font-size: 8.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(242, 214, 117, 0.14);
+  color: var(--event);
+  letter-spacing: 0.1em;
+}
+.truth-sector {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 3px;
+}
+.truth-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.truth-grid span {
+  color: var(--sub);
+}
+.truth-grid b {
+  color: #e6f0f0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.truth-foot {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 8.5px;
+  color: var(--sub);
+  letter-spacing: 0.06em;
+}
+
+/* ── FPS 미터 ── */
+.fps-meter {
+  position: absolute;
+  right: 16px;
+  bottom: 10px;
+  font: 11px/1 var(--mono);
+  color: rgba(43, 230, 200, 0.45);
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* ── 상태 바 (우하단) ── */
 .status-bar {
   position: absolute;
-  bottom: 24px;
-  right: 90px;
+  bottom: 26px;
+  right: 70px;
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -272,10 +560,10 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(223, 233, 234, 0.7);
   background: rgba(6, 10, 12, 0.6);
-  padding: 6px 12px;
+  padding: 5px 11px;
   border-radius: 999px;
   border: 1px solid rgba(43, 230, 200, 0.15);
   backdrop-filter: blur(8px);
@@ -335,7 +623,7 @@ body {
 }
 .status-help code {
   color: var(--event);
-  font-family: ui-monospace, Consolas, monospace;
+  font-family: var(--mono);
 }
 .status-errors {
   font-size: 11px;
@@ -353,32 +641,6 @@ body {
 }
 .status-errors b {
   color: rgba(223, 233, 234, 0.75);
-}
-
-/* ── 빈 상태 (보유종목 0) ── */
-.empty-state {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 32px 40px;
-  text-align: center;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: center;
-}
-.empty-state h1 {
-  margin: 0;
-  font-size: 24px;
-  letter-spacing: 0.1em;
-  color: #eef7f6;
-}
-.empty-state p {
-  margin: 0;
-  color: rgba(223, 233, 234, 0.65);
-  line-height: 1.6;
 }
 
 /* ── 버튼 ── */
