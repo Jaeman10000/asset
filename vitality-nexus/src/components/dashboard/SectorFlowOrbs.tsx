@@ -1,23 +1,31 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * SectorFlowOrbs — 프로토타입 drawFlow의 오브 "레이아웃/움직임"만 가져오고,
- * 색은 이 프로젝트의 청록(생명력) 단일 컨셉으로 통일한다.
- *   - 오브/노드/파티클 기본 = 청록(LIFE). 한국은 살짝 초록-청록, 미국은 살짝 시안-청록.
- *   - 등락 큰 "사건" 섹터의 파티클만 금색(EVENT)으로 (하이브리드 색 규칙).
- * 프로토타입의 warm(빨강/금)·cool(파랑/보라) 팔레트는 청록 컨셉을 깨므로 쓰지 않는다.
+ * SectorFlowOrbs — 오브 본체는 청록(생명) 컨셉, 파티클은 스펙의 정보 인코딩 색.
  *
- * 데이터: US는 실 SPDR 섹터 등락률, KR은 보유 종목 섹터별 평균 등락률.
+ * 스펙 1장 "파티클 색으로 정보 인코딩":
+ *   한국: 외국인=금색(45) · 기관=청록(175) · 개인=회청(220) — 3색 수급 파티클
+ *   미국: 상승=시안(195) · 하락=보라(240)
+ * 오브/노드 본체는 청록 계열로 유지해 심장·카드와 같은 광원 느낌.
+ *
+ * 데이터: KR은 KRX 12섹터 수급 강도(모의→실데이터 교체 예정), US는 실 SPDR.
  */
 
-// 청록(생명력) / 금색(사건) — lifeColors와 같은 색을 HSL로
-const LIFE_HUE_KR = 166; // 한국: 초록빛 청록
-const LIFE_HUE_US = 184; // 미국: 시안빛 청록
-const EVENT_HUE = 46; // 금색 (강한 등락 = 사건)
+// 청록(생명력) 오브 본체 색
+const LIFE_HUE_KR = 168;
+const LIFE_HUE_US = 184;
+// 스펙의 정보 인코딩 색 (파티클)
+const INV_HUES = { foreign: 45, inst: 175, individual: 220 } as const;
+const US_UP_HUE = 195;
+const US_DOWN_HUE = 240;
 
 export interface OrbSector {
   name: string;
   ret: number;
+  /** KR만: 투자자별 순매수 강도 0~1 (3색 파티클 구동) */
+  foreign?: number;
+  inst?: number;
+  individual?: number;
 }
 
 interface Particle {
@@ -125,15 +133,22 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
         const angle = -Math.PI / 2 + (i / Math.max(sectors.length, 1)) * Math.PI * 2;
         return { ...s, x: cx + Math.cos(angle) * ringR, y: cy + Math.sin(angle) * ringR, angle };
       });
-      const maxRet = Math.max(...sectors.map((x) => Math.abs(x.ret)), 0.1);
       // 노드 발광(aura)
       positions.forEach((s) => {
         let glow = glows[side][s.name] ?? 0;
         glow = Math.max(0, glow - 0.006); // 서서히 감쇠
         glows[side][s.name] = glow;
-        // 기본 청록. 등락이 큰 "사건" 섹터만 금색 쪽으로 (하이브리드 색 규칙)
-        const strong = Math.abs(s.ret) / maxRet;
-        const hue = strong > 0.75 ? EVENT_HUE : orbHue;
+        // 노드 색: KR은 지배적 투자자의 색(수급 정보), US는 상승/하락 색
+        let hue: number = orbHue;
+        if (side === 'kr') {
+          const f = s.foreign ?? 0,
+            i2 = s.inst ?? 0,
+            p2 = s.individual ?? 0;
+          const m = Math.max(f, i2, p2);
+          if (m > 0.05) hue = m === f ? INV_HUES.foreign : m === i2 ? INV_HUES.inst : INV_HUES.individual;
+        } else {
+          hue = s.ret >= 0 ? US_UP_HUE : US_DOWN_HUE;
+        }
         if (glow > 0.05) {
           const auraR = sr + 16 + glow * 22;
           const aura = ctx.createRadialGradient(s.x, s.y, sr * 0.9, s.x, s.y, auraR);
@@ -196,44 +211,62 @@ export function SectorFlowOrbs({ kr, us }: { kr: OrbSector[]; us: OrbSector[] })
       const krPos = drawOrb(krCx, krCy, orbR, ringR, krS, 'kr', LIFE_HUE_KR, now, beat);
       const usPos = drawOrb(usCx, usCy, orbR, ringR, usS, 'us', LIFE_HUE_US, now, beat);
 
-      // 파티클 스폰 (등락률 클수록 자주). 색은 청록, 강한 등락(사건)만 금색.
-      if (now - lastSpawn > 420) {
+      // 파티클 스폰 — 스펙의 정보 인코딩:
+      //   KR: 투자자별 3색 (외국인 금 45 / 기관 청록 175 / 개인 회청 220), 강도∝수급
+      //   US: 상승 시안 195 / 하락 보라 240, 강도∝|등락률|
+      if (now - lastSpawn > 460) {
         lastSpawn = now;
-        const spawn = (
-          pos: ReturnType<typeof drawOrb>,
+        const push = (
+          s: { x: number; y: number; name: string },
           cx: number,
           cy: number,
           side: 'kr' | 'us',
-          orbHue: number,
+          hue: number,
+          strength: number,
         ) => {
-          const maxRet = Math.max(...pos.map((s) => Math.abs(s.ret)), 0.1);
-          pos.forEach((s) => {
-            const intensity = Math.abs(s.ret) / maxRet;
-            if (intensity < 0.2) return;
-            if (Math.random() < intensity * intensity * 0.9) {
-              const dx = s.x - cx,
-                dy = s.y - cy;
-              const dist = Math.hypot(dx, dy) || 1;
-              const ux = dx / dist,
-                uy = dy / dist;
-              particles.push({
-                x0: cx + ux * orbR,
-                y0: cy + uy * orbR,
-                x1: s.x - ux * 20,
-                y1: s.y - uy * 20,
-                born: now,
-                dur: 1600 + Math.random() * 500,
-                key: s.name,
-                side,
-                hue: intensity > 0.75 ? EVENT_HUE : orbHue,
-                strength: intensity,
-              });
-            }
+          const dx = s.x - cx,
+            dy = s.y - cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const ux = dx / dist,
+            uy = dy / dist;
+          particles.push({
+            x0: cx + ux * orbR,
+            y0: cy + uy * orbR,
+            x1: s.x - ux * 20,
+            y1: s.y - uy * 20,
+            born: now,
+            dur: 1700 + Math.random() * 600,
+            key: s.name,
+            side,
+            hue,
+            strength,
           });
         };
-        spawn(krPos, krCx, krCy, 'kr', LIFE_HUE_KR);
-        spawn(usPos, usCx, usCy, 'us', LIFE_HUE_US);
-        if (particles.length > 120) particles.splice(0, particles.length - 120);
+        // KR: 섹터×투자자 3색
+        krPos.forEach((s) => {
+          (
+            [
+              ['foreign', s.foreign ?? 0],
+              ['inst', s.inst ?? 0],
+              ['individual', s.individual ?? 0],
+            ] as const
+          ).forEach(([key, strength]) => {
+            if (strength < 0.25) return;
+            if (Math.random() < strength * strength * 0.85) {
+              push(s, krCx, krCy, 'kr', INV_HUES[key], strength);
+            }
+          });
+        });
+        // US: 등락률
+        const maxRet = Math.max(...usPos.map((s) => Math.abs(s.ret)), 0.1);
+        usPos.forEach((s) => {
+          const intensity = Math.abs(s.ret) / maxRet;
+          if (intensity < 0.2) return;
+          if (Math.random() < intensity * intensity * 0.85) {
+            push(s, usCx, usCy, 'us', s.ret >= 0 ? US_UP_HUE : US_DOWN_HUE, intensity);
+          }
+        });
+        if (particles.length > 140) particles.splice(0, particles.length - 140);
       }
 
       // 파티클 그리기

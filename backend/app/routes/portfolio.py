@@ -19,7 +19,8 @@ from ..adapters.upbit import UpbitAdapter
 from ..adapters.yahoo import YahooAdapter
 from ..cache import TTLCache
 from ..db import save_snapshot
-from ..schemas import PortfolioSnapshot, Position, Totals, TotalsBucket
+from ..schemas import PortfolioSnapshot, Position, SourceError, Totals, TotalsBucket
+from ..services import mock_market
 
 router = APIRouter()
 
@@ -70,10 +71,26 @@ async def _build_snapshot() -> PortfolioSnapshot:
             if not result.unconfigured:
                 real_failures += 1
 
+    # ── 키움/KRX 연동 전: 프로토타입이 보여주던 시장 정보(수급/랭킹/KR섹터)를
+    #    모의 데이터로 채워 UI를 완성한다. UI에 '모의'임이 표기된다. ──
+    if not any(s.region == "KR" for s in sector_flows):
+        sector_flows.extend(mock_market.kr_sector_flows())
+    for p in positions:
+        if p.assetType == "stock" and p.region == "KR" and p.investors is None:
+            p.investors = mock_market.investors_for(p.symbol)
+    market_ranking = mock_market.market_ranking()
+    errors.append(
+        SourceError(
+            source="모의",
+            message="시장 랭킹·수급·KR 섹터는 모의 데이터 (키움/KRX 연동 시 실데이터로 대체)",
+        )
+    )
+
     snapshot = PortfolioSnapshot(
         totals=_compute_totals(positions),
         positions=positions,
         sectorFlows=sector_flows,
+        marketRanking=market_ranking,
         fetchedAt=int(time.time() * 1000),
         errors=errors,
         # 설정 안 된 소스(키 미입력)는 정상 상태다 — 진짜 데이터 조회 실패가

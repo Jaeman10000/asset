@@ -55,8 +55,9 @@ interface OrganicCoreSceneProps {
 export function OrganicCoreScene({
   bpm,
   beatEnergy,
-  // exe 컨셉(오로라 안개 분위기 + 발광)을 배경으로 복원. 바닥 반사만 끔(가장 큰 렉).
-  aurora = true,
+  // 안개는 3D 씬의 풀스크린 셰이더(렉 주범) 대신 DOM 레이어 AuroraVeil
+  // (초저해상도+CSS블러, 비용 ~2%)가 담당한다. 여기선 심장/파티클/Bloom만.
+  aurora = false,
   particles = true,
   floor = false,
   bloom = true,

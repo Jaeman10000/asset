@@ -11,6 +11,15 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class InvestorFlow(BaseModel):
+    """종목/섹터의 투자자별 순매수 (단위: 억원). 키움/KRX 연동 전엔 모의 데이터."""
+
+    foreign: float = 0.0  # 외국인
+    inst: float = 0.0  # 기관
+    individual: float = 0.0  # 개인
+    program: float = 0.0  # 프로그램 매매
+
+
 class Position(BaseModel):
     id: str  # "kiwoom:005930" | "upbit:KRW-BTC" | "manual:BTC"
     # "manual" = 수동입력(어떤 증권사든 커버하는 폴백). 스펙 4장 원본에는 없지만,
@@ -29,7 +38,20 @@ class Position(BaseModel):
     ret: float  # 수익률 %
     history: list[float] = Field(default_factory=list)  # 최근 32개 가격
     sector: str | None = None  # KR 주식만
+    # 종목별 수급 (KR 주식만, 키움 연동 전엔 모의) — 호버 Truth Layer에 표시
+    investors: InvestorFlow | None = None
     lastUpdated: int  # epoch ms
+
+
+class MarketStock(BaseModel):
+    """오늘의 시장 랭킹 항목 (보유 여부와 무관한 시장 전체 종목)."""
+
+    symbol: str
+    name: str
+    price: float
+    ret: float  # 등락률 %
+    volume: int  # 거래량 (주)
+    investors: InvestorFlow  # 수급 (외국인/기관/개인/프로그램, 억원)
 
 
 class SectorFlow(BaseModel):
@@ -69,6 +91,8 @@ class PortfolioSnapshot(BaseModel):
     totals: Totals
     positions: list[Position] = Field(default_factory=list)
     sectorFlows: list[SectorFlow] = Field(default_factory=list)
+    # 오늘의 시장 랭킹 (상승/하락/거래량/외국인/기관 탭용) — 키움 연동 전엔 모의
+    marketRanking: list[MarketStock] = Field(default_factory=list)
     fetchedAt: int  # epoch ms
     errors: list[SourceError] = Field(default_factory=list)
     isEstimate: bool = False  # errors가 하나라도 있으면 True — UI에서 흐리게 표시

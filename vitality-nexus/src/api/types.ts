@@ -8,6 +8,14 @@ export type AssetType = 'stock' | 'crypto';
 export type Region = 'KR' | 'US';
 export type Currency = 'KRW' | 'USD';
 
+/** 투자자별 순매수 (억원). 키움/KRX 연동 전엔 모의 데이터 */
+export interface InvestorFlow {
+  foreign: number; // 외국인
+  inst: number; // 기관
+  individual: number; // 개인
+  program: number; // 프로그램
+}
+
 export interface Position {
   id: string;
   exchange: Exchange;
@@ -24,7 +32,18 @@ export interface Position {
   ret: number; // 수익률 %
   history: number[];
   sector?: string | null;
+  investors?: InvestorFlow | null; // KR 주식 수급 (호버 표시)
   lastUpdated: number;
+}
+
+/** 오늘의 시장 랭킹 항목 (보유 여부와 무관) */
+export interface MarketStock {
+  symbol: string;
+  name: string;
+  price: number;
+  ret: number;
+  volume: number;
+  investors: InvestorFlow;
 }
 
 export interface SectorFlow {
@@ -62,6 +81,8 @@ export interface PortfolioSnapshot {
   totals: Totals;
   positions: Position[];
   sectorFlows: SectorFlow[];
+  /** 오늘의 시장 랭킹 (키움 연동 전엔 모의) */
+  marketRanking: MarketStock[];
   fetchedAt: number;
   errors: SourceError[];
   isEstimate: boolean;

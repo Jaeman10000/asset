@@ -1,22 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Dashboard, type AssetFilter } from './components/dashboard/Dashboard';
+import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
+import { AuroraVeil } from './components/dashboard/AuroraVeil';
 import { OrganicCoreScene } from './components/organic-core/OrganicCoreScene';
 import { usePortfolio } from './store/portfolio';
 import { portfolioBpm } from './util/heart';
 
-const ASSET_TABS: { key: AssetFilter; label: string }[] = [
-  { key: 'all', label: '전체' },
-  { key: 'stock', label: '주식' },
-  { key: 'crypto', label: '암호화폐' },
-];
-
 /**
- * App — Vitality Nexus 대시보드 셸.
- * 백엔드(localhost:8787)를 7초마다 폴링해서 프로토타입 3열 그리드 레이아웃으로
- * 실 포트폴리오를 표시한다. 3D 심장은 중앙 카드 안에 담긴다(Dashboard).
+ * App — Vitality Nexus.
+ * 배경(아래→위): AuroraVeil(초저해상도 안개, 렉 없음) → 3D 심장 씬(투명) → 글래스 UI.
+ * 프로토타입의 정보 구조(3열 그리드, 시장 랭킹, 수급 호버)를 exe의 질감으로 렌더.
  */
 
 /** 우하단 실측 FPS (심장 씬이 노출하는 __renderCount 기준) */
@@ -39,7 +34,6 @@ export default function App() {
   const { snapshot, sources, conn, start, stop, refresh } = usePortfolio();
   const [editorOpen, setEditorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [assetFilter, setAssetFilter] = useState<AssetFilter>('all');
 
   useEffect(() => {
     start();
@@ -50,31 +44,33 @@ export default function App() {
 
   return (
     <div className={snapshot?.isEstimate ? 'dashboard estimate' : 'dashboard'}>
-      {/* exe 컨셉: 오로라 안개 + 발광 심장을 전체 화면 배경으로 (글래스 카드가 위에 뜸) */}
+      {/* 배경 1: 안개 (초저해상도 셰이더 + CSS 블러 → 렉 없이 고급 안개)
+          디버그: ?noveil 로 끄고 격리 가능 */}
+      {!new URLSearchParams(window.location.search).has('noveil') && <AuroraVeil />}
+      {/* 배경 2: 3D 심장 + 생명 파티클 + Bloom (투명 캔버스) */}
       <div className="scene-bg">
         <OrganicCoreScene bpm={bpm} />
       </div>
 
-      {/* 상단 바 */}
+      {/* 상단 바 (프로토타입: 브랜드 + 마켓 상태 필) */}
       <header className="topbar">
         <span className="brand">VITALITY NEXUS</span>
         <span className="brand-sub">LIVING DASHBOARD · HEART AT THE CENTER</span>
-        <nav className="asset-tabs">
-          {ASSET_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={assetFilter === tab.key ? 'on' : ''}
-              onClick={() => setAssetFilter(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        <div className="market-pills">
+          <span className="pill">
+            <i />KR 주식
+          </span>
+          <span className="pill">
+            <i />US 주식
+          </span>
+          <span className="pill live">
+            <i />CRYPTO 24H
+          </span>
+        </div>
       </header>
 
       {snapshot ? (
-        <Dashboard snapshot={snapshot} assetFilter={assetFilter} />
+        <Dashboard snapshot={snapshot} bpm={bpm} />
       ) : (
         <div className="boot-msg">{conn === 'offline' ? '백엔드 연결 대기 중…' : '불러오는 중…'}</div>
       )}

@@ -40,7 +40,24 @@ body {
   transition: opacity 0.4s ease;
 }
 
-/* exe 컨셉: 오로라 안개 + 발광 심장을 전체 화면 배경으로. 글래스 카드가 이 위에 뜬다. */
+/* ── 배경 레이어 1: 안개 (초저해상도 셰이더 → CSS 블러 확대 = 렉 없는 고급 안개) ── */
+.aurora-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora-veil canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: blur(26px) saturate(1.08);
+  transform: scale(1.15); /* 블러 가장자리 잘림 방지 */
+  opacity: 0.85;
+}
+
+/* ── 배경 레이어 2: 3D 심장 씬 (투명 캔버스, 안개 위) ── */
 .scene-bg {
   position: fixed;
   inset: 0;
@@ -89,31 +106,38 @@ body {
   font-size: 14px;
 }
 
-/* 상단 자산 필터 탭 */
-.asset-tabs {
+/* 상단 마켓 상태 필 (프로토타입 topbar) */
+.market-pills {
   margin-left: auto;
   display: flex;
   gap: 6px;
 }
-.asset-tabs button {
+.market-pills .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  padding: 4px 12px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 3px 11px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--dim);
-  cursor: pointer;
-  transition: all 0.2s;
 }
-.asset-tabs button:hover {
-  color: #eef7f6;
+.market-pills .pill i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(223, 233, 234, 0.35);
 }
-.asset-tabs button.on {
-  background: rgba(43, 230, 200, 0.14);
-  border-color: rgba(43, 230, 200, 0.4);
+.market-pills .pill.live {
+  border-color: rgba(43, 230, 200, 0.35);
   color: var(--life);
+}
+.market-pills .pill.live i {
+  background: var(--life);
+  box-shadow: 0 0 6px var(--life);
 }
 
 /* ── 메인 3열 그리드 ── */
@@ -274,13 +298,62 @@ body {
   color: var(--down);
 }
 
-/* ── 중앙 상단: 심장 오버레이 (카드 아님 — 배경의 3D 심장이 그대로 비침) ── */
+/* ── 중앙 상단: SYSTEM PULSE — 심장(배경)과 총액이 하나의 생명체처럼 ──
+   심장은 배경 3D에서 비치고, 심박 파장(beat-rings)이 UI로 퍼지며,
+   총액 텍스트는 심장 바로 아래에서 심장의 빛을 이어받는다. */
 .heart-overlay {
   grid-column: 2;
   grid-row: 1;
   position: relative;
   pointer-events: none; /* 심장/배경으로 마우스 통과 */
+  display: flex;
+  flex-direction: column;
 }
+.heart-space {
+  flex: 1.15; /* 심장이 보이는 상단 영역 */
+}
+
+/* 심박 파장 — 심장 위치에서 bpm 주기로 퍼지는 링 (스펙: 심장 뛸 때마다 파장 확산) */
+.beat-rings {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 0;
+  height: 0;
+  z-index: 0;
+}
+.beat-rings span {
+  position: absolute;
+  left: -80px;
+  top: -80px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 1px solid rgba(43, 230, 200, 0.5);
+  opacity: 0;
+  animation: beatRipple var(--beat, 0.83s) ease-out infinite;
+}
+.beat-rings span:nth-child(2) {
+  animation-delay: calc(var(--beat, 0.83s) * 0.22); /* 이중 박동(S1+S2) */
+  border-color: rgba(43, 230, 200, 0.25);
+}
+@keyframes beatRipple {
+  0% {
+    transform: scale(0.22);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.75;
+  }
+  70% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
 .heart-label {
   position: absolute;
   top: 12px;
@@ -311,41 +384,60 @@ body {
   border: 1px solid rgba(242, 214, 117, 0.4);
   background: rgba(242, 214, 117, 0.08);
 }
+/* 총액 — 심장 바로 아래. 심장의 청록빛이 텍스트로 스며드는 연출 + 심박과 동기 펄스 */
 .heart-center-info {
-  position: absolute;
-  top: 42%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   z-index: 3;
   text-align: center;
-  pointer-events: none;
+  padding-bottom: 10px;
+}
+.heart-center-info::before {
+  /* 심장에서 내려오는 빛 기둥 — 심장과 숫자를 시각적으로 연결 */
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(180deg, transparent, rgba(43, 230, 200, 0.55));
 }
 .heart-center-info .lbl {
   font-family: var(--mono);
   font-size: 8.5px;
-  letter-spacing: 0.24em;
-  color: var(--sub);
+  letter-spacing: 0.28em;
+  color: rgba(43, 230, 200, 0.66);
 }
 .heart-center-info .total {
   font-size: 30px;
   font-weight: 700;
-  color: #eef7f6;
+  color: #f2fbf9;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+  text-shadow:
+    0 0 22px rgba(43, 230, 200, 0.4),
+    0 2px 16px rgba(0, 0, 0, 0.7);
+  animation: totalPulse var(--beat, 0.83s) ease-out infinite;
+}
+@keyframes totalPulse {
+  0%,
+  100% {
+    text-shadow: 0 0 22px rgba(43, 230, 200, 0.35), 0 2px 16px rgba(0, 0, 0, 0.7);
+  }
+  12% {
+    text-shadow: 0 0 34px rgba(43, 230, 200, 0.65), 0 2px 16px rgba(0, 0, 0, 0.7);
+  }
 }
 .heart-center-info .pnl {
   font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
 .asset-totals {
-  position: absolute;
-  bottom: 10px;
-  left: 12px;
-  right: 12px;
+  position: relative;
   z-index: 3;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  padding: 0 4px;
 }
 .asset-tile {
   background: rgba(6, 10, 12, 0.5);
@@ -512,6 +604,16 @@ body {
   font-size: 8.5px;
   margin-left: 5px;
 }
+.held-chip {
+  margin-left: 6px;
+  font-size: 7.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(242, 214, 117, 0.14);
+  color: var(--event);
+  letter-spacing: 0.1em;
+  vertical-align: 1px;
+}
 .rank-mid .v {
   font-size: 10px;
   color: var(--dim);
@@ -577,21 +679,96 @@ body {
   color: var(--dim);
   margin-top: 3px;
 }
-.truth-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 10px;
-  margin-top: 8px;
-  font-size: 11px;
+.truth-badge.held {
+  background: rgba(242, 214, 117, 0.14);
+  color: var(--event);
 }
-.truth-grid span {
+.truth-badge:not(.held) {
+  background: rgba(255, 255, 255, 0.05);
   color: var(--sub);
 }
-.truth-grid b {
+/* 필수 수치 줄 */
+.truth-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11.5px;
+}
+.truth-line span {
+  color: var(--sub);
+}
+.truth-line b {
   color: #e6f0f0;
-  text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
+}
+.truth-line b em {
+  font-style: normal;
+  font-size: 10.5px;
+}
+.truth-line.sub {
+  margin-top: 2px;
+  font-size: 10px;
+}
+.truth-line.sub b {
+  color: var(--dim);
+}
+/* ── 수급현황 (외국인/기관/개인/프로그램) — 호버 카드의 주인공 ── */
+.inv-section {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(43, 230, 200, 0.12);
+}
+.inv-title {
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  color: rgba(43, 230, 200, 0.7);
+  margin-bottom: 6px;
+}
+.inv-row {
+  display: grid;
+  grid-template-columns: 62px 1fr 58px;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.inv-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--dim);
+}
+.inv-name i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex: none;
+}
+.inv-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.inv-fill {
+  height: 100%;
+  border-radius: 3px;
+  box-shadow: 0 0 5px currentColor;
+}
+.inv-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.inv-note {
+  font-size: 8px;
+  color: var(--sub);
+  letter-spacing: 0.05em;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
 }
 .truth-foot {
   margin-top: 8px;

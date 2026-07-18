@@ -1,71 +1,160 @@
-import { useEffect, useState } from 'react';
-import type { Position } from '../../api/types';
-import { krw, pct } from '../../util/format';
+import type { InvestorFlow, MarketStock, Position } from '../../api/types';
+import { krwCompact, pct } from '../../util/format';
 
 /**
- * Truth Layer 호버 카드 (스펙: "정확한 값 = Truth Layer: 호버 시 정확한 숫자 + 기준시각").
- * 리스트 항목에 마우스를 올리면 정확한 보유 수량/평단/현재가/평가금액/손익을
- * 소수점까지 보여준다. 커서 옆에 떠서 따라온다.
+ * Truth Layer 호버 카드 — 프로토타입 showStockHover 복원.
+ * 핵심은 수급현황(외국인/기관/개인/프로그램 순매수 바). 리스트 행에 이미 보이는
+ * 손익%는 중복해서 크게 보여주지 않고, 필수 수치만 압축해서 담는다.
  */
 
+export interface HoverInfo {
+  name: string;
+  symbol: string;
+  sector?: string | null;
+  held: boolean;
+  price: number;
+  currency: 'KRW' | 'USD';
+  ret: number;
+  qty?: number;
+  avg?: number;
+  value?: number; // KRW 평가금액
+  volume?: number | null;
+  investors?: InvestorFlow | null;
+  lastUpdated?: number;
+}
+
+export function fromPosition(p: Position): HoverInfo {
+  return {
+    name: p.name,
+    symbol: p.symbol,
+    sector: p.sector,
+    held: true,
+    price: p.price,
+    currency: p.currency,
+    ret: p.ret,
+    qty: p.qty,
+    avg: p.avg,
+    value: p.value,
+    investors: p.investors,
+    lastUpdated: p.lastUpdated,
+  };
+}
+
+export function fromMarket(m: MarketStock, held: boolean): HoverInfo {
+  return {
+    name: m.name,
+    symbol: m.symbol,
+    held,
+    price: m.price,
+    currency: 'KRW',
+    ret: m.ret,
+    volume: m.volume,
+    investors: m.investors,
+  };
+}
+
 export interface HoverTarget {
-  pos: Position;
+  info: HoverInfo;
   x: number;
   y: number;
 }
 
+// 프로토타입의 투자자 색 (스펙: 파티클 색 정보 인코딩과 동일 계열)
+const INVESTOR_ROWS: { key: keyof InvestorFlow; label: string; color: string }[] = [
+  { key: 'foreign', label: '외국인', color: 'hsl(45, 90%, 65%)' },
+  { key: 'inst', label: '기관', color: 'hsl(175, 80%, 60%)' },
+  { key: 'individual', label: '개인', color: 'hsl(220, 60%, 65%)' },
+  { key: 'program', label: '프로그램', color: 'hsl(280, 60%, 70%)' },
+];
+
+function fmtEok(v: number): string {
+  return (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR') + '억';
+}
+
+function InvestorBars({ inv }: { inv: InvestorFlow }) {
+  const maxAbs = Math.max(...INVESTOR_ROWS.map((r) => Math.abs(inv[r.key])), 1);
+  return (
+    <div className="inv-section">
+      <div className="inv-title">수급 · 당일 순매수</div>
+      {INVESTOR_ROWS.map((r) => {
+        const v = inv[r.key];
+        const w = (Math.abs(v) / maxAbs) * 100;
+        return (
+          <div className="inv-row" key={r.key}>
+            <span className="inv-name">
+              <i style={{ background: r.color }} />
+              {r.label}
+            </span>
+            <div className="inv-bar">
+              <div className="inv-fill" style={{ width: `${w}%`, background: r.color }} />
+            </div>
+            <span className="inv-val" style={{ color: v >= 0 ? 'var(--up)' : 'var(--down)' }}>
+              {fmtEok(v)}
+            </span>
+          </div>
+        );
+      })}
+      <div className="inv-note">외국인·기관은 당일 장중 잠정치 · 모의 데이터</div>
+    </div>
+  );
+}
+
 export function HoverCard({ target }: { target: HoverTarget | null }) {
-  const [now, setNow] = useState('');
-  useEffect(() => {
-    if (!target) return;
-    const d = new Date(target.pos.lastUpdated || Date.now());
-    setNow(
-      d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    );
-  }, [target]);
-
   if (!target) return null;
-  const p = target.pos;
-  const isUp = p.ret >= 0;
-  const curSym = p.currency === 'USD' ? '$' : '₩';
+  const h = target.info;
+  const curSym = h.currency === 'USD' ? '$' : '₩';
+  const time = new Date(h.lastUpdated || Date.now()).toLocaleTimeString('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-  // 화면 밖으로 안 나가게 좌/우 배치 결정
-  const left = target.x + 300 > window.innerWidth ? target.x - 288 : target.x + 16;
-  const top = Math.min(target.y, window.innerHeight - 220);
+  const left = target.x + 300 > window.innerWidth ? target.x - 292 : target.x + 14;
+  const top = Math.min(target.y, window.innerHeight - 280);
 
   return (
     <div className="truth-card" style={{ left, top }}>
       <div className="truth-head">
-        <strong>{p.name}</strong>
-        <span className="truth-sym">{p.symbol}</span>
-        <span className="truth-badge">보유</span>
+        <strong>{h.name}</strong>
+        <span className="truth-sym">{h.symbol}</span>
+        <span className={`truth-badge ${h.held ? 'held' : ''}`}>{h.held ? '보유' : '미보유'}</span>
       </div>
-      {p.sector && <div className="truth-sector">{p.sector}</div>}
+      {h.sector && <div className="truth-sector">{h.sector}</div>}
 
-      <div className="truth-grid">
-        <span>수량</span>
-        <b>{p.qty.toLocaleString('ko-KR')}</b>
-        <span>평단</span>
-        <b>
-          {curSym}
-          {p.avg.toLocaleString('ko-KR')}
-        </b>
+      {/* 필수 수치만 한 줄씩 (손익%는 행에 이미 보이므로 중복 강조 안 함) */}
+      <div className="truth-line">
         <span>현재가</span>
         <b>
           {curSym}
-          {p.price.toLocaleString('ko-KR')}
-        </b>
-        <span>평가금액</span>
-        <b>{krw(p.value)}</b>
-        <span>매수금액</span>
-        <b>{krw(p.cost)}</b>
-        <span>손익</span>
-        <b style={{ color: isUp ? 'var(--up)' : 'var(--down)' }}>
-          {krw(p.value - p.cost)} ({pct(p.ret)})
+          {h.price.toLocaleString('ko-KR')}
+          <em style={{ color: h.ret >= 0 ? 'var(--up)' : 'var(--down)' }}> {pct(h.ret)}</em>
         </b>
       </div>
+      {h.held && h.value !== undefined && (
+        <div className="truth-line">
+          <span>평가금액</span>
+          <b>{krwCompact(h.value)}</b>
+        </div>
+      )}
+      {h.held && h.qty !== undefined && h.avg !== undefined && (
+        <div className="truth-line sub">
+          <span>보유</span>
+          <b>
+            {h.qty.toLocaleString('ko-KR')} × {curSym}
+            {h.avg.toLocaleString('ko-KR')}
+          </b>
+        </div>
+      )}
+      {!h.held && h.volume != null && (
+        <div className="truth-line sub">
+          <span>거래량</span>
+          <b>{(h.volume / 1e6).toFixed(1)}M</b>
+        </div>
+      )}
 
-      <div className="truth-foot">기준 {now} · {p.exchange}</div>
+      {/* 수급현황 — 이 카드의 주인공 */}
+      {h.investors && <InvestorBars inv={h.investors} />}
+
+      <div className="truth-foot">기준 {time}</div>
     </div>
   );
 }
