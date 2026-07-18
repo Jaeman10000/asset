@@ -58,7 +58,7 @@ class SectorFlow(BaseModel):
     region: Literal["KR", "US"]
     id: str  # 'semi', 'XLK' 등
     name: str  # '반도체', '기술' (한글)
-    # 한국만 — 투자자별 순매수 강도 0~1
+    # 한국만 — 투자자별 당일 순매수 (억원, 부호 있음: 음수=순매도)
     foreign: float | None = None
     inst: float | None = None
     individual: float | None = None

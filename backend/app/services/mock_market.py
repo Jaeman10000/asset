@@ -41,19 +41,28 @@ KR_SECTORS = [
 
 
 def kr_sector_flows() -> list[SectorFlow]:
-    """KR 12개 섹터 — 투자자별 순매수 강도(0~1) + 전일 등락률(모의)."""
+    """KR 12개 섹터 — 투자자별 당일 순매수(억원, 부호 있음) + 전일 등락률(모의).
+
+    부호 있는 순매수(억원)라야 매도(음수) 흐름을 표현할 수 있다. 프론트는
+    '외국인+기관' 스마트머니 순매수로 정렬하고 같은 값을 화면에 찍는다
+    (정렬 기준 == 표시 값). 종목별 investors_for()와 단위(억원)를 맞췄다.
+    """
     day = _today()
     flows: list[SectorFlow] = []
     for name in KR_SECTORS:
         s = f"{day}:{name}"
+        foreign = round(_signed(s + ":f", 2400))  # 외국인 ±2400억
+        inst = round(_signed(s + ":i", 1100))  # 기관 ±1100억
+        # 개인은 외국인+기관의 반대쪽으로 흐르는 경향 (수급은 대체로 제로섬)
+        individual = round(-(foreign + inst) * 0.85 + _signed(s + ":p", 300))
         flows.append(
             SectorFlow(
                 region="KR",
                 id=name,
                 name=name,
-                foreign=round(_rand(s + ":f"), 2),
-                inst=round(_rand(s + ":i"), 2),
-                individual=round(_rand(s + ":p"), 2),
+                foreign=float(foreign),
+                inst=float(inst),
+                individual=float(individual),
                 ret=round(_signed(s + ":r", 3.5), 2),
             )
         )

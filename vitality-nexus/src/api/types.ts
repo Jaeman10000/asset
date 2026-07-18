@@ -50,10 +50,11 @@ export interface SectorFlow {
   region: Region;
   id: string;
   name: string;
+  // 한국만 — 투자자별 당일 순매수 (억원, 부호 있음: 음수=순매도)
   foreign?: number | null;
   inst?: number | null;
   individual?: number | null;
-  ret?: number | null;
+  ret?: number | null; // 미국만 — 전일 등락률(%)
   volume?: number | null;
 }
 

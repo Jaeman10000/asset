@@ -18,22 +18,25 @@ import * as THREE from 'three';
 export interface RingSector {
   name: string;
   ret: number;
-  /** KR만: 투자자별 순매수 강도 0~1 */
+  /** KR만: 투자자별 당일 순매수 (억원, 부호 있음 — 음수=순매도) */
   foreign?: number;
   inst?: number;
   individual?: number;
 }
 
 const INV_HUES = { foreign: 45, inst: 175, individual: 220 } as const;
+/** KR 노드 최대 크기·밝기에 해당하는 스마트머니 순매수 기준값(억원) */
+const KR_NET_REF = 3000;
 
-/** 섹터의 정보 인코딩 hue (Dashboard 리드아웃과 공유) */
+/** 섹터의 정보 인코딩 hue (Dashboard 리드아웃 dot과 공유) */
 export function sectorHue(s: RingSector, side: 'kr' | 'us'): number {
   if (side === 'kr') {
-    const f = s.foreign ?? 0;
-    const i = s.inst ?? 0;
-    const p = s.individual ?? 0;
-    const m = Math.max(f, i, p);
-    if (m > 0.05) return m === f ? INV_HUES.foreign : m === i ? INV_HUES.inst : INV_HUES.individual;
+    // 지배 투자자 = |순매수|가 가장 큰 주체 (매수/매도 방향과 무관하게 '주도 세력')
+    const af = Math.abs(s.foreign ?? 0);
+    const ai = Math.abs(s.inst ?? 0);
+    const ap = Math.abs(s.individual ?? 0);
+    const m = Math.max(af, ai, ap);
+    if (m > 30) return m === af ? INV_HUES.foreign : m === ai ? INV_HUES.inst : INV_HUES.individual;
     return 175;
   }
   return s.ret >= 0 ? 195 : 240;
@@ -41,11 +44,11 @@ export function sectorHue(s: RingSector, side: 'kr' | 'us'): number {
 
 /**
  * 수급 점수 0~1 — 노드 크기·밝기·파티클 속도를 결정한다.
- * KR: (외국인+기관) 순매수 강도 = 스마트머니 유입 (App에서 정렬한 기준과 동일).
+ * KR: |외국인+기관| 순매수(억원) = 스마트머니 유출입 강도 (방향 무관, 강할수록 큼).
  * US: |등락률| 정규화.
  */
 function flowScore(s: RingSector, side: 'kr' | 'us', maxRet: number): number {
-  if (side === 'kr') return Math.min(((s.foreign ?? 0) + (s.inst ?? 0)) / 1.6, 1);
+  if (side === 'kr') return Math.min(Math.abs((s.foreign ?? 0) + (s.inst ?? 0)) / KR_NET_REF, 1);
   return Math.min(Math.abs(s.ret) / (maxRet || 1), 1);
 }
 

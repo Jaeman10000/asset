@@ -65,6 +65,11 @@ export function HeartCore({
             <Environment files="/env/studio_small_04.hdr" /> */}
       <ProceduralEnvironment washColor={attenuationColor} />
 
+      {/* 홀로그램 후광 — Bloom을 껐으므로(트랜스미션 피드백/렉 방지) 심장 뒤에
+          가산 발광 스프라이트로 부드러운 halo를 직접 낸다. 값이 고정이라
+          시간이 지나도 쌓이지 않는다 (Bloom 같은 폭주 없음). */}
+      <HeartGlow color={attenuationColor} bpm={bpm} scale={scale} />
+
       <SafeMount
         fallback={<PlaceholderHeart {...meshProps} />}
         onError={() =>
@@ -88,7 +93,7 @@ export function HeartCore({
       <pointLight
         position={[0, 0, 0]}
         color={attenuationColor}
-        intensity={2.3}
+        intensity={3.2}
         distance={8}
         decay={2}
       />
@@ -118,6 +123,52 @@ function GLBHeart({ modelPath, ...meshProps }: HeartMeshProps & { modelPath: str
 
   if (!heartGeometry) return <PlaceholderHeart {...meshProps} />;
   return <HeartMesh geometry={heartGeometry} {...meshProps} />;
+}
+
+/**
+ * HeartGlow — 심장 뒤 홀로그램 후광 (가산 발광 스프라이트).
+ * Bloom을 껐으므로(트랜스미션 피드백/렉 방지) 이걸로 halo를 낸다. 값이 고정이라
+ * 프레임을 거듭해도 밝기가 쌓이지 않는다. 심박에 맞춰 아주 약하게 숨쉰다(스케일).
+ */
+function HeartGlow({ color, bpm, scale }: { color: string; bpm: number; scale: number }) {
+  const spriteRef = useRef<THREE.Sprite>(null);
+  const tex = useMemo(() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d')!;
+    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,0.9)');
+    g.addColorStop(0.25, 'rgba(200,255,246,0.5)');
+    g.addColorStop(0.6, 'rgba(43,230,200,0.18)');
+    g.addColorStop(1, 'rgba(43,230,200,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }, []);
+  useEffect(() => () => tex.dispose(), [tex]);
+
+  useFrame(({ clock }) => {
+    if (!spriteRef.current) return;
+    const t = clock.getElapsedTime();
+    const phase = ((t * bpm) / 60) % 1;
+    const beat = Math.exp(-Math.pow((phase - 0.08) / 0.07, 2)); // 심박과 같은 위상
+    const s = scale * (5.6 + 0.5 * beat); // halo는 심장보다 크게
+    spriteRef.current.scale.set(s, s, 1);
+  });
+
+  return (
+    <sprite ref={spriteRef} position={[0, 0, -0.2]}>
+      <spriteMaterial
+        map={tex}
+        color={color}
+        transparent
+        opacity={0.32}
+        depthWrite={false}
+        depthTest={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </sprite>
+  );
 }
 
 /** GLB가 없을 때 쓰는 절차적 심장 */
@@ -183,11 +234,11 @@ function HeartMesh({
         color={attenuationColor}
         // 나이트 스튜디오 환경은 원래 어두워서 줄무늬 하이라이트만 남는다 —
         // 여기서 더 줄이면 유리가 죽고, 올리면 은색으로 뜬다
-        envMapIntensity={0.6}
-        // 생체발광 씨앗: Bloom이 물고 번질 은은한 내부 발광
-        // (너무 높이면 균일하게 떠서 유리 깊이감이 죽고 심박마다 하얗게 터진다)
+        envMapIntensity={0.72}
+        // 생체발광 씨앗: 은은한 내부 발광 (Bloom을 껐으므로 피드백 폭주 없음 —
+        // 예전보다 조금 올려 유리 심장에 생기를 준다)
         emissive={attenuationColor}
-        emissiveIntensity={0.028}
+        emissiveIntensity={0.045}
         backside={backside}
       />
     </mesh>

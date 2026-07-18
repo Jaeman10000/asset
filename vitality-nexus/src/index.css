@@ -513,97 +513,190 @@ body {
   font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
-/* ── 중앙 하단: 섹터 리드아웃 (3D 궤도의 Truth Layer) ── */
-.sector-readout {
+/* ── 중앙 하단: SECTOR FLOW 레인 (3D 궤도의 Truth Layer + 살아있는 흐름) ──
+   각 섹터 = 수급이 흐르는 레인. 중앙(균형)에서 순매수는 우, 순매도는 좌로
+   색 막대가 뻗고 그 위를 빛이 방향대로 흐른다. 강할수록 빠르고 밝다.
+   [컴포지터 안전] 막대=transform:scaleX(전환만), 흐름=translate3d(무한 1개/레인).
+   box-shadow/filter/background-position/레이아웃 애니 없음 → 매 프레임 리페인트 0. */
+.sector-flow {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
-.readout-cols {
+.flow-cols {
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 22px;
+  gap: 0 20px;
   overflow-y: auto;
   font-family: var(--mono);
   padding-right: 2px;
 }
-.readout-cols::-webkit-scrollbar {
+.flow-cols::-webkit-scrollbar {
   width: 3px;
 }
-.readout-cols::-webkit-scrollbar-thumb {
+.flow-cols::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
-.readout-col {
+.flow-col {
   min-width: 0;
 }
-.readout-head {
+.flow-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 6px;
   font-size: 9px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   color: var(--dim);
   text-transform: uppercase;
   margin: 2px 0 6px;
   padding-bottom: 4px;
   border-bottom: 1px solid rgba(43, 230, 200, 0.12);
 }
-.readout-head em {
+.flow-head em {
   font-style: normal;
   font-size: 8px;
   color: var(--sub);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
-.readout-row {
+.flow-lane {
   display: grid;
-  grid-template-columns: 15px auto minmax(0, 1fr) 46px 40px;
-  gap: 7px;
+  grid-template-columns: 13px 6px minmax(0, 0.8fr) minmax(38px, 1.5fr) auto;
+  gap: 6px;
   align-items: center;
-  padding: 2.5px 0;
-  font-size: 11px;
+  padding: 2px 0;
 }
-.readout-row .rk {
+.fl-rk {
   color: var(--sub);
-  font-size: 9.5px;
+  font-size: 9px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.readout-row:first-of-type .rk {
+.flow-lane:first-of-type .fl-rk {
   color: var(--event);
   font-weight: 700;
 }
-.readout-row i {
+.fl-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  flex: none;
-  box-shadow: 0 0 5px currentColor;
+  /* 정적 글로우 — 애니 아님(전환/정적 box-shadow는 UHD 안전) */
+  box-shadow: 0 0 5px -1px currentColor;
 }
-.readout-row .rn {
+.fl-name {
+  font-size: 10.5px;
   color: #dbe7e7;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.readout-row .rt {
-  height: 5px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
+
+/* 흐름 트랙 — 중앙 = 수급 균형(0), 우=매수 / 좌=매도 */
+.fl-track {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.045);
   overflow: hidden;
 }
-.readout-row .rf {
-  height: 100%;
-  border-radius: 3px;
-  box-shadow: 0 0 6px -1px currentColor;
+.fl-track::before {
+  /* 중앙 균형 축 (정적) */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  margin-left: -0.5px;
+  background: rgba(255, 255, 255, 0.16);
 }
-.readout-row .rv {
+
+/* 크기 막대 — scaleX만 사용(컴포지터 전용). 데이터 갱신 시 0.6s 전환으로 부드럽게 */
+.fl-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  opacity: 0.42;
+  border-radius: 3px;
+  transform: scaleX(var(--mag, 0));
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fl-track.buy .fl-fill {
+  left: 50%;
+  right: 0;
+  transform-origin: left center;
+  background: linear-gradient(90deg, currentColor, transparent);
+}
+.fl-track.sell .fl-fill {
+  left: 0;
+  right: 50%;
+  transform-origin: right center;
+  background: linear-gradient(-90deg, currentColor, transparent);
+}
+
+/* 흐르는 빛 — translate3d만 애니(레인당 1개, 컴포지터 전용).
+   repeating-gradient는 레이어에 1회만 래스터 → 이동은 리페인트 0. */
+.fl-belt {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fl-track.buy .fl-belt {
+  left: 50%;
+  right: 0;
+}
+.fl-track.sell .fl-belt {
+  left: 0;
+  right: 50%;
+}
+.fl-belt-i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -16px;
+  right: -16px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 7px,
+    rgba(214, 255, 247, 0.82) 8px 9px,
+    transparent 10px 16px
+  );
+  opacity: var(--bright, 0.4);
+  animation: flDrift var(--dur, 1.8s) linear infinite;
+}
+.fl-track.sell .fl-belt-i {
+  animation-direction: reverse;
+}
+@keyframes flDrift {
+  /* 한 주기(16px)만 이동 → 폭 무관 이음매 없는 흐름 */
+  to {
+    transform: translate3d(16px, 0, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-belt-i {
+    animation: none;
+  }
+}
+
+.fl-val {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 10px;
+  letter-spacing: -0.02em;
+}
+.fl-val em {
+  font-style: normal;
+  font-size: 8px;
+  opacity: 0.6;
+  margin-left: 1px;
 }
 
 /* ── 우측: 랭킹 ── */

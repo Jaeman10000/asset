@@ -135,47 +135,67 @@ function ListCard({
 }
 
 /**
- * 하단 섹터 리드아웃 — 3D 궤도의 순위/수치를 정확히 읽는 Truth Layer.
- * 배열은 App에서 수급 순으로 정렬돼 들어오므로 위→아래 = 궤도 12시→시계방향 순서와 동일.
+ * 하단 SECTOR FLOW — 각 섹터가 "수급이 흐르는 레인".
+ *
+ * 리스트가 아니라 흐름이다: 트랙 중앙(=수급 균형)을 기준으로 순매수는 우(→),
+ * 순매도는 좌(←)로 색 막대가 뻗고, 그 위를 빛 입자가 방향대로 흐른다.
+ * 강할수록 빠르고 밝게 — 오늘 돈이 크게 움직인 섹터가 저절로 눈에 들어온다.
+ *   · 값/정렬 일치: KR = 외국인+기관 순매수(억원, App 정렬 기준과 동일한 값을 표시),
+ *     US = 전일 등락률. 정렬은 부호값 내림차순 → 위=최대 순매수, 아래=최대 순매도.
+ *   · dot 색 = 3D 궤도 노드와 동일(지배 투자자/등락 방향) → 링↔레인 상호참조.
+ *   · 컴포지터 전용: 막대는 transform:scaleX(전환), 흐름은 translate3d(무한) 뿐.
  */
-function SectorReadout({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
-  const krScore = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
+function SectorFlowLanes({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
+  const krNet = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
+
   const col = (sectors: RingSector[], side: 'kr' | 'us', title: string, metricLabel: string) => {
-    const maxScore =
-      side === 'kr'
-        ? Math.max(...sectors.map(krScore), 0.1)
-        : Math.max(...sectors.map((s) => Math.abs(s.ret)), 0.1);
+    const val = (s: RingSector) => (side === 'kr' ? krNet(s) : s.ret);
+    const maxAbs = Math.max(
+      ...sectors.map((s) => Math.abs(val(s))),
+      side === 'kr' ? 300 : 0.5, // 바닥값 — 조용한 날 막대가 폭주하지 않게
+    );
     return (
-      <div className="readout-col">
-        <div className="readout-head">
+      <div className="flow-col">
+        <div className="flow-head">
           {title}
           <em>{metricLabel}</em>
         </div>
         {sectors.map((s, i) => {
-          const score = side === 'kr' ? krScore(s) : Math.abs(s.ret);
+          const v = val(s);
+          const buy = v >= 0;
+          const mag = Math.max(Math.abs(v) / maxAbs, 0.05); // 0.05~1 (막대 스케일·강도)
+          const dur = `${(2.6 - mag * 1.75).toFixed(2)}s`; // 강할수록 빠름: 0.85s~2.51s
+          const bright = (0.28 + mag * 0.5).toFixed(2); // 강할수록 밝음: 0.28~0.78
+          const dirColor =
+            side === 'kr'
+              ? buy
+                ? 'var(--life)'
+                : 'var(--down)'
+              : buy
+                ? 'var(--up)'
+                : 'var(--down)';
+          const sign = v >= 0 ? '+' : '−';
+          const valText =
+            side === 'kr'
+              ? sign + Math.abs(Math.round(v)).toLocaleString('ko-KR')
+              : sign + Math.abs(v).toFixed(1) + '%';
           return (
-            <div className="readout-row" key={s.name}>
-              <span className="rk">{i + 1}</span>
-              <i
-                style={{
-                  background: `hsl(${sectorHue(s, side)}, 85%, 62%)`,
-                  color: `hsl(${sectorHue(s, side)}, 85%, 62%)`,
-                }}
-              />
-              <span className="rn">{s.name}</span>
-              <div className="rt">
+            <div className="flow-lane" key={s.name}>
+              <span className="fl-rk">{i + 1}</span>
+              <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, side)}, 82%, 60%)` }} />
+              <span className="fl-name">{s.name}</span>
+              <div className={`fl-track ${buy ? 'buy' : 'sell'}`}>
+                <div className="fl-fill" style={{ ['--mag' as string]: mag, color: dirColor }} />
                 <div
-                  className="rf"
-                  style={{
-                    width: `${(score / maxScore) * 100}%`,
-                    background: `hsl(${sectorHue(s, side)}, 80%, 58%)`,
-                    color: `hsl(${sectorHue(s, side)}, 80%, 58%)`,
-                  }}
-                />
+                  className="fl-belt"
+                  style={{ ['--dur' as string]: dur, ['--bright' as string]: bright }}
+                >
+                  <span className="fl-belt-i" />
+                </div>
               </div>
-              <span className="rv" style={{ color: s.ret >= 0 ? 'var(--up)' : 'var(--down)' }}>
-                {s.ret >= 0 ? '+' : ''}
-                {s.ret.toFixed(1)}
+              <span className="fl-val" style={{ color: dirColor }}>
+                {valText}
+                {side === 'kr' && <em>억</em>}
               </span>
             </div>
           );
@@ -183,16 +203,17 @@ function SectorReadout({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
       </div>
     );
   };
+
   return (
-    <div className="card sector-readout">
+    <div className="card sector-flow">
       <h3>
         <span className="dot" />
-        SECTOR FLOW · 수급 랭킹 궤도
-        <span className="exch">수급순 정렬 · 모의</span>
+        SECTOR FLOW · 수급 흐름 레인
+        <span className="exch">순매수순 · 모의</span>
       </h3>
-      <div className="readout-cols">
-        {col(kr, 'kr', '한국 · KRX', '외국인+기관')}
-        {col(us, 'us', '미국 · SPDR', '등락률')}
+      <div className="flow-cols">
+        {col(kr, 'kr', '한국 · KRX', '외국인+기관 순매수')}
+        {col(us, 'us', '미국 · SPDR', '전일 등락률')}
       </div>
     </div>
   );
@@ -297,7 +318,7 @@ export function Dashboard({
             </div>
           </div>
 
-          <SectorReadout kr={krSectors} us={usSectors} />
+          <SectorFlowLanes kr={krSectors} us={usSectors} />
         </div>
 
         {/* ── 우측: 오늘의 시장 랭킹 ── */}

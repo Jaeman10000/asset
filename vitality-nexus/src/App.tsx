@@ -74,9 +74,18 @@ export default function App() {
       {/* 배경 1: 안개 (초저해상도 셰이더 + CSS 블러 → 렉 없이 고급 안개)
           디버그: ?noveil 로 끄고 격리 가능 */}
       {!new URLSearchParams(window.location.search).has('noveil') && <AuroraVeil />}
-      {/* 배경 2: 3D 심장 + 홀로그램 섹터 링 + 파티클 + Bloom (투명 캔버스) */}
+      {/* 배경 2: 3D 심장 + 홀로그램 섹터 링 + 파티클 (투명 캔버스).
+          Bloom은 기본 OFF: (1) MeshTransmissionMaterial(유리 심장)을 매 프레임 재샘플·
+          재증폭해 시간이 지나면 심장이 하얗게 뭉개지는 피드백 루프를 만들고,
+          (2) 약한 GPU(Intel UHD)에서 fps를 절반으로 깎는다. 홀로그램 발광은 궤도·노드·
+          파티클의 가산 스프라이트가 자체적으로 낸다. 실험용으로 ?bloom 로 켤 수 있음. */}
       <div className="scene-bg">
-        <OrganicCoreScene bpm={bpm} krSectors={krSectors} usSectors={usSectors} />
+        <OrganicCoreScene
+          bpm={bpm}
+          krSectors={krSectors}
+          usSectors={usSectors}
+          bloom={new URLSearchParams(window.location.search).has('bloom')}
+        />
       </div>
 
       {/* 상단 바 (프로토타입: 브랜드 + 마켓 상태 필) */}
