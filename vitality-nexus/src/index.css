@@ -513,7 +513,7 @@ body {
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 20px;
+  gap: 0 22px;
   overflow-y: auto;
   font-family: var(--mono);
   padding-right: 2px;
@@ -529,45 +529,69 @@ body {
   min-width: 0;
 }
 .readout-head {
-  font-size: 8px;
-  letter-spacing: 0.16em;
-  color: var(--sub);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--dim);
   text-transform: uppercase;
-  margin: 2px 0 5px;
+  margin: 2px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(43, 230, 200, 0.12);
+}
+.readout-head em {
+  font-style: normal;
+  font-size: 8px;
+  color: var(--sub);
+  letter-spacing: 0.06em;
 }
 .readout-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 52px 42px;
+  grid-template-columns: 15px auto minmax(0, 1fr) 46px 40px;
   gap: 7px;
   align-items: center;
-  padding: 1.5px 0;
-  font-size: 10px;
+  padding: 2.5px 0;
+  font-size: 11px;
+}
+.readout-row .rk {
+  color: var(--sub);
+  font-size: 9.5px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.readout-row:first-of-type .rk {
+  color: var(--event);
+  font-weight: 700;
 }
 .readout-row i {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex: none;
+  box-shadow: 0 0 5px currentColor;
 }
 .readout-row .rn {
-  color: var(--dim);
+  color: #dbe7e7;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .readout-row .rt {
-  height: 4px;
-  border-radius: 2px;
+  height: 5px;
+  border-radius: 3px;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 .readout-row .rf {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 3px;
+  box-shadow: 0 0 6px -1px currentColor;
 }
 .readout-row .rv {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
 }
 
 /* ── 우측: 랭킹 ── */

@@ -113,8 +113,8 @@ export function OrganicCoreScene({
       {/* 심장+파티클을 그룹으로 묶어 천천히 자전 = 정지 안 함 = 살아있음.
           OrbitControls autoRotate는 demand 모드에서 change→invalidate 자가 루프를
           만들어 프레임 캡을 무력화하므로, 이벤트 없는 useFrame 그룹 회전으로 대체 */}
-      {/* 심장을 살짝 위로 올려 중앙-상단(SYSTEM PULSE 영역)에 오게 함 */}
-      <group position={[0, 0.9, 0]}>
+      {/* 심장을 중앙에 배치 — 상단 총합 4카드에 위쪽이 가리지 않도록 y를 낮춤 */}
+      <group position={[0, 0.35, 0]}>
         {/* 홀로그램 섹터 궤도 (안 KR / 밖 US) + 프로젝터 디스크 —
             심장과 같은 씬·같은 Bloom이라 질감이 일치한다 */}
         <HoloSectorRings kr={krSectors} us={usSectors} />

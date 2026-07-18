@@ -39,8 +39,13 @@ export function sectorHue(s: RingSector, side: 'kr' | 'us'): number {
   return s.ret >= 0 ? 195 : 240;
 }
 
-function strengthOf(s: RingSector, side: 'kr' | 'us', maxRet: number): number {
-  if (side === 'kr') return Math.max(s.foreign ?? 0, s.inst ?? 0, s.individual ?? 0);
+/**
+ * 수급 점수 0~1 — 노드 크기·밝기·파티클 속도를 결정한다.
+ * KR: (외국인+기관) 순매수 강도 = 스마트머니 유입 (App에서 정렬한 기준과 동일).
+ * US: |등락률| 정규화.
+ */
+function flowScore(s: RingSector, side: 'kr' | 'us', maxRet: number): number {
+  if (side === 'kr') return Math.min(((s.foreign ?? 0) + (s.inst ?? 0)) / 1.6, 1);
   return Math.min(Math.abs(s.ret) / (maxRet || 1), 1);
 }
 
@@ -99,17 +104,20 @@ function Ring({
     [sectors],
   );
 
-  // 노드 위치/색/강도 + 라벨 텍스처
+  // 노드 위치/색/강도 + 라벨 텍스처.
+  // sectors는 이미 수급 순으로 정렬돼 들어온다 → i=0(12시)부터 시계방향으로 1위→꼴찌.
   const nodes = useMemo(() => {
+    const n = Math.max(sectors.length, 1);
     return sectors.map((s, i) => {
-      const angle = -Math.PI / 2 + (i / Math.max(sectors.length, 1)) * Math.PI * 2;
+      const angle = -Math.PI / 2 + (i / n) * Math.PI * 2;
       const hue = sectorHue(s, side);
-      const strength = strengthOf(s, side, maxRet);
+      const score = flowScore(s, side, maxRet);
       return {
         name: s.name,
+        rank: i + 1,
         pos: new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius),
         color: new THREE.Color(`hsl(${hue}, 88%, 66%)`),
-        strength,
+        score,
         label: makeLabelTexture(s.name),
       };
     });
@@ -140,8 +148,9 @@ function Ring({
     const progress = new Float32Array(n);
     const speeds = new Float32Array(n);
     nodes.forEach((node, i) => {
-      progress[i] = Math.random();
-      speeds[i] = 0.12 + node.strength * 0.3;
+      // Math.random 대신 노드별 결정적 위상 (시작점만 흩뿌림)
+      progress[i] = (i * 0.618) % 1;
+      speeds[i] = 0.1 + node.score * 0.45; // 수급 강할수록 빠르게 흐름
       colors[i * 3] = node.color.r;
       colors[i * 3 + 1] = node.color.g;
       colors[i * 3 + 2] = node.color.b;
@@ -185,25 +194,29 @@ function Ring({
           />
         </lineLoop>
 
-        {/* 섹터 노드 + 라벨 (스프라이트라 회전해도 항상 정면) */}
-        {nodes.map((n) => (
-          <group key={n.name} position={n.pos}>
-            <sprite scale={[0.11 + n.strength * 0.09, 0.11 + n.strength * 0.09, 1]}>
-              <spriteMaterial
-                map={glowTex}
-                color={n.color}
-                transparent
-                opacity={0.45 + n.strength * 0.4}
-                blending={THREE.AdditiveBlending}
-                depthWrite={false}
-              />
-            </sprite>
-            {/* 라벨은 작게+반투명 — 링 앞쪽(카메라 근접)에서 UI를 압도하지 않도록 */}
-            <sprite position={[0, 0.13, 0]} scale={[0.34, 0.085, 1]}>
-              <spriteMaterial map={n.label} transparent opacity={0.78} depthWrite={false} />
-            </sprite>
-          </group>
-        ))}
+        {/* 섹터 노드 + 라벨 (스프라이트라 회전해도 항상 정면).
+            크기·밝기가 수급 점수에 확실히 비례 (0.07~0.30) → 1위가 눈에 띄게 큼 */}
+        {nodes.map((n) => {
+          const size = 0.07 + n.score * 0.23;
+          return (
+            <group key={n.name} position={n.pos}>
+              <sprite scale={[size, size, 1]}>
+                <spriteMaterial
+                  map={glowTex}
+                  color={n.color}
+                  transparent
+                  opacity={0.4 + n.score * 0.55}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                />
+              </sprite>
+              {/* 라벨은 작게+반투명 — 링 앞쪽(카메라 근접)에서 UI를 압도하지 않도록 */}
+              <sprite position={[0, 0.11 + size * 0.5, 0]} scale={[0.32, 0.08, 1]}>
+                <spriteMaterial map={n.label} transparent opacity={0.72} depthWrite={false} />
+              </sprite>
+            </group>
+          );
+        })}
 
         {/* 심장 → 섹터 파티클 */}
         <points ref={pointsRef} geometry={particle.geo}>
@@ -282,11 +295,13 @@ export function HoloSectorRings({ kr, us }: { kr: RingSector[]; us: RingSector[]
 
   return (
     <group>
+      {/* 반경을 줄여 바깥 US 링까지 화면 안에 다 들어오게 (기존 2.3은 화면 반폭
+          ~2.07을 넘겨 잘려서 커 보였다). tilt를 키워 세로 footprint도 압축. */}
       {kr.length > 0 && (
-        <Ring sectors={kr} side="kr" radius={1.75} tiltX={0.42} tiltZ={0.1} speed={0.07} glowTex={glowTex} />
+        <Ring sectors={kr} side="kr" radius={1.15} tiltX={0.5} tiltZ={0.08} speed={0.07} glowTex={glowTex} />
       )}
       {us.length > 0 && (
-        <Ring sectors={us} side="us" radius={2.3} tiltX={0.42} tiltZ={-0.08} speed={-0.05} glowTex={glowTex} />
+        <Ring sectors={us} side="us" radius={1.6} tiltX={0.5} tiltZ={-0.06} speed={-0.05} glowTex={glowTex} />
       )}
       <ProjectorBase glowTex={glowTex} />
     </group>

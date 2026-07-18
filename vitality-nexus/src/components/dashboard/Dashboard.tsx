@@ -134,32 +134,52 @@ function ListCard({
   );
 }
 
-/** 하단 섹터 리드아웃 — 3D 링의 수치를 정확히 읽는 Truth Layer */
+/**
+ * 하단 섹터 리드아웃 — 3D 궤도의 순위/수치를 정확히 읽는 Truth Layer.
+ * 배열은 App에서 수급 순으로 정렬돼 들어오므로 위→아래 = 궤도 12시→시계방향 순서와 동일.
+ */
 function SectorReadout({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
-  const col = (sectors: RingSector[], side: 'kr' | 'us', title: string) => {
-    const maxAbs = Math.max(...sectors.map((s) => Math.abs(s.ret)), 0.1);
+  const krScore = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
+  const col = (sectors: RingSector[], side: 'kr' | 'us', title: string, metricLabel: string) => {
+    const maxScore =
+      side === 'kr'
+        ? Math.max(...sectors.map(krScore), 0.1)
+        : Math.max(...sectors.map((s) => Math.abs(s.ret)), 0.1);
     return (
       <div className="readout-col">
-        <div className="readout-head">{title}</div>
-        {sectors.map((s) => (
-          <div className="readout-row" key={s.name}>
-            <i style={{ background: `hsl(${sectorHue(s, side)}, 85%, 62%)` }} />
-            <span className="rn">{s.name}</span>
-            <div className="rt">
-              <div
-                className="rf"
+        <div className="readout-head">
+          {title}
+          <em>{metricLabel}</em>
+        </div>
+        {sectors.map((s, i) => {
+          const score = side === 'kr' ? krScore(s) : Math.abs(s.ret);
+          return (
+            <div className="readout-row" key={s.name}>
+              <span className="rk">{i + 1}</span>
+              <i
                 style={{
-                  width: `${(Math.abs(s.ret) / maxAbs) * 100}%`,
-                  background: s.ret >= 0 ? 'var(--up)' : 'var(--down)',
+                  background: `hsl(${sectorHue(s, side)}, 85%, 62%)`,
+                  color: `hsl(${sectorHue(s, side)}, 85%, 62%)`,
                 }}
               />
+              <span className="rn">{s.name}</span>
+              <div className="rt">
+                <div
+                  className="rf"
+                  style={{
+                    width: `${(score / maxScore) * 100}%`,
+                    background: `hsl(${sectorHue(s, side)}, 80%, 58%)`,
+                    color: `hsl(${sectorHue(s, side)}, 80%, 58%)`,
+                  }}
+                />
+              </div>
+              <span className="rv" style={{ color: s.ret >= 0 ? 'var(--up)' : 'var(--down)' }}>
+                {s.ret >= 0 ? '+' : ''}
+                {s.ret.toFixed(1)}
+              </span>
             </div>
-            <span className="rv" style={{ color: s.ret >= 0 ? 'var(--up)' : 'var(--down)' }}>
-              {s.ret >= 0 ? '+' : ''}
-              {s.ret.toFixed(1)}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -167,12 +187,12 @@ function SectorReadout({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
     <div className="card sector-readout">
       <h3>
         <span className="dot" />
-        SECTOR FLOW · 심장 궤도
-        <span className="exch">KR 수급 · US 전일 · 모의</span>
+        SECTOR FLOW · 수급 랭킹 궤도
+        <span className="exch">수급순 정렬 · 모의</span>
       </h3>
       <div className="readout-cols">
-        {col(kr, 'kr', '한국 · KRX')}
-        {col(us, 'us', '미국 · SPDR')}
+        {col(kr, 'kr', '한국 · KRX', '외국인+기관')}
+        {col(us, 'us', '미국 · SPDR', '등락률')}
       </div>
     </div>
   );

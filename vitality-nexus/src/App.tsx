@@ -43,7 +43,9 @@ export default function App() {
 
   const bpm = snapshot ? portfolioBpm(snapshot.totals.total.pnlPct) : 72;
 
-  // 홀로그램 섹터 링 + 하단 리드아웃 공용 데이터
+  // 홀로그램 섹터 링 + 하단 리드아웃 공용 데이터.
+  // 순서 = 수급 순위: KR은 (외국인+기관) 순매수 강도, US는 등락률 내림차순.
+  // 링과 리드아웃이 같은 배열을 받으므로 "12시=1위, 시계방향" 규칙이 둘 다 동일하다.
   const krSectors: RingSector[] = useMemo(
     () =>
       (snapshot?.sectorFlows ?? [])
@@ -54,14 +56,16 @@ export default function App() {
           foreign: s.foreign ?? 0,
           inst: s.inst ?? 0,
           individual: s.individual ?? 0,
-        })),
+        }))
+        .sort((a, b) => (b.foreign! + b.inst!) - (a.foreign! + a.inst!)),
     [snapshot],
   );
   const usSectors: RingSector[] = useMemo(
     () =>
       (snapshot?.sectorFlows ?? [])
         .filter((s) => s.region === 'US' && typeof s.ret === 'number')
-        .map((s) => ({ name: s.name, ret: s.ret ?? 0 })),
+        .map((s) => ({ name: s.name, ret: s.ret ?? 0 }))
+        .sort((a, b) => b.ret - a.ret),
     [snapshot],
   );
 
