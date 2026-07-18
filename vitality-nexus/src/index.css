@@ -71,6 +71,33 @@ body {
   font-size: 14px;
 }
 
+/* 상단 자산 필터 탭 */
+.asset-tabs {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.asset-tabs button {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.asset-tabs button:hover {
+  color: #eef7f6;
+}
+.asset-tabs button.on {
+  background: rgba(43, 230, 200, 0.14);
+  border-color: rgba(43, 230, 200, 0.4);
+  color: var(--life);
+}
+
 /* ── 메인 3열 그리드 ── */
 .stage {
   flex: 1;
@@ -328,52 +355,57 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── 중앙 하단: 섹터 플로우 ── */
+/* ── 중앙 하단: 섹터 플로우 오브 ── */
 .flow-card {
   grid-column: 2;
   grid-row: 2;
+  position: relative;
+  overflow: hidden;
+}
+.flow-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.flow-card h3 {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  right: 14px;
+  z-index: 3;
+}
+.flow-labels {
+  position: absolute;
+  bottom: 8px;
+  left: 14px;
+  right: 14px;
+  z-index: 3;
   display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.sector-cols {
-  flex: 1;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(6, auto);
-  gap: 3px 18px;
-  align-content: start;
-}
-.sector-bar-row {
-  display: grid;
-  grid-template-columns: 60px 1fr 34px;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  justify-content: space-between;
   font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
 }
-.sector-name {
+.flow-side {
+  max-width: 48%;
+}
+.flow-side:last-child {
+  text-align: right;
+}
+.flow-region {
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--sub);
+  text-transform: uppercase;
+}
+.flow-side b {
+  font-size: 10px;
   color: var(--dim);
+  font-weight: 500;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.sector-track {
-  height: 5px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-.sector-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease;
-}
-.sector-pct {
-  text-align: right;
 }
 
 /* ── 우측: 랭킹 ── */
@@ -383,6 +415,26 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+.ranking-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.ranking-tabs button {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--dim);
+  cursor: pointer;
+}
+.ranking-tabs button.on {
+  background: rgba(43, 230, 200, 0.14);
+  border-color: rgba(43, 230, 200, 0.4);
+  color: var(--life);
 }
 .ranking-list {
   flex: 1;

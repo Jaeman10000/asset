@@ -5,13 +5,26 @@ import { portfolioBpm } from '../../util/heart';
 import { OrganicCoreScene } from '../organic-core/OrganicCoreScene';
 import { MiniDonut } from './MiniDonut';
 import { HoverCard, type HoverTarget } from './HoverCard';
+import { SectorFlowOrbs, type OrbSector } from './SectorFlowOrbs';
 import { Spark } from './shared';
+
+export type AssetFilter = 'all' | 'stock' | 'crypto';
+type SortMode = 'up' | 'down' | 'value';
 
 /**
  * Dashboard — 프로토타입(full-dashboard-v2.html)의 3열 그리드 레이아웃을 복원.
  * 3D 심장·청록 색상은 유지. 좌측 3단 리스트 / 중앙 심장+총합+섹터플로우 / 우측 랭킹.
  * 리스트 항목 호버 시 정확한 값+기준시각(Truth Layer) 카드가 뜬다.
  */
+
+/** 등락률 상위 섹터 이름 3개를 " · "로 (flow-labels용) */
+function topSectorNames(sectors: OrbSector[]): string {
+  return [...sectors]
+    .sort((a, b) => b.ret - a.ret)
+    .slice(0, 3)
+    .map((s) => s.name)
+    .join(' · ');
+}
 
 function useHover() {
   const [target, setTarget] = useState<HoverTarget | null>(null);
@@ -81,30 +94,62 @@ function ListCard({
   );
 }
 
-export function Dashboard({ snapshot }: { snapshot: PortfolioSnapshot }) {
+export function Dashboard({
+  snapshot,
+  assetFilter = 'all',
+}: {
+  snapshot: PortfolioSnapshot;
+  assetFilter?: AssetFilter;
+}) {
   const hover = useHover();
+  const [sortMode, setSortMode] = useState<SortMode>('up');
   const t = snapshot.totals;
   const bpm = portfolioBpm(t.total.pnlPct);
 
-  const { kr, us, crypto, ranked } = useMemo(() => {
+  const { kr, us, crypto } = useMemo(() => {
     const ps = [...snapshot.positions];
     const byVal = (a: Position, b: Position) => b.value - a.value;
     return {
       kr: ps.filter((p) => p.assetType === 'stock' && p.region === 'KR').sort(byVal),
       us: ps.filter((p) => p.assetType === 'stock' && p.region === 'US').sort(byVal),
       crypto: ps.filter((p) => p.assetType === 'crypto').sort(byVal),
-      // 우측 랭킹: 내 보유 종목을 수익률 순으로 (시장 전체 랭킹은 데이터 소스 미연동)
-      ranked: [...ps].sort((a, b) => b.ret - a.ret),
     };
   }, [snapshot]);
 
-  const usSectors = useMemo(
+  // 우측 랭킹: 자산 필터 + 정렬 모드 적용 (상단/랭킹 탭)
+  const ranked = useMemo(() => {
+    let ps = snapshot.positions.filter((p) =>
+      assetFilter === 'all' ? true : assetFilter === 'crypto' ? p.assetType === 'crypto' : p.assetType === 'stock',
+    );
+    ps = [...ps];
+    if (sortMode === 'up') ps.sort((a, b) => b.ret - a.ret);
+    else if (sortMode === 'down') ps.sort((a, b) => a.ret - b.ret);
+    else ps.sort((a, b) => b.value - a.value);
+    return ps;
+  }, [snapshot, assetFilter, sortMode]);
+
+  // 섹터 오브 데이터: US는 실 SPDR, KR은 보유 종목을 섹터별 평균 등락률로
+  const usOrb: OrbSector[] = useMemo(
     () =>
       snapshot.sectorFlows
         .filter((s) => s.region === 'US' && typeof s.ret === 'number')
-        .sort((a, b) => (b.ret ?? 0) - (a.ret ?? 0)),
+        .map((s) => ({ name: s.name, ret: s.ret ?? 0 })),
     [snapshot],
   );
+  const krOrb: OrbSector[] = useMemo(() => {
+    const bySector = new Map<string, { sum: number; n: number }>();
+    for (const p of snapshot.positions) {
+      if (p.assetType !== 'stock' || p.region !== 'KR') continue;
+      const key = p.sector || '기타';
+      const cur = bySector.get(key) ?? { sum: 0, n: 0 };
+      cur.sum += p.ret;
+      cur.n += 1;
+      bySector.set(key, cur);
+    }
+    return [...bySector.entries()].map(([name, v]) => ({ name, ret: v.sum / v.n }));
+  }, [snapshot]);
+
+  const usSectors = usOrb;
 
   const tiles = [
     { lbl: '주식 · 한국', b: t.kr },
@@ -156,34 +201,23 @@ export function Dashboard({ snapshot }: { snapshot: PortfolioSnapshot }) {
         </div>
       </div>
 
-      {/* ── 중앙 하단: 섹터 플로우 (미국 SPDR 일간) ── */}
+      {/* ── 중앙 하단: 섹터 플로우 오브 (한국 + 미국) ── */}
       <div className="card flow-card">
+        <SectorFlowOrbs kr={krOrb} us={usSectors} />
         <h3>
           <span className="dot" />
-          SECTOR FLOW · 미국(SPDR)
+          SECTOR FLOW · 한국 + 미국(SPDR)
           <span className="exch">전일 대비</span>
         </h3>
-        <div className="sector-cols">
-          {usSectors.map((s) => {
-            const r = s.ret ?? 0;
-            const w = Math.min(Math.abs(r) * 14, 100);
-            return (
-              <div className="sector-bar-row" key={s.id} title={`${s.name} ${r}%`}>
-                <span className="sector-name">{s.name}</span>
-                <div className="sector-track">
-                  <div
-                    className="sector-fill"
-                    style={{ width: `${w}%`, background: r >= 0 ? 'var(--up)' : 'var(--down)' }}
-                  />
-                </div>
-                <span className="sector-pct" style={{ color: r >= 0 ? 'var(--up)' : 'var(--down)' }}>
-                  {r >= 0 ? '+' : ''}
-                  {r.toFixed(1)}
-                </span>
-              </div>
-            );
-          })}
-          {usSectors.length === 0 && <div className="list-empty">섹터 데이터 로딩…</div>}
+        <div className="flow-labels">
+          <div className="flow-side">
+            <div className="flow-region">한국 · 보유 섹터</div>
+            <b>{topSectorNames(krOrb) || '보유 없음'}</b>
+          </div>
+          <div className="flow-side">
+            <div className="flow-region">미국 · SPDR</div>
+            <b>{topSectorNames(usSectors) || '로딩…'}</b>
+          </div>
         </div>
       </div>
 
@@ -192,8 +226,19 @@ export function Dashboard({ snapshot }: { snapshot: PortfolioSnapshot }) {
         <h3>
           <span className="dot" />
           내 종목 랭킹
-          <span className="exch">수익률 순</span>
         </h3>
+        <div className="ranking-tabs">
+          {([['up', '상승'], ['down', '하락'], ['value', '평가금액']] as const).map(([m, lbl]) => (
+            <button
+              key={m}
+              type="button"
+              className={sortMode === m ? 'on' : ''}
+              onClick={() => setSortMode(m)}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
         <div className="ranking-list">
           {ranked.map((p, i) => {
             const up = p.ret >= 0;

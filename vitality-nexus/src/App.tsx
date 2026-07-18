@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Dashboard } from './components/dashboard/Dashboard';
+import { Dashboard, type AssetFilter } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
 import { usePortfolio } from './store/portfolio';
+
+const ASSET_TABS: { key: AssetFilter; label: string }[] = [
+  { key: 'all', label: '전체' },
+  { key: 'stock', label: '주식' },
+  { key: 'crypto', label: '암호화폐' },
+];
 
 /**
  * App — Vitality Nexus 대시보드 셸.
@@ -31,6 +37,7 @@ export default function App() {
   const { snapshot, sources, conn, start, stop, refresh } = usePortfolio();
   const [editorOpen, setEditorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [assetFilter, setAssetFilter] = useState<AssetFilter>('all');
 
   useEffect(() => {
     start();
@@ -43,10 +50,22 @@ export default function App() {
       <header className="topbar">
         <span className="brand">VITALITY NEXUS</span>
         <span className="brand-sub">LIVING DASHBOARD · HEART AT THE CENTER</span>
+        <nav className="asset-tabs">
+          {ASSET_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={assetFilter === tab.key ? 'on' : ''}
+              onClick={() => setAssetFilter(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </header>
 
       {snapshot ? (
-        <Dashboard snapshot={snapshot} />
+        <Dashboard snapshot={snapshot} assetFilter={assetFilter} />
       ) : (
         <div className="boot-msg">{conn === 'offline' ? '백엔드 연결 대기 중…' : '불러오는 중…'}</div>
       )}
