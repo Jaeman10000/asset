@@ -3,7 +3,9 @@ import { Dashboard, type AssetFilter } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
+import { OrganicCoreScene } from './components/organic-core/OrganicCoreScene';
 import { usePortfolio } from './store/portfolio';
+import { portfolioBpm } from './util/heart';
 
 const ASSET_TABS: { key: AssetFilter; label: string }[] = [
   { key: 'all', label: '전체' },
@@ -44,8 +46,15 @@ export default function App() {
     return () => stop();
   }, [start, stop]);
 
+  const bpm = snapshot ? portfolioBpm(snapshot.totals.total.pnlPct) : 72;
+
   return (
     <div className={snapshot?.isEstimate ? 'dashboard estimate' : 'dashboard'}>
+      {/* exe 컨셉: 오로라 안개 + 발광 심장을 전체 화면 배경으로 (글래스 카드가 위에 뜸) */}
+      <div className="scene-bg">
+        <OrganicCoreScene bpm={bpm} />
+      </div>
+
       {/* 상단 바 */}
       <header className="topbar">
         <span className="brand">VITALITY NEXUS</span>

@@ -55,10 +55,8 @@ interface OrganicCoreSceneProps {
 export function OrganicCoreScene({
   bpm,
   beatEnergy,
-  // 기본값을 "가벼운 위젯"으로 조정 (Intel 내장그래픽 등 약한 GPU 대응):
-  //  - 오로라(풀스크린 안개 셰이더)와 바닥 반사(매 프레임 반사 렌더)는 렉의 주범 → 기본 끔
-  //  - 심장 유리 재질도 굴절 패스를 반으로 줄임 (아래 HeartCore backside=false)
-  aurora = false,
+  // exe 컨셉(오로라 안개 분위기 + 발광)을 배경으로 복원. 바닥 반사만 끔(가장 큰 렉).
+  aurora = true,
   particles = true,
   floor = false,
   bloom = true,
@@ -108,23 +106,26 @@ export function OrganicCoreScene({
       {/* 심장+파티클을 그룹으로 묶어 천천히 자전 = 정지 안 함 = 살아있음.
           OrbitControls autoRotate는 demand 모드에서 change→invalidate 자가 루프를
           만들어 프레임 캡을 무력화하므로, 이벤트 없는 useFrame 그룹 회전으로 대체 */}
-      <SlowOrbit>
-        {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼) */}
-        {particles && config.particleCount > 0 && (
-          <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
-        )}
+      {/* 심장을 살짝 위로 올려 중앙-상단(SYSTEM PULSE 영역)에 오게 함.
+          하단은 섹터 오브/카드가 오므로 심장과 겹치지 않는다 */}
+      <group position={[0, 0.9, 0]}>
+        <SlowOrbit>
+          {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼) */}
+          {particles && config.particleCount > 0 && (
+            <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
+          )}
 
-        {/* 해부학적 유리질 심장 (주인공) — 스펙: "작고 상징적으로".
-            scale 축소 + 굴절 backside 끄기 + 해상도↓ 로 크기/성능 둘 다 개선 */}
-        <HeartCore
-          modelPath="/models/heart.glb"
-          bpm={bpm}
-          attenuationColor={LIFE_COLOR}
-          scale={0.62}
-          transmissionRes={384}
-          backside={false}
-        />
-      </SlowOrbit>
+          {/* 해부학적 유리질 심장 — 작고 상징적으로 (scale 축소 + 경량 유리) */}
+          <HeartCore
+            modelPath="/models/heart.glb"
+            bpm={bpm}
+            attenuationColor={LIFE_COLOR}
+            scale={0.5}
+            transmissionRes={384}
+            backside={false}
+          />
+        </SlowOrbit>
+      </group>
 
       {/* 발광 번짐 — 홀로그램 느낌의 핵심 */}
       {bloom && (

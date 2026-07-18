@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import type { PortfolioSnapshot, Position } from '../../api/types';
 import { krwCompact, krw, pct } from '../../util/format';
 import { portfolioBpm } from '../../util/heart';
-import { OrganicCoreScene } from '../organic-core/OrganicCoreScene';
 import { MiniDonut } from './MiniDonut';
 import { HoverCard, type HoverTarget } from './HoverCard';
 import { SectorFlowOrbs, type OrbSector } from './SectorFlowOrbs';
@@ -167,17 +166,12 @@ export function Dashboard({
         <ListCard title="암호화폐 상세" exch="업비트 · 빗썸" positions={crypto} empty="보유 종목 없음" hover={hover} />
       </div>
 
-      {/* ── 중앙 상단: 심장 + 자산군 총합 ── */}
-      <div className="card heart-card">
+      {/* ── 중앙 상단: 심장(배경에서 비침) + 자산군 총합. 카드가 아니라 투명 오버레이 ── */}
+      <div className="heart-overlay">
         <div className="heart-label">
           <span className="dot" />
           SYSTEM PULSE
           <span className="bpm-badge">{bpm} BPM</span>
-        </div>
-
-        {/* 3D 심장 (카드 안에 담김) */}
-        <div className="heart-canvas">
-          <OrganicCoreScene bpm={bpm} />
         </div>
 
         <div className="heart-center-info">
