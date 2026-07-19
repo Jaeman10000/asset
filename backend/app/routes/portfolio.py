@@ -230,6 +230,42 @@ async def set_kiwoom_config(cfg: KiwoomConfigIn) -> dict:
     return {"ok": True}
 
 
+class CryptoConfigIn(BaseModel):
+    upbit_access: str | None = None
+    upbit_secret: str | None = None
+    bithumb_key: str | None = None
+    bithumb_secret: str | None = None
+
+
+@router.get("/config/crypto")
+async def get_crypto_config() -> dict:
+    """업비트/빗썸 연동 상태 (값 노출 안 함)."""
+    from ..keychain import has_api_key
+
+    return {
+        "upbit": has_api_key("upbit", "access_key") and has_api_key("upbit", "secret_key"),
+        "bithumb": has_api_key("bithumb", "api_key") and has_api_key("bithumb", "secret_key"),
+    }
+
+
+@router.put("/config/crypto")
+async def set_crypto_config(cfg: CryptoConfigIn) -> dict:
+    """앱 안에서 업비트/빗썸 API 키 저장 (터미널 불필요). OS 키체인에만 저장."""
+    from ..keychain import set_api_key
+
+    saved = []
+    if cfg.upbit_access and cfg.upbit_secret:
+        set_api_key("upbit", "access_key", cfg.upbit_access.strip())
+        set_api_key("upbit", "secret_key", cfg.upbit_secret.strip())
+        saved.append("upbit")
+    if cfg.bithumb_key and cfg.bithumb_secret:
+        set_api_key("bithumb", "api_key", cfg.bithumb_key.strip())
+        set_api_key("bithumb", "secret_key", cfg.bithumb_secret.strip())
+        saved.append("bithumb")
+    _cache.clear()  # 다음 조회부터 새 키로
+    return {"ok": True, "saved": saved}
+
+
 @router.get("/config/sources")
 async def get_source_status() -> dict[str, bool]:
     """각 소스가 설정됐는지만 알려준다 (키 값 자체는 노출 안 함) —

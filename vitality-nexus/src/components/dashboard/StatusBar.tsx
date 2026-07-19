@@ -22,6 +22,7 @@ export function StatusBar({
   errors,
   onOpenEditor,
   onOpenKiwoom,
+  onOpenCrypto,
   onOpenSettings,
 }: {
   conn: ConnState;
@@ -30,6 +31,7 @@ export function StatusBar({
   errors: SourceError[];
   onOpenEditor: () => void;
   onOpenKiwoom: () => void;
+  onOpenCrypto: () => void;
   /** Tauri 앱일 때만 전달됨 (브라우저에선 undefined → 설정 버튼 숨김) */
   onOpenSettings?: () => void;
 }) {
@@ -54,6 +56,14 @@ export function StatusBar({
           title="키움 앱키/시크릿 입력 (실계좌 연동)"
         >
           키움 연동
+        </button>
+        <button
+          type="button"
+          className="status-edit-btn"
+          onClick={onOpenCrypto}
+          title="업비트/빗썸 API 키 입력 (보유 코인 연동)"
+        >
+          거래소 연동
         </button>
         {onOpenSettings && (
           <button type="button" className="status-edit-btn" onClick={onOpenSettings} title="데스크톱 설정">

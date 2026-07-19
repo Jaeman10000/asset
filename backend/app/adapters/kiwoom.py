@@ -18,12 +18,21 @@ import time
 from datetime import datetime
 from typing import Any
 
-from ..schemas import InvestorFlow, InvestorPeriod, MarketStock, Position, SourceError
+from ..schemas import (
+    InvestorFlow,
+    InvestorPeriod,
+    MarketStock,
+    Position,
+    SectorFlow,
+    SourceError,
+)
 from ..services.kiwoom_client import KiwoomClient, KiwoomError
 from .base import AdapterResult, BaseAdapter
 
-# 투자자 순매수 금액 단위 = 백만원 → 억원 환산(÷100). (acc_trde_prica 교차검증으로 확인)
+# 종목별 투자자 순매수(ka10059) 금액 단위 = 백만원 → 억원 환산(÷100). acc_trde_prica 교차검증.
 _AMT_TO_EOK = 100.0
+# 업종별 투자자 순매수(ka10051, amt_qty_tp=1) 값은 억원 직접(종합KOSPI 개인≈+7,900 = +7,900억).
+_SECT_TO_EOK = 1.0
 
 # 일봉·수급은 인트라데이로 거의 안 변하므로 스냅샷 7s 캐시보다 길게 둔다
 # (스냅샷마다 종목별 ka10081/ka10059를 다시 부르면 레이트리밋·지연). 모듈 레벨 캐시.
@@ -141,7 +150,9 @@ class KiwoomAdapter(BaseAdapter):
             )
         try:
             positions = await self._holdings(client)
-            ranking = await self._ranking(client)
+            ranking, sectors = await asyncio.gather(
+                self._ranking(client), self._kr_sectors(client)
+            )
             # 수급(ka10059)·일봉(ka10081)을 동시에 부착
             await asyncio.gather(
                 self._attach_investors(client, positions, ranking),
@@ -151,7 +162,50 @@ class KiwoomAdapter(BaseAdapter):
             return AdapterResult(
                 error=SourceError(source=self.name, message=f"키움 조회 실패: {exc}")
             )
-        return AdapterResult(positions=positions, market_ranking=ranking)
+        return AdapterResult(
+            positions=positions, market_ranking=ranking, sector_flows=sectors
+        )
+
+    # ── KR 섹터(업종별 투자자순매수 ka10051) — 수급 흐름 레인 실데이터 ──
+    async def _kr_sectors(self, client: KiwoomClient) -> list[SectorFlow]:
+        base = datetime.now().strftime("%Y%m%d")
+
+        # KOSPI(mrkt_tp=0)만 사용 — 깔끔한 업종명(전기전자·화학·금융업…). KOSDAQ은
+        # '업종' 대신 규모/등급 버킷(KOSDAQ 100·MID 300·우량기업…)이 섞여 나와 제외.
+        try:
+            data = await client.call(
+                "sect",
+                "ka10051",
+                {"mrkt_tp": "0", "amt_qty_tp": "1", "base_dt": base, "stex_tp": "3"},
+            )
+            rows = data.get("inds_netprps") or _first_list(data)
+        except Exception:
+            rows = []
+        out: list[SectorFlow] = []
+        seen: set[str] = set()
+        for r in rows:
+            name = str(_f(r, "inds_nm", default="")).strip()
+            code = _clean_code(_f(r, "inds_cd"))
+            # 종합/대형·중형·소형주 같은 크기 버킷은 '업종'이 아니므로 제외
+            if not name or code in seen or any(
+                k in name for k in ("종합", "대형주", "중형주", "소형주")
+            ):
+                continue
+            seen.add(code)
+            out.append(
+                SectorFlow(
+                    region="KR",
+                    id=code,
+                    name=name,
+                    foreign=round(_num(_f(r, "frgnr_netprps")) / _SECT_TO_EOK),
+                    inst=round(_num(_f(r, "orgn_netprps")) / _SECT_TO_EOK),
+                    individual=round(_num(_f(r, "ind_netprps")) / _SECT_TO_EOK),
+                    ret=round(_num(_f(r, "flu_rt")) / 100, 2),  # -637 → -6.37%
+                )
+            )
+        # 외국인+기관 순매수 절대값이 큰 상위 12개 업종만 (레인·궤도 과밀 방지)
+        out.sort(key=lambda s: abs((s.foreign or 0) + (s.inst or 0)), reverse=True)
+        return out[:12]
 
     # ── 보유종목 (실계좌 잔고 kt00005) ──
     async def _holdings(self, client: KiwoomClient) -> list[Position]:

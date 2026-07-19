@@ -134,3 +134,32 @@ export async function saveKiwoomConfig(cfg: {
     throw new Error(`키움 연동 저장 실패: HTTP ${resp.status} ${detail}`);
   }
 }
+
+// ── 암호화폐 거래소 연동 (업비트/빗썸 잔고) ──
+
+export interface CryptoStatus {
+  upbit: boolean;
+  bithumb: boolean;
+}
+
+export function fetchCryptoStatus(signal?: AbortSignal): Promise<CryptoStatus> {
+  return getJSON<CryptoStatus>('/config/crypto', signal);
+}
+
+export async function saveCryptoConfig(cfg: {
+  upbit_access?: string;
+  upbit_secret?: string;
+  bithumb_key?: string;
+  bithumb_secret?: string;
+}): Promise<{ saved: string[] }> {
+  const resp = await fetch(`${BASE}/config/crypto`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cfg),
+  });
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => '');
+    throw new Error(`거래소 연동 저장 실패: HTTP ${resp.status} ${detail}`);
+  }
+  return (await resp.json()) as { saved: string[] };
+}

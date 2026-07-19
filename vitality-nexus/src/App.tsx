@@ -3,6 +3,7 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { KiwoomPanel } from './components/dashboard/KiwoomPanel';
+import { CryptoPanel } from './components/dashboard/CryptoPanel';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
 import { AuroraVeil } from './components/dashboard/AuroraVeil';
 import { OrganicCoreScene } from './components/organic-core/OrganicCoreScene';
@@ -54,6 +55,7 @@ export default function App() {
   const { snapshot, sources, conn, start, stop, refresh } = usePortfolio();
   const [editorOpen, setEditorOpen] = useState(false);
   const [kiwoomOpen, setKiwoomOpen] = useState(false);
+  const [cryptoOpen, setCryptoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -186,6 +188,7 @@ export default function App() {
         errors={snapshot?.errors ?? []}
         onOpenEditor={() => setEditorOpen(true)}
         onOpenKiwoom={() => setKiwoomOpen(true)}
+        onOpenCrypto={() => setCryptoOpen(true)}
         onOpenSettings={settingsAvailable ? () => setSettingsOpen(true) : undefined}
       />
 
@@ -194,6 +197,9 @@ export default function App() {
       )}
       {kiwoomOpen && (
         <KiwoomPanel onClose={() => setKiwoomOpen(false)} onSaved={() => void refresh()} />
+      )}
+      {cryptoOpen && (
+        <CryptoPanel onClose={() => setCryptoOpen(false)} onSaved={() => void refresh()} />
       )}
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
 
