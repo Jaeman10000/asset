@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { MarketStock, PortfolioSnapshot, Position } from '../../api/types';
 import { krwCompact, krw, pct } from '../../util/format';
 import { HoverCard, fromMarket, fromPosition, type HoverInfo, type HoverTarget } from './HoverCard';
+import { ChartPanel } from './ChartPanel';
 import { sectorHue, type RingSector } from '../organic-core/HoloSectorRings';
 import { Spark } from './shared';
 
@@ -108,26 +109,33 @@ function useRipple() {
   return { trigger };
 }
 
-/** 리스트 행 — 캡처 레퍼런스처럼 이름 · 라인그래프 · 값 · 등락% */
+/** 리스트 행 — 캡처 레퍼런스처럼 이름 · 라인그래프 · 값 · 등락%. 클릭 시 실시간 차트 */
 function MiniRow({
   p,
   onEnter,
   onLeave,
+  onSelect,
 }: {
   p: Position;
   onEnter: (e: React.MouseEvent) => void;
   onLeave: () => void;
+  onSelect: (p: Position) => void;
 }) {
   const up = p.ret >= 0;
   const { trigger } = useRipple();
   return (
     <div
       className="mini-holding"
+      title="클릭하면 실시간 차트"
       onMouseEnter={(e) => {
         trigger(e);
         onEnter(e);
       }}
       onMouseLeave={onLeave}
+      onClick={(e) => {
+        trigger(e);
+        onSelect(p);
+      }}
     >
       <div className="n">
         {p.name}
@@ -146,12 +154,14 @@ function ListCard({
   positions,
   empty,
   hover,
+  onSelect,
 }: {
   title: string;
   exch: string;
   positions: Position[];
   empty: string;
   hover: ReturnType<typeof useHover>;
+  onSelect: (p: Position) => void;
 }) {
   return (
     <div className="card list-card">
@@ -170,6 +180,7 @@ function ListCard({
               p={p}
               onEnter={hover.onEnter(fromPosition(p))}
               onLeave={hover.onLeave}
+              onSelect={onSelect}
             />
           ))
         )}
@@ -327,6 +338,7 @@ export function Dashboard({
   const hover = useHover();
   const [rankTab, setRankTab] = useState<RankTabKey>('up');
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const [selId, setSelId] = useState<string | null>(null);
   const t = snapshot.totals;
   // 랭킹·섹터수급이 모의(mock_market)면 실데이터로 오인하지 않게 '샘플' 워터마크.
   // (구버전 백엔드엔 marketMock이 없으므로 기본 false)
@@ -357,6 +369,17 @@ export function Dashboard({
     [snapshot, rankTab],
   );
 
+  // 실시간 차트로 선택된 종목 — 현재 스냅샷에서 다시 찾아 폴링마다 갱신되게 함
+  const selected = useMemo(
+    () => snapshot.positions.find((p) => p.id === selId) ?? null,
+    [snapshot, selId],
+  );
+  // 차트를 열 때 호버 카드(수급)는 닫아 겹치지 않게 한다
+  const openChart = (p: Position) => {
+    hover.onLeave();
+    setSelId(p.id);
+  };
+
   const beatSec = 60 / Math.max(bpm, 40);
 
   const tiles = [
@@ -382,11 +405,11 @@ export function Dashboard({
       </div>
 
       <div className="stage">
-        {/* ── 좌측: 3단 세로 리스트 (라인그래프) ── */}
+        {/* ── 좌측: 3단 세로 리스트 (라인그래프, 클릭 시 실시간 차트) ── */}
         <div className="col-left">
-          <ListCard title="한국 주식 상세" exch="실시간" positions={kr} empty="보유 종목 없음" hover={hover} />
-          <ListCard title="미국 주식 상세" exch="실시간" positions={us} empty="보유 종목 없음" hover={hover} />
-          <ListCard title="암호화폐 상세" exch="업비트 · 빗썸" positions={crypto} empty="보유 종목 없음" hover={hover} />
+          <ListCard title="한국 주식 상세" exch="실시간" positions={kr} empty="보유 종목 없음" hover={hover} onSelect={openChart} />
+          <ListCard title="미국 주식 상세" exch="실시간" positions={us} empty="보유 종목 없음" hover={hover} onSelect={openChart} />
+          <ListCard title="암호화폐 상세" exch="업비트 · 빗썸" positions={crypto} empty="보유 종목 없음" hover={hover} onSelect={openChart} />
         </div>
 
         {/* ── 중앙: 홀로그램 무대 (심장+궤도는 배경 씬) + 총액 + 섹터 리드아웃 ── */}
@@ -462,6 +485,7 @@ export function Dashboard({
       </div>
 
       <HoverCard target={hover.target} />
+      <ChartPanel position={selected} tick={snapshot.fetchedAt} onClose={() => setSelId(null)} />
     </div>
   );
 }
