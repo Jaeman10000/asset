@@ -48,9 +48,12 @@ class ManualAdapter(BaseAdapter):
     name = "manual"
 
     async def fetch(self) -> AdapterResult:
-        raw = load_manual_holdings()
+        # 손편집된 holdings.json은 신뢰할 수 없다 — dict가 아니거나 symbol이 없는
+        # 행은 시세 조회·포지션 변환 모두 불가하므로 여기서 조용히 걸러낸다.
+        # (한 행이 깨져도 나머지는 살린다는 부분실패 원칙. 상세 방어는 _to_position.)
+        raw = [r for r in load_manual_holdings() if isinstance(r, dict) and r.get("symbol")]
         if not raw:
-            return AdapterResult()  # 수동입력 미사용 — 조용히 빈 결과 (에러 아님)
+            return AdapterResult()  # 수동입력 미사용/전부 무효 — 조용히 빈 결과 (에러 아님)
 
         crypto_rows = [r for r in raw if r.get("assetType") == "crypto"]
         stock_rows = [r for r in raw if r.get("assetType") == "stock"]
@@ -131,59 +134,63 @@ class ManualAdapter(BaseAdapter):
         fx: float,
         now: int,
     ) -> Position | None:
+        # 한 행이라도 잘못되면(assetType/region/currency 오타로 pydantic Literal 위반,
+        # qty/avg 파싱 실패 등) 그 행만 건너뛰고 나머지는 살린다. 전체 스냅샷이
+        # 500으로 죽어 앱이 "영구 오프라인"이 되던 문제(QA 재현)를 막기 위해
+        # Position() 생성까지 포함해 함수 전체를 방어한다.
         try:
             symbol = str(r["symbol"])
             qty = float(r["qty"])
             avg = float(r["avg"])
-        except (KeyError, ValueError, TypeError):
-            return None  # 필수 필드 누락 행은 건너뜀
 
-        asset_type = r.get("assetType", "crypto")
-        history: list[float] = []
+            asset_type = r.get("assetType", "crypto")
+            history: list[float] = []
 
-        # 통화: 명시값 > (미국주식이면 USD) > 기본 KRW
-        currency = r.get("currency")
-        if currency is None:
-            currency = "USD" if (asset_type == "stock" and r.get("region") != "KR") else "KRW"
+            # 통화: 명시값 > (미국주식이면 USD) > 기본 KRW
+            currency = r.get("currency")
+            if currency is None:
+                currency = "USD" if (asset_type == "stock" and r.get("region") != "KR") else "KRW"
 
-        # 현재가(원통화 기준) 결정
-        price = avg  # 폴백: 시세 없으면 평단
-        if asset_type == "crypto":
-            q = crypto_quotes.get(symbol.upper())
-            if q is not None:
-                price = q.price
-            history = crypto_histories.get(symbol.upper(), [])
-        elif asset_type == "stock":
-            sq = stock_quotes.get(_yahoo_symbol(r))
-            if sq is not None:
-                price = sq.price
-                history = sq.history
-                if sq.currency:
-                    currency = sq.currency  # Yahoo가 알려준 실제 통화로 정정
+            # 현재가(원통화 기준) 결정
+            price = avg  # 폴백: 시세 없으면 평단
+            if asset_type == "crypto":
+                q = crypto_quotes.get(symbol.upper())
+                if q is not None:
+                    price = q.price
+                history = crypto_histories.get(symbol.upper(), [])
+            elif asset_type == "stock":
+                sq = stock_quotes.get(_yahoo_symbol(r))
+                if sq is not None:
+                    price = sq.price
+                    history = sq.history
+                    if sq.currency:
+                        currency = sq.currency  # Yahoo가 알려준 실제 통화로 정정
 
-        # 원통화 기준 수익률 (환율과 무관 — 같은 통화끼리 비교)
-        ret = round((price - avg) / avg * 100, 2) if avg else 0.0
+            # 원통화 기준 수익률 (환율과 무관 — 같은 통화끼리 비교)
+            ret = round((price - avg) / avg * 100, 2) if avg else 0.0
 
-        # KRW 환산: USD 자산이면 환율 곱함
-        krw = fx if currency == "USD" else 1.0
-        value = qty * price * krw
-        cost = qty * avg * krw
+            # KRW 환산: USD 자산이면 환율 곱함
+            krw = fx if currency == "USD" else 1.0
+            value = qty * price * krw
+            cost = qty * avg * krw
 
-        return Position(
-            id=f"manual:{symbol}",
-            exchange="manual",
-            assetType=asset_type,
-            region=r.get("region"),
-            symbol=symbol,
-            name=r.get("name", symbol),
-            qty=qty,
-            avg=avg,
-            price=price,
-            currency=currency,
-            value=value,
-            cost=cost,
-            ret=ret,
-            history=history,
-            sector=r.get("sector"),
-            lastUpdated=now,
-        )
+            return Position(
+                id=f"manual:{symbol}",
+                exchange="manual",
+                assetType=asset_type,
+                region=r.get("region"),
+                symbol=symbol,
+                name=r.get("name", symbol),
+                qty=qty,
+                avg=avg,
+                price=price,
+                currency=currency,
+                value=value,
+                cost=cost,
+                ret=ret,
+                history=history,
+                sector=r.get("sector"),
+                lastUpdated=now,
+            )
+        except Exception:
+            return None  # 손상된 행은 조용히 건너뜀 (부분실패 원칙)

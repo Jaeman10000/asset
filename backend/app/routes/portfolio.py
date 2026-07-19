@@ -57,13 +57,24 @@ def _compute_totals(positions: list[Position]) -> Totals:
 
 
 async def _build_snapshot() -> PortfolioSnapshot:
-    results = await asyncio.gather(*(a.fetch() for a in ADAPTERS))
+    # return_exceptions=True: 어댑터 하나가 예외를 던져도 전체 스냅샷이 500으로
+    # 죽지 않게 한다 (부분실패 원칙 — 나머지 어댑터 결과는 살린다).
+    results = await asyncio.gather(
+        *(a.fetch() for a in ADAPTERS), return_exceptions=True
+    )
 
     positions: list[Position] = []
     sector_flows = []
     errors = []
     real_failures = 0  # "설정 대기"가 아닌 진짜 실패만 센다
-    for result in results:
+    for adapter, result in zip(ADAPTERS, results):
+        if isinstance(result, BaseException):
+            # 어댑터가 통째로 터진 경우: 로그성 에러로 담고 진짜 실패로 카운트
+            errors.append(
+                SourceError(source=adapter.name, message=f"어댑터 예외: {result}")
+            )
+            real_failures += 1
+            continue
         positions.extend(result.positions)
         sector_flows.extend(result.sector_flows)
         if result.error:

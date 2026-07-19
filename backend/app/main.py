@@ -28,16 +28,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Vitality Nexus Backend", version="0.1.0", lifespan=lifespan)
 
-# CORS: 개발(Vite localhost:5173)과 배포(Tauri WebView) origin을 모두 허용.
-# 배포 앱의 WebView origin은 플랫폼마다 다르다:
-#   Windows: http://tauri.localhost, macOS/Linux: tauri://localhost
-# 이 백엔드는 127.0.0.1에만 바인딩되어 외부 네트워크에 노출되지 않고
-# 쿠키/자격증명도 쓰지 않으므로, origin 전체 허용(*)이 안전하다.
+# CORS: 우리 프론트(개발 Vite / 배포 Tauri WebView) origin만 화이트리스트.
+#
+# ⚠️ 이전엔 allow_origins=["*"] 였는데, 백엔드가 127.0.0.1:8787에 떠 있는 동안
+# 사용자가 아무 웹사이트만 방문해도 그 페이지의 JS가 GET /portfolio/snapshot 으로
+# 전체 보유종목·평단·평가액을 읽고 PUT /holdings 로 조작할 수 있었다(보안 리뷰 지적).
+# 와일드카드는 크로스오리진 '읽기'를 허용하므로, 우리 앱 origin으로 좁힌다.
+# (배포 WebView origin: Windows=http://tauri.localhost, macOS/Linux=tauri://localhost)
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+    "tauri://localhost",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 app.include_router(portfolio_router)
