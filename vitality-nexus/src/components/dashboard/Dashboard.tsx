@@ -467,11 +467,6 @@ export function Dashboard({
               <span className="bpm-badge">{bpm} BPM</span>
             </div>
 
-            <div className="beat-rings" style={{ ['--beat' as string]: `${beatSec}s` }}>
-              <span />
-              <span />
-            </div>
-
             <div className="heart-space" />
 
             <div className="heart-center-info" style={{ ['--beat' as string]: `${beatSec}s` }}>

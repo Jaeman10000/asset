@@ -414,7 +414,7 @@ class KiwoomAdapter(BaseAdapter):
             if hist:
                 p.history = hist
 
-    # ── 오늘의 시장 순위 (상승률/거래량) ──
+    # ── 오늘의 시장 순위 (상승/하락/거래량) ──
     async def _ranking(self, client: KiwoomClient) -> list[MarketStock]:
         async def one(api_id: str, body: dict[str, Any]) -> list[dict[str, Any]]:
             try:
@@ -422,11 +422,11 @@ class KiwoomAdapter(BaseAdapter):
             except Exception:
                 return []
 
-        up = await one(
-            "ka10027",
-            {
+        # ka10027 등락률상위: sort_tp 1=상승률, 3=하락률 (실응답으로 확인).
+        def updown(sort_tp: str) -> dict[str, Any]:
+            return {
                 "mrkt_tp": "000",
-                "sort_tp": "1",
+                "sort_tp": sort_tp,
                 "trde_qty_cnd": "0000",
                 "stk_cnd": "0",
                 "crd_cnd": "0",
@@ -434,24 +434,29 @@ class KiwoomAdapter(BaseAdapter):
                 "pric_cnd": "0",
                 "trde_prica_cnd": "0",
                 "stex_tp": "3",
-            },
-        )
-        vol = await one(
-            "ka10030",
-            {
-                "mrkt_tp": "000",
-                "sort_tp": "1",
-                "mang_stk_incls": "0",
-                "crd_tp": "0",
-                "trde_qty_tp": "0",
-                "pric_tp": "0",
-                "trde_prica_tp": "0",
-                "mrkt_open_tp": "0",
-                "stex_tp": "3",
-            },
+            }
+
+        up, down, vol = await asyncio.gather(
+            one("ka10027", updown("1")),  # 상승률상위
+            one("ka10027", updown("3")),  # 하락률상위 (하락 탭이 실제 하락 종목을 보게)
+            one(
+                "ka10030",
+                {
+                    "mrkt_tp": "000",
+                    "sort_tp": "1",
+                    "mang_stk_incls": "0",
+                    "crd_tp": "0",
+                    "trde_qty_tp": "0",
+                    "pric_tp": "0",
+                    "trde_prica_tp": "0",
+                    "mrkt_open_tp": "0",
+                    "stex_tp": "3",
+                },
+            ),
         )
         merged: dict[str, MarketStock] = {}
-        for r in [*up, *vol]:
+        # 각 소스 상위 12씩 → 탭(상승/하락/거래량)마다 10개는 확보되게. 중복 제거.
+        for r in [*up[:12], *down[:12], *vol[:12]]:
             code = _clean_code(_f(r, "stk_cd", "종목코드", "item_cd"))
             if not code or code in merged:
                 continue
@@ -463,4 +468,4 @@ class KiwoomAdapter(BaseAdapter):
                 volume=int(abs(_num(_f(r, "trde_qty", "거래량", "acml_vol", "now_trde_qty")))),
                 investors=InvestorFlow(),
             )
-        return list(merged.values())[:14]
+        return list(merged.values())[:30]

@@ -5,7 +5,6 @@ import { MOUSE } from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { HeartCore } from './HeartCore';
 import { AuroraBackground } from './AuroraBackground';
-import { HoloSectorRings, type RingSector } from './HoloSectorRings';
 import { LifeParticles } from './LifeParticles';
 import { ReflectiveFloor } from './ReflectiveFloor';
 import { useAdaptiveQuality, QUALITY_LEVELS } from './useAdaptiveQuality';
@@ -51,9 +50,6 @@ interface OrganicCoreSceneProps {
   frameloop?: 'always' | 'never';
   /** 렌더 상한 fps — 상시 위젯의 배터리/발열 대책. 0이면 캡 없음 */
   maxFps?: number;
-  /** 홀로그램 섹터 링 데이터 (심장 주위 궤도) — 없으면 링 생략 */
-  krSectors?: RingSector[];
-  usSectors?: RingSector[];
 }
 
 export function OrganicCoreScene({
@@ -68,8 +64,6 @@ export function OrganicCoreScene({
   adaptive = true,
   frameloop = 'always',
   maxFps = 60,
-  krSectors = [],
-  usSectors = [],
 }: OrganicCoreSceneProps) {
   // 수동 구동(never) 중에는 측정이 무의미하므로 (idle RAF 주기를 재게 됨) 끔
   // 약한 GPU 우선: 레벨 1(파티클 36)에서 시작해 여유가 있으면 자동 승급한다.
@@ -121,22 +115,19 @@ export function OrganicCoreScene({
           OrbitControls로 카메라를 돌릴 때만 일어난다 (심장·궤도·섹터가 한 덩어리로
           같이 움직임 = 카메라 오빗). 살아있는 느낌은 심박 스케일·섹터 파티클·
           프로젝터 디스크·beat-rings가 담당한다. */}
-      <group position={[0, 0.62, 0]}>
-        {/* 홀로그램 섹터 궤도 (안 KR / 밖 US) + 프로젝터 디스크 —
-            심장과 같은 씬·같은 Bloom이라 질감이 일치한다 */}
-        <HoloSectorRings kr={krSectors} us={usSectors} />
-
-        {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼) */}
+      <group position={[0, 0.55, 0]}>
+        {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼).
+            섹터 궤도(HoloSectorRings)는 제거 — 심장만 주인공으로, 부하도 크게 줄인다. */}
         {particles && config.particleCount > 0 && (
           <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
         )}
 
-        {/* 해부학적 유리질 심장 — 작고 상징적으로 (scale 축소 + 경량 유리) */}
+        {/* 해부학적 유리질 심장 — 이제 씬의 유일한 오브젝트라 좀 더 크게 */}
         <HeartCore
           modelPath="/models/heart.glb"
           bpm={bpm}
           attenuationColor={LIFE_COLOR}
-          scale={0.5}
+          scale={0.72}
           transmissionRes={256}
           backside={false}
         />

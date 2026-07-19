@@ -130,8 +130,6 @@ export default function App() {
         <SceneBoundary>
           <OrganicCoreScene
             bpm={bpm}
-            krSectors={krSectors}
-            usSectors={usSectors}
             bloom={new URLSearchParams(window.location.search).has('bloom')}
           />
         </SceneBoundary>
