@@ -163,18 +163,31 @@ function ListCard({
   hover: ReturnType<typeof useHover>;
   onSelect: (p: Position) => void;
 }) {
+  // 좁은 세로 칸에 전 종목을 욱여넣으면 행이 얇아져 안 보인다 → 페이지당 소수만
+  // 보여주고 하단 점으로 넘긴다. 종목 수가 바뀌어도 페이지가 범위를 안 벗어나게 클램프.
+  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(positions.length / PAGE_SIZE));
+  const cur = Math.min(page, pageCount - 1);
+  const shown = positions.slice(cur * PAGE_SIZE, cur * PAGE_SIZE + PAGE_SIZE);
+
   return (
     <div className="card list-card">
       <h3>
         <span className="dot" />
         {title}
         <span className="exch">{exch}</span>
+        {positions.length > PAGE_SIZE && (
+          <span className="list-count">
+            {cur * PAGE_SIZE + 1}–{cur * PAGE_SIZE + shown.length} / {positions.length}
+          </span>
+        )}
       </h3>
       <div className="list">
         {positions.length === 0 ? (
           <div className="list-empty">{empty}</div>
         ) : (
-          positions.map((p) => (
+          shown.map((p) => (
             <MiniRow
               key={p.id}
               p={p}
@@ -185,6 +198,38 @@ function ListCard({
           ))
         )}
       </div>
+      {pageCount > 1 && (
+        <div className="list-dots" role="tablist" aria-label={`${title} 페이지`}>
+          <button
+            type="button"
+            className="list-arrow"
+            aria-label="이전"
+            disabled={cur === 0}
+            onClick={() => setPage(cur - 1)}
+          >
+            ‹
+          </button>
+          {Array.from({ length: pageCount }, (_, i) => (
+            <button
+              type="button"
+              key={i}
+              className={`list-dot ${i === cur ? 'on' : ''}`}
+              aria-label={`${i + 1}페이지`}
+              aria-selected={i === cur}
+              onClick={() => setPage(i)}
+            />
+          ))}
+          <button
+            type="button"
+            className="list-arrow"
+            aria-label="다음"
+            disabled={cur >= pageCount - 1}
+            onClick={() => setPage(cur + 1)}
+          >
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -32,10 +32,10 @@ export interface QualityConfig {
 }
 
 export const QUALITY_LEVELS: Record<number, QualityConfig> = {
-  3: { particleCount: 150, floor: true,  floorRes: 1024, aurora: true },
-  2: { particleCount: 100, floor: true,  floorRes: 1024, aurora: true },
-  1: { particleCount: 60,  floor: true,  floorRes: 1024, aurora: true },
-  0: { particleCount: 0,   floor: false, floorRes: 1024, aurora: true },
+  3: { particleCount: 90, floor: true,  floorRes: 1024, aurora: true },
+  2: { particleCount: 60, floor: true,  floorRes: 1024, aurora: true },
+  1: { particleCount: 36, floor: true,  floorRes: 1024, aurora: true },
+  0: { particleCount: 0,  floor: false, floorRes: 1024, aurora: true },
 };
 
 /**

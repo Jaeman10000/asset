@@ -225,6 +225,9 @@ function HeartMesh({
         // 생겨 매 프레임 씬을 2회 추가 렌더하는 것이 지배 비용이 된다
         resolution={transmissionRes}
         backsideResolution={Math.max(256, transmissionRes / 2)}
+        // 굴절 샘플 수 축소(기본 6→4): 약한 GPU에서 트랜스미션 패스 비용 직접 절감.
+        // 유리 심장은 배경 상징물이라 4로도 충분히 매끈하다.
+        samples={4}
         // 오로라 배경을 제거했으므로 굴절 왜곡은 약하게 (성능 + 깔끔함)
         distortion={0.15}
         distortionScale={0.3}

@@ -415,6 +415,56 @@ body {
   font-size: 11px;
   padding: 10px 4px;
 }
+/* 헤더 우측 '1–5 / 9' 카운트 */
+.list-count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--sub);
+}
+/* 하단 페이지 점 인디케이터 + 이전/다음 화살표 */
+.list-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 2px 1px;
+}
+.list-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+.list-dot:hover {
+  background: rgba(43, 230, 200, 0.55);
+}
+.list-dot.on {
+  background: var(--life, #2be6c8);
+  transform: scale(1.35);
+  box-shadow: 0 0 6px rgba(43, 230, 200, 0.7);
+}
+.list-arrow {
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+}
+.list-arrow:hover:not(:disabled) {
+  color: #eef7f6;
+}
+.list-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
 .mini-holding {
   display: grid;
   /* 이름(가변) · 라인그래프 · 평가금액 · 등락% */
@@ -1177,6 +1227,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* ChartPanel은 .stage-wrap(pointer-events:none) 안에서 렌더되므로 명시적으로
+     이벤트를 되살려야 X·배경클릭·기간버튼이 먹는다(이게 없으면 클릭이 뒤 캔버스로
+     새서 Esc로만 닫혔다). 모달이라 뒤 심장 오빗을 막는 것도 올바른 동작. */
+  pointer-events: auto;
 }
 .chart-panel {
   width: min(680px, 92vw);
@@ -1248,6 +1302,44 @@ body {
 }
 .chart-close:hover {
   color: #eef7f6;
+}
+.chart-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* 일/주/월봉 토글 */
+.chart-periods {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 2px;
+}
+.chart-period {
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.chart-period:hover {
+  color: #eef7f6;
+}
+.chart-period.on {
+  background: rgba(43, 230, 200, 0.16);
+  color: #2be6c8;
+}
+/* 캔들 차트 마지막 종가 기준선 */
+.cp-lastline {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
 }
 .chart-price {
   display: flex;

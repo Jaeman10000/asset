@@ -54,6 +54,27 @@ export function fetchSourceStatus(signal?: AbortSignal): Promise<SourceStatus> {
   return getJSON<SourceStatus>('/config/sources', signal);
 }
 
+// ── 캔들 차트 (일/주/월봉, 키움 실데이터) ──
+
+export type ChartPeriod = 'D' | 'W' | 'M';
+
+export interface Candle {
+  dt: string; // YYYYMMDD
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+export function fetchChart(
+  code: string,
+  period: ChartPeriod,
+  signal?: AbortSignal,
+): Promise<{ code: string; period: ChartPeriod; candles: Candle[] }> {
+  return getJSON(`/chart/${encodeURIComponent(code)}?period=${period}`, signal);
+}
+
 // ── 보유종목 편집 (holdings.json) ──
 
 export interface HoldingInput {

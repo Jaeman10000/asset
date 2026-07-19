@@ -71,6 +71,61 @@ def _clean_code(raw: Any) -> str:
     return s.split("_")[0]
 
 
+# ── 캔들 차트 (일/주/월봉) — ChartPanel 요청 시 on-demand ──
+# period → (TR코드, 응답 리스트 키). 세 TR 모두 파라미터/필드(OHLC) 구조 동일.
+_PERIOD_TR = {
+    "D": ("ka10081", "stk_dt_pole_chart_qry"),  # 일봉
+    "W": ("ka10082", "stk_stk_pole_chart_qry"),  # 주봉
+    "M": ("ka10083", "stk_mth_pole_chart_qry"),  # 월봉
+}
+_CANDLE_TTL = 300.0  # 캔들 5분 캐시 (일/주/월봉은 자주 안 변함)
+_candle_cache: dict[tuple[str, str], tuple[float, list[dict[str, Any]]]] = {}
+
+
+async def fetch_candles(code: str, period: str = "D", limit: int = 140) -> list[dict[str, Any]]:
+    """종목 캔들(OHLC) 최근 limit개를 시간순(오름차순)으로. 키 미설정/실패 시 []."""
+    period = period.upper()
+    if period not in _PERIOD_TR:
+        period = "D"
+    code = _clean_code(code)
+    key = (code, period)
+    now = time.time()
+    cached = _candle_cache.get(key)
+    if cached and now - cached[0] < _CANDLE_TTL:
+        return cached[1]
+    client = KiwoomClient()
+    if not client.configured:
+        return []
+    tr, lkey = _PERIOD_TR[period]
+    base = datetime.now().strftime("%Y%m%d")
+    try:
+        data = await client.call(
+            "chart", tr, {"stk_cd": code, "base_dt": base, "upd_stkpc_tp": "1"}
+        )
+        rows = data.get(lkey) or _first_list(data)
+    except Exception:
+        return []
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        c = abs(_num(r.get("cur_prc")))
+        if not c:
+            continue
+        out.append(
+            {
+                "dt": str(r.get("dt", "")),
+                "o": abs(_num(r.get("open_pric"))) or c,
+                "h": abs(_num(r.get("high_pric"))) or c,
+                "l": abs(_num(r.get("low_pric"))) or c,
+                "c": c,
+                "v": int(abs(_num(r.get("trde_qty")))),
+            }
+        )
+    out.reverse()  # 최신순 → 시간순
+    out = out[-limit:]
+    _candle_cache[key] = (now, out)
+    return out
+
+
 class KiwoomAdapter(BaseAdapter):
     name = "kiwoom"
 

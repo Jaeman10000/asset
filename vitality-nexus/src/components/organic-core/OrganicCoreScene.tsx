@@ -72,8 +72,9 @@ export function OrganicCoreScene({
   usSectors = [],
 }: OrganicCoreSceneProps) {
   // 수동 구동(never) 중에는 측정이 무의미하므로 (idle RAF 주기를 재게 됨) 끔
+  // 약한 GPU 우선: 레벨 1(파티클 36)에서 시작해 여유가 있으면 자동 승급한다.
   const { level, config: adaptiveConfig } = useAdaptiveQuality(
-    2,
+    1,
     adaptive && frameloop === 'always'
   );
   const config = adaptive ? adaptiveConfig : QUALITY_LEVELS[2];
@@ -89,7 +90,11 @@ export function OrganicCoreScene({
       // bloom이 켜지면 EffectComposer가 MSAA 오프스크린 버퍼에 렌더하므로
       // 캔버스 자체 antialias는 이득 없이 메모리/리졸브 비용만 이중으로 든다
       gl={{ antialias: !bloom, alpha: true }}
-      dpr={[1, 1.5]}
+      // dpr 1 고정: 상시 배경 위젯이라 선명함보다 부하가 중요하다. 디스플레이 배율
+      // 150%(dpr 1.5)면 백버퍼가 2.25배가 되어 유리 심장 트랜스미션·파티클 래스터가
+      // 그만큼 무거워지는 게 약한 GPU(Intel UHD) 렉의 최대 주범이었다. DOM/글래스
+      // UI 텍스트는 CSS라 네이티브 해상도 그대로 선명하게 유지된다(캔버스만 1x).
+      dpr={1}
       // 'demand' + FramePacer 조합으로 maxFps 캡 (frameloop prop이 'never'면 그대로)
       frameloop={frameloop === 'always' && maxFps > 0 ? 'demand' : frameloop}
     >
@@ -132,7 +137,7 @@ export function OrganicCoreScene({
           bpm={bpm}
           attenuationColor={LIFE_COLOR}
           scale={0.5}
-          transmissionRes={384}
+          transmissionRes={256}
           backside={false}
         />
       </group>

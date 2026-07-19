@@ -145,6 +145,18 @@ async def get_snapshot() -> PortfolioSnapshot:
     return await _cache.get_or_fetch(_build_snapshot)
 
 
+@router.get("/chart/{code}")
+async def get_chart(code: str, period: str = "D") -> dict:
+    """종목 캔들(OHLC) — ChartPanel이 종목 클릭/기간전환 시 호출. 일(D)/주(W)/월(M)봉.
+    키움 실데이터(ka10081/82/83). 키 미설정이거나 해외/암호화폐면 candles=[] (프론트가
+    보유 history 라인으로 폴백)."""
+    from ..adapters.kiwoom import fetch_candles
+
+    p = (period or "D").upper()
+    candles = await fetch_candles(code, p)
+    return {"code": code, "period": p, "candles": candles}
+
+
 @router.get("/debug/kiwoom")
 async def debug_kiwoom() -> dict:
     """키움 실제 응답 원문을 그대로 반환 — 필드 매핑 확정용(로컬 전용).
