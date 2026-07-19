@@ -66,6 +66,7 @@ async def _build_snapshot() -> PortfolioSnapshot:
 
     positions: list[Position] = []
     sector_flows = []
+    real_ranking: list = []  # 실데이터 랭킹(키움) — 있으면 mock 대신 사용
     errors = []
     real_failures = 0  # "설정 대기"가 아닌 진짜 실패만 센다
     for adapter, result in zip(ADAPTERS, results):
@@ -78,6 +79,8 @@ async def _build_snapshot() -> PortfolioSnapshot:
             continue
         positions.extend(result.positions)
         sector_flows.extend(result.sector_flows)
+        if result.market_ranking:
+            real_ranking = result.market_ranking
         if result.error:
             errors.append(result.error)
             # 설정 대기(키 미입력)·배경 시장데이터(US 섹터) 실패는 내 자산 평가와
@@ -85,9 +88,9 @@ async def _build_snapshot() -> PortfolioSnapshot:
             if not result.unconfigured and not result.background:
                 real_failures += 1
 
-    # ── 키움/KRX 연동 전: 프로토타입이 보여주던 시장 정보(수급/랭킹/KR섹터)를
-    #    모의 데이터로 채워 UI를 완성한다. 실제 종목명에 조작된 수치를 붙이는
-    #    것이므로, marketMock=True로 내려 프론트가 "샘플 데이터" 워터마크를 씌운다. ──
+    # ── 실데이터(키움)로 채워지지 않은 시장 정보만 모의로 보충한다.
+    #    모의가 하나라도 섞이면 marketMock=True로 내려 프론트가 "샘플" 워터마크를 씌운다.
+    #    키움 연동 시 랭킹은 실데이터로 대체되고, 남은 수급/섹터만 모의로 표시된다. ──
     market_mock = False
     if not any(s.region == "KR" for s in sector_flows):
         sector_flows.extend(mock_market.kr_sector_flows())
@@ -97,9 +100,12 @@ async def _build_snapshot() -> PortfolioSnapshot:
             p.investors = mock_market.investors_for(p.symbol)
             p.investorPeriods = mock_market.investor_periods_for(p.symbol)
             market_mock = True
-    # 시장 랭킹은 현재 항상 모의 (실 키움 랭킹 어댑터 연동 전)
-    market_ranking = mock_market.market_ranking()
-    market_mock = market_mock or bool(market_ranking)
+    # 시장 랭킹: 키움 실데이터가 있으면 그걸, 없으면 모의로
+    if real_ranking:
+        market_ranking = real_ranking
+    else:
+        market_ranking = mock_market.market_ranking()
+        market_mock = True
     if market_mock:
         errors.append(
             SourceError(
@@ -129,6 +135,28 @@ async def _build_snapshot() -> PortfolioSnapshot:
 @router.get("/portfolio/snapshot", response_model=PortfolioSnapshot)
 async def get_snapshot() -> PortfolioSnapshot:
     return await _cache.get_or_fetch(_build_snapshot)
+
+
+@router.get("/debug/kiwoom")
+async def debug_kiwoom() -> dict:
+    """키움 실제 응답 원문을 그대로 반환 — 필드 매핑 확정용(로컬 전용).
+    키 등록 후 http://127.0.0.1:8787/debug/kiwoom 을 열어 응답 키 이름을 확인한다."""
+    from ..services.kiwoom_client import KiwoomClient
+
+    c = KiwoomClient()
+    if not c.configured:
+        return {"configured": False, "hint": "키움 앱키/시크릿 미설정"}
+    calls = [
+        ("acnt", "kt00005", {"qry_tp": "1", "dmst_stex_tp": "KRX"}),  # 잔고
+        ("rkinfo", "ka10027", {"mrkt_tp": "000"}),  # 상승률 상위
+    ]
+    out: dict = {"configured": True, "is_mock": c.is_mock}
+    for cat, tr, body in calls:
+        try:
+            out[tr] = await c.call(cat, tr, body)
+        except Exception as exc:  # noqa: BLE001
+            out[tr] = {"error": str(exc)}
+    return out
 
 
 @router.get("/config/sources")

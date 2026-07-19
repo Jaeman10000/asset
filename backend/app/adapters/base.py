@@ -9,13 +9,15 @@ PortfolioSnapshot.errors 배열로 합친다.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from ..schemas import Position, SectorFlow, SourceError
+from ..schemas import MarketStock, Position, SectorFlow, SourceError
 
 
 @dataclass
 class AdapterResult:
     positions: list[Position] = field(default_factory=list)
     sector_flows: list[SectorFlow] = field(default_factory=list)
+    # 실데이터 시장 랭킹(키움 등). 하나라도 있으면 portfolio가 mock 대신 이걸 쓴다.
+    market_ranking: list[MarketStock] = field(default_factory=list)
     error: SourceError | None = None
     # "설정 대기"는 진짜 오류가 아니다 — API 키를 일부러 안 넣은 사용자에게
     # isEstimate 경고를 상시 띄우면 안 되므로, unconfigured=True인 결과는
