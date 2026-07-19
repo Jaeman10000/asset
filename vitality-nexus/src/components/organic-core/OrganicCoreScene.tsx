@@ -115,19 +115,19 @@ export function OrganicCoreScene({
           OrbitControls로 카메라를 돌릴 때만 일어난다 (심장·궤도·섹터가 한 덩어리로
           같이 움직임 = 카메라 오빗). 살아있는 느낌은 심박 스케일·섹터 파티클·
           프로젝터 디스크·beat-rings가 담당한다. */}
-      <group position={[0, 0.55, 0]}>
+      <group position={[0, 0.9, 0]}>
         {/* 떠다니는 생명력 입자 (beatEnergy 미지정 시 bpm으로 심장과 같은 위상으로 숨쉼).
             섹터 궤도(HoloSectorRings)는 제거 — 심장만 주인공으로, 부하도 크게 줄인다. */}
         {particles && config.particleCount > 0 && (
           <LifeParticles count={config.particleCount} beatEnergy={beatEnergy} bpm={bpm} />
         )}
 
-        {/* 해부학적 유리질 심장 — 이제 씬의 유일한 오브젝트라 좀 더 크게 */}
+        {/* 해부학적 유리질 심장 — 씬의 유일한 오브젝트. 더 크게(0.9) + 위로(group y 0.9) */}
         <HeartCore
           modelPath="/models/heart.glb"
           bpm={bpm}
           attenuationColor={LIFE_COLOR}
-          scale={0.72}
+          scale={0.9}
           transmissionRes={256}
           backside={false}
         />
