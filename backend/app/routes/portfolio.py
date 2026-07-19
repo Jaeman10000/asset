@@ -83,20 +83,27 @@ async def _build_snapshot() -> PortfolioSnapshot:
                 real_failures += 1
 
     # ── 키움/KRX 연동 전: 프로토타입이 보여주던 시장 정보(수급/랭킹/KR섹터)를
-    #    모의 데이터로 채워 UI를 완성한다. UI에 '모의'임이 표기된다. ──
+    #    모의 데이터로 채워 UI를 완성한다. 실제 종목명에 조작된 수치를 붙이는
+    #    것이므로, marketMock=True로 내려 프론트가 "샘플 데이터" 워터마크를 씌운다. ──
+    market_mock = False
     if not any(s.region == "KR" for s in sector_flows):
         sector_flows.extend(mock_market.kr_sector_flows())
+        market_mock = True
     for p in positions:
         if p.assetType == "stock" and p.region == "KR" and p.investors is None:
             p.investors = mock_market.investors_for(p.symbol)
             p.investorPeriods = mock_market.investor_periods_for(p.symbol)
+            market_mock = True
+    # 시장 랭킹은 현재 항상 모의 (실 키움 랭킹 어댑터 연동 전)
     market_ranking = mock_market.market_ranking()
-    errors.append(
-        SourceError(
-            source="모의",
-            message="시장 랭킹·수급·KR 섹터는 모의 데이터 (키움/KRX 연동 시 실데이터로 대체)",
+    market_mock = market_mock or bool(market_ranking)
+    if market_mock:
+        errors.append(
+            SourceError(
+                source="모의",
+                message="시장 랭킹·수급·KR 섹터는 모의 데이터 (키움/KRX 연동 시 실데이터로 대체)",
+            )
         )
-    )
 
     snapshot = PortfolioSnapshot(
         totals=_compute_totals(positions),
@@ -108,6 +115,7 @@ async def _build_snapshot() -> PortfolioSnapshot:
         # 설정 안 된 소스(키 미입력)는 정상 상태다 — 진짜 데이터 조회 실패가
         # 있을 때만 "추정치"로 표시한다 (스펙: isEstimate = UI에서 흐리게)
         isEstimate=real_failures > 0,
+        marketMock=market_mock,
     )
 
     save_snapshot(snapshot.fetchedAt, snapshot.model_dump_json())

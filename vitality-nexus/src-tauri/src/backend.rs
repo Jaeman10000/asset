@@ -54,11 +54,15 @@ fn find_dev_backend() -> Option<(PathBuf, PathBuf)> {
 }
 
 /// 백엔드를 기동한다. 성공하면 Child를 state에 저장.
-pub fn spawn_backend(state: &BackendProcess) {
+///
+/// `data_dir`(Tauri app_data_dir)을 넘기면 백엔드에 `VITALITY_DATA_DIR`로 주입한다.
+/// 배포판(PyInstaller onefile)에서 보유종목/DB를 임시폴더에 써서 종료 시 소실되던
+/// 문제를 막기 위함 — 백엔드는 이 값을 쓰기 가능한 사용자 데이터 경로로 쓴다.
+pub fn spawn_backend(state: &BackendProcess, data_dir: Option<PathBuf>) {
     // 1) 환경변수 override (사용자가 직접 지정)
     if let Ok(python) = std::env::var("VITALITY_BACKEND_PYTHON") {
         let backend = std::env::var("VITALITY_BACKEND_DIR").unwrap_or_else(|_| "backend".into());
-        if let Some(child) = try_spawn_python(PathBuf::from(&backend), PathBuf::from(&python)) {
+        if let Some(child) = try_spawn_python(PathBuf::from(&backend), PathBuf::from(&python), &data_dir) {
             *state.0.lock().unwrap() = Some(child);
             return;
         }
@@ -66,7 +70,7 @@ pub fn spawn_backend(state: &BackendProcess) {
 
     // 2) 개발용 venv python 탐색
     if let Some((backend, python)) = find_dev_backend() {
-        if let Some(child) = try_spawn_python(backend, python) {
+        if let Some(child) = try_spawn_python(backend, python, &data_dir) {
             eprintln!("[vitality] 개발 백엔드 기동됨");
             *state.0.lock().unwrap() = Some(child);
             return;
@@ -82,7 +86,11 @@ pub fn spawn_backend(state: &BackendProcess) {
                 "vitality-backend"
             });
             if sidecar.exists() {
-                if let Ok(child) = Command::new(&sidecar).spawn() {
+                let mut cmd = Command::new(&sidecar);
+                if let Some(d) = &data_dir {
+                    cmd.env("VITALITY_DATA_DIR", d);
+                }
+                if let Ok(child) = cmd.spawn() {
                     eprintln!("[vitality] 사이드카 백엔드 기동됨");
                     *state.0.lock().unwrap() = Some(child);
                     return;
@@ -97,20 +105,26 @@ pub fn spawn_backend(state: &BackendProcess) {
     );
 }
 
-fn try_spawn_python(backend_dir: PathBuf, python: PathBuf) -> Option<Child> {
-    Command::new(&python)
-        .args([
-            "-m",
-            "uvicorn",
-            "app.main:app",
-            "--host",
-            "127.0.0.1",
-            "--port",
-            BACKEND_PORT,
-        ])
-        .current_dir(&backend_dir)
-        .spawn()
-        .ok()
+fn try_spawn_python(
+    backend_dir: PathBuf,
+    python: PathBuf,
+    data_dir: &Option<PathBuf>,
+) -> Option<Child> {
+    let mut cmd = Command::new(&python);
+    cmd.args([
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        BACKEND_PORT,
+    ])
+    .current_dir(&backend_dir);
+    if let Some(d) = data_dir {
+        cmd.env("VITALITY_DATA_DIR", d);
+    }
+    cmd.spawn().ok()
 }
 
 /// 앱 종료 시 백엔드 자식 프로세스를 정리한다.

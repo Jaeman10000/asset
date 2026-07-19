@@ -113,3 +113,6 @@ class PortfolioSnapshot(BaseModel):
     fetchedAt: int  # epoch ms
     errors: list[SourceError] = Field(default_factory=list)
     isEstimate: bool = False  # errors가 하나라도 있으면 True — UI에서 흐리게 표시
+    # 시장 데이터(랭킹/섹터수급/종목수급)가 모의(mock_market)인지 — 키움/KRX 연동 전엔 True.
+    # 프론트가 해당 패널에 "샘플 데이터" 워터마크를 씌워 실데이터로 오인하지 않게 한다.
+    marketMock: bool = False

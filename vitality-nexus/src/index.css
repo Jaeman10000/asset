@@ -306,6 +306,41 @@ body {
   letter-spacing: 0.06em;
 }
 
+/* ── 모의(mock) 데이터 워터마크 ──
+   랭킹·섹터수급은 실제 종목명에 조작된 수치를 붙인 것이라 실데이터로 오인하면
+   금융 신뢰가 깨진다(리뷰 보드 블로커 #2). 눈에 띄는 금색 '샘플' 배지 + 패널 전체에
+   은은한 대각 해치를 씌워 한눈에 '실데이터 아님'을 알린다. 키움 연동 시 자동 제거. */
+.card h3 .mock-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--event);
+  background: rgba(242, 214, 117, 0.16);
+  border: 1px solid rgba(242, 214, 117, 0.5);
+  white-space: nowrap;
+  text-transform: none;
+}
+.card.is-mock::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5; /* 콘텐츠 위 은은한 오버레이 (pointer-events 없음 → 호버 방해 안 함) */
+  pointer-events: none;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 15px,
+    rgba(242, 214, 117, 0.055) 15px 16px
+  );
+}
+
 /* ── 좌측: 3단 세로 리스트 ── */
 .col-left {
   display: grid;

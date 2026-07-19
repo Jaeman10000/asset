@@ -100,9 +100,11 @@ pub fn run() {
             is_autostart
         ])
         .setup(|app| {
-            // 로컬 백엔드 기동
+            // 로컬 백엔드 기동 — 데이터 디렉터리(app_data_dir)를 넘겨 배포판에서
+            // 보유종목/DB가 임시폴더에 쓰여 재시작마다 소실되는 것을 막는다.
             let state = app.state::<BackendProcess>();
-            spawn_backend(&state);
+            let data_dir = app.path().app_data_dir().ok();
+            spawn_backend(&state, data_dir);
 
             // 로컬 개발(debug) 빌드에서만 웹뷰 콘솔 자동 오픈.
             // 배포(release) 빌드에서는 열리지 않는다.

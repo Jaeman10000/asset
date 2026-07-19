@@ -25,19 +25,27 @@ data/holdings.json 형식 (없으면 그냥 빈 리스트로 취급):
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-HOLDINGS_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "holdings.json"
+from ..paths import data_path
+
+
+def _holdings_path() -> Path:
+    """항상 현재 데이터 디렉터리 기준 (배포판=%APPDATA%, 개발=backend/data).
+    함수로 두어 테스트/실행 중 VITALITY_DATA_DIR 변경도 반영되게 한다."""
+    return data_path("holdings.json")
 
 
 def load_manual_holdings() -> list[dict[str, Any]]:
-    """data/holdings.json을 읽어 raw dict 리스트를 반환. 파일이 없거나
+    """holdings.json을 읽어 raw dict 리스트를 반환. 파일이 없거나
     깨졌으면 빈 리스트 (수동입력을 안 쓰는 사용자는 이게 정상 상태)."""
-    if not HOLDINGS_PATH.exists():
+    path = _holdings_path()
+    if not path.exists():
         return []
     try:
-        payload = json.loads(HOLDINGS_PATH.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return []
     positions = payload.get("positions")
@@ -45,10 +53,15 @@ def load_manual_holdings() -> list[dict[str, Any]]:
 
 
 def save_manual_holdings(positions: list[dict[str, Any]]) -> None:
-    """보유종목 리스트를 data/holdings.json에 쓴다 (UI 편집 저장용).
-    로컬 파일이라 서버로 안 나가고, 다음 스냅샷부터 반영된다."""
-    HOLDINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    """보유종목 리스트를 holdings.json에 쓴다 (UI 편집 저장용).
+    로컬 파일이라 서버로 안 나가고, 다음 스냅샷부터 반영된다.
+    원자적 쓰기(tmp→os.replace): 저장 도중 사이드카가 죽어도 반쯤 쓰인 파손
+    파일이 남지 않아 다음 로드에서 보유종목이 통째로 사라지는 일을 막는다(QA 지적)."""
+    path = _holdings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"positions": positions}
-    HOLDINGS_PATH.write_text(
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    os.replace(tmp, path)  # 원자적 교체

@@ -235,7 +235,7 @@ function RankRow({
  *   · dot 색 = 3D 궤도 노드와 동일(지배 투자자/등락 방향) → 링↔레인 상호참조.
  *   · 컴포지터 전용: 막대는 transform:scaleX(전환), 흐름은 translate3d(무한) 뿐.
  */
-function SectorFlowLanes({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
+function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
   const krNet = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
 
   const col = (sectors: RingSector[], side: 'kr' | 'us', title: string, metricLabel: string) => {
@@ -295,11 +295,15 @@ function SectorFlowLanes({ kr, us }: { kr: RingSector[]; us: RingSector[] }) {
   };
 
   return (
-    <div className="card sector-flow">
+    <div className={`card sector-flow${mock ? ' is-mock' : ''}`}>
       <h3>
         <span className="dot" />
         SECTOR FLOW · 수급 흐름 레인
-        <span className="exch">순매수순 · 모의</span>
+        {mock ? (
+          <span className="mock-badge">⚠ 샘플 데이터</span>
+        ) : (
+          <span className="exch">순매수순</span>
+        )}
       </h3>
       <div className="flow-cols">
         {col(kr, 'kr', '한국 · KRX', '외국인+기관 순매수')}
@@ -324,6 +328,9 @@ export function Dashboard({
   const [rankTab, setRankTab] = useState<RankTabKey>('up');
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const t = snapshot.totals;
+  // 랭킹·섹터수급이 모의(mock_market)면 실데이터로 오인하지 않게 '샘플' 워터마크.
+  // (구버전 백엔드엔 marketMock이 없으므로 기본 false)
+  const marketMock = snapshot.marketMock ?? false;
 
   // 데이터 갱신 순간 = 총합 카드 하나가 금색 플래시 (스펙: 갱신 순간만 발광)
   useEffect(() => {
@@ -408,15 +415,19 @@ export function Dashboard({
             </div>
           </div>
 
-          <SectorFlowLanes kr={krSectors} us={usSectors} />
+          <SectorFlowLanes kr={krSectors} us={usSectors} mock={marketMock} />
         </div>
 
         {/* ── 우측: 오늘의 시장 랭킹 ── */}
-        <div className="card ranking-card">
+        <div className={`card ranking-card${marketMock ? ' is-mock' : ''}`}>
           <h3>
             <span className="dot" />
             오늘의 시장 랭킹
-            <span className="exch">키움 연동 전 · 모의</span>
+            {marketMock ? (
+              <span className="mock-badge">⚠ 샘플 데이터</span>
+            ) : (
+              <span className="exch">실시간</span>
+            )}
           </h3>
           <div className="ranking-tabs">
             {RANK_TABS.map(({ key, label }) => (
