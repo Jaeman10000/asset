@@ -14,6 +14,8 @@ from typing import Any
 
 import asyncio
 
+import httpx
+
 from ..schemas import Position, SourceError
 from ..services.holdings import load_manual_holdings
 from ..services.quotes import (
@@ -82,17 +84,25 @@ class ManualAdapter(BaseAdapter):
                 errors.append(f"빗썸 시세 실패: {exc}")
 
         # --- 암호화폐 스파크라인 히스토리 (60분봉 종가, 실데이터) ---
+        # 공유 클라이언트 + 세마포어(동시 4): 심볼마다 새 연결을 만들어 동시 발사하면
+        # 보유 종목이 많을 때 거래소 IP 레이트리밋(429)에 걸린다 (QA 지적).
         crypto_histories: dict[str, list[float]] = {}
         if crypto_rows:
             hist_syms = [str(r["symbol"]).upper() for r in crypto_rows]
-            hist_results = await asyncio.gather(
-                *(
-                    fetch_bithumb_history(sym)
-                    if r.get("market") == "bithumb"
-                    else fetch_upbit_history(sym)
-                    for r, sym in zip(crypto_rows, hist_syms)
+            sem = asyncio.Semaphore(4)
+
+            async def _hist(r: dict[str, Any], sym: str, client: httpx.AsyncClient) -> list[float]:
+                async with sem:
+                    if r.get("market") == "bithumb":
+                        return await fetch_bithumb_history(sym, client=client)
+                    return await fetch_upbit_history(sym, client=client)
+
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(8.0), headers={"Accept": "application/json"}
+            ) as hist_client:
+                hist_results = await asyncio.gather(
+                    *(_hist(r, sym, hist_client) for r, sym in zip(crypto_rows, hist_syms))
                 )
-            )
             crypto_histories = dict(zip(hist_syms, hist_results))
 
         # --- 주식 시세 (Yahoo) + 환율 ---
@@ -112,8 +122,8 @@ class ManualAdapter(BaseAdapter):
 
         now = int(time.time() * 1000)
         positions: list[Position] = []
-        for r in raw:
-            pos = self._to_position(r, crypto_quotes, stock_quotes, crypto_histories, fx, now)
+        for i, r in enumerate(raw):
+            pos = self._to_position(r, crypto_quotes, stock_quotes, crypto_histories, fx, now, i)
             if pos is not None:
                 positions.append(pos)
 
@@ -133,6 +143,7 @@ class ManualAdapter(BaseAdapter):
         crypto_histories: dict[str, list[float]],
         fx: float,
         now: int,
+        index: int = 0,
     ) -> Position | None:
         # 한 행이라도 잘못되면(assetType/region/currency 오타로 pydantic Literal 위반,
         # qty/avg 파싱 실패 등) 그 행만 건너뛰고 나머지는 살린다. 전체 스냅샷이
@@ -175,7 +186,9 @@ class ManualAdapter(BaseAdapter):
             cost = qty * avg * krw
 
             return Position(
-                id=f"manual:{symbol}",
+                # 행 인덱스 포함 = 같은 심볼을 두 번 넣어도(업비트 BTC+빗썸 BTC 등)
+                # id가 유일 → React key 충돌·호버/차트 오배정 방지 (QA)
+                id=f"manual:{index}:{symbol}",
                 exchange="manual",
                 assetType=asset_type,
                 region=r.get("region"),

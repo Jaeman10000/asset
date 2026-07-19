@@ -41,6 +41,15 @@ export function HoldingsEditor({
       .finally(() => setLoading(false));
   }, []);
 
+  // Esc로 닫기 (접근성 — 마우스 없이도 모달 탈출)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   function update(i: number, patch: Partial<HoldingInput>) {
     setConfirmDrop(false);
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -86,10 +95,16 @@ export function HoldingsEditor({
 
   return (
     <div className="editor-backdrop" onClick={onClose}>
-      <div className="editor-panel glass-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="editor-panel glass-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="보유종목 편집"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="editor-header">
           <h2>보유종목 편집</h2>
-          <button type="button" className="editor-close" onClick={onClose}>
+          <button type="button" className="editor-close" onClick={onClose} aria-label="닫기">
             ✕
           </button>
         </div>
@@ -165,7 +180,12 @@ export function HoldingsEditor({
                   value={r.avg || ''}
                   onChange={(e) => update(i, { avg: Number(e.target.value) })}
                 />
-                <button type="button" className="row-remove" onClick={() => removeRow(i)}>
+                <button
+                  type="button"
+                  className="row-remove"
+                  onClick={() => removeRow(i)}
+                  aria-label={`${r.name || r.symbol || '행'} 삭제`}
+                >
                   ✕
                 </button>
               </div>

@@ -74,12 +74,17 @@ async def fetch_upbit_quotes(symbols: list[str]) -> dict[str, Quote]:
         return quotes
 
 
-async def fetch_upbit_history(symbol: str, count: int = 32) -> list[float]:
+async def fetch_upbit_history(
+    symbol: str, count: int = 32, client: httpx.AsyncClient | None = None
+) -> list[float]:
     """업비트 60분봉 종가 최근 count개 (오래된 것→최신 순). 스파크라인용.
-    실패는 빈 리스트 (스파크라인만 빠지고 나머지는 정상)."""
+    실패는 빈 리스트 (스파크라인만 빠지고 나머지는 정상).
+
+    client를 넘기면 커넥션을 재사용한다 — 보유 종목이 많을 때 심볼마다 새
+    AsyncClient를 만들어 동시 연결이 폭주(레이트리밋 429)하던 것 방지(QA)."""
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, headers=_HEADERS) as client:
-            resp = await client.get(
+        async with _maybe_client(client) as c:
+            resp = await c.get(
                 UPBIT_CANDLES,
                 params={"market": f"KRW-{symbol.upper()}", "count": count},
             )
@@ -90,11 +95,13 @@ async def fetch_upbit_history(symbol: str, count: int = 32) -> list[float]:
         return []
 
 
-async def fetch_bithumb_history(symbol: str, count: int = 32) -> list[float]:
-    """빗썸 1시간봉 종가 최근 count개. 실패는 빈 리스트."""
+async def fetch_bithumb_history(
+    symbol: str, count: int = 32, client: httpx.AsyncClient | None = None
+) -> list[float]:
+    """빗썸 1시간봉 종가 최근 count개. 실패는 빈 리스트. client 재사용 지원."""
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, headers=_HEADERS) as client:
-            resp = await client.get(BITHUMB_CANDLES.format(symbol=symbol.upper()))
+        async with _maybe_client(client) as c:
+            resp = await c.get(BITHUMB_CANDLES.format(symbol=symbol.upper()))
             resp.raise_for_status()
             payload = resp.json()
         if payload.get("status") != "0000":
@@ -103,6 +110,24 @@ async def fetch_bithumb_history(symbol: str, count: int = 32) -> list[float]:
         return [float(r[2]) for r in rows[-count:]]
     except Exception:
         return []
+
+
+class _maybe_client:
+    """외부 client가 있으면 그대로 쓰고(닫지 않음), 없으면 임시로 만들어 닫는다."""
+
+    def __init__(self, client: httpx.AsyncClient | None):
+        self._external = client
+        self._own: httpx.AsyncClient | None = None
+
+    async def __aenter__(self) -> httpx.AsyncClient:
+        if self._external is not None:
+            return self._external
+        self._own = httpx.AsyncClient(timeout=_TIMEOUT, headers=_HEADERS)
+        return self._own
+
+    async def __aexit__(self, *exc: object) -> None:
+        if self._own is not None:
+            await self._own.aclose()
 
 
 async def fetch_bithumb_quotes(symbols: list[str]) -> dict[str, Quote]:

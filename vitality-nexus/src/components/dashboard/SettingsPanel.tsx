@@ -30,6 +30,15 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       .catch(() => {});
   }, []);
 
+  // Esc로 닫기 (접근성)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   // 네이티브 호출 실패를 반드시 여기서 잡는다. 안 잡으면 `void chooseMode()`의
   // 거부가 unhandledrejection → 닫을 수 없는 FATAL 오버레이로 앱을 벽돌화한다(UX P0).
   async function chooseMode(m: PlacementMode) {
@@ -58,10 +67,16 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="editor-backdrop" onClick={onClose}>
-      <div className="settings-panel glass-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="settings-panel glass-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="데스크톱 설정"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="editor-header">
           <h2>데스크톱 설정</h2>
-          <button type="button" className="editor-close" onClick={onClose}>
+          <button type="button" className="editor-close" onClick={onClose} aria-label="닫기">
             ✕
           </button>
         </div>

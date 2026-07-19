@@ -159,7 +159,8 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
   const GAP = 14;
   const placeRight = target.x + GAP + W <= window.innerWidth;
   const left = Math.max(8, placeRight ? target.x + GAP : target.left - GAP - W);
-  const top = Math.min(target.y, window.innerHeight - 280);
+  // 아래로 넘치면 올리되, 창이 아주 작아도 top이 음수가 되지 않게 (상단 잘림 방지)
+  const top = Math.max(8, Math.min(target.y, window.innerHeight - 280));
 
   return (
     <div className="truth-card" style={{ left, top }}>
