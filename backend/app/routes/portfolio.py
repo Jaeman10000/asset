@@ -146,15 +146,20 @@ async def get_snapshot() -> PortfolioSnapshot:
 
 
 @router.get("/chart/{code}")
-async def get_chart(code: str, period: str = "D") -> dict:
+async def get_chart(code: str, period: str = "D", market: str = "kr") -> dict:
     """종목 캔들(OHLC) — ChartPanel이 종목 클릭/기간전환 시 호출. 일(D)/주(W)/월(M)봉.
-    키움 실데이터(ka10081/82/83). 키 미설정이거나 해외/암호화폐면 candles=[] (프론트가
-    보유 history 라인으로 폴백)."""
-    from ..adapters.kiwoom import fetch_candles
-
+    market=kr → 키움 ka10081/82/83, market=us → Yahoo(1d/1wk/1mo). 암호화폐/실패면
+    candles=[] (프론트가 보유 history 라인으로 폴백)."""
     p = (period or "D").upper()
-    candles = await fetch_candles(code, p)
-    return {"code": code, "period": p, "candles": candles}
+    if market == "us":
+        from ..services.stock_quotes import fetch_us_candles
+
+        candles = await fetch_us_candles(code, p)
+    else:
+        from ..adapters.kiwoom import fetch_candles
+
+        candles = await fetch_candles(code, p)
+    return {"code": code, "period": p, "market": market, "candles": candles}
 
 
 @router.get("/debug/kiwoom")

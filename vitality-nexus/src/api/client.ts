@@ -70,9 +70,13 @@ export interface Candle {
 export function fetchChart(
   code: string,
   period: ChartPeriod,
+  market: 'kr' | 'us' = 'kr',
   signal?: AbortSignal,
 ): Promise<{ code: string; period: ChartPeriod; candles: Candle[] }> {
-  return getJSON(`/chart/${encodeURIComponent(code)}?period=${period}`, signal);
+  return getJSON(
+    `/chart/${encodeURIComponent(code)}?period=${period}&market=${market}`,
+    signal,
+  );
 }
 
 // ── 보유종목 편집 (holdings.json) ──

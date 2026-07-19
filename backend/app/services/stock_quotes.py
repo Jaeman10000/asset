@@ -154,3 +154,50 @@ async def fetch_usdkrw() -> float | None:
             return _fx_cache[1] if _fx_cache else None
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
         return _fx_cache[1] if _fx_cache else None  # stale-on-error
+
+
+# ── 미국주식 캔들 (OHLC) — ChartPanel 일/주/월봉 (Yahoo interval 1d/1wk/1mo) ──
+# period → (interval, range). 봉 개수 넉넉하게 range를 잡는다.
+_US_PERIOD = {
+    "D": ("1d", "1y"),
+    "W": ("1wk", "5y"),
+    "M": ("1mo", "max"),
+}
+_US_CANDLE_TTL = 300.0  # 5분 캐시 (일/주/월봉은 자주 안 변함)
+_us_candle_cache: dict[tuple[str, str], tuple[float, list[dict]]] = {}
+
+
+async def fetch_us_candles(symbol: str, period: str = "D", limit: int = 140) -> list[dict]:
+    """미국 티커(Yahoo 심볼)의 OHLC 캔들 최근 limit개. 실패/미상장 시 []."""
+    period = period.upper()
+    if period not in _US_PERIOD:
+        period = "D"
+    key = (symbol.upper(), period)
+    now = time.monotonic()
+    cached = _us_candle_cache.get(key)
+    if cached and now - cached[0] < _US_CANDLE_TTL:
+        return cached[1]
+    interval, rng = _US_PERIOD[period]
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT, headers=_HEADERS) as client:
+            resp = await client.get(
+                CHART_URL.format(symbol=symbol), params={"range": rng, "interval": interval}
+            )
+            resp.raise_for_status()
+            node = resp.json()["chart"]["result"][0]
+            ts = node.get("timestamp") or []
+            q = node["indicators"]["quote"][0]
+            opens, highs = q.get("open", []), q.get("high", [])
+            lows, closes = q.get("low", []), q.get("close", [])
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+        return cached[1] if cached else []  # stale-on-error
+    out: list[dict] = []
+    for t, o, h, low, c in zip(ts, opens, highs, lows, closes):
+        if None in (o, h, low, c):
+            continue
+        dt = time.strftime("%Y%m%d", time.gmtime(t)) if t else ""
+        out.append({"dt": dt, "o": float(o), "h": float(h), "l": float(low), "c": float(c), "v": 0})
+    out = out[-limit:]
+    if out:
+        _us_candle_cache[key] = (now, out)
+    return out

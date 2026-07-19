@@ -37,8 +37,10 @@ export function ChartPanel({
   const symRef = useRef<string | null>(null);
   const tickRef = useRef(0);
 
-  // 캔들 지원 = KR 주식(키움 실데이터). 암호화폐/미국은 라인 폴백.
-  const supportsCandles = position?.assetType === 'stock' && position?.region === 'KR';
+  // 캔들 지원 = 주식(KR=키움, US=Yahoo). 암호화폐만 라인 폴백.
+  const supportsCandles =
+    position?.assetType === 'stock' && (position?.region === 'KR' || position?.region === 'US');
+  const market: 'kr' | 'us' = position?.region === 'US' ? 'us' : 'kr';
 
   // 선택 종목이 바뀌면 상태 리셋 + 기간 일봉으로
   useEffect(() => {
@@ -60,7 +62,7 @@ export function ChartPanel({
     let alive = true;
     const ctrl = new AbortController();
     setLoading(true);
-    fetchChart(position.symbol, period, ctrl.signal)
+    fetchChart(position.symbol, period, market, ctrl.signal)
       .then((r) => {
         if (alive) setCandles(r.candles ?? []);
       })
@@ -74,7 +76,7 @@ export function ChartPanel({
       alive = false;
       ctrl.abort();
     };
-  }, [position, period, supportsCandles]);
+  }, [position, period, supportsCandles, market]);
 
   // 폴링마다 현재가를 라인 폴백 버퍼에 append (최근 120틱)
   useEffect(() => {
@@ -163,7 +165,7 @@ export function ChartPanel({
 
   const periodName = period === 'D' ? '일봉' : period === 'W' ? '주봉' : '월봉';
   const source = supportsCandles
-    ? `키움 ${periodName} · 현재가 7초 갱신`
+    ? `${market === 'us' ? 'Yahoo' : '키움'} ${periodName} · 현재가 7초 갱신`
     : position.assetType === 'crypto'
       ? '업비트·빗썸 60분봉 · 현재가 7초 갱신'
       : 'Yahoo Finance 일봉 · 현재가 7초 갱신';
