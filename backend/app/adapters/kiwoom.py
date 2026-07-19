@@ -25,6 +25,14 @@ from .base import AdapterResult, BaseAdapter
 # 투자자 순매수 금액 단위 = 백만원 → 억원 환산(÷100). (acc_trde_prica 교차검증으로 확인)
 _AMT_TO_EOK = 100.0
 
+# 일봉·수급은 인트라데이로 거의 안 변하므로 스냅샷 7s 캐시보다 길게 둔다
+# (스냅샷마다 종목별 ka10081/ka10059를 다시 부르면 레이트리밋·지연). 모듈 레벨 캐시.
+_HIST_TTL = 600.0  # 일봉(종가) 10분
+_FLOW_TTL = 180.0  # 수급 3분
+_HIST_LEN = 120  # 보관 일봉 개수(스파크라인·차트용)
+_hist_cache: dict[str, tuple[float, list[float]]] = {}
+_flow_cache: dict[str, tuple[float, "tuple[InvestorFlow, list[InvestorPeriod]]"]] = {}
+
 
 def _first_list(data: Any) -> list[dict[str, Any]]:
     if isinstance(data, list):
@@ -79,7 +87,11 @@ class KiwoomAdapter(BaseAdapter):
         try:
             positions = await self._holdings(client)
             ranking = await self._ranking(client)
-            await self._attach_investors(client, positions, ranking)
+            # 수급(ka10059)·일봉(ka10081)을 동시에 부착
+            await asyncio.gather(
+                self._attach_investors(client, positions, ranking),
+                self._attach_history(client, positions),
+            )
         except (KiwoomError, Exception) as exc:
             return AdapterResult(
                 error=SourceError(source=self.name, message=f"키움 조회 실패: {exc}")
@@ -138,8 +150,12 @@ class KiwoomAdapter(BaseAdapter):
             return
         dt = datetime.now().strftime("%Y%m%d")
         sem = asyncio.Semaphore(3)  # 레이트리밋 대비 동시 3
+        now = time.time()
 
-        async def one(code: str) -> list[dict[str, Any]]:
+        async def one(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
+            cached = _flow_cache.get(code)
+            if cached and now - cached[0] < _FLOW_TTL:
+                return cached[1]
             async with sem:
                 try:
                     data = await client.call(
@@ -153,15 +169,17 @@ class KiwoomAdapter(BaseAdapter):
                             "unit_tp": "1000",
                         },
                     )
-                    return data.get("stk_invsr_orgn") or _first_list(data)
+                    rows = data.get("stk_invsr_orgn") or _first_list(data)
                 except Exception:
-                    return []
+                    return None
+            if not rows:
+                return None
+            built = self._build_flow(rows)
+            _flow_cache[code] = (now, built)
+            return built
 
-        lists = await asyncio.gather(*(one(c) for c in codes))
-        flows: dict[str, tuple[InvestorFlow, list[InvestorPeriod]]] = {}
-        for code, rows in zip(codes, lists):
-            if rows:
-                flows[code] = self._build_flow(rows)
+        results = await asyncio.gather(*(one(c) for c in codes))
+        flows = {code: r for code, r in zip(codes, results) if r}
         for p in kr:
             if p.symbol in flows:
                 p.investors, p.investorPeriods = flows[p.symbol]
@@ -190,6 +208,43 @@ class KiwoomAdapter(BaseAdapter):
                 InvestorPeriod(label=label, foreign=f, inst=i, individual=ind, program=0)
             )
         return today, periods
+
+    # ── 일봉 종가 (ka10081) — 보유 KR 종목의 history(스파크라인·차트) 채우기 ──
+    async def _attach_history(self, client: KiwoomClient, positions: list[Position]) -> None:
+        kr = [p for p in positions if p.region == "KR" and p.assetType == "stock"]
+        if not kr:
+            return
+        base = datetime.now().strftime("%Y%m%d")
+        sem = asyncio.Semaphore(3)
+        now = time.time()
+
+        async def one(code: str) -> list[float] | None:
+            cached = _hist_cache.get(code)
+            if cached and now - cached[0] < _HIST_TTL:
+                return cached[1]
+            async with sem:
+                try:
+                    data = await client.call(
+                        "chart",
+                        "ka10081",
+                        {"stk_cd": code, "base_dt": base, "upd_stkpc_tp": "1"},
+                    )
+                    rows = data.get("stk_dt_pole_chart_qry") or _first_list(data)
+                except Exception:
+                    return None
+            if not rows:
+                return None
+            # 응답은 최신일자 먼저(내림차순) → 시간순(오름차순)으로 뒤집고 종가만, 최근 N개
+            closes = [abs(_num(r.get("cur_prc"))) for r in rows if r.get("cur_prc")]
+            closes.reverse()
+            hist = closes[-_HIST_LEN:]
+            _hist_cache[code] = (now, hist)
+            return hist
+
+        results = await asyncio.gather(*(one(p.symbol) for p in kr))
+        for p, hist in zip(kr, results):
+            if hist:
+                p.history = hist
 
     # ── 오늘의 시장 순위 (상승률/거래량) ──
     async def _ranking(self, client: KiwoomClient) -> list[MarketStock]:
