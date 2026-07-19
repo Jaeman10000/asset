@@ -149,7 +149,10 @@ class KiwoomAdapter(BaseAdapter):
                 ),
             )
         try:
-            positions = await self._holdings(client)
+            kr_pos, us_pos = await asyncio.gather(
+                self._holdings(client), self._us_holdings(client)
+            )
+            positions = kr_pos + us_pos
             ranking, sectors = await asyncio.gather(
                 self._ranking(client), self._kr_sectors(client)
             )
@@ -243,6 +246,62 @@ class KiwoomAdapter(BaseAdapter):
             )
         if rows and not out:
             raise KiwoomError(f"잔고 필드 매핑 실패 — 실제 키: {list(rows[0].keys())}")
+        return out
+
+    # ── 미국주식 잔고 (ust21070, 2026-07 신규 /api/us/acnt) ──
+    async def _us_holdings(self, client: KiwoomClient) -> list[Position]:
+        try:
+            data = await client.call("us_acnt", "ust21070", {})
+        except Exception:
+            return []  # 해외 미신청/미보유는 조용히 스킵 (국내는 계속)
+        rows = data.get("result_list") or _first_list(data)
+        now = int(time.time() * 1000)
+        out: list[Position] = []
+        for i, r in enumerate(rows):
+            code = str(_f(r, "stk_cd", default="")).strip()
+            if not code:
+                continue
+            # 평가는 결제완료 보유수량(poss_qty) 기준 — evlt_amt와 일치. 없으면 qty.
+            qty = _num(_f(r, "poss_qty", "qty"))
+            if qty == 0:
+                continue
+            avg = _num(_f(r, "frgn_stk_book_uv"))  # 평단(USD)
+            price = _num(_f(r, "now_pric"), avg)  # 현재가(USD)
+            name = _f(r, "frgn_stk_nm", default=code)
+            ret = _num(_f(r, "pl_rt"))
+            # 키움이 원화 환산까지 제공 → 그대로 사용(자체 환율 불필요)
+            value_krw = _num(_f(r, "evlt_amt_krw"))
+            cost_krw = _num(_f(r, "frgn_stk_book_amt_krw"))
+            out.append(
+                Position(
+                    id=f"kiwoom-us:{i}:{code}",
+                    exchange="kiwoom",
+                    assetType="stock",
+                    region="US",
+                    symbol=code,
+                    name=str(name),
+                    qty=qty,
+                    avg=avg,
+                    price=price,
+                    currency="USD",
+                    value=value_krw or 0.0,
+                    cost=cost_krw or 0.0,
+                    ret=round(ret, 2),
+                    lastUpdated=now,
+                )
+            )
+        # 스파크라인·라인차트용 history를 Yahoo 일봉으로 채운다(미국 티커=Yahoo 심볼 그대로).
+        if out:
+            try:
+                from ..services.stock_quotes import fetch_stock_quotes
+
+                quotes = await fetch_stock_quotes([p.symbol for p in out])
+                for p in out:
+                    q = quotes.get(p.symbol)
+                    if q and q.history:
+                        p.history = q.history
+            except Exception:
+                pass  # history 없어도 보유/평가는 정상 표시
         return out
 
     # ── 종목별 수급 (ka10059) — 보유 KR 종목 + 랭킹 종목에 당일 + 20/60일 누적 부착 ──

@@ -37,6 +37,7 @@ _API_PATHS = {
     "rkinfo": "/api/dostk/rkinfo",    # 순위정보 (상승/하락/거래량)
     "chart": "/api/dostk/chart",      # 차트 (일봉/주봉 등)
     "sect": "/api/dostk/sect",        # 업종 (업종별 투자자순매수 등)
+    "us_acnt": "/api/us/acnt",        # 미국주식 계좌 (2026-07 신규, 국내와 다른 /api/us)
 }
 
 _TIMEOUT = httpx.Timeout(8.0)
