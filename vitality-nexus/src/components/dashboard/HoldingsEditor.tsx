@@ -25,33 +25,54 @@ export function HoldingsEditor({
 }) {
   const [rows, setRows] = useState<HoldingInput[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 미완성 행이 있을 때, 한 번 경고한 뒤 두 번째 클릭에서만 저장(조용한 삭제 방지)
+  const [confirmDrop, setConfirmDrop] = useState(false);
 
   useEffect(() => {
     fetchHoldings()
       .then((data) => setRows(data.positions))
-      .catch((e) => setError(String(e)))
+      .catch((e) => {
+        setLoadFailed(true);
+        setError('보유종목을 불러오지 못했습니다: ' + String(e));
+      })
       .finally(() => setLoading(false));
   }, []);
 
   function update(i: number, patch: Partial<HoldingInput>) {
+    setConfirmDrop(false);
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
 
   function addRow() {
+    setConfirmDrop(false);
     setRows((rs) => [...rs, { ...EMPTY_ROW }]);
   }
 
   function removeRow(i: number) {
+    setConfirmDrop(false);
     setRows((rs) => rs.filter((_, idx) => idx !== i));
   }
 
   async function handleSave() {
-    setSaving(true);
-    setError(null);
+    // 불러오기 실패 상태에서 저장하면 rows=[]로 기존 파일을 통째로 덮어쓸 수 있다 → 차단
+    if (loadFailed) {
+      setError('기존 보유종목을 못 불러와서 저장을 막았습니다 (덮어쓰기·전량 소실 방지). 편집기를 다시 열어 주세요.');
+      return;
+    }
     // 심볼/수량/평단이 유효한 행만 저장
     const valid = rows.filter((r) => r.symbol.trim() && r.qty > 0 && r.avg > 0);
+    const dropped = rows.length - valid.length;
+    // 미완성 행이 있으면 한 번 경고 (조용히 사라지지 않게)
+    if (dropped > 0 && !confirmDrop) {
+      setConfirmDrop(true);
+      setError(`미완성 행 ${dropped}개(심볼·수량·평단 누락)는 저장에서 제외됩니다. 계속하려면 "제외하고 저장"을 누르세요.`);
+      return;
+    }
+    setSaving(true);
+    setError(null);
     try {
       await saveHoldings(valid);
       onSaved();
@@ -162,7 +183,7 @@ export function HoldingsEditor({
             취소
           </button>
           <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? '저장 중…' : '저장'}
+            {saving ? '저장 중…' : confirmDrop ? '제외하고 저장' : '저장'}
           </button>
         </div>
       </div>
