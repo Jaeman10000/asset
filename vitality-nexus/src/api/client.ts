@@ -84,3 +84,32 @@ export async function saveHoldings(positions: HoldingInput[]): Promise<void> {
     throw new Error(`보유종목 저장 실패: HTTP ${resp.status} ${detail}`);
   }
 }
+
+// ── 키움 증권 연동 (앱키/시크릿) ──
+
+export interface KiwoomStatus {
+  configured: boolean;
+  isMock: boolean;
+  hasAccount: boolean;
+}
+
+export function fetchKiwoomStatus(signal?: AbortSignal): Promise<KiwoomStatus> {
+  return getJSON<KiwoomStatus>('/config/kiwoom', signal);
+}
+
+export async function saveKiwoomConfig(cfg: {
+  app_key: string;
+  app_secret: string;
+  is_mock: boolean;
+  account_no?: string;
+}): Promise<void> {
+  const resp = await fetch(`${BASE}/config/kiwoom`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cfg),
+  });
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => '');
+    throw new Error(`키움 연동 저장 실패: HTTP ${resp.status} ${detail}`);
+  }
+}

@@ -2,6 +2,7 @@ import { Component, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
+import { KiwoomPanel } from './components/dashboard/KiwoomPanel';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
 import { AuroraVeil } from './components/dashboard/AuroraVeil';
 import { OrganicCoreScene } from './components/organic-core/OrganicCoreScene';
@@ -52,6 +53,7 @@ function FpsMeter() {
 export default function App() {
   const { snapshot, sources, conn, start, stop, refresh } = usePortfolio();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [kiwoomOpen, setKiwoomOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -183,11 +185,15 @@ export default function App() {
         sources={sources}
         errors={snapshot?.errors ?? []}
         onOpenEditor={() => setEditorOpen(true)}
+        onOpenKiwoom={() => setKiwoomOpen(true)}
         onOpenSettings={settingsAvailable ? () => setSettingsOpen(true) : undefined}
       />
 
       {editorOpen && (
         <HoldingsEditor onClose={() => setEditorOpen(false)} onSaved={() => void refresh()} />
+      )}
+      {kiwoomOpen && (
+        <KiwoomPanel onClose={() => setKiwoomOpen(false)} onSaved={() => void refresh()} />
       )}
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
 

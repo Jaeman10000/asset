@@ -21,6 +21,7 @@ export function StatusBar({
   sources,
   errors,
   onOpenEditor,
+  onOpenKiwoom,
   onOpenSettings,
 }: {
   conn: ConnState;
@@ -28,6 +29,7 @@ export function StatusBar({
   sources: SourceStatus | null;
   errors: SourceError[];
   onOpenEditor: () => void;
+  onOpenKiwoom: () => void;
   /** Tauri 앱일 때만 전달됨 (브라우저에선 undefined → 설정 버튼 숨김) */
   onOpenSettings?: () => void;
 }) {
@@ -44,6 +46,14 @@ export function StatusBar({
         {isEstimate && <span className="status-estimate">추정치</span>}
         <button type="button" className="status-edit-btn" onClick={onOpenEditor}>
           보유종목 편집
+        </button>
+        <button
+          type="button"
+          className="status-edit-btn"
+          onClick={onOpenKiwoom}
+          title="키움 앱키/시크릿 입력 (실계좌 연동)"
+        >
+          키움 연동
         </button>
         {onOpenSettings && (
           <button type="button" className="status-edit-btn" onClick={onOpenSettings} title="데스크톱 설정">

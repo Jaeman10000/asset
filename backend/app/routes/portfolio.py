@@ -9,6 +9,7 @@ import time
 
 from fastapi import APIRouter
 from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel
 
 from ..adapters.base import BaseAdapter
 from ..adapters.bithumb import BithumbAdapter
@@ -157,6 +158,43 @@ async def debug_kiwoom() -> dict:
         except Exception as exc:  # noqa: BLE001
             out[tr] = {"error": str(exc)}
     return out
+
+
+class KiwoomConfigIn(BaseModel):
+    app_key: str
+    app_secret: str
+    is_mock: bool = False
+    account_no: str | None = None
+
+
+@router.get("/config/kiwoom")
+async def get_kiwoom_config() -> dict:
+    """키움 연동 상태 (값은 노출하지 않음)."""
+    from ..keychain import get_api_key, has_api_key
+
+    return {
+        "configured": has_api_key("kiwoom", "app_key") and has_api_key("kiwoom", "app_secret"),
+        "isMock": get_api_key("kiwoom", "is_mock") == "1",
+        "hasAccount": has_api_key("kiwoom", "account_no"),
+    }
+
+
+@router.put("/config/kiwoom")
+async def set_kiwoom_config(cfg: KiwoomConfigIn) -> dict:
+    """앱 안에서 키움 앱키/시크릿을 저장한다 (터미널 불필요). OS 키체인에만 저장."""
+    from ..keychain import set_api_key
+    from ..services.kiwoom_client import KiwoomClient
+
+    set_api_key("kiwoom", "app_key", cfg.app_key.strip())
+    set_api_key("kiwoom", "app_secret", cfg.app_secret.strip())
+    set_api_key("kiwoom", "is_mock", "1" if cfg.is_mock else "0")
+    if cfg.account_no and cfg.account_no.strip():
+        set_api_key("kiwoom", "account_no", cfg.account_no.strip())
+    # 캐시된 토큰·스냅샷 무효화 → 다음 조회부터 새 키로
+    KiwoomClient._token = None
+    KiwoomClient._token_exp = 0.0
+    _cache.clear()
+    return {"ok": True}
 
 
 @router.get("/config/sources")

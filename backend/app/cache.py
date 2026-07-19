@@ -34,3 +34,8 @@ class TTLCache(Generic[T]):
             self._value = value
             self._expires_at = time.monotonic() + self.ttl
             return value
+
+    def clear(self) -> None:
+        """캐시 무효화 — 다음 조회에서 새로 fetch (예: 키 변경 직후)."""
+        self._value = None
+        self._expires_at = 0.0
