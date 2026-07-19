@@ -46,7 +46,7 @@ try {
  * JS 에러가 나면 흰/검은 빈 화면("먹통")만 보인다. 그걸 진단 가능하게 만든다.
  */
 function showFatalOverlay(title: string, detail: string) {
-  report('FATAL: ' + title + ' :: ' + detail.slice(0, 500));
+  report('FATAL: ' + title + ' :: ' + detail.slice(0, 500))
   const existing = document.getElementById('fatal-overlay')
   if (existing) return // 첫 에러만 표시
   const el = document.createElement('div')
@@ -54,7 +54,22 @@ function showFatalOverlay(title: string, detail: string) {
   el.style.cssText =
     'position:fixed;inset:0;z-index:99999;background:#0a0e12;color:#e6f0f0;' +
     'font:13px/1.6 ui-monospace,Consolas,monospace;padding:24px;overflow:auto;white-space:pre-wrap'
-  el.textContent = `⚠ ${title}\n\n${detail}\n\n(이 화면을 캡처해서 개발자에게 보내세요)`
+
+  const pre = document.createElement('div')
+  pre.textContent = `⚠ ${title}\n\n${detail}\n\n(이 화면을 캡처해서 개발자에게 보내세요)`
+
+  // ⚠️ 닫기 버튼 필수: 이 오버레이는 unhandledrejection에도 뜨는데, 설정 토글 같은
+  // 비치명적 async 실패까지 전체화면으로 덮어 "앱 벽돌화"를 만들던 문제(UX P0)를
+  // 막는다. 닫으면 뒤의 앱이 그대로 살아있다(대개 치명적이지 않음).
+  const btn = document.createElement('button')
+  btn.textContent = '닫기'
+  btn.style.cssText =
+    'position:fixed;top:16px;right:16px;padding:6px 14px;border-radius:8px;cursor:pointer;' +
+    'background:#12303a;color:#dfe9ea;border:1px solid rgba(43,230,200,0.4);font:inherit'
+  btn.onclick = () => el.remove()
+
+  el.appendChild(pre)
+  el.appendChild(btn)
   document.body.appendChild(el)
 }
 

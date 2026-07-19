@@ -28,6 +28,7 @@ interface PortfolioStore {
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let inFlight: AbortController | null = null;
+let onWake: (() => void) | null = null;
 
 export const usePortfolio = create<PortfolioStore>((set, get) => {
   /**
@@ -87,12 +88,27 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
           .then((sources) => set({ sources }))
           .catch(() => {});
       }, POLL_INTERVAL_MS);
+
+      // 절전 복귀·창 포커스·네트워크 복구 시 강제 새로고침 —
+      // 진행 중 요청이 stuck이면 취소하고 즉시 최신 데이터를 받아 stale 상태를 푼다.
+      onWake = () => {
+        if (document.visibilityState === 'visible') void poll(true);
+      };
+      window.addEventListener('focus', onWake);
+      window.addEventListener('online', onWake);
+      document.addEventListener('visibilitychange', onWake);
     },
 
     stop: () => {
       if (pollTimer) {
         clearInterval(pollTimer);
         pollTimer = null;
+      }
+      if (onWake) {
+        window.removeEventListener('focus', onWake);
+        window.removeEventListener('online', onWake);
+        document.removeEventListener('visibilitychange', onWake);
+        onWake = null;
       }
       inFlight?.abort();
       inFlight = null;

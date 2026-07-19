@@ -117,6 +117,55 @@ body {
   color: var(--dim);
   font-size: 14px;
 }
+/* 오프라인 재시도 안내 (무한 대기 대신 명확한 상태 + 액션) */
+.boot-offline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.boot-offline strong {
+  font-size: 16px;
+  color: #eef7f6;
+}
+.boot-offline span {
+  font-size: 12px;
+  color: var(--sub);
+}
+.boot-offline .btn-primary {
+  margin-top: 6px;
+}
+/* 빈 포트폴리오 온보딩 CTA — 중앙에 떠서 첫 액션을 유도 */
+.empty-cta {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 22px 28px;
+  border-radius: 16px;
+  background: rgba(8, 13, 16, 0.82);
+  border: 1px solid rgba(43, 230, 200, 0.28);
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.75), 0 0 30px -10px rgba(43, 230, 200, 0.25);
+  backdrop-filter: blur(10px);
+}
+.empty-cta strong {
+  font-size: 16px;
+  color: #eef7f6;
+}
+.empty-cta span {
+  font-size: 12px;
+  color: var(--dim);
+}
+.empty-cta .btn-primary {
+  margin-top: 8px;
+}
 
 /* 상단 마켓 상태 필 (프로토타입 topbar) */
 .market-pills {

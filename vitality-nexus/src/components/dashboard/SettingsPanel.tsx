@@ -21,20 +21,39 @@ const MODES: { key: PlacementMode; label: string; desc: string }[] = [
 export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<PlacementMode>('normal');
   const [autostart, setAuto] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    void isAutostartEnabled().then(setAuto);
+    // .catch 필수 — 실패가 unhandledrejection으로 새 나가면 전체화면 오류 오버레이가 뜬다
+    isAutostartEnabled()
+      .then(setAuto)
+      .catch(() => {});
   }, []);
 
+  // 네이티브 호출 실패를 반드시 여기서 잡는다. 안 잡으면 `void chooseMode()`의
+  // 거부가 unhandledrejection → 닫을 수 없는 FATAL 오버레이로 앱을 벽돌화한다(UX P0).
   async function chooseMode(m: PlacementMode) {
+    const prev = mode;
     setMode(m);
-    await setPlacement(m);
+    try {
+      await setPlacement(m);
+      setErr(null);
+    } catch (e) {
+      setMode(prev); // 실패 시 원복
+      setErr('배치 모드 변경 실패: ' + (e instanceof Error ? e.message : String(e)));
+    }
   }
 
   async function toggleAutostart() {
     const next = !autostart;
     setAuto(next);
-    await setAutostart(next);
+    try {
+      await setAutostart(next);
+      setErr(null);
+    } catch (e) {
+      setAuto(!next); // 실패 시 원복
+      setErr('자동 실행 설정 실패: ' + (e instanceof Error ? e.message : String(e)));
+    }
   }
 
   return (
@@ -73,6 +92,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             </span>
           </label>
         </section>
+
+        {err && <p className="editor-error">{err}</p>}
 
         <p className="settings-note">
           배치 모드는 시스템 트레이 아이콘 우클릭 메뉴에서도 바꿀 수 있습니다.

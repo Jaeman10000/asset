@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Component, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
@@ -14,6 +14,24 @@ import { portfolioBpm } from './util/heart';
  * 배경(아래→위): AuroraVeil(초저해상도 안개, 렉 없음) → 3D 심장 씬(투명) → 글래스 UI.
  * 프로토타입의 정보 구조(3열 그리드, 시장 랭킹, 수급 호버)를 exe의 질감으로 렌더.
  */
+
+/**
+ * SceneBoundary — 3D 심장 씬(WebGL/R3F)에서 던진 에러를 여기서 잡아 씬만 숨긴다.
+ * 이 경계가 없으면 씬 오류가 RootErrorBoundary까지 올라가 앱 전체가 빈 화면이
+ * 된다(CTO 지적). GPU가 약하거나 컨텍스트 로스트가 나도 대시보드는 계속 쓰인다.
+ */
+class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.warn('[scene] 3D 씬 오류 — 씬 없이 계속 진행', error);
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 /** 우하단 실측 FPS (심장 씬이 노출하는 __renderCount 기준) */
 function FpsMeter() {
@@ -105,12 +123,14 @@ export default function App() {
           (2) 약한 GPU(Intel UHD)에서 fps를 절반으로 깎는다. 홀로그램 발광은 궤도·노드·
           파티클의 가산 스프라이트가 자체적으로 낸다. 실험용으로 ?bloom 로 켤 수 있음. */}
       <div className="scene-bg">
-        <OrganicCoreScene
-          bpm={bpm}
-          krSectors={krSectors}
-          usSectors={usSectors}
-          bloom={new URLSearchParams(window.location.search).has('bloom')}
-        />
+        <SceneBoundary>
+          <OrganicCoreScene
+            bpm={bpm}
+            krSectors={krSectors}
+            usSectors={usSectors}
+            bloom={new URLSearchParams(window.location.search).has('bloom')}
+          />
+        </SceneBoundary>
       </div>
 
       {/* 상단 바 (프로토타입: 브랜드 + 마켓 상태 필) */}
@@ -132,8 +152,29 @@ export default function App() {
 
       {snapshot ? (
         <Dashboard snapshot={snapshot} bpm={bpm} krSectors={krSectors} usSectors={usSectors} />
+      ) : conn === 'offline' ? (
+        <div className="boot-msg">
+          <div className="boot-offline">
+            <strong>백엔드에 연결하지 못했습니다</strong>
+            <span>로컬 데이터 서버(127.0.0.1:8787)가 아직 준비되지 않았어요.</span>
+            <button type="button" className="btn-primary" onClick={() => void refresh()}>
+              다시 시도
+            </button>
+          </div>
+        </div>
       ) : (
-        <div className="boot-msg">{conn === 'offline' ? '백엔드 연결 대기 중…' : '불러오는 중…'}</div>
+        <div className="boot-msg">불러오는 중…</div>
+      )}
+
+      {/* 빈 포트폴리오 — 첫 유저를 보유종목 추가로 유도 (온보딩 CTA) */}
+      {snapshot && snapshot.positions.length === 0 && (
+        <div className="empty-cta">
+          <strong>아직 보유 종목이 없어요</strong>
+          <span>보유 종목을 추가하면 심장이 내 자산으로 뛰기 시작합니다.</span>
+          <button type="button" className="btn-primary" onClick={() => setEditorOpen(true)}>
+            + 보유종목 추가
+          </button>
+        </div>
       )}
 
       <StatusBar

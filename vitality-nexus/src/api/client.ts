@@ -20,12 +20,30 @@ const BASE =
   (import.meta.env.VITE_API_BASE as string | undefined) ??
   (isTauri ? 'http://127.0.0.1:8787' : '/api');
 
+// 요청 타임아웃 — 절전 복귀/회선 블랙홀(RST 없이 끊김)로 소켓이 OS TCP 타임아웃
+// (수 분)까지 살아있으면 폴링이 그 요청에 갇혀 stale 데이터를 "실시간"인 척 보인다.
+// 10초 안에 응답 없으면 abort → 스토어가 '오프라인'으로 전환하고 다음 폴링이 재시도.
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function getJSON<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const resp = await fetch(`${BASE}${path}`, { signal });
-  if (!resp.ok) {
-    throw new Error(`${path} → HTTP ${resp.status}`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+  // 외부 signal(수동 새로고침/stop)도 이 요청을 중단시키도록 연결
+  const onAbort = () => ctrl.abort();
+  if (signal) {
+    if (signal.aborted) ctrl.abort();
+    else signal.addEventListener('abort', onAbort, { once: true });
   }
-  return resp.json() as Promise<T>;
+  try {
+    const resp = await fetch(`${BASE}${path}`, { signal: ctrl.signal });
+    if (!resp.ok) {
+      throw new Error(`${path} → HTTP ${resp.status}`);
+    }
+    return (await resp.json()) as T;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+  }
 }
 
 export function fetchSnapshot(signal?: AbortSignal): Promise<PortfolioSnapshot> {
