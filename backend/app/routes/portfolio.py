@@ -8,6 +8,7 @@ import asyncio
 import time
 
 from fastapi import APIRouter
+from fastapi.concurrency import run_in_threadpool
 
 from ..adapters.base import BaseAdapter
 from ..adapters.bithumb import BithumbAdapter
@@ -79,7 +80,9 @@ async def _build_snapshot() -> PortfolioSnapshot:
         sector_flows.extend(result.sector_flows)
         if result.error:
             errors.append(result.error)
-            if not result.unconfigured:
+            # 설정 대기(키 미입력)·배경 시장데이터(US 섹터) 실패는 내 자산 평가와
+            # 무관하므로 isEstimate(전체 흐림) 판정에서 제외한다.
+            if not result.unconfigured and not result.background:
                 real_failures += 1
 
     # ── 키움/KRX 연동 전: 프로토타입이 보여주던 시장 정보(수급/랭킹/KR섹터)를
@@ -118,7 +121,8 @@ async def _build_snapshot() -> PortfolioSnapshot:
         marketMock=market_mock,
     )
 
-    save_snapshot(snapshot.fetchedAt, snapshot.model_dump_json())
+    # 동기 sqlite write를 스레드풀로 — async 요청 경로에서 이벤트 루프 블로킹 방지(QA)
+    await run_in_threadpool(save_snapshot, snapshot.fetchedAt, snapshot.model_dump_json())
     return snapshot
 
 

@@ -94,7 +94,8 @@ class YahooAdapter(BaseAdapter):
                 )
         except Exception as exc:  # 클라이언트 자체 생성 실패 등
             return AdapterResult(
-                error=SourceError(source=self.name, message=f"Yahoo Finance 연결 실패: {exc}")
+                error=SourceError(source=self.name, message=f"Yahoo Finance 연결 실패: {exc}"),
+                background=True,  # 섹터 배경 데이터 — 실패해도 내 자산은 추정치 아님
             )
 
         flows: list[SectorFlow] = []

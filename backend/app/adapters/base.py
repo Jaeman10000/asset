@@ -21,6 +21,10 @@ class AdapterResult:
     # isEstimate 경고를 상시 띄우면 안 되므로, unconfigured=True인 결과는
     # 상태 표시용으로만 errors에 담고 isEstimate 판정에서는 제외한다.
     unconfigured: bool = False
+    # 사용자 보유 자산 평가와 무관한 '배경 시장 데이터'(예: 미국 SPDR 섹터 등락률)
+    # 전용 어댑터. 이런 소스가 실패해도 내 포트폴리오 가치가 추정치가 되는 건 아니므로
+    # isEstimate(전체 흐림)에서 제외한다 (errors에는 담아 상태만 표시).
+    background: bool = False
 
 
 class BaseAdapter(ABC):
