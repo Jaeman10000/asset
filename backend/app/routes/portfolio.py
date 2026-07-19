@@ -101,17 +101,20 @@ async def _build_snapshot() -> PortfolioSnapshot:
             p.investors = mock_market.investors_for(p.symbol)
             p.investorPeriods = mock_market.investor_periods_for(p.symbol)
             market_mock = True
-    # 시장 랭킹: 키움 실데이터가 있으면 그걸, 없으면 모의로
+    # 시장 랭킹: 키움 실데이터가 있으면 그걸(rankingMock=False), 없으면 모의로
     if real_ranking:
         market_ranking = real_ranking
+        ranking_mock = False
     else:
         market_ranking = mock_market.market_ranking()
-        market_mock = True
-    if market_mock:
+        ranking_mock = True
+    if market_mock or ranking_mock:
         errors.append(
             SourceError(
                 source="모의",
-                message="시장 랭킹·수급·KR 섹터는 모의 데이터 (키움/KRX 연동 시 실데이터로 대체)",
+                message="섹터·수급"
+                + ("·랭킹" if ranking_mock else "")
+                + "은 모의 데이터 (키움 연동 시 실데이터로 대체)",
             )
         )
 
@@ -126,6 +129,7 @@ async def _build_snapshot() -> PortfolioSnapshot:
         # 있을 때만 "추정치"로 표시한다 (스펙: isEstimate = UI에서 흐리게)
         isEstimate=real_failures > 0,
         marketMock=market_mock,
+        rankingMock=ranking_mock,
     )
 
     # 동기 sqlite write를 스레드풀로 — async 요청 경로에서 이벤트 루프 블로킹 방지(QA)
@@ -149,7 +153,21 @@ async def debug_kiwoom() -> dict:
         return {"configured": False, "hint": "키움 앱키/시크릿 미설정"}
     calls = [
         ("acnt", "kt00005", {"qry_tp": "1", "dmst_stex_tp": "KRX"}),  # 잔고
-        ("rkinfo", "ka10027", {"mrkt_tp": "000"}),  # 상승률 상위
+        (
+            "rkinfo",
+            "ka10027",
+            {
+                "mrkt_tp": "000",
+                "sort_tp": "1",
+                "trde_qty_cnd": "0000",
+                "stk_cnd": "0",
+                "crd_cnd": "0",
+                "updown_incls": "1",
+                "pric_cnd": "0",
+                "trde_prica_cnd": "0",
+                "stex_tp": "3",
+            },
+        ),  # 상승률 상위
     ]
     out: dict = {"configured": True, "is_mock": c.is_mock}
     for cat, tr, body in calls:

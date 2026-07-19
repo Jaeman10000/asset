@@ -98,8 +98,10 @@ export interface PortfolioSnapshot {
   fetchedAt: number;
   errors: SourceError[];
   isEstimate: boolean;
-  /** 시장 데이터(랭킹/섹터수급/종목수급)가 모의인지 — true면 UI에 '샘플' 워터마크 */
+  /** 섹터 flow·종목 수급이 모의인지 — true면 해당 패널에 '샘플' 워터마크 */
   marketMock?: boolean;
+  /** 시장 랭킹이 모의인지 (키움 랭킹 연동되면 false) */
+  rankingMock?: boolean;
 }
 
 /** 각 소스가 설정됐는지 (GET /config/sources) */

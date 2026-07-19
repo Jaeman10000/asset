@@ -340,9 +340,10 @@ export function Dashboard({
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [selId, setSelId] = useState<string | null>(null);
   const t = snapshot.totals;
-  // 랭킹·섹터수급이 모의(mock_market)면 실데이터로 오인하지 않게 '샘플' 워터마크.
-  // (구버전 백엔드엔 marketMock이 없으므로 기본 false)
+  // 섹터 flow·수급이 모의면 '샘플' 워터마크 (구버전 백엔드엔 없으므로 기본 false).
   const marketMock = snapshot.marketMock ?? false;
+  // 랭킹은 별도 플래그 — 키움 연동되면 랭킹만 실데이터라 '샘플' 딱지가 사라진다.
+  const rankingMock = snapshot.rankingMock ?? marketMock;
 
   // 데이터 갱신 순간 = 총합 카드 하나가 금색 플래시 (스펙: 갱신 순간만 발광)
   useEffect(() => {
@@ -442,14 +443,14 @@ export function Dashboard({
         </div>
 
         {/* ── 우측: 오늘의 시장 랭킹 ── */}
-        <div className={`card ranking-card${marketMock ? ' is-mock' : ''}`}>
+        <div className={`card ranking-card${rankingMock ? ' is-mock' : ''}`}>
           <h3>
             <span className="dot" />
             오늘의 시장 랭킹
-            {marketMock ? (
+            {rankingMock ? (
               <span className="mock-badge">⚠ 샘플 데이터</span>
             ) : (
-              <span className="exch">실시간</span>
+              <span className="exch">키움 실시간</span>
             )}
           </h3>
           <div className="ranking-tabs">

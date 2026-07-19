@@ -113,6 +113,9 @@ class PortfolioSnapshot(BaseModel):
     fetchedAt: int  # epoch ms
     errors: list[SourceError] = Field(default_factory=list)
     isEstimate: bool = False  # errors가 하나라도 있으면 True — UI에서 흐리게 표시
-    # 시장 데이터(랭킹/섹터수급/종목수급)가 모의(mock_market)인지 — 키움/KRX 연동 전엔 True.
-    # 프론트가 해당 패널에 "샘플 데이터" 워터마크를 씌워 실데이터로 오인하지 않게 한다.
+    # 섹터 flow·종목 수급이 모의(mock_market)인지 (키움 수급/섹터 연동 전엔 True).
+    # 프론트가 해당 패널에 "샘플 데이터" 워터마크를 씌운다.
     marketMock: bool = False
+    # 시장 랭킹이 모의인지 (키움 랭킹 연동되면 False). 랭킹 카드 워터마크용 — 별도 플래그라
+    # 랭킹만 실데이터가 돼도 섹터/수급 모의와 독립적으로 표시된다.
+    rankingMock: bool = True
