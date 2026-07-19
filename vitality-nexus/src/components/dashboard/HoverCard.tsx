@@ -21,6 +21,7 @@ export interface HoverInfo {
   volume?: number | null;
   investors?: InvestorFlow | null;
   periods?: InvestorPeriod[]; // 20일/60일 누적 수급
+  investorsMock?: boolean; // 수급이 모의면 note에 '모의' 표기
   lastUpdated?: number;
 }
 
@@ -38,6 +39,7 @@ export function fromPosition(p: Position): HoverInfo {
     value: p.value,
     investors: p.investors,
     periods: p.investorPeriods,
+    investorsMock: p.investorsMock,
     lastUpdated: p.lastUpdated,
   };
 }
@@ -53,6 +55,7 @@ export function fromMarket(m: MarketStock, held: boolean): HoverInfo {
     volume: m.volume,
     investors: m.investors,
     periods: m.investorPeriods,
+    investorsMock: m.investorsMock,
   };
 }
 
@@ -82,8 +85,18 @@ function fmtNum(v: number): string {
   return (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR');
 }
 
-function InvestorBars({ inv, periods }: { inv: InvestorFlow; periods?: InvestorPeriod[] }) {
-  const maxAbs = Math.max(...INVESTOR_ROWS.map((r) => Math.abs(inv[r.key])), 1);
+function InvestorBars({
+  inv,
+  periods,
+  mock,
+}: {
+  inv: InvestorFlow;
+  periods?: InvestorPeriod[];
+  mock?: boolean;
+}) {
+  // 키움 실데이터(ka10059)엔 프로그램 항목이 없어 항상 0 → 실데이터일 땐 행을 숨긴다.
+  const rows = mock ? INVESTOR_ROWS : INVESTOR_ROWS.filter((r) => r.key !== 'program');
+  const maxAbs = Math.max(...rows.map((r) => Math.abs(inv[r.key])), 1);
   const hasP = !!periods && periods.length > 0;
   return (
     <div className={`inv-section ${hasP ? 'has-periods' : ''}`}>
@@ -100,7 +113,7 @@ function InvestorBars({ inv, periods }: { inv: InvestorFlow; periods?: InvestorP
           ))}
         </div>
       )}
-      {INVESTOR_ROWS.map((r) => {
+      {rows.map((r) => {
         const v = inv[r.key];
         const w = (Math.abs(v) / maxAbs) * 100;
         return (
@@ -136,9 +149,11 @@ function InvestorBars({ inv, periods }: { inv: InvestorFlow; periods?: InvestorP
         );
       })}
       <div className="inv-note">
-        {hasP
-          ? '당일=장중 잠정 · 20/60일=누적 순매수 · 모의 데이터'
-          : '외국인·기관은 당일 장중 잠정치 · 모의 데이터'}
+        {mock
+          ? hasP
+            ? '당일=장중 잠정 · 20/60일=누적 순매수 · 모의 데이터'
+            : '외국인·기관은 당일 장중 잠정치 · 모의 데이터'
+          : '당일=최근 거래일 · 20/60일=누적 순매수 · 키움 실데이터'}
       </div>
     </div>
   );
@@ -203,7 +218,9 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
       )}
 
       {/* 수급현황 — 이 카드의 주인공 (당일 + 20/60일 누적) */}
-      {h.investors && <InvestorBars inv={h.investors} periods={h.periods} />}
+      {h.investors && (
+        <InvestorBars inv={h.investors} periods={h.periods} mock={h.investorsMock} />
+      )}
 
       <div className="truth-foot">기준 {time}</div>
     </div>

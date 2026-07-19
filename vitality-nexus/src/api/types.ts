@@ -43,6 +43,7 @@ export interface Position {
   sector?: string | null;
   investors?: InvestorFlow | null; // KR 주식 수급 (호버 표시)
   investorPeriods?: InvestorPeriod[]; // 20일/60일 누적 수급
+  investorsMock?: boolean; // 수급이 모의인지 (키움 실데이터면 false)
   lastUpdated: number;
 }
 
@@ -55,6 +56,7 @@ export interface MarketStock {
   volume: number;
   investors: InvestorFlow;
   investorPeriods?: InvestorPeriod[]; // 20일/60일 누적 수급
+  investorsMock?: boolean; // 수급이 모의인지 (키움 실데이터면 false)
 }
 
 export interface SectorFlow {

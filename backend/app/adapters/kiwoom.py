@@ -3,34 +3,36 @@
 앱키/시크릿이 keychain에 있으면 실제 REST를 호출한다(services/kiwoom_client).
 없으면 unconfigured로 조용히 넘어가 mock_market이 채운다.
 
-⚠️ 응답 필드명은 실제 응답으로 확정한다. 그래서:
-  - 응답에서 '첫 dict 리스트'를 자동 탐색해 출력 배열을 찾고(_first_list),
-  - 각 값은 여러 후보 키로 추출하며(_f),
-  - 그래도 핵심 필드를 못 찾으면 raw 응답의 키 목록을 에러로 올려(진단),
-    실제 필드명을 보고 이 파일의 후보 목록만 고치면 되게 했다.
-TR코드: 잔고 kt00005 / 종목별투자자 ka10059 / 상승률 ka10027 / 하락률 ka10028
-        / 거래량상위 ka10030 (실제 코드는 응답으로 검증).
+실제 응답으로 확정한 필드/TR:
+  - 잔고 kt00005: 리스트 stk_cntr_remn, 종목코드 stk_cd("A" 접두사),
+    보유수량 cur_qty, 평단 buy_uv, 현재가 cur_prc, 종목명 stk_nm.
+  - 종목별투자자 ka10059(stkinfo): dt 필수(YYYYMMDD), 리스트 stk_invsr_orgn,
+    일별 순매수(백만원) 외국인 frgnr_invsr / 기관 orgn / 개인 ind_invsr.
+    일별이라 최근 N행을 합산해 20/60일 누적을 만든다.
+  - 순위 ka10027(등락률상위)/ka10030(거래량상위): sort_tp 등 필수 파라미터.
 """
 from __future__ import annotations
 
 import asyncio
 import time
+from datetime import datetime
 from typing import Any
 
-from ..schemas import InvestorFlow, MarketStock, Position, SourceError
+from ..schemas import InvestorFlow, InvestorPeriod, MarketStock, Position, SourceError
 from ..services.kiwoom_client import KiwoomClient, KiwoomError
 from .base import AdapterResult, BaseAdapter
 
+# 투자자 순매수 금액 단위 = 백만원 → 억원 환산(÷100). (acc_trde_prica 교차검증으로 확인)
+_AMT_TO_EOK = 100.0
+
 
 def _first_list(data: Any) -> list[dict[str, Any]]:
-    """응답에서 dict들의 리스트(출력 배열)를 자동으로 찾아 반환."""
     if isinstance(data, list):
         return [x for x in data if isinstance(x, dict)]
     if isinstance(data, dict):
         for v in data.values():
             if isinstance(v, list) and v and isinstance(v[0], dict):
                 return v
-        # 한 단계 더 (output.list 같은 중첩)
         for v in data.values():
             if isinstance(v, dict):
                 got = _first_list(v)
@@ -53,6 +55,14 @@ def _num(v: Any, default: float = 0.0) -> float:
         return default
 
 
+def _clean_code(raw: Any) -> str:
+    """키움 종목코드 정규화 — 'A000660'/'008290_AL' → '000660'/'008290'."""
+    s = str(raw)
+    if s[:1] in ("A", "Q"):
+        s = s[1:]
+    return s.split("_")[0]
+
+
 class KiwoomAdapter(BaseAdapter):
     name = "kiwoom"
 
@@ -69,6 +79,7 @@ class KiwoomAdapter(BaseAdapter):
         try:
             positions = await self._holdings(client)
             ranking = await self._ranking(client)
+            await self._attach_investors(client, positions, ranking)
         except (KiwoomError, Exception) as exc:
             return AdapterResult(
                 error=SourceError(source=self.name, message=f"키움 조회 실패: {exc}")
@@ -77,16 +88,13 @@ class KiwoomAdapter(BaseAdapter):
 
     # ── 보유종목 (실계좌 잔고 kt00005) ──
     async def _holdings(self, client: KiwoomClient) -> list[Position]:
-        data = await client.call(
-            "acnt", "kt00005", {"qry_tp": "1", "dmst_stex_tp": "KRX"}
-        )
+        data = await client.call("acnt", "kt00005", {"qry_tp": "1", "dmst_stex_tp": "KRX"})
         rows = _first_list(data)
         now = int(time.time() * 1000)
         out: list[Position] = []
         for i, r in enumerate(rows):
             code_raw = _f(r, "stk_cd", "종목코드", "item_cd", "pdno")
-            # 키움은 종목코드에 "A" 접두사("A000660") — 앱 표준(6자리)으로 정규화
-            code = str(code_raw)[1:] if str(code_raw).startswith(("A", "Q")) else str(code_raw)
+            code = _clean_code(code_raw)
             qty = _num(_f(r, "cur_qty", "rmnd_qty", "보유수량", "hold_qty", "qty", "hldg_qty"))
             if not code_raw or qty == 0:
                 continue
@@ -100,7 +108,7 @@ class KiwoomAdapter(BaseAdapter):
                     exchange="kiwoom",
                     assetType="stock",
                     region="KR",
-                    symbol=str(code),
+                    symbol=code,
                     name=str(name),
                     qty=qty,
                     avg=avg,
@@ -113,9 +121,75 @@ class KiwoomAdapter(BaseAdapter):
                 )
             )
         if rows and not out:
-            # 리스트는 받았는데 매핑이 하나도 안 됨 → 실제 키를 알려 확정에 쓴다
             raise KiwoomError(f"잔고 필드 매핑 실패 — 실제 키: {list(rows[0].keys())}")
         return out
+
+    # ── 종목별 수급 (ka10059) — 보유 KR 종목 + 랭킹 종목에 당일 + 20/60일 누적 부착 ──
+    async def _attach_investors(
+        self,
+        client: KiwoomClient,
+        positions: list[Position],
+        ranking: list[MarketStock],
+    ) -> None:
+        kr = [p for p in positions if p.region == "KR" and p.assetType == "stock"]
+        # 보유 + 랭킹 종목코드를 합쳐 중복 제거 (한 종목당 ka10059 1회만)
+        codes = sorted({p.symbol for p in kr} | {m.symbol for m in ranking})
+        if not codes:
+            return
+        dt = datetime.now().strftime("%Y%m%d")
+        sem = asyncio.Semaphore(3)  # 레이트리밋 대비 동시 3
+
+        async def one(code: str) -> list[dict[str, Any]]:
+            async with sem:
+                try:
+                    data = await client.call(
+                        "stkinfo",
+                        "ka10059",
+                        {
+                            "dt": dt,
+                            "stk_cd": code,
+                            "amt_qty_tp": "1",  # 1=금액
+                            "trde_tp": "0",  # 0=순매수
+                            "unit_tp": "1000",
+                        },
+                    )
+                    return data.get("stk_invsr_orgn") or _first_list(data)
+                except Exception:
+                    return []
+
+        lists = await asyncio.gather(*(one(c) for c in codes))
+        flows: dict[str, tuple[InvestorFlow, list[InvestorPeriod]]] = {}
+        for code, rows in zip(codes, lists):
+            if rows:
+                flows[code] = self._build_flow(rows)
+        for p in kr:
+            if p.symbol in flows:
+                p.investors, p.investorPeriods = flows[p.symbol]
+                p.investorsMock = False
+        for m in ranking:
+            if m.symbol in flows:
+                m.investors, m.investorPeriods = flows[m.symbol]
+                m.investorsMock = False
+
+    @staticmethod
+    def _build_flow(rows: list[dict[str, Any]]) -> tuple[InvestorFlow, list[InvestorPeriod]]:
+        """ka10059 일별 순매수 행들 → 당일(InvestorFlow) + 20/60일 누적(InvestorPeriod)."""
+
+        def agg(rs: list[dict[str, Any]]) -> tuple[int, int, int]:
+            f = sum(_num(r.get("frgnr_invsr")) for r in rs) / _AMT_TO_EOK
+            i = sum(_num(r.get("orgn")) for r in rs) / _AMT_TO_EOK
+            ind = sum(_num(r.get("ind_invsr")) for r in rs) / _AMT_TO_EOK
+            return round(f), round(i), round(ind)
+
+        f0, i0, ind0 = agg(rows[:1])
+        today = InvestorFlow(foreign=f0, inst=i0, individual=ind0, program=0)
+        periods: list[InvestorPeriod] = []
+        for label, n in (("20일", 20), ("60일", 60)):
+            f, i, ind = agg(rows[:n])
+            periods.append(
+                InvestorPeriod(label=label, foreign=f, inst=i, individual=ind, program=0)
+            )
+        return today, periods
 
     # ── 오늘의 시장 순위 (상승률/거래량) ──
     async def _ranking(self, client: KiwoomClient) -> list[MarketStock]:
@@ -125,7 +199,6 @@ class KiwoomAdapter(BaseAdapter):
             except Exception:
                 return []
 
-        # ka10027(등락률상위): sort_tp 필수(1=상승률). 나머지는 전체/조건없음 기본.
         up = await one(
             "ka10027",
             {
@@ -156,9 +229,8 @@ class KiwoomAdapter(BaseAdapter):
         )
         merged: dict[str, MarketStock] = {}
         for r in [*up, *vol]:
-            code_raw = _f(r, "stk_cd", "종목코드", "item_cd")
-            code = str(code_raw)[1:] if str(code_raw).startswith(("A", "Q")) else str(code_raw)
-            if not code_raw or code in merged:
+            code = _clean_code(_f(r, "stk_cd", "종목코드", "item_cd"))
+            if not code or code in merged:
                 continue
             merged[code] = MarketStock(
                 symbol=code,
@@ -166,6 +238,6 @@ class KiwoomAdapter(BaseAdapter):
                 price=abs(_num(_f(r, "cur_prc", "현재가", "prpr"))),
                 ret=_num(_f(r, "flu_rt", "등락률", "prdy_ctrt", "chg_rt", "fluc_rt")),
                 volume=int(abs(_num(_f(r, "trde_qty", "거래량", "acml_vol", "now_trde_qty")))),
-                investors=InvestorFlow(),  # 순위 TR엔 투자자별 수급 없음 (수급은 종목 상세)
+                investors=InvestorFlow(),
             )
         return list(merged.values())[:14]

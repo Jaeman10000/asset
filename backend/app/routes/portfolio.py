@@ -100,6 +100,7 @@ async def _build_snapshot() -> PortfolioSnapshot:
         if p.assetType == "stock" and p.region == "KR" and p.investors is None:
             p.investors = mock_market.investors_for(p.symbol)
             p.investorPeriods = mock_market.investor_periods_for(p.symbol)
+            p.investorsMock = True
             market_mock = True
     # 시장 랭킹: 키움 실데이터가 있으면 그걸(rankingMock=False), 없으면 모의로
     if real_ranking:
@@ -107,6 +108,8 @@ async def _build_snapshot() -> PortfolioSnapshot:
         ranking_mock = False
     else:
         market_ranking = mock_market.market_ranking()
+        for m in market_ranking:
+            m.investorsMock = True
         ranking_mock = True
     if market_mock or ranking_mock:
         errors.append(

@@ -56,6 +56,8 @@ class Position(BaseModel):
     investors: InvestorFlow | None = None
     # 기간 누적 수급 (20일/60일 등) — 호버에서 당일 옆에 작게
     investorPeriods: list[InvestorPeriod] = Field(default_factory=list)
+    # 이 종목 수급이 모의인지 (키움 ka10059 실데이터면 False). 호버 '모의' 표기용.
+    investorsMock: bool = False
     lastUpdated: int  # epoch ms
 
 
@@ -69,6 +71,7 @@ class MarketStock(BaseModel):
     volume: int  # 거래량 (주)
     investors: InvestorFlow  # 수급 (외국인/기관/개인/프로그램, 억원)
     investorPeriods: list[InvestorPeriod] = Field(default_factory=list)  # 20일/60일 누적
+    investorsMock: bool = False  # 이 종목 수급이 모의인지 (키움 실데이터면 False)
 
 
 class SectorFlow(BaseModel):
