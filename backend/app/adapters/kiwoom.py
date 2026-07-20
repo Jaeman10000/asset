@@ -164,6 +164,11 @@ _THEME_SECTORS: list[tuple[str, list[str]]] = [
     ("엔터", ["352820", "035900"]),  # 하이브·JYP
 ]
 
+# 지금까지 만든 '가장 완전한' 테마 섹터 세트를 기억한다. 콜드/불안정으로 이번 빌드가
+# 몇 개만 나오면(레이트리밋 예산 컷) 이 완전 세트로 대체해 SECTOR FLOW가 '2개만
+# 뜨는' 문제를 막는다(약간 stale해도 부분보다 낫다). 완전 세트를 새로 받으면 갱신.
+_sector_state: dict[str, list[SectorFlow]] = {"last": []}
+
 
 class KiwoomAdapter(BaseAdapter):
     name = "kiwoom"
@@ -251,6 +256,12 @@ class KiwoomAdapter(BaseAdapter):
                     individual=round(sum(m.individual for m in members)),
                 )
             )
+        # 이번 빌드가 더 완전하면(같거나 많으면) 갱신, 아니면 마지막 완전 세트로 대체 →
+        # 콜드/불안정에도 SECTOR FLOW가 '몇 개만' 뜨는 일이 없다.
+        if len(sectors) >= len(_sector_state["last"]):
+            _sector_state["last"] = sectors
+        else:
+            sectors = _sector_state["last"]
 
         fail_parts = []
         if rank_err:

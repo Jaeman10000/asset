@@ -1480,6 +1480,41 @@ body {
   gap: 6px;
   max-width: 260px;
 }
+/* 접기/펼치기 토글 — 평소엔 작은 점, 펼치면 라벨까지 */
+.status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(223, 233, 234, 0.7);
+  background: rgba(6, 10, 12, 0.55);
+  border: 1px solid rgba(43, 230, 200, 0.15);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  /* 접힘 상태(라벨 없음): 점만 있는 작은 원 */
+  padding: 6px;
+  transition: background 0.15s ease;
+}
+.status-bar.open .status-toggle {
+  padding: 5px 11px;
+  align-self: flex-end;
+}
+.status-toggle:hover {
+  background: rgba(6, 10, 12, 0.8);
+}
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
 .status-line {
   display: flex;
   align-items: center;

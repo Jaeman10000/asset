@@ -91,8 +91,10 @@ export default function App() {
   const bpm = snapshot ? portfolioBpm(snapshot.totals.total.pnlPct) : 72;
 
   // 홀로그램 섹터 링 + 하단 리드아웃 공용 데이터.
-  // 순서 = 수급 순위: KR은 (외국인+기관) 순매수 강도, US는 등락률 내림차순.
-  // 링과 리드아웃이 같은 배열을 받으므로 "12시=1위, 시계방향" 규칙이 둘 다 동일하다.
+  // 순서 = 수급 '규모' 순위: KR은 |외국인+기관| 절대값 큰 순(=오늘 외국인·기관이 가장
+  // 크게 사고판 섹터가 1위). 부호 큰 순(양수 먼저)으로 하면 수급 거의 없는 섹터(+47억)가
+  // 수급 최대 섹터(반도체 ±1,375억)보다 위로 올라오는 말이 안 되는 정렬이 돼서 바꿨다.
+  // 매수/매도 방향은 레인의 좌우 막대로 표시된다. US는 등락률 내림차순.
   const krSectors: RingSector[] = useMemo(
     () =>
       (snapshot?.sectorFlows ?? [])
@@ -104,7 +106,7 @@ export default function App() {
           inst: s.inst ?? 0,
           individual: s.individual ?? 0,
         }))
-        .sort((a, b) => (b.foreign! + b.inst!) - (a.foreign! + a.inst!)),
+        .sort((a, b) => Math.abs(b.foreign! + b.inst!) - Math.abs(a.foreign! + a.inst!)),
     [snapshot],
   );
   const usSectors: RingSector[] = useMemo(

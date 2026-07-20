@@ -46,86 +46,104 @@ export function StatusBar({
     // 폴링이 끝나는 시점을 정확히 모르므로 짧게 스핀만 보여준다(피드백용)
     setTimeout(() => setRefreshing(false), 1200);
   };
+  const [open, setOpen] = useState(false);
   const connLabel =
     conn === 'online' ? '연결됨' : conn === 'connecting' ? '연결 중…' : '백엔드 오프라인';
   const connColor =
     conn === 'online' ? 'var(--life)' : conn === 'connecting' ? 'var(--event)' : 'var(--down)';
 
   return (
-    <div className="status-bar">
-      <div className="status-line">
+    <div className={`status-bar${open ? ' open' : ''}`}>
+      {/* 평소엔 작은 상태 점만(우하단). 클릭하면 패널이 펼쳐지고, 다시 누르면 숨는다. */}
+      <button
+        type="button"
+        className="status-toggle"
+        onClick={() => setOpen((o) => !o)}
+        title={open ? '숨기기' : '상태·설정 열기'}
+      >
         <span className="status-dot" style={{ background: connColor }} />
-        <span>{connLabel}</span>
-        {isEstimate && <span className="status-estimate">추정치</span>}
-        <button
-          type="button"
-          className={`status-edit-btn refresh-btn${refreshing ? ' spinning' : ''}`}
-          onClick={handleRefresh}
-          disabled={refreshing}
-          title="지금 이 순간의 최신 수급·시세로 갱신 (캐시 무시)"
-        >
-          <span className="refresh-ico">↻</span> 새로고침
-        </button>
-        <button type="button" className="status-edit-btn" onClick={onOpenEditor}>
-          보유종목 편집
-        </button>
-        <button
-          type="button"
-          className="status-edit-btn"
-          onClick={onOpenKiwoom}
-          title="키움 앱키/시크릿 입력 (실계좌 연동)"
-        >
-          키움 연동
-        </button>
-        <button
-          type="button"
-          className="status-edit-btn"
-          onClick={onOpenCrypto}
-          title="업비트/빗썸 API 키 입력 (보유 코인 연동)"
-        >
-          거래소 연동
-        </button>
-        {onOpenSettings && (
-          <button type="button" className="status-edit-btn" onClick={onOpenSettings} title="데스크톱 설정">
-            ⚙
-          </button>
-        )}
-      </div>
+        {open && <span className="status-label">{connLabel}</span>}
+        {open && isEstimate && <span className="status-estimate">추정치</span>}
+      </button>
 
-      {sources && (
-        <div className="source-chips">
-          {(['manual', 'upbit', 'bithumb', 'kiwoom'] as const).map((k) => (
-            <span
-              key={k}
-              className={`source-chip ${sources[k] ? 'on' : 'off'}`}
-              title={sources[k] ? '설정됨' : '미설정 (API 키 필요)'}
+      {open && (
+        <div className="status-panel">
+          <div className="status-actions">
+            <button
+              type="button"
+              className={`status-edit-btn refresh-btn${refreshing ? ' spinning' : ''}`}
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="지금 이 순간의 최신 수급·시세로 갱신 (캐시 무시)"
             >
-              {SOURCE_LABELS[k]}
-            </span>
-          ))}
-        </div>
-      )}
+              <span className="refresh-ico">↻</span> 새로고침
+            </button>
+            <button type="button" className="status-edit-btn" onClick={onOpenEditor}>
+              보유종목 편집
+            </button>
+            <button
+              type="button"
+              className="status-edit-btn"
+              onClick={onOpenKiwoom}
+              title="키움 앱키/시크릿 입력 (실계좌 연동)"
+            >
+              키움 연동
+            </button>
+            <button
+              type="button"
+              className="status-edit-btn"
+              onClick={onOpenCrypto}
+              title="업비트/빗썸 API 키 입력 (보유 코인 연동)"
+            >
+              거래소 연동
+            </button>
+            {onOpenSettings && (
+              <button
+                type="button"
+                className="status-edit-btn"
+                onClick={onOpenSettings}
+                title="데스크톱 설정"
+              >
+                ⚙
+              </button>
+            )}
+          </div>
 
-      {conn === 'offline' && (
-        <div className="status-help">
-          백엔드가 꺼져 있습니다. <code>backend/</code>에서
-          <br />
-          <code>uvicorn app.main:app --port 8787</code> 실행
-        </div>
-      )}
+          {sources && (
+            <div className="source-chips">
+              {(['manual', 'upbit', 'bithumb', 'kiwoom'] as const).map((k) => (
+                <span
+                  key={k}
+                  className={`source-chip ${sources[k] ? 'on' : 'off'}`}
+                  title={sources[k] ? '설정됨' : '미설정 (API 키 필요)'}
+                >
+                  {SOURCE_LABELS[k]}
+                </span>
+              ))}
+            </div>
+          )}
 
-      {/* 진짜 실패(설정 대기 제외)만 접어서 보여줌 */}
-      {errors.length > 0 && conn === 'online' && (
-        <details className="status-errors">
-          <summary>{errors.length}개 소스 대기/오류</summary>
-          <ul>
-            {errors.map((e, i) => (
-              <li key={i}>
-                <b>{SOURCE_LABELS[e.source] ?? e.source}</b>: {e.message}
-              </li>
-            ))}
-          </ul>
-        </details>
+          {conn === 'offline' && (
+            <div className="status-help">
+              백엔드가 꺼져 있습니다. <code>backend/</code>에서
+              <br />
+              <code>uvicorn app.main:app --port 8787</code> 실행
+            </div>
+          )}
+
+          {errors.length > 0 && conn === 'online' && (
+            <details className="status-errors">
+              <summary>{errors.length}개 소스 대기/오류</summary>
+              <ul>
+                {errors.map((e, i) => (
+                  <li key={i}>
+                    <b>{SOURCE_LABELS[e.source] ?? e.source}</b>: {e.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
       )}
     </div>
   );

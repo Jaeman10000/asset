@@ -428,7 +428,7 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
         {mock ? (
           <span className="mock-badge">⚠ 샘플 데이터</span>
         ) : (
-          <span className="exch">순매수순</span>
+          <span className="exch">수급 규모순</span>
         )}
       </h3>
       <div className="flow-cols">
