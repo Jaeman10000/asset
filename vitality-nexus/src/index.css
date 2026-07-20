@@ -578,6 +578,20 @@ body {
   margin-left: 4px;
   letter-spacing: 0.06em;
 }
+/* 거래소 태그 — 업비트/빗썸을 색으로 구분 (같은 코인 2행일 때 한눈에) */
+.mini-holding .n small.ex-tag {
+  font-weight: 600;
+  padding: 0.5px 4px;
+  border-radius: 4px;
+}
+.ex-tag.upbit {
+  color: #6ea8ff;
+  background: rgba(59, 130, 246, 0.14);
+}
+.ex-tag.bithumb {
+  color: #ffb14d;
+  background: rgba(245, 158, 11, 0.14);
+}
 .mini-holding .v {
   font-size: 9px;
   color: var(--dim);

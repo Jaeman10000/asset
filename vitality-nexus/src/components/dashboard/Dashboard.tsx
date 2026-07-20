@@ -17,6 +17,13 @@ import { Spark, CoinIcon } from './shared';
 
 type RankTabKey = 'up' | 'down' | 'volume' | 'foreign' | 'inst';
 
+// 암호화폐 행에 어느 거래소인지 표기 (같은 코인이 업비트·빗썸 양쪽에 있으면 2행)
+const EXCHANGE_LABEL: Record<string, string> = {
+  upbit: '업비트',
+  bithumb: '빗썸',
+  manual: '수동',
+};
+
 const RANK_TABS: { key: RankTabKey; label: string }[] = [
   { key: 'up', label: '상승' },
   { key: 'down', label: '하락' },
@@ -141,8 +148,14 @@ function MiniRow({
         {/* 암호화폐만 코인 로고를 이름 앞에 */}
         {p.assetType === 'crypto' && <CoinIcon symbol={p.symbol} />}
         {p.name}
-        {/* 암호화폐는 종목명=심볼이라 중복(BTC BTC) → 다를 때만 코드 표기 */}
-        {p.symbol !== p.name && <small>{p.symbol}</small>}
+        {/* 암호화폐는 종목명=심볼이라 코드 대신 거래소를 표기 — 같은 코인이 업비트·
+            빗썸 양쪽에 있으면 2행으로 나오는데 어느 거래소 것인지 구분해준다.
+            주식은 기존대로 종목코드를 표기(이름≠코드). */}
+        {p.assetType === 'crypto' ? (
+          <small className={`ex-tag ${p.exchange}`}>{EXCHANGE_LABEL[p.exchange] ?? p.exchange}</small>
+        ) : (
+          p.symbol !== p.name && <small>{p.symbol}</small>
+        )}
       </div>
       <Spark history={p.history} color="auto" width={56} height={18} />
       <div className="v">{krwCompact(p.value)}</div>
