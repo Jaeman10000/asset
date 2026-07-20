@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any
 
@@ -54,6 +55,12 @@ class KiwoomClient:
 
     _token: str | None = None
     _token_exp: float = 0.0  # epoch seconds
+    # 스냅샷 하나가 잔고·랭킹·섹터·수급을 asyncio.gather로 동시에 부르는데, 토큰이
+    # 아직 없는 콜드스타트 순간엔 그 요청들이 전부 동시에 토큰 발급을 시도한다.
+    # 락 없이는 여러 개가 동시에 /oauth2/token을 때려서 서로의 토큰을 무효화시켜
+    # 그중 일부만 401로 실패하는 레이스가 났다(첫 스냅샷만 랭킹/섹터가 모의로
+    # 떨어지고 재시도하면 멀쩡했던 원인). 클래스 레벨 락으로 발급을 1회로 직렬화.
+    _token_lock: asyncio.Lock = asyncio.Lock()
 
     def __init__(self) -> None:
         self.app_key = get_api_key("kiwoom", "app_key")
@@ -70,6 +77,14 @@ class KiwoomClient:
         now = time.time()
         if KiwoomClient._token and now < KiwoomClient._token_exp - _TOKEN_SAFETY_SEC:
             return KiwoomClient._token
+        async with KiwoomClient._token_lock:
+            # 락 대기 중 다른 요청이 이미 발급했을 수 있음 — 다시 확인(더블체크).
+            now = time.time()
+            if KiwoomClient._token and now < KiwoomClient._token_exp - _TOKEN_SAFETY_SEC:
+                return KiwoomClient._token
+            return await self._request_token(client)
+
+    async def _request_token(self, client: httpx.AsyncClient) -> str:
         resp = await client.post(
             f"{self.base}{_TOKEN_PATH}",
             json={
@@ -86,7 +101,7 @@ class KiwoomClient:
         # expires_dt(만료시각 문자열) 또는 expires_in(초) 지원 — 없으면 12시간 가정
         exp_in = data.get("expires_in")
         KiwoomClient._token = token
-        KiwoomClient._token_exp = now + (float(exp_in) if exp_in else 12 * 3600)
+        KiwoomClient._token_exp = time.time() + (float(exp_in) if exp_in else 12 * 3600)
         return token
 
     async def call(

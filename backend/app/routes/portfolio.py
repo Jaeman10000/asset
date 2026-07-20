@@ -88,6 +88,10 @@ async def _build_snapshot() -> PortfolioSnapshot:
             # 무관하므로 isEstimate(전체 흐림) 판정에서 제외한다.
             if not result.unconfigured and not result.background:
                 real_failures += 1
+        if result.warning:
+            # 부가정보(랭킹/섹터)만 실패한 경우 — 내 자산가치는 정확하므로 isEstimate엔
+            # 영향 안 주지만, "왜 모의로 폴백했는지"는 화면에 보이게 한다.
+            errors.append(result.warning)
 
     # ── 실데이터(키움)로 채워지지 않은 시장 정보만 모의로 보충한다.
     #    모의가 하나라도 섞이면 marketMock=True로 내려 프론트가 "샘플" 워터마크를 씌운다.

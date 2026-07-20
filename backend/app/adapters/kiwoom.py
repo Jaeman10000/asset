@@ -153,20 +153,45 @@ class KiwoomAdapter(BaseAdapter):
                 self._holdings(client), self._us_holdings(client)
             )
             positions = kr_pos + us_pos
-            ranking, sectors = await asyncio.gather(
-                self._ranking(client), self._kr_sectors(client)
+        except (KiwoomError, Exception) as exc:
+            # 잔고(내 자산가치)를 못 받으면 이건 진짜 실패 — 전체를 에러로.
+            return AdapterResult(
+                error=SourceError(source=self.name, message=f"키움 잔고 조회 실패: {exc}")
             )
-            # 수급(ka10059)·일봉(ka10081)을 동시에 부착
+
+        # 랭킹·섹터는 부가정보라 잔고와 분리 — return_exceptions=True로 한쪽이
+        # 실패해도 다른 쪽·보유종목은 살린다. 실패하면 이유를 warning으로 남겨
+        # "왜 모의로 폴백했는지"가 화면에 보이게 한다(예전엔 조용히 삼켜져 원인불명이었음).
+        ranking_r, sectors_r = await asyncio.gather(
+            self._ranking(client), self._kr_sectors(client), return_exceptions=True
+        )
+        ranking = ranking_r if isinstance(ranking_r, list) else []
+        sectors = sectors_r if isinstance(sectors_r, list) else []
+        fail_parts = []
+        if isinstance(ranking_r, Exception):
+            fail_parts.append(f"랭킹={ranking_r}")
+        if isinstance(sectors_r, Exception):
+            fail_parts.append(f"KR섹터={sectors_r}")
+        warning = (
+            SourceError(source=self.name, message="키움 부가정보 조회 실패(" + ", ".join(fail_parts) + ") — 랭킹/섹터는 모의로 대체됨")
+            if fail_parts
+            else None
+        )
+
+        try:
+            # 수급(ka10059)·일봉(ka10081)을 동시에 부착 — 실패해도 보유종목 자체는 살린다.
             await asyncio.gather(
                 self._attach_investors(client, positions, ranking),
                 self._attach_history(client, positions),
             )
-        except (KiwoomError, Exception) as exc:
-            return AdapterResult(
-                error=SourceError(source=self.name, message=f"키움 조회 실패: {exc}")
-            )
+        except Exception:
+            pass
+
         return AdapterResult(
-            positions=positions, market_ranking=ranking, sector_flows=sectors
+            positions=positions,
+            market_ranking=ranking,
+            sector_flows=sectors,
+            warning=warning,
         )
 
     # ── KR 섹터(업종별 투자자순매수 ka10051) — 수급 흐름 레인 실데이터 ──
@@ -175,15 +200,14 @@ class KiwoomAdapter(BaseAdapter):
 
         # KOSPI(mrkt_tp=0)만 사용 — 깔끔한 업종명(전기전자·화학·금융업…). KOSDAQ은
         # '업종' 대신 규모/등급 버킷(KOSDAQ 100·MID 300·우량기업…)이 섞여 나와 제외.
-        try:
-            data = await client.call(
-                "sect",
-                "ka10051",
-                {"mrkt_tp": "0", "amt_qty_tp": "1", "base_dt": base, "stex_tp": "3"},
-            )
-            rows = data.get("inds_netprps") or _first_list(data)
-        except Exception:
-            rows = []
+        # 실패는 삼키지 않고 그대로 올린다 — fetch()가 return_exceptions=True로 받아
+        # "왜 모의로 폴백했는지"를 warning으로 화면에 보여준다(예전엔 조용히 []였음).
+        data = await client.call(
+            "sect",
+            "ka10051",
+            {"mrkt_tp": "0", "amt_qty_tp": "1", "base_dt": base, "stex_tp": "3"},
+        )
+        rows = data.get("inds_netprps") or _first_list(data)
         out: list[SectorFlow] = []
         seen: set[str] = set()
         for r in rows:
@@ -416,10 +440,14 @@ class KiwoomAdapter(BaseAdapter):
 
     # ── 오늘의 시장 순위 (상승/하락/거래량) ──
     async def _ranking(self, client: KiwoomClient) -> list[MarketStock]:
+        last_err: str | None = None
+
         async def one(api_id: str, body: dict[str, Any]) -> list[dict[str, Any]]:
+            nonlocal last_err
             try:
                 return _first_list(await client.call("rkinfo", api_id, body))
-            except Exception:
+            except Exception as exc:
+                last_err = str(exc)  # 개별 호출 실패는 다른 소스로 흡수 가능하니 계속 진행
                 return []
 
         # ka10027 등락률상위: sort_tp 1=상승률, 3=하락률 (실응답으로 확인).
@@ -468,4 +496,9 @@ class KiwoomAdapter(BaseAdapter):
                 volume=int(abs(_num(_f(r, "trde_qty", "거래량", "acml_vol", "now_trde_qty")))),
                 investors=InvestorFlow(),
             )
+        if not merged and last_err:
+            # 상승/하락/거래량 세 소스 다 실패 — 진짜 장애. 원인을 올려서 fetch()가
+            # warning으로 화면에 보이게 한다(비었다고 조용히 넘기면 "오늘 랭킹 없음"과
+            # 구분이 안 됨).
+            raise KiwoomError(f"랭킹 조회 실패: {last_err}")
         return list(merged.values())[:30]

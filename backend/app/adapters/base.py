@@ -27,6 +27,10 @@ class AdapterResult:
     # 전용 어댑터. 이런 소스가 실패해도 내 포트폴리오 가치가 추정치가 되는 건 아니므로
     # isEstimate(전체 흐림)에서 제외한다 (errors에는 담아 상태만 표시).
     background: bool = False
+    # 부가 정보(랭킹·섹터 등) 일부만 실패했을 때의 비치명 경고 — positions는 정상인데
+    # 랭킹/섹터 호출만 실패해 mock으로 폴백한 경우, 그 이유를 화면에 보이게 한다.
+    # error와 달리 isEstimate(전체 흐림) 판정에 영향 주지 않는다(내 자산가치는 정확하므로).
+    warning: SourceError | None = None
 
 
 class BaseAdapter(ABC):
