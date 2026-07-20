@@ -805,6 +805,45 @@ body {
   white-space: nowrap;
 }
 
+/* 순매수 상위 / 순매도 상위 그룹 헤더 — HTS식 매수·매도 분리 */
+.fl-group + .fl-group {
+  margin-top: 7px;
+}
+.fl-group-h {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  margin: 0 0 3px 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.fl-group-h::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+}
+.fl-group.buy .fl-group-h {
+  color: var(--up);
+}
+.fl-group.buy .fl-group-h::before {
+  background: var(--up);
+  box-shadow: 0 0 5px -1px var(--up);
+}
+.fl-group.sell .fl-group-h {
+  color: var(--down);
+}
+.fl-group.sell .fl-group-h::before {
+  background: var(--down);
+  box-shadow: 0 0 5px -1px var(--down);
+}
+.fl-empty {
+  font-size: 9.5px;
+  color: var(--dim);
+  padding: 3px 2px 4px;
+}
+
 /* 흐름 트랙 — 중앙 = 수급 균형(0), 우=매수 / 좌=매도 */
 /* ── 한국 섹터: 외국인·기관 분리 막대 (중앙=0, 좌=매도/우=매수) ── */
 .flow-lane.kr2 {

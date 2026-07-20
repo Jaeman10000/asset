@@ -310,13 +310,16 @@ const INST_COLOR = 'hsl(175, 80%, 60%)'; // 기관(청록)
 function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
   // ── 한국: 섹터별로 외국인·기관을 각각의 막대로(중앙=0, 좌=매도/우=매수) ──
   // 유저 지적: 하나의 합산 막대로는 "외국인이 샀는데 기관이 팔았는지"가 안 보인다.
-  // 순위(1위=건설 등)는 여전히 외국인+기관 합산 순매수 기준(smart money 순).
+  // 정렬 문제(규모순이면 파는 날 매도 섹터가 1~4위 독식 → "판 게 왜 1위냐")를 없애려고
+  // 증권사 HTS처럼 순매수 상위 / 순매도 상위 두 그룹으로 분리한다. 각 그룹은
+  // 외국인+기관 합계 기준으로 정렬하고, 각 그룹의 1·2·3위에 금은동을 준다.
   const krCol = (sectors: RingSector[]) => {
-    // 외국인·기관 값 전체의 최대치로 두 막대를 같은 스케일에 둔다.
+    // 외국인·기관 값 전체의 최대치로 두 막대를 같은 스케일에 둔다(그룹 간에도 폭 비교 가능).
     const maxAbs = Math.max(
       ...sectors.flatMap((s) => [Math.abs(s.foreign ?? 0), Math.abs(s.inst ?? 0)]),
       300, // 바닥값 — 조용한 날 막대 폭주 방지
     );
+    const net = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
     const seg = (v: number) => {
       const w = Math.min(Math.abs(v) / maxAbs, 1) * 50; // 반폭 %
       const buy = v >= 0;
@@ -325,53 +328,61 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
     };
     const fmt = (v: number) =>
       (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR');
+    const buys = sectors.filter((s) => net(s) > 0).sort((a, b) => net(b) - net(a)).slice(0, 5);
+    const sells = sectors.filter((s) => net(s) < 0).sort((a, b) => net(a) - net(b)).slice(0, 5);
+    const lane = (s: RingSector, i: number) => {
+      const f = seg(s.foreign ?? 0);
+      const g = seg(s.inst ?? 0);
+      return (
+        <div className={`flow-lane kr2${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
+          <span className="fl-rk">{i + 1}</span>
+          <span className="fl-name">{s.name}</span>
+          <div className="fl2-track">
+            <div className="fl2-axis" />
+            <div
+              className="fl2-bar for"
+              style={{ left: `${f.left}%`, width: `${f.width}%`, background: FOREIGN_COLOR, color: FOREIGN_COLOR }}
+            />
+            <div
+              className="fl2-bar org"
+              style={{ left: `${g.left}%`, width: `${g.width}%`, background: INST_COLOR, color: INST_COLOR }}
+            />
+          </div>
+          <div className="fl2-vals">
+            <span style={{ color: FOREIGN_COLOR }}>
+              <b>외</b>
+              {fmt(s.foreign ?? 0)}
+            </span>
+            <span style={{ color: INST_COLOR }}>
+              <b>기</b>
+              {fmt(s.inst ?? 0)}
+            </span>
+          </div>
+        </div>
+      );
+    };
     return (
       <div className="flow-col">
         <div className="flow-head">
           한국 · KRX
-          <em>순매수(억) · 외국인/기관</em>
+          <em>외국인/기관 순매수(억)</em>
         </div>
-        {sectors.map((s, i) => {
-          const f = seg(s.foreign ?? 0);
-          const g = seg(s.inst ?? 0);
-          return (
-            <div className={`flow-lane kr2${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
-              <span className="fl-rk">{i + 1}</span>
-              <span className="fl-name">{s.name}</span>
-              <div className="fl2-track">
-                <div className="fl2-axis" />
-                <div
-                  className="fl2-bar for"
-                  style={{
-                    left: `${f.left}%`,
-                    width: `${f.width}%`,
-                    background: FOREIGN_COLOR,
-                    color: FOREIGN_COLOR,
-                  }}
-                />
-                <div
-                  className="fl2-bar org"
-                  style={{
-                    left: `${g.left}%`,
-                    width: `${g.width}%`,
-                    background: INST_COLOR,
-                    color: INST_COLOR,
-                  }}
-                />
-              </div>
-              <div className="fl2-vals">
-                <span style={{ color: FOREIGN_COLOR }}>
-                  <b>외</b>
-                  {fmt(s.foreign ?? 0)}
-                </span>
-                <span style={{ color: INST_COLOR }}>
-                  <b>기</b>
-                  {fmt(s.inst ?? 0)}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        <div className="fl-group buy">
+          <div className="fl-group-h">순매수 상위</div>
+          {buys.length ? (
+            buys.map(lane)
+          ) : (
+            <div className="fl-empty">오늘 순매수 섹터 없음</div>
+          )}
+        </div>
+        <div className="fl-group sell">
+          <div className="fl-group-h">순매도 상위</div>
+          {sells.length ? (
+            sells.map(lane)
+          ) : (
+            <div className="fl-empty">오늘 순매도 섹터 없음</div>
+          )}
+        </div>
       </div>
     );
   };
@@ -424,7 +435,7 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
         {mock ? (
           <span className="mock-badge">⚠ 샘플 데이터</span>
         ) : (
-          <span className="exch">수급 규모순</span>
+          <span className="exch">순매수·순매도 상위</span>
         )}
       </h3>
       <div className="flow-cols">
