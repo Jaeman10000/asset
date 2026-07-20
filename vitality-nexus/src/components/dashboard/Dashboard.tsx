@@ -139,7 +139,8 @@ function MiniRow({
     >
       <div className="n">
         {p.name}
-        <small>{p.symbol}</small>
+        {/* 암호화폐는 종목명=심볼이라 중복(BTC BTC) → 다를 때만 코드 표기 */}
+        {p.symbol !== p.name && <small>{p.symbol}</small>}
       </div>
       <Spark history={p.history} color="auto" width={56} height={18} />
       <div className="v">{krwCompact(p.value)}</div>
