@@ -551,6 +551,26 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* 암호화폐 로고 (실제 아이콘) + 폴백 뱃지 */
+.coin-icon {
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: contain;
+}
+.coin-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 .mini-holding .n small {
   color: var(--sub);

@@ -64,7 +64,27 @@ class UpbitAdapter(BaseAdapter):
                 resp = await client.get(
                     _ACCOUNTS, headers={"Authorization": f"Bearer {token}"}
                 )
-                resp.raise_for_status()
+                if resp.status_code != 200:
+                    # 업비트가 주는 실제 원인(error.name)을 표면화 → 유저가 IP/권한/키를
+                    # 바로 구분할 수 있게. 예: no_authorization_ip(IP 미허용),
+                    # invalid_access_key(키 오류), jwt_verification(서명 오류).
+                    name = ""
+                    try:
+                        name = resp.json().get("error", {}).get("name", "")
+                    except Exception:
+                        name = resp.text[:80]
+                    hint = {
+                        "no_authorization_ip": "키에 등록한 허용 IP가 현재 IP와 다릅니다 — 업비트 Open API 관리에서 현재 IP로 갱신하세요",
+                        "invalid_access_key": "Access Key가 올바르지 않습니다 (오타/누락 확인)",
+                        "jwt_verification": "Secret Key가 올바르지 않습니다",
+                        "out_of_scope": "키에 '자산조회' 권한이 없습니다",
+                    }.get(name, "업비트 Open API 관리에서 자산조회 권한 + 현재 IP 등록을 확인하세요")
+                    return AdapterResult(
+                        error=SourceError(
+                            source=self.name,
+                            message=f"업비트 인증 실패({resp.status_code}, {name or '?'}) — {hint}",
+                        )
+                    )
                 accounts = resp.json()
         except Exception as exc:  # noqa: BLE001
             return AdapterResult(

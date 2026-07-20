@@ -4,7 +4,7 @@ import { krwCompact, krw, pct } from '../../util/format';
 import { HoverCard, fromMarket, fromPosition, type HoverInfo, type HoverTarget } from './HoverCard';
 import { ChartPanel } from './ChartPanel';
 import { sectorHue, type RingSector } from '../organic-core/HoloSectorRings';
-import { Spark } from './shared';
+import { Spark, CoinIcon } from './shared';
 
 /**
  * Dashboard — 심장이 중앙 무대(홀로그램), 정보가 주위에 떠 있는 구성.
@@ -138,6 +138,8 @@ function MiniRow({
       }}
     >
       <div className="n">
+        {/* 암호화폐만 코인 로고를 이름 앞에 */}
+        {p.assetType === 'crypto' && <CoinIcon symbol={p.symbol} />}
         {p.name}
         {/* 암호화폐는 종목명=심볼이라 중복(BTC BTC) → 다를 때만 코드 표기 */}
         {p.symbol !== p.name && <small>{p.symbol}</small>}
@@ -427,7 +429,8 @@ export function Dashboard({
     setSelId(p.id);
   };
 
-  const beatSec = 60 / Math.max(bpm, 40);
+  // 심장과 동일하게 3~5초 주기로 느리게(총액 후광 맥동). 심박 시각 부담 완화.
+  const beatSec = Math.min(5, Math.max(3, 5 - (bpm - 40) / 40));
 
   const tiles = [
     { lbl: 'KR 주식', b: t.kr },

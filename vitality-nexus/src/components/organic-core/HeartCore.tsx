@@ -195,17 +195,18 @@ function HeartMesh({
     if (!meshRef.current) return;
     const t = clock.getElapsedTime();
 
-    // Real heartbeat is not a clean sine wave: fast systolic contraction,
-    // slower diastolic relaxation. Combine two frequencies to fake that
-    // asymmetry instead of a single symmetric sin() pulse.
-    const beatsPerSecond = bpm / 60;
-    const phase = (t * beatsPerSecond) % 1;
+    // 실제 심박은 깔끔한 사인파가 아니다: 빠른 수축(systole) + 느린 이완(diastole).
+    // 다만 유저 요청으로 "3~5초에 한 번" 아주 느리고 부드럽게 뛰게 한다(눈부담 완화).
+    // 자산 상태(bpm)에 따라 40bpm→5초 / 120bpm→3초로 미세하게만 변주.
+    const beatPeriod = Math.min(5, Math.max(3, 5 - (bpm - 40) / 40)); // 초/박
+    const phase = (t / beatPeriod) % 1;
 
     // Sharp contraction spike (first ~30% of cycle), slow decay after.
     const systole = Math.exp(-Math.pow((phase - 0.08) / 0.06, 2)); // sharp beat
     const secondaryBeat = 0.4 * Math.exp(-Math.pow((phase - 0.28) / 0.08, 2)); // dicrotic notch echo
 
-    const pulse = 1 + 0.06 * (systole + secondaryBeat);
+    // 진폭도 살짝 줄여(0.06→0.05) 더 은은하게 꿈틀거리게.
+    const pulse = 1 + 0.05 * (systole + secondaryBeat);
     meshRef.current.scale.setScalar(scale * pulse);
 
     // Very slow idle rotation so the heart never looks perfectly static.
