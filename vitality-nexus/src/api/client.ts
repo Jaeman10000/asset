@@ -25,9 +25,9 @@ const BASE =
 // 10초 안에 응답 없으면 abort → 스토어가 '오프라인'으로 전환하고 다음 폴링이 재시도.
 const REQUEST_TIMEOUT_MS = 10_000;
 
-async function getJSON<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function getJSON<T>(path: string, signal?: AbortSignal, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   // 외부 signal(수동 새로고침/stop)도 이 요청을 중단시키도록 연결
   const onAbort = () => ctrl.abort();
   if (signal) {
@@ -48,7 +48,9 @@ async function getJSON<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 export function fetchSnapshot(signal?: AbortSignal, fresh = false): Promise<PortfolioSnapshot> {
   // fresh=true: 백엔드 7초 캐시 + 수급/일봉 캐시까지 비우고 즉시 재조회(수동 새로고침).
-  return getJSON<PortfolioSnapshot>(`/portfolio/snapshot${fresh ? '?fresh=1' : ''}`, signal);
+  // 콜드 로딩 땐 보유 종목 수급(ka10059)을 블로킹으로 다 받느라 ~14초 걸릴 수 있어
+  // 스냅샷만 타임아웃을 넉넉히(30초) 준다. 캐시가 데워진 뒤엔 즉시 반환된다.
+  return getJSON<PortfolioSnapshot>(`/portfolio/snapshot${fresh ? '?fresh=1' : ''}`, signal, 30_000);
 }
 
 export function fetchSourceStatus(signal?: AbortSignal): Promise<SourceStatus> {

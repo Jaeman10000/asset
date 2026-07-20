@@ -135,16 +135,11 @@ async def fetch_candles(code: str, period: str = "D", limit: int = 140) -> list[
     return out
 
 
-async def fetch_flow(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
-    """단일 KR 종목 종목별 수급(ka10059) — 호버 on-demand용. _flow_cache(180s) 공유.
-
-    스냅샷의 통합 수급 조회는 5초 시간예산에 걸려 보유·랭킹 종목 대부분을 못 채운다.
-    그래서 호버한 '그 종목 하나만' 즉석에서 받아, 예산·랭킹누락·0값숨김 문제를 없앤다.
-    """
+async def _fetch_one_flow(
+    client: KiwoomClient, code: str
+) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
+    """단일 종목 ka10059 → (당일, 20/60일). 캐시 히트면 재조회 안 함. _flow_cache에 기록."""
     code = _clean_code(code)
-    client = KiwoomClient()
-    if not client.configured:
-        return None
     now = time.time()
     cached = _flow_cache.get(code)
     if cached and now - cached[0] < _FLOW_TTL:
@@ -162,8 +157,63 @@ async def fetch_flow(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | N
     if not rows:
         return None
     built = KiwoomAdapter._build_flow(rows)
-    _flow_cache[code] = (now, built)
+    _flow_cache[code] = (time.time(), built)
     return built
+
+
+async def fetch_flow(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
+    """단일 KR 종목 수급 — 호버 즉석조회(폴백)용. 평소엔 워머가 미리 채워 캐시 히트."""
+    client = KiwoomClient()
+    if not client.configured:
+        return None
+    return await _fetch_one_flow(client, code)
+
+
+# ── 백그라운드 수급 워머 ──────────────────────────────────────────────────
+# 유저 요청: 호버할 때 받지 말고, 보유·랭킹이 정해지면 '미리미리' 받아놔라.
+# 키움 레이트리밋(ka10059 ~40종목=32초, 세마포어 4가 최적)이라 한 번에 다 못 받으므로,
+# 스냅샷과 별개로 도는 백그라운드 루프가 대상 종목을 계속 캐시에 채운다(만료 전 갱신).
+# 스냅샷/호버는 이 캐시를 읽기만 → 화면엔 점진적으로(수 초~수십 초) 다 채워진다.
+_warm_codes: set[str] = set()
+_warm_task: "asyncio.Task | None" = None
+
+
+async def _warm_loop() -> None:
+    while True:
+        try:
+            client = KiwoomClient()
+            if client.configured and _warm_codes:
+                now = time.time()
+                todo = [
+                    c
+                    for c in list(_warm_codes)
+                    if not (
+                        (hit := _flow_cache.get(c)) and now - hit[0] < _FLOW_TTL
+                    )
+                ]
+                if todo:
+                    sem = asyncio.Semaphore(4)  # 세마포어 4 = 스로틀링 최소(실측 최적)
+
+                    async def one(code: str) -> None:
+                        async with sem:
+                            await _fetch_one_flow(client, code)
+
+                    await asyncio.gather(*(one(c) for c in todo[:80]), return_exceptions=True)
+        except Exception:
+            pass
+        await asyncio.sleep(3)
+
+
+def start_warm(codes: "set[str] | list[str]") -> None:
+    """워밍 대상(보유+랭킹+테마)을 갱신하고, 워머 루프가 없으면 띄운다."""
+    global _warm_codes, _warm_task
+    _warm_codes = {_clean_code(c) for c in codes}
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    if _warm_task is None or _warm_task.done():
+        _warm_task = loop.create_task(_warm_loop())
 
 
 def clear_caches() -> None:
@@ -242,30 +292,30 @@ class KiwoomAdapter(BaseAdapter):
         ranking = ranking_res if isinstance(ranking_res, list) else []
         rank_err = str(ranking_res) if isinstance(ranking_res, Exception) else None
 
-        # ── 종목별 수급(ka10059)을 '보유 KR + 테마 대표종목 + 랭킹' 통합 조회 ──
-        #    (한 종목당 1콜, _flow_cache로 중복 제거). 이 하나로 (1) 보유 호버 수급,
-        #    (2) 테마 섹터 합산, (3) 랭킹 외국인/기관 탭을 모두 만든다. 아래 시간 예산
-        #    (budget)이 20초+ 블로킹을 막으므로 랭킹까지 넣어도 안전 — 못 받은 건 다음
-        #    폴링이 이어서 채운다(점진적).
+        # ── 종목별 수급(ka10059) — 유저 요청: 호버 때 말고 '미리미리' 받아놔라 ──
+        # 레이트리밋(ka10059 ~40종목=32초, 실측상 세마포어 4가 스로틀링 최소)이라 한 번에
+        # 다 못 받는다. 그래서 둘로 나눈다:
+        #  · 보유(소수 ~10): 첫 로딩 중 블로킹으로 다 받아 화면에 바로 뜬다(이후 캐시 히트=즉시).
+        #  · 랭킹·테마(수십 개): 백그라운드 워머(start_warm)가 계속 캐시에 채운다 → 호버는
+        #    그 '미리 받아둔' 캐시를 읽기만(라이브 대기 아님). 스냅샷도 캐시를 읽어 점진 반영.
         kr = [p for p in positions if p.region == "KR" and p.assetType == "stock"]
         theme_codes = {c for _, codes in _THEME_SECTORS for c in codes}
-        # 랭킹 종목 수급은 안 받는다 — 외국인/기관 랭킹 탭을 없앴고(키움에 기관 순매수
-        # 상위 TR이 없음), 랭킹 잡주는 기관 수급이 0이라 의미도 없다. 호출 수도 준다.
-        codes = {p.symbol for p in kr} | theme_codes
-        # 키움 레이트리밋 때문에 종목 수급을 다 받으려면 20초+ 걸려 스냅샷이 클라이언트
-        # 타임아웃(10초)에 걸린다. → 시간 예산(6초)만 쓰고, 그 안에 완료된 종목만
-        # _flow_cache에 남긴다. 나머지는 다음 폴링이 이어서 채운다(_fetch_flows가 각
-        # 완료 즉시 캐시에 쓰므로, 타임아웃으로 취소돼도 완료분은 보존됨). 아래에서
-        # 캐시를 읽어 부분 결과라도 즉시 반영 → 테마 섹터가 몇 초에 걸쳐 채워진다.
+        held_codes = [p.symbol for p in kr]
+        # 블로킹 조회 = 보유 먼저 + 테마(부분이라도 SECTOR FLOW 즉시 반영). 보유는 예산 안에
+        # 완주하고 테마 나머지는 워머가 채운다. 캐시 히트면 즉시 반환하므로 평소엔 안 느리다.
+        blocking = held_codes + [c for c in theme_codes if c not in set(held_codes)]
         work = asyncio.gather(
-            self._fetch_flows(client, codes),
+            self._fetch_flows(client, blocking),
             self._attach_history(client, positions),
             return_exceptions=True,
         )
         try:
-            await asyncio.wait_for(work, timeout=5.0)
+            await asyncio.wait_for(work, timeout=14.0)  # 보유 ~10종목 완주(≈8s)+여유
         except (asyncio.TimeoutError, Exception):
             pass
+
+        # 워머 대상 = 보유+랭킹+테마 전체. 계속 미리 받아둔다(호버/스냅샷은 이 캐시를 읽음).
+        start_warm(set(held_codes) | {m.symbol for m in ranking} | theme_codes)
 
         now2 = time.time()
 
@@ -460,43 +510,21 @@ class KiwoomAdapter(BaseAdapter):
     # ── 종목별 수급 (ka10059) — 코드 집합 → {코드: (당일 InvestorFlow, 20/60일 누적)} ──
     #    _flow_cache로 중복/재조회를 막는다. 보유·랭킹 호버 수급과 테마 섹터 합산이 공용.
     async def _fetch_flows(
-        self, client: KiwoomClient, codes: set[str] | list[str]
+        self, client: KiwoomClient, codes: "list[str]"
     ) -> dict[str, tuple[InvestorFlow, list[InvestorPeriod]]]:
-        codes = sorted(set(codes))
-        if not codes:
+        # 입력 순서를 보존한다 — 앞쪽(보유)이 세마포어를 먼저 잡아 예산 안에 먼저 완주.
+        seen: set[str] = set()
+        ordered = [c for c in codes if not (c in seen or seen.add(c))]
+        if not ordered:
             return {}
-        dt = datetime.now().strftime("%Y%m%d")
-        sem = asyncio.Semaphore(4)  # 레이트리밋 대비
-        now = time.time()
+        sem = asyncio.Semaphore(4)  # 레이트리밋 대비 (실측상 4가 스로틀링 최소)
 
         async def one(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
-            cached = _flow_cache.get(code)
-            if cached and now - cached[0] < _FLOW_TTL:
-                return cached[1]
             async with sem:
-                try:
-                    data = await client.call(
-                        "stkinfo",
-                        "ka10059",
-                        {
-                            "dt": dt,
-                            "stk_cd": code,
-                            "amt_qty_tp": "1",  # 1=금액
-                            "trde_tp": "0",  # 0=순매수
-                            "unit_tp": "1000",
-                        },
-                    )
-                    rows = data.get("stk_invsr_orgn") or _first_list(data)
-                except Exception:
-                    return None
-            if not rows:
-                return None
-            built = self._build_flow(rows)
-            _flow_cache[code] = (now, built)
-            return built
+                return await _fetch_one_flow(client, code)
 
-        results = await asyncio.gather(*(one(c) for c in codes))
-        return {code: r for code, r in zip(codes, results) if r}
+        results = await asyncio.gather(*(one(c) for c in ordered))
+        return {code: r for code, r in zip(ordered, results) if r}
 
     @staticmethod
     def _build_flow(rows: list[dict[str, Any]]) -> tuple[InvestorFlow, list[InvestorPeriod]]:

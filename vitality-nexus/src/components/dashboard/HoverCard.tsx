@@ -174,9 +174,11 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
   const info = target?.info;
   const symbol = info?.symbol;
   const isKR = info?.currency === 'KRW';
-  // 실데이터(모의 아님) KR 종목이면 그 종목 하나만 즉석에서 수급 조회 → 스냅샷 시간예산에
-  // 잘려 못 받은 보유/랭킹 종목도 호버하면 바로 뜬다(수급이 0이어도 20/60일 누적은 보인다).
-  const canFetch = !!symbol && isKR && !info?.investorsMock;
+  // 스냅샷에 이미 수급(20/60일 누적 포함)이 실려 있으면(보유 종목=로딩 때 블로킹으로 다
+  // 받아둠) 재조회하지 않고 그대로 쓴다.
+  const hasFullFlow = !!(info?.investors && info?.periods && info.periods.length > 0);
+  // 아직 안 실린 KR 종목(랭킹 등)만 조회 — 백그라운드 워머가 미리 채워둔 캐시라 즉시 히트.
+  const canFetch = !!symbol && isKR && !info?.investorsMock && !hasFullFlow;
   const [live, setLive] = useState<{ sym: string; data: FlowResp } | null>(null);
 
   useEffect(() => {
