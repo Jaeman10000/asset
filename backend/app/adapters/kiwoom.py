@@ -539,7 +539,7 @@ class KiwoomAdapter(BaseAdapter):
                 "stex_tp": "3",
             }
 
-        up, down, vol = await asyncio.gather(
+        up, down, vol, frgn = await asyncio.gather(
             one("ka10027", updown("1")),  # 상승률상위
             one("ka10027", updown("3")),  # 하락률상위 (하락 탭이 실제 하락 종목을 보게)
             one(
@@ -556,6 +556,12 @@ class KiwoomAdapter(BaseAdapter):
                     "stex_tp": "3",
                 },
             ),
+            # ka10034 외인기간별매매상위: 외국인 순매수 상위. trde_tp 2=순매수,
+            # dt 1=최근 완결 거래일(dt 0=장중 당일은 값이 희박). 리스트 for_dt_trde_upper.
+            one(
+                "ka10034",
+                {"mrkt_tp": "000", "trde_tp": "2", "dt": "1", "amt_qty_tp": "1", "stex_tp": "3"},
+            ),
         )
         merged: dict[str, MarketStock] = {}
         # 각 소스 상위 12씩 → 탭(상승/하락/거래량)마다 10개는 확보되게. 중복 제거.
@@ -571,9 +577,31 @@ class KiwoomAdapter(BaseAdapter):
                 volume=int(abs(_num(_f(r, "trde_qty", "거래량", "acml_vol", "now_trde_qty")))),
                 investors=InvestorFlow(),
             )
+        # 외국인 순매수 상위(ka10034): 응답은 순매수 '수량'만 주므로(금액 필드 없음)
+        # 순매수금액(억원) ≈ 순매수량 × 현재가로 환산해 investors.foreign에 싣는다.
+        # 프론트 '외국인' 탭이 이 값으로 재정렬·표시. 이미 있는 종목이면 값만 채운다.
+        for r in frgn[:15]:
+            code = _clean_code(_f(r, "stk_cd", "종목코드"))
+            if not code:
+                continue
+            qty = _num(_f(r, "netprps_qty"))
+            prc = abs(_num(_f(r, "cur_prc")))
+            eok = qty * prc / 1e8
+            if code in merged:
+                merged[code].investors.foreign = eok
+            else:
+                merged[code] = MarketStock(
+                    symbol=code,
+                    name=str(_f(r, "stk_nm", "종목명", default=code)),
+                    price=prc,
+                    ret=0.0,
+                    volume=int(abs(_num(_f(r, "trde_qty")))),
+                    investors=InvestorFlow(foreign=eok),
+                )
         if not merged and last_err:
             # 상승/하락/거래량 세 소스 다 실패 — 진짜 장애. 원인을 올려서 fetch()가
             # warning으로 화면에 보이게 한다(비었다고 조용히 넘기면 "오늘 랭킹 없음"과
             # 구분이 안 됨).
             raise KiwoomError(f"랭킹 조회 실패: {last_err}")
-        return list(merged.values())[:30]
+        # 4개 소스(상승/하락/거래량/외국인) 합집합 — 프론트가 탭별 재정렬 후 top10 슬라이스.
+        return list(merged.values())[:60]

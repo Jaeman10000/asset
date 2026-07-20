@@ -15,7 +15,7 @@ import { Spark, CoinIcon } from './shared';
  *   우:   오늘의 시장 랭킹 (상승/하락/거래량/외국인/기관)
  */
 
-type RankTabKey = 'up' | 'down' | 'volume' | 'foreign' | 'inst';
+type RankTabKey = 'up' | 'down' | 'volume' | 'foreign';
 
 // 암호화폐 행에 어느 거래소인지 표기 (같은 코인이 업비트·빗썸 양쪽에 있으면 2행)
 const EXCHANGE_LABEL: Record<string, string> = {
@@ -24,13 +24,15 @@ const EXCHANGE_LABEL: Record<string, string> = {
   manual: '수동',
 };
 
-// 외국인/기관 탭 제거: 키움 REST엔 '기관 순매수 상위 종목' 랭킹이 아예 없고(종목별로만
-// 조회 가능), 상승/거래량 랭킹(상한가 잡주들)은 기관 수급이 0이라 그걸 재정렬하면 다
-// 0으로 떠서 말이 안 됐다. 기관·외국인 흐름은 SECTOR FLOW(테마별 외국인/기관 분리)에서 본다.
+// 기관 탭은 제거(키움 REST엔 '기관 순매수 상위 종목' 랭킹 TR이 아예 없음 — 종목별 조회만).
+// 외국인 탭은 ka10034(외인기간별매매상위)로 복원: 응답이 순매수 '수량'만 주므로 백엔드가
+// 순매수금액(억) ≈ 수량×현재가로 환산해 investors.foreign에 실어 준다. 그걸 여기서 정렬·표시.
+// 기관 흐름은 SECTOR FLOW(테마별 외국인/기관 분리)에서 본다.
 const RANK_TABS: { key: RankTabKey; label: string }[] = [
   { key: 'up', label: '상승' },
   { key: 'down', label: '하락' },
   { key: 'volume', label: '거래량' },
+  { key: 'foreign', label: '외국인' },
 ];
 
 function sortRanking(list: MarketStock[], tab: RankTabKey): MarketStock[] {
@@ -44,8 +46,6 @@ function sortRanking(list: MarketStock[], tab: RankTabKey): MarketStock[] {
       return out.sort((a, b) => b.volume - a.volume);
     case 'foreign':
       return out.sort((a, b) => b.investors.foreign - a.investors.foreign);
-    case 'inst':
-      return out.sort((a, b) => b.investors.inst - a.investors.inst);
   }
 }
 
@@ -62,11 +62,6 @@ function rankMetric(m: MarketStock, tab: RankTabKey): { text: string; color: str
       return {
         text: eok(m.investors.foreign),
         color: m.investors.foreign >= 0 ? 'var(--up)' : 'var(--down)',
-      };
-    case 'inst':
-      return {
-        text: eok(m.investors.inst),
-        color: m.investors.inst >= 0 ? 'var(--up)' : 'var(--down)',
       };
   }
 }
