@@ -207,7 +207,9 @@ class KiwoomAdapter(BaseAdapter):
         #    폴링이 이어서 채운다(점진적).
         kr = [p for p in positions if p.region == "KR" and p.assetType == "stock"]
         theme_codes = {c for _, codes in _THEME_SECTORS for c in codes}
-        codes = {p.symbol for p in kr} | theme_codes | {m.symbol for m in ranking}
+        # 랭킹 종목 수급은 안 받는다 — 외국인/기관 랭킹 탭을 없앴고(키움에 기관 순매수
+        # 상위 TR이 없음), 랭킹 잡주는 기관 수급이 0이라 의미도 없다. 호출 수도 준다.
+        codes = {p.symbol for p in kr} | theme_codes
         # 키움 레이트리밋 때문에 종목 수급을 다 받으려면 20초+ 걸려 스냅샷이 클라이언트
         # 타임아웃(10초)에 걸린다. → 시간 예산(6초)만 쓰고, 그 안에 완료된 종목만
         # _flow_cache에 남긴다. 나머지는 다음 폴링이 이어서 채운다(_fetch_flows가 각
@@ -234,11 +236,6 @@ class KiwoomAdapter(BaseAdapter):
             if cf:
                 p.investors, p.investorPeriods = cf
                 p.investorsMock = False
-        for m in ranking:
-            cf = cached_flow(m.symbol)
-            if cf:
-                m.investors, m.investorPeriods = cf
-                m.investorsMock = False
 
         # 테마 섹터 = 대표종목 당일 수급 합산 (캐시에 있는 것만 — 부분→완전 점진 채움)
         sectors: list[SectorFlow] = []

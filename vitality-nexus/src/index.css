@@ -780,17 +780,15 @@ body {
   grid-template-columns: 13px 6px minmax(0, 0.8fr) minmax(38px, 1.5fr) auto;
   gap: 6px;
   align-items: center;
-  padding: 2px 0;
+  padding: 2px 4px;
+  border: 1px solid transparent; /* 1·2·3위 금은동 테두리가 얹힐 자리 */
+  border-radius: 6px;
 }
 .fl-rk {
   color: var(--sub);
   font-size: 9px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-.flow-lane:first-of-type .fl-rk {
-  color: var(--event);
-  font-weight: 700;
 }
 .fl-dot {
   width: 6px;
@@ -1025,9 +1023,40 @@ body {
   padding: 9px 10px;
   background: rgba(255, 255, 255, 0.03);
 }
-.rank-row.rank-1 {
-  border-color: rgba(242, 214, 117, 0.4);
-  background: rgba(242, 214, 117, 0.06);
+/* ── 1·2·3위 금·은·동 (시장 랭킹 + SECTOR FLOW 공통) ── */
+.rank-row.rank-1,
+.flow-lane.rank-1 {
+  border-color: rgba(255, 212, 94, 0.55);
+  background: rgba(255, 212, 94, 0.07);
+}
+.rank-row.rank-2,
+.flow-lane.rank-2 {
+  border-color: rgba(205, 214, 224, 0.5);
+  background: rgba(205, 214, 224, 0.05);
+}
+.rank-row.rank-3,
+.flow-lane.rank-3 {
+  border-color: rgba(224, 150, 90, 0.5);
+  background: rgba(224, 150, 90, 0.05);
+}
+/* 순위 숫자 색 (랭킹 .rank-no / 섹터 .fl-rk 공통) */
+.rank-1 .rank-no,
+.rank-1 .fl-rk {
+  color: #ffd45e;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(255, 212, 94, 0.5);
+}
+.rank-2 .rank-no,
+.rank-2 .fl-rk {
+  color: #d7e0ea;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(205, 214, 224, 0.45);
+}
+.rank-3 .rank-no,
+.rank-3 .fl-rk {
+  color: #ef9d5f;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(224, 150, 90, 0.45);
 }
 .rank-no {
   font-size: 12px;
@@ -1035,10 +1064,6 @@ body {
   width: 18px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-.rank-1 .rank-no {
-  color: var(--event);
-  font-weight: 700;
 }
 .rank-mid {
   min-width: 0;

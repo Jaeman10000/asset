@@ -226,10 +226,15 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
         </div>
       )}
 
-      {/* 수급현황 — 이 카드의 주인공 (당일 + 20/60일 누적) */}
-      {h.investors && (
-        <InvestorBars inv={h.investors} periods={h.periods} mock={h.investorsMock} />
-      )}
+      {/* 수급현황 — 당일 + 20/60일 누적. 값이 전부 0이면(랭킹 잡주 등 수급 미조회)
+          빈 막대를 띄우지 않는다. */}
+      {h.investors &&
+        (h.investorsMock ||
+          h.investors.foreign !== 0 ||
+          h.investors.inst !== 0 ||
+          h.investors.individual !== 0) && (
+          <InvestorBars inv={h.investors} periods={h.periods} mock={h.investorsMock} />
+        )}
 
       <div className="truth-foot">기준 {time}</div>
     </div>

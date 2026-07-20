@@ -24,12 +24,13 @@ const EXCHANGE_LABEL: Record<string, string> = {
   manual: '수동',
 };
 
+// 외국인/기관 탭 제거: 키움 REST엔 '기관 순매수 상위 종목' 랭킹이 아예 없고(종목별로만
+// 조회 가능), 상승/거래량 랭킹(상한가 잡주들)은 기관 수급이 0이라 그걸 재정렬하면 다
+// 0으로 떠서 말이 안 됐다. 기관·외국인 흐름은 SECTOR FLOW(테마별 외국인/기관 분리)에서 본다.
 const RANK_TABS: { key: RankTabKey; label: string }[] = [
   { key: 'up', label: '상승' },
   { key: 'down', label: '하락' },
   { key: 'volume', label: '거래량' },
-  { key: 'foreign', label: '외국인' },
-  { key: 'inst', label: '기관' },
 ];
 
 function sortRanking(list: MarketStock[], tab: RankTabKey): MarketStock[] {
@@ -339,7 +340,7 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
           const f = seg(s.foreign ?? 0);
           const g = seg(s.inst ?? 0);
           return (
-            <div className="flow-lane kr2" key={s.name}>
+            <div className={`flow-lane kr2${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
               <span className="fl-rk">{i + 1}</span>
               <span className="fl-name">{s.name}</span>
               <div className="fl2-track">
@@ -397,7 +398,7 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
           const bright = (0.28 + mag * 0.5).toFixed(2);
           const dirColor = buy ? 'var(--up)' : 'var(--down)';
           return (
-            <div className="flow-lane" key={s.name}>
+            <div className={`flow-lane${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
               <span className="fl-rk">{i + 1}</span>
               <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, 'us')}, 82%, 60%)` }} />
               <span className="fl-name">{s.name}</span>
