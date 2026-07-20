@@ -135,6 +135,14 @@ async def fetch_candles(code: str, period: str = "D", limit: int = 140) -> list[
     return out
 
 
+def clear_caches() -> None:
+    """수동 새로고침 시 종목 수급/일봉/캔들 캐시를 모두 비워 즉시 재조회하게 한다.
+    (평소엔 수급 3분·일봉 10분 캐시라 새로고침 눌러도 캐시값이 나올 수 있어서.)"""
+    _flow_cache.clear()
+    _hist_cache.clear()
+    _candle_cache.clear()
+
+
 # ── 테마 섹터: 대표 종목들의 종목별 수급(ka10059)을 합산해 '반도체' 같은 테마 단위
 #    수급을 만든다. 키움은 테마별 투자자 수급을 안 주고 업종(전기/전자 뭉뚱그림)만
 #    주므로, 유저가 실제로 생각하는 섹터(반도체 독립)를 보려면 대표 종목 합산이 유일한

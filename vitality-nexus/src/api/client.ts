@@ -46,8 +46,9 @@ async function getJSON<T>(path: string, signal?: AbortSignal): Promise<T> {
   }
 }
 
-export function fetchSnapshot(signal?: AbortSignal): Promise<PortfolioSnapshot> {
-  return getJSON<PortfolioSnapshot>('/portfolio/snapshot', signal);
+export function fetchSnapshot(signal?: AbortSignal, fresh = false): Promise<PortfolioSnapshot> {
+  // fresh=true: 백엔드 7초 캐시 + 수급/일봉 캐시까지 비우고 즉시 재조회(수동 새로고침).
+  return getJSON<PortfolioSnapshot>(`/portfolio/snapshot${fresh ? '?fresh=1' : ''}`, signal);
 }
 
 export function fetchSourceStatus(signal?: AbortSignal): Promise<SourceStatus> {

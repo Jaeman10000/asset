@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { SourceError, SourceStatus } from '../../api/types';
 
 /**
@@ -24,6 +25,7 @@ export function StatusBar({
   onOpenKiwoom,
   onOpenCrypto,
   onOpenSettings,
+  onRefresh,
 }: {
   conn: ConnState;
   isEstimate: boolean;
@@ -32,9 +34,18 @@ export function StatusBar({
   onOpenEditor: () => void;
   onOpenKiwoom: () => void;
   onOpenCrypto: () => void;
+  /** 수동 새로고침 — 캐시 무시하고 지금 이 순간의 최신 수급/시세 재조회 */
+  onRefresh: () => void;
   /** Tauri 앱일 때만 전달됨 (브라우저에선 undefined → 설정 버튼 숨김) */
   onOpenSettings?: () => void;
 }) {
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    onRefresh();
+    // 폴링이 끝나는 시점을 정확히 모르므로 짧게 스핀만 보여준다(피드백용)
+    setTimeout(() => setRefreshing(false), 1200);
+  };
   const connLabel =
     conn === 'online' ? '연결됨' : conn === 'connecting' ? '연결 중…' : '백엔드 오프라인';
   const connColor =
@@ -46,6 +57,15 @@ export function StatusBar({
         <span className="status-dot" style={{ background: connColor }} />
         <span>{connLabel}</span>
         {isEstimate && <span className="status-estimate">추정치</span>}
+        <button
+          type="button"
+          className={`status-edit-btn refresh-btn${refreshing ? ' spinning' : ''}`}
+          onClick={handleRefresh}
+          disabled={refreshing}
+          title="지금 이 순간의 최신 수급·시세로 갱신 (캐시 무시)"
+        >
+          <span className="refresh-ico">↻</span> 새로고침
+        </button>
         <button type="button" className="status-edit-btn" onClick={onOpenEditor}>
           보유종목 편집
         </button>
@@ -74,7 +94,7 @@ export function StatusBar({
 
       {sources && (
         <div className="source-chips">
-          {(['manual', 'upbit', 'bithumb', 'kis', 'kiwoom'] as const).map((k) => (
+          {(['manual', 'upbit', 'bithumb', 'kiwoom'] as const).map((k) => (
             <span
               key={k}
               className={`source-chip ${sources[k] ? 'on' : 'off'}`}

@@ -187,6 +187,7 @@ export default function App() {
         onOpenEditor={() => setEditorOpen(true)}
         onOpenKiwoom={() => setKiwoomOpen(true)}
         onOpenCrypto={() => setCryptoOpen(true)}
+        onRefresh={() => void refresh()}
         onOpenSettings={settingsAvailable ? () => setSettingsOpen(true) : undefined}
       />
 

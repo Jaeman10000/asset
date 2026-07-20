@@ -40,7 +40,7 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
    *   force=true(수동 새로고침, 예: 보유종목 저장 후): 진행 중 요청을 취소하고
    *     즉시 새 데이터를 받는다.
    */
-  const poll = async (force: boolean) => {
+  const poll = async (force: boolean, fresh = false) => {
     if (inFlight) {
       if (!force) return;
       inFlight.abort();
@@ -48,7 +48,7 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
     const ctrl = new AbortController();
     inFlight = ctrl;
     try {
-      const snap = await fetchSnapshot(ctrl.signal);
+      const snap = await fetchSnapshot(ctrl.signal, fresh);
       if (ctrl.signal.aborted) return;
       const prev = get().snapshot;
       const changed = !prev || prev.fetchedAt !== snap.fetchedAt;
@@ -73,7 +73,8 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
     lastError: null,
     updateTick: 0,
 
-    refresh: () => poll(true),
+    // 수동 새로고침 = 강제(진행중 취소) + fresh(백엔드 캐시·수급 캐시 비우고 즉시 최신)
+    refresh: () => poll(true, true),
 
     start: () => {
       if (pollTimer) return; // 이미 폴링 중

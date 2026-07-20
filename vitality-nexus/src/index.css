@@ -1513,6 +1513,26 @@ body {
 .status-edit-btn:hover {
   background: rgba(43, 230, 200, 0.22);
 }
+/* 새로고침 버튼 — 눈에 띄게(약간 밝게) + 누르면 아이콘 회전 */
+.refresh-btn {
+  background: rgba(43, 230, 200, 0.2);
+  font-weight: 600;
+}
+.refresh-btn:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+.refresh-ico {
+  display: inline-block;
+}
+.refresh-btn.spinning .refresh-ico {
+  animation: refreshspin 0.7s linear infinite;
+}
+@keyframes refreshspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .source-chips {
   display: flex;
   gap: 4px;

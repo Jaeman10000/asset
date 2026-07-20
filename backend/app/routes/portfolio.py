@@ -13,9 +13,7 @@ from pydantic import BaseModel
 
 from ..adapters.base import BaseAdapter
 from ..adapters.bithumb import BithumbAdapter
-from ..adapters.kis import KISAdapter
 from ..adapters.kiwoom import KiwoomAdapter
-from ..adapters.krx import KRXAdapter
 from ..adapters.manual import ManualAdapter
 from ..adapters.upbit import UpbitAdapter
 from ..adapters.yahoo import YahooAdapter
@@ -29,12 +27,12 @@ router = APIRouter()
 ADAPTERS: list[BaseAdapter] = [
     ManualAdapter(),  # 수동입력 (어떤 증권사든 커버하는 폴백)
     KiwoomAdapter(),
-    KISAdapter(),
     UpbitAdapter(),
     BithumbAdapter(),
-    KRXAdapter(),
     YahooAdapter(),
 ]
+# KIS(한국투자증권)·KRX 어댑터는 제거 — KIS는 키움 연동으로 불필요, KRX는 미구현
+# 스텁이라 '대기/오류'만 띄웠다. 필요해지면 다시 ADAPTERS에 추가한다.
 
 _cache: TTLCache[PortfolioSnapshot] = TTLCache(ttl_seconds=7.0)
 
@@ -147,7 +145,14 @@ async def _build_snapshot() -> PortfolioSnapshot:
 
 
 @router.get("/portfolio/snapshot", response_model=PortfolioSnapshot)
-async def get_snapshot() -> PortfolioSnapshot:
+async def get_snapshot(fresh: bool = False) -> PortfolioSnapshot:
+    """fresh=1이면 스냅샷 7초 캐시 + 종목 수급/일봉 캐시까지 비우고 즉시 재조회한다
+    (수동 새로고침 버튼용 — '지금 이 순간'의 최신 수급을 받아온다)."""
+    if fresh:
+        from ..adapters import kiwoom
+
+        kiwoom.clear_caches()
+        _cache.clear()
     return await _cache.get_or_fetch(_build_snapshot)
 
 
