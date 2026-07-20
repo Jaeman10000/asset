@@ -24,6 +24,8 @@ from .base import AdapterResult, BaseAdapter
 
 _ACCOUNTS = "https://api.upbit.com/v1/accounts"
 _TIMEOUT = httpx.Timeout(8.0)
+# 소액/비상장(먼지) 자산 숨김 임계값(KRW) — 평가금액이 이 값 미만이면 목록 제외.
+_DUST_KRW = 1000.0
 
 
 def _jwt(access_key: str, secret_key: str) -> str:
@@ -110,4 +112,6 @@ class UpbitAdapter(BaseAdapter):
                     lastUpdated=now,
                 )
             )
+        # 소액/비상장(먼지) 숨김 — 평가금액 기준
+        positions = [p for p in positions if p.value >= _DUST_KRW]
         return AdapterResult(positions=positions)

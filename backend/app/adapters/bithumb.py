@@ -25,6 +25,9 @@ from .base import AdapterResult, BaseAdapter
 
 _ACCOUNTS = "https://api.bithumb.com/v1/accounts"
 _TIMEOUT = httpx.Timeout(8.0)
+# 소액/비상장(먼지) 자산 숨김 임계값(KRW). 0.00001개씩 사둔 잔여·상장폐지(시세 0)
+# 코인이 수십 개씩 잡히는 걸 막는다. 평가금액이 이 값 미만이면 목록에서 제외.
+_DUST_KRW = 1000.0
 
 
 def _jwt(access_key: str, secret_key: str) -> str:
@@ -126,4 +129,6 @@ class BithumbAdapter(BaseAdapter):
         except Exception:
             pass  # 시세 보강 실패해도 평단 기준 값은 이미 있음
 
+        # 소액/비상장(먼지) 숨김 — 시세 보강 후의 실제 평가금액 기준
+        positions = [p for p in positions if p.value >= _DUST_KRW]
         return AdapterResult(positions=positions)
