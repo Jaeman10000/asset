@@ -805,6 +805,37 @@ body {
   white-space: nowrap;
 }
 
+/* SECTOR FLOW 방향 토글 [순매수][순매도] — 선택 방향의 전체 섹터를 본다 */
+.flow-dir {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: auto;
+}
+.flow-dir button {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.flow-dir button:hover {
+  color: var(--sub);
+}
+.flow-dir button.on.buy {
+  color: var(--up);
+  border-color: color-mix(in srgb, var(--up) 55%, transparent);
+  background: color-mix(in srgb, var(--up) 12%, transparent);
+}
+.flow-dir button.on.sell {
+  color: var(--down);
+  border-color: color-mix(in srgb, var(--down) 55%, transparent);
+  background: color-mix(in srgb, var(--down) 12%, transparent);
+}
+
 /* 순매수 상위 / 순매도 상위 그룹 헤더 — HTS식 매수·매도 분리 */
 .fl-group + .fl-group {
   margin-top: 7px;

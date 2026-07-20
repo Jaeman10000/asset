@@ -308,13 +308,14 @@ const FOREIGN_COLOR = 'hsl(45, 90%, 65%)'; // 외국인(금색)
 const INST_COLOR = 'hsl(175, 80%, 60%)'; // 기관(청록)
 
 function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
+  // 순매수/순매도를 두 그룹으로 쪼개니 한 방향에 보이는 개수가 적어진다는 지적 →
+  // HTS처럼 [순매수][순매도] 토글 버튼으로 바꿔, 선택한 방향의 '전체'를 보여준다.
+  // KR = 외국인+기관 합계 부호로 분류. US는 수급 데이터가 없어(야후 가격) 전일 등락률
+  // 부호로 분류(순매수=상승 섹터 / 순매도=하락 섹터). 각 방향 1·2·3위에 금은동.
+  const [dir, setDir] = useState<'buy' | 'sell'>('buy');
+
   // ── 한국: 섹터별로 외국인·기관을 각각의 막대로(중앙=0, 좌=매도/우=매수) ──
-  // 유저 지적: 하나의 합산 막대로는 "외국인이 샀는데 기관이 팔았는지"가 안 보인다.
-  // 정렬 문제(규모순이면 파는 날 매도 섹터가 1~4위 독식 → "판 게 왜 1위냐")를 없애려고
-  // 증권사 HTS처럼 순매수 상위 / 순매도 상위 두 그룹으로 분리한다. 각 그룹은
-  // 외국인+기관 합계 기준으로 정렬하고, 각 그룹의 1·2·3위에 금은동을 준다.
   const krCol = (sectors: RingSector[]) => {
-    // 외국인·기관 값 전체의 최대치로 두 막대를 같은 스케일에 둔다(그룹 간에도 폭 비교 가능).
     const maxAbs = Math.max(
       ...sectors.flatMap((s) => [Math.abs(s.foreign ?? 0), Math.abs(s.inst ?? 0)]),
       300, // 바닥값 — 조용한 날 막대 폭주 방지
@@ -323,106 +324,103 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
     const seg = (v: number) => {
       const w = Math.min(Math.abs(v) / maxAbs, 1) * 50; // 반폭 %
       const buy = v >= 0;
-      // 매수=중앙에서 오른쪽, 매도=중앙에서 왼쪽 (방향은 위치로, 색은 주체로 구분)
       return { left: buy ? 50 : 50 - w, width: w };
     };
     const fmt = (v: number) =>
       (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR');
-    const buys = sectors.filter((s) => net(s) > 0).sort((a, b) => net(b) - net(a)).slice(0, 5);
-    const sells = sectors.filter((s) => net(s) < 0).sort((a, b) => net(a) - net(b)).slice(0, 5);
-    const lane = (s: RingSector, i: number) => {
-      const f = seg(s.foreign ?? 0);
-      const g = seg(s.inst ?? 0);
-      return (
-        <div className={`flow-lane kr2${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
-          <span className="fl-rk">{i + 1}</span>
-          <span className="fl-name">{s.name}</span>
-          <div className="fl2-track">
-            <div className="fl2-axis" />
-            <div
-              className="fl2-bar for"
-              style={{ left: `${f.left}%`, width: `${f.width}%`, background: FOREIGN_COLOR, color: FOREIGN_COLOR }}
-            />
-            <div
-              className="fl2-bar org"
-              style={{ left: `${g.left}%`, width: `${g.width}%`, background: INST_COLOR, color: INST_COLOR }}
-            />
-          </div>
-          <div className="fl2-vals">
-            <span style={{ color: FOREIGN_COLOR }}>
-              <b>외</b>
-              {fmt(s.foreign ?? 0)}
-            </span>
-            <span style={{ color: INST_COLOR }}>
-              <b>기</b>
-              {fmt(s.inst ?? 0)}
-            </span>
-          </div>
-        </div>
-      );
-    };
+    const rows =
+      dir === 'buy'
+        ? sectors.filter((s) => net(s) > 0).sort((a, b) => net(b) - net(a))
+        : sectors.filter((s) => net(s) < 0).sort((a, b) => net(a) - net(b));
     return (
       <div className="flow-col">
         <div className="flow-head">
           한국 · KRX
           <em>외국인/기관 순매수(억)</em>
         </div>
-        <div className="fl-group buy">
-          <div className="fl-group-h">순매수 상위</div>
-          {buys.length ? (
-            buys.map(lane)
-          ) : (
-            <div className="fl-empty">오늘 순매수 섹터 없음</div>
-          )}
-        </div>
-        <div className="fl-group sell">
-          <div className="fl-group-h">순매도 상위</div>
-          {sells.length ? (
-            sells.map(lane)
-          ) : (
-            <div className="fl-empty">오늘 순매도 섹터 없음</div>
-          )}
-        </div>
+        {rows.length ? (
+          rows.map((s, i) => {
+            const f = seg(s.foreign ?? 0);
+            const g = seg(s.inst ?? 0);
+            return (
+              <div className={`flow-lane kr2${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
+                <span className="fl-rk">{i + 1}</span>
+                <span className="fl-name">{s.name}</span>
+                <div className="fl2-track">
+                  <div className="fl2-axis" />
+                  <div
+                    className="fl2-bar for"
+                    style={{ left: `${f.left}%`, width: `${f.width}%`, background: FOREIGN_COLOR, color: FOREIGN_COLOR }}
+                  />
+                  <div
+                    className="fl2-bar org"
+                    style={{ left: `${g.left}%`, width: `${g.width}%`, background: INST_COLOR, color: INST_COLOR }}
+                  />
+                </div>
+                <div className="fl2-vals">
+                  <span style={{ color: FOREIGN_COLOR }}>
+                    <b>외</b>
+                    {fmt(s.foreign ?? 0)}
+                  </span>
+                  <span style={{ color: INST_COLOR }}>
+                    <b>기</b>
+                    {fmt(s.inst ?? 0)}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="fl-empty">오늘 {dir === 'buy' ? '순매수' : '순매도'} 섹터 없음</div>
+        )}
       </div>
     );
   };
 
-  // ── 미국: 전일 등락률 단일 막대(가격 변화라 방향=색) ──
+  // ── 미국: 전일 등락률 단일 막대(가격 변화라 방향=색). 수급 데이터가 없어 등락률 부호로 분류 ──
   const usCol = (sectors: RingSector[]) => {
     const maxAbs = Math.max(...sectors.map((s) => Math.abs(s.ret)), 0.5);
+    const rows =
+      dir === 'buy'
+        ? sectors.filter((s) => s.ret >= 0).sort((a, b) => b.ret - a.ret)
+        : sectors.filter((s) => s.ret < 0).sort((a, b) => a.ret - b.ret);
     return (
       <div className="flow-col">
         <div className="flow-head">
           미국 · SPDR
-          <em>전일 등락률</em>
+          <em>전일 등락률{dir === 'buy' ? ' · 상승' : ' · 하락'}</em>
         </div>
-        {sectors.map((s, i) => {
-          const v = s.ret;
-          const buy = v >= 0;
-          const mag = Math.max(Math.abs(v) / maxAbs, 0.05);
-          const dur = `${(2.6 - mag * 1.75).toFixed(2)}s`;
-          const bright = (0.28 + mag * 0.5).toFixed(2);
-          const dirColor = buy ? 'var(--up)' : 'var(--down)';
-          return (
-            <div className={`flow-lane${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
-              <span className="fl-rk">{i + 1}</span>
-              <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, 'us')}, 82%, 60%)` }} />
-              <span className="fl-name">{s.name}</span>
-              <div className={`fl-track ${buy ? 'buy' : 'sell'}`}>
-                <div className="fl-fill" style={{ ['--mag' as string]: mag, color: dirColor }} />
-                <div
-                  className="fl-belt"
-                  style={{ ['--dur' as string]: dur, ['--bright' as string]: bright }}
-                >
-                  <span className="fl-belt-i" />
+        {rows.length ? (
+          rows.map((s, i) => {
+            const v = s.ret;
+            const buy = v >= 0;
+            const mag = Math.max(Math.abs(v) / maxAbs, 0.05);
+            const dur = `${(2.6 - mag * 1.75).toFixed(2)}s`;
+            const bright = (0.28 + mag * 0.5).toFixed(2);
+            const dirColor = buy ? 'var(--up)' : 'var(--down)';
+            return (
+              <div className={`flow-lane${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
+                <span className="fl-rk">{i + 1}</span>
+                <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, 'us')}, 82%, 60%)` }} />
+                <span className="fl-name">{s.name}</span>
+                <div className={`fl-track ${buy ? 'buy' : 'sell'}`}>
+                  <div className="fl-fill" style={{ ['--mag' as string]: mag, color: dirColor }} />
+                  <div
+                    className="fl-belt"
+                    style={{ ['--dur' as string]: dur, ['--bright' as string]: bright }}
+                  >
+                    <span className="fl-belt-i" />
+                  </div>
                 </div>
+                <span className="fl-val" style={{ color: dirColor }}>
+                  {(v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1)}%
+                </span>
               </div>
-              <span className="fl-val" style={{ color: dirColor }}>
-                {(v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1)}%
-              </span>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="fl-empty">{dir === 'buy' ? '상승' : '하락'} 섹터 없음</div>
+        )}
       </div>
     );
   };
@@ -435,7 +433,14 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
         {mock ? (
           <span className="mock-badge">⚠ 샘플 데이터</span>
         ) : (
-          <span className="exch">순매수·순매도 상위</span>
+          <div className="flow-dir">
+            <button type="button" className={dir === 'buy' ? 'on buy' : ''} onClick={() => setDir('buy')}>
+              순매수
+            </button>
+            <button type="button" className={dir === 'sell' ? 'on sell' : ''} onClick={() => setDir('sell')}>
+              순매도
+            </button>
+          </div>
         )}
       </h3>
       <div className="flow-cols">
