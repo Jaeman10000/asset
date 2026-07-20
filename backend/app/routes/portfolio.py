@@ -96,6 +96,9 @@ async def _build_snapshot() -> PortfolioSnapshot:
     # ── 실데이터(키움)로 채워지지 않은 시장 정보만 모의로 보충한다.
     #    모의가 하나라도 섞이면 marketMock=True로 내려 프론트가 "샘플" 워터마크를 씌운다.
     #    키움 연동 시 랭킹은 실데이터로 대체되고, 남은 수급/섹터만 모의로 표시된다. ──
+    # marketMock = '섹터 카드가 모의인가'만 뜻한다. 개별 보유종목 수급이 아직 안
+    # 채워진 건(투자자 mock 주입) 종목별 investorsMock으로 따로 표시하지, 섹터 카드
+    # 배지(샘플)를 켜지 않는다 — 테마 섹터가 실데이터인데 "샘플"로 잘못 뜨는 걸 막음.
     market_mock = False
     if not any(s.region == "KR" for s in sector_flows):
         sector_flows.extend(mock_market.kr_sector_flows())
@@ -105,7 +108,6 @@ async def _build_snapshot() -> PortfolioSnapshot:
             p.investors = mock_market.investors_for(p.symbol)
             p.investorPeriods = mock_market.investor_periods_for(p.symbol)
             p.investorsMock = True
-            market_mock = True
     # 시장 랭킹: 키움 실데이터가 있으면 그걸(rankingMock=False), 없으면 모의로
     if real_ranking:
         market_ranking = real_ranking

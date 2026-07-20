@@ -135,6 +135,28 @@ async def fetch_candles(code: str, period: str = "D", limit: int = 140) -> list[
     return out
 
 
+# ── 테마 섹터: 대표 종목들의 종목별 수급(ka10059)을 합산해 '반도체' 같은 테마 단위
+#    수급을 만든다. 키움은 테마별 투자자 수급을 안 주고 업종(전기/전자 뭉뚱그림)만
+#    주므로, 유저가 실제로 생각하는 섹터(반도체 독립)를 보려면 대표 종목 합산이 유일한
+#    방법이다. '어떤 종목=반도체'는 대표 대형주 기준(근사치) — 필요하면 여기만 고친다. ──
+#    ※ 대표 종목은 각 테마의 '대장주' 2~3개만 — 키움 레이트리밋(초당 호출 제한) 때문에
+#      종목별 수급(ka10059)을 너무 많이 부르면 throttle이 걸려 첫 로딩이 20초+가 된다.
+#      대장주만으로도 테마 수급 방향·규모는 충분히 대표된다.
+_THEME_SECTORS: list[tuple[str, list[str]]] = [
+    ("반도체", ["005930", "000660", "042700"]),  # 삼성전자·SK하이닉스·한미반도체
+    ("이차전지", ["373220", "006400", "247540"]),  # LG엔솔·삼성SDI·에코프로비엠
+    ("자동차", ["005380", "000270"]),  # 현대차·기아
+    ("바이오/제약", ["207940", "068270"]),  # 삼성바이오·셀트리온
+    ("방산", ["012450", "047810"]),  # 한화에어로·한국항공우주
+    ("조선", ["009540", "010140", "042660"]),  # HD한국조선·삼성중공업·한화오션
+    ("원전/에너지", ["034020", "052690", "010120"]),  # 두산에너빌리티·한전기술·LS ELECTRIC
+    ("인터넷/게임", ["035420", "035720"]),  # NAVER·카카오
+    ("금융", ["105560", "055550", "086790"]),  # KB·신한·하나
+    ("로봇", ["277810", "454910", "058610"]),  # 레인보우·두산로보틱스·에스피지
+    ("엔터", ["352820", "035900"]),  # 하이브·JYP
+]
+
+
 class KiwoomAdapter(BaseAdapter):
     name = "kiwoom"
 
@@ -159,33 +181,82 @@ class KiwoomAdapter(BaseAdapter):
                 error=SourceError(source=self.name, message=f"키움 잔고 조회 실패: {exc}")
             )
 
-        # 랭킹·섹터는 부가정보라 잔고와 분리 — return_exceptions=True로 한쪽이
-        # 실패해도 다른 쪽·보유종목은 살린다. 실패하면 이유를 warning으로 남겨
-        # "왜 모의로 폴백했는지"가 화면에 보이게 한다(예전엔 조용히 삼켜져 원인불명이었음).
-        ranking_r, sectors_r = await asyncio.gather(
-            self._ranking(client), self._kr_sectors(client), return_exceptions=True
+        # 랭킹은 부가정보 — 실패해도 잔고·나머지는 살린다.
+        ranking_r = await asyncio.gather(self._ranking(client), return_exceptions=True)
+        ranking_res = ranking_r[0]
+        ranking = ranking_res if isinstance(ranking_res, list) else []
+        rank_err = str(ranking_res) if isinstance(ranking_res, Exception) else None
+
+        # ── 종목별 수급(ka10059)을 '보유 KR + 테마 대표종목 + 랭킹' 통합 조회 ──
+        #    (한 종목당 1콜, _flow_cache로 중복 제거). 이 하나로 (1) 보유 호버 수급,
+        #    (2) 테마 섹터 합산, (3) 랭킹 외국인/기관 탭을 모두 만든다. 아래 시간 예산
+        #    (budget)이 20초+ 블로킹을 막으므로 랭킹까지 넣어도 안전 — 못 받은 건 다음
+        #    폴링이 이어서 채운다(점진적).
+        kr = [p for p in positions if p.region == "KR" and p.assetType == "stock"]
+        theme_codes = {c for _, codes in _THEME_SECTORS for c in codes}
+        codes = {p.symbol for p in kr} | theme_codes | {m.symbol for m in ranking}
+        # 키움 레이트리밋 때문에 종목 수급을 다 받으려면 20초+ 걸려 스냅샷이 클라이언트
+        # 타임아웃(10초)에 걸린다. → 시간 예산(6초)만 쓰고, 그 안에 완료된 종목만
+        # _flow_cache에 남긴다. 나머지는 다음 폴링이 이어서 채운다(_fetch_flows가 각
+        # 완료 즉시 캐시에 쓰므로, 타임아웃으로 취소돼도 완료분은 보존됨). 아래에서
+        # 캐시를 읽어 부분 결과라도 즉시 반영 → 테마 섹터가 몇 초에 걸쳐 채워진다.
+        work = asyncio.gather(
+            self._fetch_flows(client, codes),
+            self._attach_history(client, positions),
+            return_exceptions=True,
         )
-        ranking = ranking_r if isinstance(ranking_r, list) else []
-        sectors = sectors_r if isinstance(sectors_r, list) else []
+        try:
+            await asyncio.wait_for(work, timeout=5.0)
+        except (asyncio.TimeoutError, Exception):
+            pass
+
+        now2 = time.time()
+
+        def cached_flow(code: str):
+            hit = _flow_cache.get(code)
+            return hit[1] if hit and now2 - hit[0] < _FLOW_TTL else None
+
+        for p in kr:
+            cf = cached_flow(p.symbol)
+            if cf:
+                p.investors, p.investorPeriods = cf
+                p.investorsMock = False
+        for m in ranking:
+            cf = cached_flow(m.symbol)
+            if cf:
+                m.investors, m.investorPeriods = cf
+                m.investorsMock = False
+
+        # 테마 섹터 = 대표종목 당일 수급 합산 (캐시에 있는 것만 — 부분→완전 점진 채움)
+        sectors: list[SectorFlow] = []
+        for name, tcodes in _THEME_SECTORS:
+            members = [cf[0] for c in tcodes if (cf := cached_flow(c))]
+            if not members:
+                continue
+            sectors.append(
+                SectorFlow(
+                    region="KR",
+                    id=name,
+                    name=name,
+                    foreign=round(sum(m.foreign for m in members)),
+                    inst=round(sum(m.inst for m in members)),
+                    individual=round(sum(m.individual for m in members)),
+                )
+            )
+
         fail_parts = []
-        if isinstance(ranking_r, Exception):
-            fail_parts.append(f"랭킹={ranking_r}")
-        if isinstance(sectors_r, Exception):
-            fail_parts.append(f"KR섹터={sectors_r}")
+        if rank_err:
+            fail_parts.append(f"랭킹={rank_err}")
+        if not sectors:
+            fail_parts.append("테마섹터=종목 수급 조회 실패")
         warning = (
-            SourceError(source=self.name, message="키움 부가정보 조회 실패(" + ", ".join(fail_parts) + ") — 랭킹/섹터는 모의로 대체됨")
+            SourceError(
+                source=self.name,
+                message="키움 부가정보 실패(" + ", ".join(fail_parts) + ") — 모의로 대체됨",
+            )
             if fail_parts
             else None
         )
-
-        try:
-            # 수급(ka10059)·일봉(ka10081)을 동시에 부착 — 실패해도 보유종목 자체는 살린다.
-            await asyncio.gather(
-                self._attach_investors(client, positions, ranking),
-                self._attach_history(client, positions),
-            )
-        except Exception:
-            pass
 
         return AdapterResult(
             positions=positions,
@@ -328,20 +399,16 @@ class KiwoomAdapter(BaseAdapter):
                 pass  # history 없어도 보유/평가는 정상 표시
         return out
 
-    # ── 종목별 수급 (ka10059) — 보유 KR 종목 + 랭킹 종목에 당일 + 20/60일 누적 부착 ──
-    async def _attach_investors(
-        self,
-        client: KiwoomClient,
-        positions: list[Position],
-        ranking: list[MarketStock],
-    ) -> None:
-        kr = [p for p in positions if p.region == "KR" and p.assetType == "stock"]
-        # 보유 + 랭킹 종목코드를 합쳐 중복 제거 (한 종목당 ka10059 1회만)
-        codes = sorted({p.symbol for p in kr} | {m.symbol for m in ranking})
+    # ── 종목별 수급 (ka10059) — 코드 집합 → {코드: (당일 InvestorFlow, 20/60일 누적)} ──
+    #    _flow_cache로 중복/재조회를 막는다. 보유·랭킹 호버 수급과 테마 섹터 합산이 공용.
+    async def _fetch_flows(
+        self, client: KiwoomClient, codes: set[str] | list[str]
+    ) -> dict[str, tuple[InvestorFlow, list[InvestorPeriod]]]:
+        codes = sorted(set(codes))
         if not codes:
-            return
+            return {}
         dt = datetime.now().strftime("%Y%m%d")
-        sem = asyncio.Semaphore(3)  # 레이트리밋 대비 동시 3
+        sem = asyncio.Semaphore(4)  # 레이트리밋 대비
         now = time.time()
 
         async def one(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
@@ -371,15 +438,7 @@ class KiwoomAdapter(BaseAdapter):
             return built
 
         results = await asyncio.gather(*(one(c) for c in codes))
-        flows = {code: r for code, r in zip(codes, results) if r}
-        for p in kr:
-            if p.symbol in flows:
-                p.investors, p.investorPeriods = flows[p.symbol]
-                p.investorsMock = False
-        for m in ranking:
-            if m.symbol in flows:
-                m.investors, m.investorPeriods = flows[m.symbol]
-                m.investorsMock = False
+        return {code: r for code, r in zip(codes, results) if r}
 
     @staticmethod
     def _build_flow(rows: list[dict[str, Any]]) -> tuple[InvestorFlow, list[InvestorPeriod]]:
