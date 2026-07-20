@@ -96,8 +96,17 @@ function InvestorBars({
 }) {
   // 키움 실데이터(ka10059)엔 프로그램 항목이 없어 항상 0 → 실데이터일 땐 행을 숨긴다.
   const rows = mock ? INVESTOR_ROWS : INVESTOR_ROWS.filter((r) => r.key !== 'program');
-  const maxAbs = Math.max(...rows.map((r) => Math.abs(inv[r.key])), 1);
   const hasP = !!periods && periods.length > 0;
+  // 막대는 '당일' 3주체(외국인/기관/개인)끼리만 비교하면 안 된다 — 당일 순매도가
+  // -459(작은 값)여도 그게 셋 중 제일 크면 막대가 꽉 차 보여서, 바로 옆 20일
+  // -222,120·60일 -486,464 같은 누적치보다 훨씬 작다는 게 전혀 안 드러난다(유저 지적:
+  // "당일 매도가 작은데 왜 게이지는 만땅?"). 20/60일까지 포함한 값 중 최대치를
+  // 기준으로 삼아, 당일이 누적 대비 실제로 작으면 막대도 작게 나오게 한다.
+  const maxAbs = Math.max(
+    ...rows.map((r) => Math.abs(inv[r.key])),
+    ...(hasP ? periods!.flatMap((p) => rows.map((r) => Math.abs(p[r.key]))) : []),
+    1,
+  );
   return (
     <div className={`inv-section ${hasP ? 'has-periods' : ''}`}>
       <div className="inv-title">
