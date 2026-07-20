@@ -4,7 +4,7 @@
  * 개발: Vite 프록시(/api → 127.0.0.1:8787)를 통한다.
  * 프로덕션(Tauri): VITE_API_BASE 환경변수로 백엔드 주소를 직접 지정한다.
  */
-import type { PortfolioSnapshot, SourceStatus } from './types';
+import type { InvestorFlow, InvestorPeriod, PortfolioSnapshot, SourceStatus } from './types';
 
 /**
  * 백엔드 주소 결정:
@@ -78,6 +78,25 @@ export function fetchChart(
     `/chart/${encodeURIComponent(code)}?period=${period}&market=${market}`,
     signal,
   );
+}
+
+// ── 종목별 수급 (호버 시 on-demand 조회) ──
+
+export interface FlowResp {
+  investors: InvestorFlow | null;
+  investorPeriods: InvestorPeriod[];
+}
+
+// 클라 캐시(60초) — 같은 종목에 반복 호버해도 재요청/깜빡임 없이 즉시. 백엔드도 180초
+// 캐시하므로 이중 캐시. null 결과(수급 없음/실패)도 캐시해 무한 재시도를 막는다.
+const _flowCache = new Map<string, { at: number; data: FlowResp }>();
+
+export async function fetchFlow(code: string, signal?: AbortSignal): Promise<FlowResp> {
+  const hit = _flowCache.get(code);
+  if (hit && Date.now() - hit.at < 60_000) return hit.data;
+  const data = await getJSON<FlowResp>(`/flow/${encodeURIComponent(code)}`, signal);
+  _flowCache.set(code, { at: Date.now(), data });
+  return data;
 }
 
 // ── 보유종목 편집 (holdings.json) ──

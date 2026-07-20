@@ -135,6 +135,37 @@ async def fetch_candles(code: str, period: str = "D", limit: int = 140) -> list[
     return out
 
 
+async def fetch_flow(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
+    """단일 KR 종목 종목별 수급(ka10059) — 호버 on-demand용. _flow_cache(180s) 공유.
+
+    스냅샷의 통합 수급 조회는 5초 시간예산에 걸려 보유·랭킹 종목 대부분을 못 채운다.
+    그래서 호버한 '그 종목 하나만' 즉석에서 받아, 예산·랭킹누락·0값숨김 문제를 없앤다.
+    """
+    code = _clean_code(code)
+    client = KiwoomClient()
+    if not client.configured:
+        return None
+    now = time.time()
+    cached = _flow_cache.get(code)
+    if cached and now - cached[0] < _FLOW_TTL:
+        return cached[1]
+    dt = datetime.now().strftime("%Y%m%d")
+    try:
+        data = await client.call(
+            "stkinfo",
+            "ka10059",
+            {"dt": dt, "stk_cd": code, "amt_qty_tp": "1", "trde_tp": "0", "unit_tp": "1000"},
+        )
+        rows = data.get("stk_invsr_orgn") or _first_list(data)
+    except Exception:
+        return None
+    if not rows:
+        return None
+    built = KiwoomAdapter._build_flow(rows)
+    _flow_cache[code] = (now, built)
+    return built
+
+
 def clear_caches() -> None:
     """수동 새로고침 시 종목 수급/일봉/캔들 캐시를 모두 비워 즉시 재조회하게 한다.
     (평소엔 수급 3분·일봉 10분 캐시라 새로고침 눌러도 캐시값이 나올 수 있어서.)"""
@@ -162,6 +193,17 @@ _THEME_SECTORS: list[tuple[str, list[str]]] = [
     ("금융", ["105560", "055550", "086790"]),  # KB·신한·하나
     ("로봇", ["277810", "454910", "058610"]),  # 레인보우·두산로보틱스·에스피지
     ("엔터", ["352820", "035900"]),  # 하이브·JYP
+    # ── 아래는 순매수/순매도 방향에 더 다양한 섹터가 잡히도록 확장(유저 요청). 시장
+    #    큰손이 자주 움직이는 대형 테마 위주. 한전·HMM은 기존 랭킹엔 잡히나 테마엔 없어
+    #    빠졌던 것들 → 독립 테마로 추가.
+    ("화학", ["051910", "011170"]),  # LG화학·롯데케미칼
+    ("철강", ["005490", "004020"]),  # POSCO홀딩스·현대제철
+    ("통신", ["017670", "030200"]),  # SK텔레콤·KT
+    ("건설", ["000720", "006360"]),  # 현대건설·GS건설
+    ("전력/유틸", ["015760", "036460"]),  # 한국전력·한국가스공사
+    ("해운", ["011200", "028670"]),  # HMM·팬오션
+    ("화장품", ["090430", "051900"]),  # 아모레퍼시픽·LG생활건강
+    ("유통", ["139480", "023530"]),  # 이마트·롯데쇼핑
 ]
 
 # 지금까지 만든 '가장 완전한' 테마 섹터 세트를 기억한다. 콜드/불안정으로 이번 빌드가

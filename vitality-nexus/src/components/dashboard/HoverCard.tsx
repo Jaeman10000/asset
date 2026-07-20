@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { fetchFlow, type FlowResp } from '../../api/client';
 import type { InvestorFlow, InvestorPeriod, MarketStock, Position } from '../../api/types';
 import { krwCompact, pct } from '../../util/format';
 
@@ -169,8 +171,27 @@ function InvestorBars({
 }
 
 export function HoverCard({ target }: { target: HoverTarget | null }) {
-  if (!target) return null;
-  const h = target.info;
+  const info = target?.info;
+  const symbol = info?.symbol;
+  const isKR = info?.currency === 'KRW';
+  // 실데이터(모의 아님) KR 종목이면 그 종목 하나만 즉석에서 수급 조회 → 스냅샷 시간예산에
+  // 잘려 못 받은 보유/랭킹 종목도 호버하면 바로 뜬다(수급이 0이어도 20/60일 누적은 보인다).
+  const canFetch = !!symbol && isKR && !info?.investorsMock;
+  const [live, setLive] = useState<{ sym: string; data: FlowResp } | null>(null);
+
+  useEffect(() => {
+    if (!canFetch || !symbol) return;
+    let cancel = false;
+    fetchFlow(symbol)
+      .then((data) => !cancel && setLive({ sym: symbol, data }))
+      .catch(() => !cancel && setLive({ sym: symbol, data: { investors: null, investorPeriods: [] } }));
+    return () => {
+      cancel = true;
+    };
+  }, [symbol, canFetch]);
+
+  if (!target || !info) return null;
+  const h = info;
   const curSym = h.currency === 'USD' ? '$' : '₩';
   const time = new Date(h.lastUpdated || Date.now()).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -226,15 +247,23 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
         </div>
       )}
 
-      {/* 수급현황 — 당일 + 20/60일 누적. 값이 전부 0이면(랭킹 잡주 등 수급 미조회)
-          빈 막대를 띄우지 않는다. */}
-      {h.investors &&
-        (h.investorsMock ||
-          h.investors.foreign !== 0 ||
-          h.investors.inst !== 0 ||
-          h.investors.individual !== 0) && (
-          <InvestorBars inv={h.investors} periods={h.periods} mock={h.investorsMock} />
-        )}
+      {/* 수급현황 — 당일 + 20/60일 누적. 모의면 그대로, 실데이터 KR이면 on-demand 조회분
+          우선(스냅샷에 없던 종목도 호버 즉시 채움). 오늘치가 0이어도 20/60일 누적을 보여
+          주므로 숨기지 않는다. */}
+      {(() => {
+        if (h.investorsMock) {
+          return h.investors ? (
+            <InvestorBars inv={h.investors} periods={h.periods} mock />
+          ) : null;
+        }
+        if (!isKR) return null;
+        const liveMatch = live && live.sym === h.symbol ? live.data : null;
+        const inv = liveMatch?.investors ?? h.investors ?? null;
+        const periods = liveMatch ? liveMatch.investorPeriods : h.periods;
+        if (inv) return <InvestorBars inv={inv} periods={periods} />;
+        if (canFetch && !liveMatch) return <div className="inv-loading">수급 불러오는 중…</div>;
+        return <div className="inv-loading">오늘 수급 데이터 없음</div>;
+      })()}
 
       <div className="truth-foot">기준 {time}</div>
     </div>

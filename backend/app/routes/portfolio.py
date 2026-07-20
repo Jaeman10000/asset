@@ -173,6 +173,24 @@ async def get_chart(code: str, period: str = "D", market: str = "kr") -> dict:
     return {"code": code, "period": p, "market": market, "candles": candles}
 
 
+@router.get("/flow/{code}")
+async def get_flow(code: str) -> dict:
+    """단일 KR 종목 종목별 수급(외국인/기관/개인, 당일+20/60일) — 호버 시 on-demand.
+    스냅샷 통합조회는 시간예산에 잘려 보유·랭킹 대부분을 못 채우므로, 호버한 종목만
+    즉석 조회한다. 미설정/실패/데이터없음이면 investors=null(프론트가 '수급 없음' 표기)."""
+    from ..adapters.kiwoom import fetch_flow
+
+    built = await fetch_flow(code)
+    if not built:
+        return {"code": code, "investors": None, "investorPeriods": []}
+    inv, periods = built
+    return {
+        "code": code,
+        "investors": inv.model_dump(),
+        "investorPeriods": [p.model_dump() for p in periods],
+    }
+
+
 @router.get("/debug/kiwoom")
 async def debug_kiwoom() -> dict:
     """키움 실제 응답 원문을 그대로 반환 — 필드 매핑 확정용(로컬 전용).
