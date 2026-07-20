@@ -794,6 +794,59 @@ body {
 }
 
 /* 흐름 트랙 — 중앙 = 수급 균형(0), 우=매수 / 좌=매도 */
+/* ── 한국 섹터: 외국인·기관 분리 막대 (중앙=0, 좌=매도/우=매수) ── */
+.flow-lane.kr2 {
+  grid-template-columns: 13px minmax(0, 0.72fr) minmax(40px, 1.5fr) auto;
+  padding: 3px 0;
+}
+.fl2-track {
+  position: relative;
+  height: 16px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+.fl2-axis {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateX(-0.5px);
+}
+.fl2-bar {
+  position: absolute;
+  height: 5px;
+  border-radius: 2px;
+  opacity: 0.9;
+  box-shadow: 0 0 5px currentColor;
+  transition:
+    left 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fl2-bar.for {
+  top: 2.5px;
+} /* 외국인 (위) */
+.fl2-bar.org {
+  bottom: 2.5px;
+} /* 기관 (아래) */
+.fl2-vals {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+.fl2-vals b {
+  font-weight: 700;
+  margin-right: 2px;
+  opacity: 0.75;
+}
+
 .fl-track {
   position: relative;
   height: 14px;

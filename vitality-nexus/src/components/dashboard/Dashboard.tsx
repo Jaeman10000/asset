@@ -294,44 +294,99 @@ function RankRow({
  *   · dot 색 = 3D 궤도 노드와 동일(지배 투자자/등락 방향) → 링↔레인 상호참조.
  *   · 컴포지터 전용: 막대는 transform:scaleX(전환), 흐름은 translate3d(무한) 뿐.
  */
-function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
-  const krNet = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
+// 외국인·기관 색은 호버 카드(InvestorBars)와 동일하게 맞춘다.
+const FOREIGN_COLOR = 'hsl(45, 90%, 65%)'; // 외국인(금색)
+const INST_COLOR = 'hsl(175, 80%, 60%)'; // 기관(청록)
 
-  const col = (sectors: RingSector[], side: 'kr' | 'us', title: string, metricLabel: string) => {
-    const val = (s: RingSector) => (side === 'kr' ? krNet(s) : s.ret);
+function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
+  // ── 한국: 섹터별로 외국인·기관을 각각의 막대로(중앙=0, 좌=매도/우=매수) ──
+  // 유저 지적: 하나의 합산 막대로는 "외국인이 샀는데 기관이 팔았는지"가 안 보인다.
+  // 순위(1위=건설 등)는 여전히 외국인+기관 합산 순매수 기준(smart money 순).
+  const krCol = (sectors: RingSector[]) => {
+    // 외국인·기관 값 전체의 최대치로 두 막대를 같은 스케일에 둔다.
     const maxAbs = Math.max(
-      ...sectors.map((s) => Math.abs(val(s))),
-      side === 'kr' ? 300 : 0.5, // 바닥값 — 조용한 날 막대가 폭주하지 않게
+      ...sectors.flatMap((s) => [Math.abs(s.foreign ?? 0), Math.abs(s.inst ?? 0)]),
+      300, // 바닥값 — 조용한 날 막대 폭주 방지
     );
+    const seg = (v: number) => {
+      const w = Math.min(Math.abs(v) / maxAbs, 1) * 50; // 반폭 %
+      const buy = v >= 0;
+      // 매수=중앙에서 오른쪽, 매도=중앙에서 왼쪽 (방향은 위치로, 색은 주체로 구분)
+      return { left: buy ? 50 : 50 - w, width: w };
+    };
+    const fmt = (v: number) =>
+      (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR');
     return (
       <div className="flow-col">
         <div className="flow-head">
-          {title}
-          <em>{metricLabel}</em>
+          한국 · KRX
+          <em>순매수(억) · 외국인/기관</em>
         </div>
         {sectors.map((s, i) => {
-          const v = val(s);
+          const f = seg(s.foreign ?? 0);
+          const g = seg(s.inst ?? 0);
+          return (
+            <div className="flow-lane kr2" key={s.name}>
+              <span className="fl-rk">{i + 1}</span>
+              <span className="fl-name">{s.name}</span>
+              <div className="fl2-track">
+                <div className="fl2-axis" />
+                <div
+                  className="fl2-bar for"
+                  style={{
+                    left: `${f.left}%`,
+                    width: `${f.width}%`,
+                    background: FOREIGN_COLOR,
+                    color: FOREIGN_COLOR,
+                  }}
+                />
+                <div
+                  className="fl2-bar org"
+                  style={{
+                    left: `${g.left}%`,
+                    width: `${g.width}%`,
+                    background: INST_COLOR,
+                    color: INST_COLOR,
+                  }}
+                />
+              </div>
+              <div className="fl2-vals">
+                <span style={{ color: FOREIGN_COLOR }}>
+                  <b>외</b>
+                  {fmt(s.foreign ?? 0)}
+                </span>
+                <span style={{ color: INST_COLOR }}>
+                  <b>기</b>
+                  {fmt(s.inst ?? 0)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ── 미국: 전일 등락률 단일 막대(가격 변화라 방향=색) ──
+  const usCol = (sectors: RingSector[]) => {
+    const maxAbs = Math.max(...sectors.map((s) => Math.abs(s.ret)), 0.5);
+    return (
+      <div className="flow-col">
+        <div className="flow-head">
+          미국 · SPDR
+          <em>전일 등락률</em>
+        </div>
+        {sectors.map((s, i) => {
+          const v = s.ret;
           const buy = v >= 0;
-          const mag = Math.max(Math.abs(v) / maxAbs, 0.05); // 0.05~1 (막대 스케일·강도)
-          const dur = `${(2.6 - mag * 1.75).toFixed(2)}s`; // 강할수록 빠름: 0.85s~2.51s
-          const bright = (0.28 + mag * 0.5).toFixed(2); // 강할수록 밝음: 0.28~0.78
-          const dirColor =
-            side === 'kr'
-              ? buy
-                ? 'var(--life)'
-                : 'var(--down)'
-              : buy
-                ? 'var(--up)'
-                : 'var(--down)';
-          const sign = v >= 0 ? '+' : '−';
-          const valText =
-            side === 'kr'
-              ? sign + Math.abs(Math.round(v)).toLocaleString('ko-KR')
-              : sign + Math.abs(v).toFixed(1) + '%';
+          const mag = Math.max(Math.abs(v) / maxAbs, 0.05);
+          const dur = `${(2.6 - mag * 1.75).toFixed(2)}s`;
+          const bright = (0.28 + mag * 0.5).toFixed(2);
+          const dirColor = buy ? 'var(--up)' : 'var(--down)';
           return (
             <div className="flow-lane" key={s.name}>
               <span className="fl-rk">{i + 1}</span>
-              <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, side)}, 82%, 60%)` }} />
+              <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, 'us')}, 82%, 60%)` }} />
               <span className="fl-name">{s.name}</span>
               <div className={`fl-track ${buy ? 'buy' : 'sell'}`}>
                 <div className="fl-fill" style={{ ['--mag' as string]: mag, color: dirColor }} />
@@ -343,8 +398,7 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
                 </div>
               </div>
               <span className="fl-val" style={{ color: dirColor }}>
-                {valText}
-                {side === 'kr' && <em>억</em>}
+                {(v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1)}%
               </span>
             </div>
           );
@@ -365,8 +419,8 @@ function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[];
         )}
       </h3>
       <div className="flow-cols">
-        {col(kr, 'kr', '한국 · KRX', '외국인+기관 순매수')}
-        {col(us, 'us', '미국 · SPDR', '전일 등락률')}
+        {krCol(kr)}
+        {usCol(us)}
       </div>
     </div>
   );
