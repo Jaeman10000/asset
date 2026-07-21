@@ -1090,6 +1090,16 @@ body {
   border-color: rgba(43, 230, 200, 0.4);
   color: var(--life);
 }
+/* 거래대금 하한을 걸었다는 표기 — 순위에 구멍이 나는 이유를 숨기지 않는다 */
+.rank-note {
+  margin-left: auto;
+  align-self: center;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+  color: var(--sub);
+  white-space: nowrap;
+}
 .ranking-list {
   flex: 1;
   overflow-y: auto;

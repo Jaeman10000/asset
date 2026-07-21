@@ -39,6 +39,18 @@ _SECT_TO_EOK = 1.0
 _HIST_TTL = 600.0  # 일봉(종가) 10분
 _FLOW_TTL = 180.0  # 수급 3분
 _HIST_LEN = 120  # 보관 일봉 개수(스파크라인·차트용)
+
+# 랭킹 '껍데기 상한가' 제외 — 거래대금 하한. 실측: 상승률 상위 20개 중 원풍물산은
+# +29.84%인데 하루 거래대금이 3천만원, 엔젠바이오·비케이홀딩스는 2억이다. 몇 천만원으로
+# 만들어지는 상한가는 시장 신호가 아니라 노이즈다. 50억이면 이런 껍데기는 걸러지면서
+# 실제 자금이 들어온 상한가(에브리봇 114억·코스모로보틱스 342억)는 살아남는다.
+_MIN_TRDE_PRICA = 50e8
+# 키움이 32비트 한계로 잘라 보내는 쓰레기 거래량(2^32-1). 실제값이 아니므로 '미상' 처리
+# (실측: ka10030 거래량 1위 KODEX 200선물인버스2X = 4,294,967,295).
+_QTY_OVERFLOW = 4294967295.0
+# ka10059의 flu_rt는 1/100 단위(1273 = 12.73%). ka10027의 flu_rt(30.00 = 30%)와 스케일이
+# 달라서 그대로 쓰면 100배가 된다(유저 지적: 레인보우 1200%).
+_KA10059_RT_DIV = 100.0
 _hist_cache: dict[str, tuple[float, list[float]]] = {}
 _flow_cache: dict[str, tuple[float, "tuple[InvestorFlow, list[InvestorPeriod]]"]] = {}
 # ka10059 응답에 같이 오는 시세(현재가/등락률/거래량) — 대장주를 랭킹 후보로 올릴 때
@@ -168,7 +180,8 @@ async def _fetch_one_flow(
         now2,
         {
             "price": abs(_num(r0.get("cur_prc"))),
-            "ret": _num(r0.get("flu_rt")),
+            # flu_rt는 1/100 단위(1273 = 12.73%) — 나누지 않으면 100배로 찍힌다.
+            "ret": _num(r0.get("flu_rt")) / _KA10059_RT_DIV,
             "volume": abs(_num(r0.get("acc_trde_qty"))),
         },
     )
@@ -414,6 +427,8 @@ class KiwoomAdapter(BaseAdapter):
                     investors=cf[0],
                     investorPeriods=cf[1],
                     investorsMock=False,
+                    # 외국인 탭 보정 전용 — 상승/하락/거래량 순위엔 끼지 않는다.
+                    flowOnly=True,
                 )
             )
 
@@ -721,19 +736,39 @@ class KiwoomAdapter(BaseAdapter):
             ),
         )
         merged: dict[str, MarketStock] = {}
-        # 각 소스 상위 12씩 → 탭(상승/하락/거래량)마다 10개는 확보되게. 중복 제거.
-        for r in [*up[:12], *down[:12], *vol[:12]]:
-            code = _clean_code(_f(r, "stk_cd", "종목코드", "item_cd"))
-            if not code or code in merged:
-                continue
-            merged[code] = MarketStock(
-                symbol=code,
-                name=str(_f(r, "stk_nm", "종목명", "item_nm", default=code)),
-                price=abs(_num(_f(r, "cur_prc", "현재가", "prpr"))),
-                ret=_num(_f(r, "flu_rt", "등락률", "prdy_ctrt", "chg_rt", "fluc_rt")),
-                volume=int(abs(_num(_f(r, "trde_qty", "거래량", "acml_vol", "now_trde_qty")))),
-                investors=InvestorFlow(),
-            )
+
+        def take(rows: list[dict[str, Any]], n: int = 12) -> list[MarketStock]:
+            """한 소스에서 '거래대금 하한'을 통과한 상위 n개만. 응답 전량(≈100)을 훑으므로
+            껍데기를 걸러도 탭마다 10개가 채워진다."""
+            out: list[MarketStock] = []
+            for r in rows:
+                code = _clean_code(_f(r, "stk_cd", "종목코드", "item_cd"))
+                if not code:
+                    continue
+                price = abs(_num(_f(r, "cur_prc", "현재가", "prpr")))
+                # 거래량 필드명이 TR마다 다르다: ka10027=now_trde_qty, ka10030=trde_qty
+                qty = abs(_num(_f(r, "now_trde_qty", "trde_qty", "거래량", "acml_vol")))
+                if qty >= _QTY_OVERFLOW:
+                    qty = 0.0  # 32비트 오버플로우 값 → 신뢰 불가
+                if price * qty < _MIN_TRDE_PRICA:
+                    continue
+                out.append(
+                    MarketStock(
+                        symbol=code,
+                        name=str(_f(r, "stk_nm", "종목명", "item_nm", default=code)),
+                        price=price,
+                        ret=_num(_f(r, "flu_rt", "등락률", "prdy_ctrt", "chg_rt", "fluc_rt")),
+                        volume=int(qty),
+                        investors=InvestorFlow(),
+                    )
+                )
+                if len(out) >= n:
+                    break
+            return out
+
+        for m in [*take(up), *take(down), *take(vol)]:
+            if m.symbol not in merged:
+                merged[m.symbol] = m
         # ka10034는 '외국인 순매수 후보 발굴'에만 쓴다 — 정렬이 금액이 아니라 '수량(주)'
         # 이라 순위 자체를 믿으면 안 된다(1위가 저가 ETF 962만주, SK하이닉스는 +1,037억을
         # 사도 5.7만주뿐이라 100위 밖으로 탈락). 수량×현재가 환산도 실제와 4배씩 어긋났다
@@ -743,13 +778,16 @@ class KiwoomAdapter(BaseAdapter):
             code = _clean_code(_f(r, "stk_cd", "종목코드"))
             if not code or code in merged:
                 continue
+            qty = abs(_num(_f(r, "trde_qty")))
             merged[code] = MarketStock(
                 symbol=code,
                 name=str(_f(r, "stk_nm", "종목명", default=code)),
                 price=abs(_num(_f(r, "cur_prc"))),
                 ret=0.0,
-                volume=int(abs(_num(_f(r, "trde_qty")))),
+                volume=int(0 if qty >= _QTY_OVERFLOW else qty),
                 investors=InvestorFlow(),
+                # 외국인 탭 후보일 뿐 — 상승/하락/거래량은 키움 공식 랭킹만 쓴다.
+                flowOnly=True,
             )
         if not merged and last_err:
             # 상승/하락/거래량 세 소스 다 실패 — 진짜 장애. 원인을 올려서 fetch()가

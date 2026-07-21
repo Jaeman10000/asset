@@ -36,7 +36,9 @@ const RANK_TABS: { key: RankTabKey; label: string }[] = [
 ];
 
 function sortRanking(list: MarketStock[], tab: RankTabKey): MarketStock[] {
-  const out = [...list];
+  // 상승/하락/거래량은 '오늘의 시장 순위' 그 자체여야 하므로 키움 공식 랭킹
+  // (ka10027/ka10030)에서 온 종목만 쓴다. flowOnly=대장주·외국인후보는 '외국인' 탭 전용.
+  const out = tab === 'foreign' ? [...list] : list.filter((m) => !m.flowOnly);
   switch (tab) {
     case 'up':
       return out.sort((a, b) => b.ret - a.ret);
@@ -587,6 +589,8 @@ export function Dashboard({
                 {label}
               </button>
             ))}
+            {/* 껍데기 상한가(거래대금 몇 천만원짜리)를 걸러냈다는 걸 숨기지 않고 표기 */}
+            {rankTab !== 'foreign' && <span className="rank-note">거래대금 50억↑</span>}
           </div>
           <div className="ranking-list">
             {ranking.map((m, i) => {

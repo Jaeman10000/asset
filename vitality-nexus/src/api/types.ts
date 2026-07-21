@@ -57,6 +57,8 @@ export interface MarketStock {
   investors: InvestorFlow;
   investorPeriods?: InvestorPeriod[]; // 20일/60일 누적 수급
   investorsMock?: boolean; // 수급이 모의인지 (키움 실데이터면 false)
+  /** true = '외국인' 탭 보정용 후보(대장주 등). 상승/하락/거래량 탭엔 포함하지 않는다. */
+  flowOnly?: boolean;
 }
 
 export interface SectorFlow {

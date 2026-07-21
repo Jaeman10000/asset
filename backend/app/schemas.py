@@ -72,6 +72,9 @@ class MarketStock(BaseModel):
     investors: InvestorFlow  # 수급 (외국인/기관/개인/프로그램, 억원)
     investorPeriods: list[InvestorPeriod] = Field(default_factory=list)  # 20일/60일 누적
     investorsMock: bool = False  # 이 종목 수급이 모의인지 (키움 실데이터면 False)
+    # True = '외국인 순매수' 탭 보정용으로만 넣은 대장주 후보. 상승/하락/거래량 탭은
+    # 키움 공식 랭킹(ka10027/ka10030)만 써야 하므로 이 종목들은 그 탭에서 제외한다.
+    flowOnly: bool = False
 
 
 class SectorFlow(BaseModel):
