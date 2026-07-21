@@ -18,6 +18,9 @@ interface PortfolioStore {
   sources: SourceStatus | null;
   conn: ConnState;
   lastError: string | null;
+  /** 스냅샷 요청이 실제로 진행 중인지 — 새로고침 버튼 스피너/‘불러오는 중’ 문구용.
+   *  콜드 로딩은 수급 사전조회 때문에 십수 초 걸리므로 정직한 진행 표시가 필요하다. */
+  loading: boolean;
   /** 데이터가 방금 갱신된 순간 — 카드 플래시 트리거용 (fetchedAt이 바뀔 때마다 증가) */
   updateTick: number;
 
@@ -47,6 +50,7 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
     }
     const ctrl = new AbortController();
     inFlight = ctrl;
+    set({ loading: true });
     try {
       const snap = await fetchSnapshot(ctrl.signal, fresh);
       if (ctrl.signal.aborted) return;
@@ -62,7 +66,11 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
       if (ctrl.signal.aborted) return;
       set({ conn: 'offline', lastError: err instanceof Error ? err.message : String(err) });
     } finally {
-      if (inFlight === ctrl) inFlight = null;
+      // force 새로고침으로 교체된 경우엔 새 요청이 아직 진행 중이므로 loading을 끄지 않는다.
+      if (inFlight === ctrl) {
+        inFlight = null;
+        set({ loading: false });
+      }
     }
   };
 
@@ -71,6 +79,7 @@ export const usePortfolio = create<PortfolioStore>((set, get) => {
     sources: null,
     conn: 'connecting',
     lastError: null,
+    loading: false,
     updateTick: 0,
 
     // 수동 새로고침 = 강제(진행중 취소) + fresh(백엔드 캐시·수급 캐시 비우고 즉시 최신)

@@ -200,6 +200,35 @@ body {
   background: var(--life);
   box-shadow: 0 0 6px var(--life);
 }
+/* 로딩 표시 — 새로고침/콜드 로딩이 십수 초 걸리므로 상단에 항상 보이게 */
+.market-pills .pill.loading-pill {
+  border-color: rgba(255, 200, 90, 0.45);
+  color: var(--event);
+}
+.market-pills .pill.loading-pill i.load-spin {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: none;
+  border: 1.5px solid rgba(255, 200, 90, 0.3);
+  border-top-color: var(--event);
+  animation: refreshspin 0.8s linear infinite;
+}
+/* 접힌 상태 점도 로딩 중엔 맥동 → 진행 중임을 알린다 */
+.status-dot.loading {
+  animation: statusdotpulse 1s ease-in-out infinite;
+}
+@keyframes statusdotpulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
 
 /* ── 메인 무대: 상단 총합 4카드 + 3열 그리드 ── */
 .stage-wrap {

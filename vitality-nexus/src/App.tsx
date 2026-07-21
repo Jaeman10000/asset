@@ -52,7 +52,7 @@ function FpsMeter() {
 }
 
 export default function App() {
-  const { snapshot, sources, conn, start, stop, refresh } = usePortfolio();
+  const { snapshot, sources, conn, loading, start, stop, refresh } = usePortfolio();
   const [editorOpen, setEditorOpen] = useState(false);
   const [kiwoomOpen, setKiwoomOpen] = useState(false);
   const [cryptoOpen, setCryptoOpen] = useState(false);
@@ -142,6 +142,13 @@ export default function App() {
         <span className="brand">VITALITY NEXUS</span>
         <span className="brand-sub">LIVING DASHBOARD · HEART AT THE CENTER</span>
         <div className="market-pills">
+          {/* 로딩 중엔 상단에 항상 보이게 — 콜드/새로고침이 십수 초 걸리므로
+              "멈춘 게 아니라 받아오는 중"이 눈에 보여야 한다. */}
+          {loading && (
+            <span className="pill loading-pill">
+              <i className="load-spin" />정보 불러오는 중…
+            </span>
+          )}
           <span className="pill">
             <i />KR 주식
           </span>
@@ -183,6 +190,7 @@ export default function App() {
 
       <StatusBar
         conn={conn}
+        loading={loading}
         isEstimate={snapshot?.isEstimate ?? false}
         sources={sources}
         errors={snapshot?.errors ?? []}

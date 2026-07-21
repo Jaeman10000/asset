@@ -18,6 +18,7 @@ const SOURCE_LABELS: Record<string, string> = {
 
 export function StatusBar({
   conn,
+  loading,
   isEstimate,
   sources,
   errors,
@@ -28,6 +29,8 @@ export function StatusBar({
   onRefresh,
 }: {
   conn: ConnState;
+  /** 실제 요청 진행 중 여부 — 버튼 스피너/문구를 진짜 완료 시점까지 유지한다. */
+  loading: boolean;
   isEstimate: boolean;
   sources: SourceStatus | null;
   errors: SourceError[];
@@ -39,13 +42,8 @@ export function StatusBar({
   /** Tauri 앱일 때만 전달됨 (브라우저에선 undefined → 설정 버튼 숨김) */
   onOpenSettings?: () => void;
 }) {
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = () => {
-    setRefreshing(true);
-    onRefresh();
-    // 폴링이 끝나는 시점을 정확히 모르므로 짧게 스핀만 보여준다(피드백용)
-    setTimeout(() => setRefreshing(false), 1200);
-  };
+  // 예전엔 1.2초 타이머로 '가짜' 스핀만 돌렸다 — 실제 로딩(콜드 십수 초)과 안 맞아
+  // 다 받은 줄 착각하게 됐다. 이제 스토어의 진짜 loading을 그대로 쓴다.
   const [open, setOpen] = useState(false);
   const connLabel =
     conn === 'online' ? '연결됨' : conn === 'connecting' ? '연결 중…' : '백엔드 오프라인';
@@ -61,8 +59,10 @@ export function StatusBar({
         onClick={() => setOpen((o) => !o)}
         title={open ? '숨기기' : '상태·설정 열기'}
       >
-        <span className="status-dot" style={{ background: connColor }} />
-        {open && <span className="status-label">{connLabel}</span>}
+        <span className={`status-dot${loading ? ' loading' : ''}`} style={{ background: connColor }} />
+        {/* 접혀 있어도 로딩 중이면 문구를 보여준다(작은 점만으론 진행 중인지 알 수 없다) */}
+        {!open && loading && <span className="status-label">불러오는 중…</span>}
+        {open && <span className="status-label">{loading ? '불러오는 중…' : connLabel}</span>}
         {open && isEstimate && <span className="status-estimate">추정치</span>}
       </button>
 
@@ -71,12 +71,12 @@ export function StatusBar({
           <div className="status-actions">
             <button
               type="button"
-              className={`status-edit-btn refresh-btn${refreshing ? ' spinning' : ''}`}
-              onClick={handleRefresh}
-              disabled={refreshing}
+              className={`status-edit-btn refresh-btn${loading ? ' spinning' : ''}`}
+              onClick={onRefresh}
+              disabled={loading}
               title="지금 이 순간의 최신 수급·시세로 갱신 (캐시 무시)"
             >
-              <span className="refresh-ico">↻</span> 새로고침
+              <span className="refresh-ico">↻</span> {loading ? '불러오는 중…' : '새로고침'}
             </button>
             <button type="button" className="status-edit-btn" onClick={onOpenEditor}>
               보유종목 편집
