@@ -1,6 +1,6 @@
 [package]
 name = "vitality-nexus"
-version = "0.1.22"
+version = "0.1.23"
 description = "Vitality Nexus — 살아있는 인터페이스 트레이딩 위젯"
 authors = ["JJ"]
 edition = "2021"

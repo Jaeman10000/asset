@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from datetime import datetime
 from typing import Any
@@ -51,6 +52,29 @@ _QTY_OVERFLOW = 4294967295.0
 # ka10059의 flu_rt는 1/100 단위(1273 = 12.73%). ka10027의 flu_rt(30.00 = 30%)와 스케일이
 # 달라서 그대로 쓰면 100배가 된다(유저 지적: 레인보우 1200%).
 _KA10059_RT_DIV = 100.0
+
+# ── 랭킹에서 제외: ETF·우선주 (유저 요청 — 실제 회사만 보고 싶다) ──
+# ETF: ka10027은 stk_cls=20이 전부 ETF였다(실측 12/12: KODEX·TIGER·PLUS·SOL·RISE·
+#      KIWOOM·HANARO 인버스/레버리지). 다만 ka10030엔 stk_cls 필드가 아예 없으므로
+#      브랜드 접두어로도 잡는다.
+# 우선주: ka10027은 stk_cnd=3으로 서버가 걸러준다(실측 10개→0개). stk_cnd가 없는 TR을
+#      위해 이름 규칙도 함께 쓴다. '…우 / …1우 / …2우B'만 매칭되므로 '우주일렉트로',
+#      '우리엔터프라이즈'처럼 앞글자가 '우'인 종목은 걸리지 않는다(실측 확인).
+_ETF_BRANDS = (
+    "KODEX", "TIGER", "PLUS", "SOL", "RISE", "KIWOOM", "HANARO", "ACE",
+    "KBSTAR", "ARIRANG", "KOSEF", "TREX", "FOCUS", "TRUE", "QV",
+)
+_PREF_RE = re.compile(r"우B?$")
+
+
+def _is_etf_or_pref(name: Any, stk_cls: Any = None) -> bool:
+    n = str(name).strip()
+    if str(stk_cls) == "20":
+        return True
+    up = n.upper()
+    if any(up.startswith(b) for b in _ETF_BRANDS):
+        return True
+    return bool(_PREF_RE.search(n))
 _hist_cache: dict[str, tuple[float, list[float]]] = {}
 _flow_cache: dict[str, tuple[float, "tuple[InvestorFlow, list[InvestorPeriod]]"]] = {}
 # ka10059 응답에 같이 오는 시세(현재가/등락률/거래량) — 대장주를 랭킹 후보로 올릴 때
@@ -703,7 +727,8 @@ class KiwoomAdapter(BaseAdapter):
                 "mrkt_tp": "000",
                 "sort_tp": sort_tp,
                 "trde_qty_cnd": "0000",
-                "stk_cnd": "0",
+                # 3 = 우선주 제외 (실측: 하락률상위 200행의 우선주 10개 → 0개)
+                "stk_cnd": "3",
                 "crd_cnd": "0",
                 "updown_incls": "1",
                 "pric_cnd": "0",
@@ -745,6 +770,9 @@ class KiwoomAdapter(BaseAdapter):
                 code = _clean_code(_f(r, "stk_cd", "종목코드", "item_cd"))
                 if not code:
                     continue
+                name = str(_f(r, "stk_nm", "종목명", "item_nm", default=code))
+                if _is_etf_or_pref(name, r.get("stk_cls")):
+                    continue  # ETF·우선주는 '시장 랭킹'에서 제외
                 price = abs(_num(_f(r, "cur_prc", "현재가", "prpr")))
                 # 거래량 필드명이 TR마다 다르다: ka10027=now_trde_qty, ka10030=trde_qty
                 qty = abs(_num(_f(r, "now_trde_qty", "trde_qty", "거래량", "acml_vol")))
@@ -755,7 +783,7 @@ class KiwoomAdapter(BaseAdapter):
                 out.append(
                     MarketStock(
                         symbol=code,
-                        name=str(_f(r, "stk_nm", "종목명", "item_nm", default=code)),
+                        name=name,
                         price=price,
                         ret=_num(_f(r, "flu_rt", "등락률", "prdy_ctrt", "chg_rt", "fluc_rt")),
                         volume=int(qty),
@@ -774,14 +802,19 @@ class KiwoomAdapter(BaseAdapter):
         # 사도 5.7만주뿐이라 100위 밖으로 탈락). 수량×현재가 환산도 실제와 4배씩 어긋났다
         # (ka10034 dt=1과 ka10059 당일이 서로 다른 날짜 기준). 따라서 여기선 종목만 담고,
         # 외국인 순매수 '금액'은 fetch()에서 ka10059 실데이터로 채운다.
-        for r in frgn[:15]:
+        for r in frgn:
+            if len([m for m in merged.values() if m.flowOnly]) >= 15:
+                break
             code = _clean_code(_f(r, "stk_cd", "종목코드"))
             if not code or code in merged:
                 continue
+            name = str(_f(r, "stk_nm", "종목명", default=code))
+            if _is_etf_or_pref(name, r.get("stk_cls")):
+                continue  # ETF·우선주 제외 (외국인 후보도 실제 회사만)
             qty = abs(_num(_f(r, "trde_qty")))
             merged[code] = MarketStock(
                 symbol=code,
-                name=str(_f(r, "stk_nm", "종목명", default=code)),
+                name=name,
                 price=abs(_num(_f(r, "cur_prc"))),
                 ret=0.0,
                 volume=int(0 if qty >= _QTY_OVERFLOW else qty),
