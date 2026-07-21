@@ -28,6 +28,7 @@ from ..schemas import (
     SourceError,
 )
 from ..services.kiwoom_client import KiwoomClient, KiwoomError
+from ..services.market_hours import kr_session, us_session
 from .base import AdapterResult, BaseAdapter
 
 # 종목별 투자자 순매수(ka10059) 금액 단위 = 백만원 → 억원 환산(÷100). acc_trde_prica 교차검증.
@@ -66,8 +67,25 @@ _KA10059_RT_DIV = 100.0
 _ETF_BRANDS = (
     "KODEX", "TIGER", "PLUS", "SOL", "RISE", "KIWOOM", "HANARO", "ACE",
     "KBSTAR", "ARIRANG", "KOSEF", "TREX", "FOCUS", "TRUE", "QV",
+    # 브랜드는 계속 늘고 리브랜딩도 잦다 — 'KoAct 바이오헬스케어액티브'가 거래대금
+    # 9위로 새어 들어와 추가. 오탐 위험이 큰 짧은 토큰(HK=HK이노엔 등)은 넣지 않는다.
+    "KOACT", "UNICORN", "KINDEX", "TIMEFOLIO", "HEROES", "히어로즈", "BNK", "WOORI",
 )
+# 브랜드 목록만으론 신규 상품을 계속 놓친다. 아래 토큰은 일반 회사명엔 안 쓰이고
+# ETF/ETN 상품명에만 나타나므로 2차 안전망으로 둔다.
+_ETF_TOKENS = ("레버리지", "인버스", "선물", "커버드콜", "액티브")
 _PREF_RE = re.compile(r"우B?$")
+
+
+def _row_value_eok(r: dict[str, Any]) -> float:
+    """랭킹 응답 1행의 거래대금(억원). 키움 실제값(trde_amt, 백만원) 우선, 없으면 근사."""
+    raw = _num(_f(r, "trde_amt"))
+    if raw:
+        return raw / _AMT_MN_TO_EOK
+    qty = abs(_num(_f(r, "now_trde_qty", "trde_qty", "거래량", "acml_vol")))
+    if qty >= _QTY_OVERFLOW:
+        qty = 0.0
+    return abs(_num(_f(r, "cur_prc", "현재가"))) * qty / 1e8
 
 
 def _is_etf_or_pref(name: Any, stk_cls: Any = None) -> bool:
@@ -77,12 +95,37 @@ def _is_etf_or_pref(name: Any, stk_cls: Any = None) -> bool:
     up = n.upper()
     if any(up.startswith(b) for b in _ETF_BRANDS):
         return True
+    if any(t in n for t in _ETF_TOKENS):
+        return True
     return bool(_PREF_RE.search(n))
+
+
 _hist_cache: dict[str, tuple[float, list[float]]] = {}
 _flow_cache: dict[str, tuple[float, "tuple[InvestorFlow, list[InvestorPeriod]]"]] = {}
 # ka10059 응답에 같이 오는 시세(현재가/등락률/거래량) — 대장주를 랭킹 후보로 올릴 때
 # 별도 시세 조회 없이 재사용한다. {코드: (ts, {price, ret, volume})}
 _quote_cache: dict[str, tuple[float, dict[str, float]]] = {}
+
+# ── 장 시간 기반 갱신 억제 ──────────────────────────────────────────────
+# 장이 닫혀 있으면 랭킹·수급·미국잔고는 값이 변하지 않는다. 그래서 '닫힌 장'은 캐시가
+# 있으면 만료시키지 않고 그대로 쓴다(= API 호출 0회). 수동 새로고침(fresh=1)은
+# clear_caches()로 캐시를 비우므로 장외에도 강제 재조회가 된다.
+_RANK_TTL_OPEN = 60.0  # 한국장 중 랭킹 갱신 주기
+_US_TTL_OPEN = 120.0  # 미국장 중 미국잔고 갱신 주기
+_rank_cache: dict[str, Any] = {"at": 0.0, "rows": []}
+_us_cache: dict[str, Any] = {"at": 0.0, "rows": []}
+
+
+def _cache_ok(at: float, ttl: float, market_open: bool) -> bool:
+    """캐시를 그대로 써도 되나. 장이 닫혀 있으면 나이와 무관하게 유효(값이 안 변하므로)."""
+    if not at:
+        return False
+    return True if not market_open else (time.time() - at < ttl)
+
+
+def _flow_fresh(ts: float) -> bool:
+    """수급 캐시 유효성. 한국장이 닫혔으면 오래돼도 그대로 쓴다(더 변할 게 없다)."""
+    return _cache_ok(ts, _FLOW_TTL, kr_session())
 
 
 def _first_list(data: Any) -> list[dict[str, Any]]:
@@ -182,9 +225,8 @@ async def _fetch_one_flow(
 ) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
     """단일 종목 ka10059 → (당일, 20/60일). 캐시 히트면 재조회 안 함. _flow_cache에 기록."""
     code = _clean_code(code)
-    now = time.time()
     cached = _flow_cache.get(code)
-    if cached and now - cached[0] < _FLOW_TTL:
+    if cached and _flow_fresh(cached[0]):
         return cached[1]
     dt = datetime.now().strftime("%Y%m%d")
     try:
@@ -244,14 +286,12 @@ async def _warm_loop() -> None:
             if _snapshot_busy:
                 await asyncio.sleep(1)
                 continue
-            if client.configured and _warm_codes:
-                now = time.time()
+            # 한국장이 닫혀 있으면 수급은 더 변하지 않는다 → 워머 정지(API 0회).
+            if client.configured and _warm_codes and kr_session():
                 todo = [
                     c
                     for c in list(_warm_codes)
-                    if not (
-                        (hit := _flow_cache.get(c)) and now - hit[0] < _FLOW_TTL
-                    )
+                    if not ((hit := _flow_cache.get(c)) and _flow_fresh(hit[0]))
                 ]
                 if todo:
 
@@ -280,11 +320,15 @@ def start_warm(codes: "set[str] | list[str]") -> None:
 
 
 def clear_caches() -> None:
-    """수동 새로고침 시 종목 수급/일봉/캔들 캐시를 모두 비워 즉시 재조회하게 한다.
-    (평소엔 수급 3분·일봉 10분 캐시라 새로고침 눌러도 캐시값이 나올 수 있어서.)"""
+    """수동 새로고침 시 캐시를 모두 비워 즉시 재조회하게 한다.
+    장외에는 랭킹·미국잔고·수급이 캐시로 고정되므로, '새로고침'이 그걸 뚫는 유일한
+    수단이다(유저 요구: 밤엔 한국 주식은 새로고침 눌렀을 때만 다시 받는다)."""
     _flow_cache.clear()
     _hist_cache.clear()
     _candle_cache.clear()
+    _quote_cache.clear()
+    _rank_cache.update(at=0.0, rows=[])
+    _us_cache.update(at=0.0, rows=[])
 
 
 # ── 테마 섹터: 대표 종목들의 종목별 수급(ka10059)을 합산해 '반도체' 같은 테마 단위
@@ -375,10 +419,20 @@ class KiwoomAdapter(BaseAdapter):
             )
 
         # 랭킹은 부가정보 — 실패해도 잔고·나머지는 살린다.
-        ranking_r = await asyncio.gather(self._ranking(client), return_exceptions=True)
-        ranking_res = ranking_r[0]
-        ranking = ranking_res if isinstance(ranking_res, list) else []
-        rank_err = str(ranking_res) if isinstance(ranking_res, Exception) else None
+        # 한국장이 닫혀 있으면 랭킹은 변하지 않으므로 캐시를 그대로 쓴다(API 0회).
+        rank_err: str | None = None
+        if _cache_ok(_rank_cache["at"], _RANK_TTL_OPEN, kr_session()):
+            ranking = list(_rank_cache["rows"])
+        else:
+            ranking_r = await asyncio.gather(self._ranking(client), return_exceptions=True)
+            ranking_res = ranking_r[0]
+            if isinstance(ranking_res, list):
+                ranking = ranking_res
+                _rank_cache.update(at=time.time(), rows=list(ranking))
+            else:
+                # 실패했는데 예전 값이 있으면 그거라도 보여준다(빈 화면보다 낫다)
+                ranking = list(_rank_cache["rows"])
+                rank_err = str(ranking_res)
 
         # ── 종목별 수급(ka10059) — 유저 요청: 호버 때 말고 '미리미리' 받아놔라 ──
         # 레이트리밋(ka10059 ~40종목=32초, 실측상 세마포어 4가 스로틀링 최소)이라 한 번에
@@ -409,15 +463,13 @@ class KiwoomAdapter(BaseAdapter):
         # 워머 대상 = 보유+랭킹+테마 전체. 계속 미리 받아둔다(호버/스냅샷은 이 캐시를 읽음).
         start_warm(set(held_codes) | {m.symbol for m in ranking} | theme_codes)
 
-        now2 = time.time()
-
         def cached_flow(code: str):
             hit = _flow_cache.get(code)
-            return hit[1] if hit and now2 - hit[0] < _FLOW_TTL else None
+            return hit[1] if hit and _flow_fresh(hit[0]) else None
 
         def cached_quote(code: str):
             hit = _quote_cache.get(code)
-            return hit[1] if hit and now2 - hit[0] < _FLOW_TTL else None
+            return hit[1] if hit and _flow_fresh(hit[0]) else None
 
         for p in kr:
             cf = cached_flow(p.symbol)
@@ -584,10 +636,14 @@ class KiwoomAdapter(BaseAdapter):
 
     # ── 미국주식 잔고 (ust21070, 2026-07 신규 /api/us/acnt) ──
     async def _us_holdings(self, client: KiwoomClient) -> list[Position]:
+        # 유저 요구: 미국장은 밤에만 본다 → 한국장 시간대엔 미국 데이터를 갱신하지 않고
+        # 앱 시작 때 받아둔 값을 그대로 쓴다(미국장이 닫혀 있어 어차피 안 변한다).
+        if _cache_ok(_us_cache["at"], _US_TTL_OPEN, us_session()):
+            return list(_us_cache["rows"])
         try:
             data = await client.call("us_acnt", "ust21070", {})
         except Exception:
-            return []  # 해외 미신청/미보유는 조용히 스킵 (국내는 계속)
+            return list(_us_cache["rows"])  # 해외 미신청/실패 → 직전 값 유지(국내는 계속)
         rows = data.get("result_list") or _first_list(data)
         now = int(time.time() * 1000)
         out: list[Position] = []
@@ -636,6 +692,7 @@ class KiwoomAdapter(BaseAdapter):
                         p.history = q.history
             except Exception:
                 pass  # history 없어도 보유/평가는 정상 표시
+        _us_cache.update(at=time.time(), rows=list(out))
         return out
 
     # ── 종목별 수급 (ka10059) — 코드 집합 → {코드: (당일 InvestorFlow, 20/60일 누적)} ──
@@ -782,9 +839,7 @@ class KiwoomAdapter(BaseAdapter):
                 qty = abs(_num(_f(r, "now_trde_qty", "trde_qty", "거래량", "acml_vol")))
                 if qty >= _QTY_OVERFLOW:
                     qty = 0.0  # 32비트 오버플로우 값 → 신뢰 불가
-                # 거래대금: 키움 실제값(ka10030 trde_amt) 우선, 없으면 현재가×거래량 근사
-                raw_amt = _num(_f(r, "trde_amt"))
-                value = raw_amt / _AMT_MN_TO_EOK if raw_amt else price * qty / 1e8
+                value = _row_value_eok(r)
                 if value < _MIN_TRDE_PRICA_EOK:
                     continue
                 out.append(
@@ -802,7 +857,12 @@ class KiwoomAdapter(BaseAdapter):
                     break
             return out
 
-        for m in [*take(up), *take(down), *take(vol)]:
+        # ka10030은 '주식 수' 순이라 고가주가 뒤로 밀린다 — 실측: SK하이닉스는 거래대금
+        # 12.3조로 시장 1위(삼성전자 7.9조)인데 주가가 ₩1,847,000이라 주식 수가 적어
+        # 거래량 순위는 48위다. 상위 12개만 뽑으면 후보에도 못 들어와 '거래대금' 탭에서
+        # 통째로 빠진다(유저 지적). → 응답 100행 전체를 거래대금순으로 재정렬해서 뽑는다.
+        vol_by_value = sorted(vol, key=_row_value_eok, reverse=True)
+        for m in [*take(up), *take(down), *take(vol_by_value)]:
             if m.symbol not in merged:
                 merged[m.symbol] = m
         # ka10034는 '외국인 순매수 후보 발굴'에만 쓴다 — 정렬이 금액이 아니라 '수량(주)'

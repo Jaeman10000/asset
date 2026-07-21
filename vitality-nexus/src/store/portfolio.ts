@@ -9,7 +9,11 @@ import { create } from 'zustand';
 import { fetchSnapshot, fetchSourceStatus } from '../api/client';
 import type { PortfolioSnapshot, SourceStatus } from '../api/types';
 
-const POLL_INTERVAL_MS = 7000;
+// 7초 폴링은 키움 레이트리밋(실측 초당 ~1.25콜) 한계에 붙어 돌았고, 로딩 배지도 몇 초마다
+// 깜빡였다. 60초면 호출이 1/8로 줄고 '실시간' 느낌은 남는다. 더 큰 절감은 백엔드가
+// 장 마감 후엔 아예 재조회를 안 하는 것(services/market_hours.py) — 그때는 이 폴링이
+// 캐시만 읽어오므로 키움 호출이 0회다. 즉시 갱신은 새로고침 버튼으로.
+const POLL_INTERVAL_MS = 60_000;
 
 type ConnState = 'connecting' | 'online' | 'offline';
 

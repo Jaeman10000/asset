@@ -51,8 +51,27 @@ function FpsMeter() {
   return <div className="fps-meter">{fps} fps</div>;
 }
 
+/**
+ * 값이 true로 '연속 ms 이상' 유지될 때만 true가 되는 플래그.
+ * 캐시 히트로 0.1초 만에 끝나는 폴링까지 '불러오는 중' 배지를 띄우면 몇 초마다 깜빡여
+ * 거슬린다(유저 지적) → 실제로 오래 걸릴 때만 보이게 한다.
+ */
+function useDelayedFlag(value: boolean, ms: number): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!value) {
+      setOn(false);
+      return;
+    }
+    const t = setTimeout(() => setOn(true), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return on;
+}
+
 export default function App() {
   const { snapshot, sources, conn, loading, start, stop, refresh } = usePortfolio();
+  const showLoading = useDelayedFlag(loading, 400);
   const [editorOpen, setEditorOpen] = useState(false);
   const [kiwoomOpen, setKiwoomOpen] = useState(false);
   const [cryptoOpen, setCryptoOpen] = useState(false);
@@ -144,7 +163,7 @@ export default function App() {
         <div className="market-pills">
           {/* 로딩 중엔 상단에 항상 보이게 — 콜드/새로고침이 십수 초 걸리므로
               "멈춘 게 아니라 받아오는 중"이 눈에 보여야 한다. */}
-          {loading && (
+          {showLoading && (
             <span className="pill loading-pill">
               <i className="load-spin" />정보 불러오는 중…
             </span>
@@ -190,7 +209,7 @@ export default function App() {
 
       <StatusBar
         conn={conn}
-        loading={loading}
+        loading={showLoading}
         isEstimate={snapshot?.isEstimate ?? false}
         sources={sources}
         errors={snapshot?.errors ?? []}
