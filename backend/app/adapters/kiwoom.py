@@ -41,6 +41,9 @@ _FLOW_TTL = 180.0  # 수급 3분
 _HIST_LEN = 120  # 보관 일봉 개수(스파크라인·차트용)
 _hist_cache: dict[str, tuple[float, list[float]]] = {}
 _flow_cache: dict[str, tuple[float, "tuple[InvestorFlow, list[InvestorPeriod]]"]] = {}
+# ka10059 응답에 같이 오는 시세(현재가/등락률/거래량) — 대장주를 랭킹 후보로 올릴 때
+# 별도 시세 조회 없이 재사용한다. {코드: (ts, {price, ret, volume})}
+_quote_cache: dict[str, tuple[float, dict[str, float]]] = {}
 
 
 def _first_list(data: Any) -> list[dict[str, Any]]:
@@ -157,7 +160,18 @@ async def _fetch_one_flow(
     if not rows:
         return None
     built = KiwoomAdapter._build_flow(rows)
-    _flow_cache[code] = (time.time(), built)
+    now2 = time.time()
+    _flow_cache[code] = (now2, built)
+    # 같은 응답의 시세도 챙겨둔다(대장주를 랭킹 후보로 올릴 때 사용).
+    r0 = rows[0]
+    _quote_cache[code] = (
+        now2,
+        {
+            "price": abs(_num(r0.get("cur_prc"))),
+            "ret": _num(r0.get("flu_rt")),
+            "volume": abs(_num(r0.get("acc_trde_qty"))),
+        },
+    )
     return built
 
 
@@ -176,12 +190,20 @@ async def fetch_flow(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | N
 # 스냅샷/호버는 이 캐시를 읽기만 → 화면엔 점진적으로(수 초~수십 초) 다 채워진다.
 _warm_codes: set[str] = set()
 _warm_task: "asyncio.Task | None" = None
+# ka10059 전역 동시성 — 스냅샷 조회와 워머가 '같이' 쓴다. 각자 4씩 쓰면 총 8이 되어
+# 스로틀링이 심해지고(실측: 8은 4보다 느림) 스냅샷이 워머 뒤에 밀려 40초까지 걸렸다.
+_flow_sem: asyncio.Semaphore = asyncio.Semaphore(4)
+# 스냅샷이 보유 수급을 블로킹 조회하는 동안엔 워머가 양보한다(첫 로딩을 최우선).
+_snapshot_busy: bool = False
 
 
 async def _warm_loop() -> None:
     while True:
         try:
             client = KiwoomClient()
+            if _snapshot_busy:
+                await asyncio.sleep(1)
+                continue
             if client.configured and _warm_codes:
                 now = time.time()
                 todo = [
@@ -192,10 +214,11 @@ async def _warm_loop() -> None:
                     )
                 ]
                 if todo:
-                    sem = asyncio.Semaphore(4)  # 세마포어 4 = 스로틀링 최소(실측 최적)
 
                     async def one(code: str) -> None:
-                        async with sem:
+                        if _snapshot_busy:  # 로딩 시작하면 즉시 양보
+                            return
+                        async with _flow_sem:
                             await _fetch_one_flow(client, code)
 
                     await asyncio.gather(*(one(c) for c in todo[:80]), return_exceptions=True)
@@ -256,6 +279,31 @@ _THEME_SECTORS: list[tuple[str, list[str]]] = [
     ("유통", ["139480", "023530"]),  # 이마트·롯데쇼핑
 ]
 
+# 테마 대장주 종목명 — ka10059 응답엔 종목명이 없어서, 이들을 '외국인 순매수' 랭킹
+# 후보로 합류시킬 때 표시용으로 쓴다. (키움 ka10034는 '수량'순이라 SK하이닉스처럼
+# 주가가 비싼 종목은 금액이 커도 순위에서 통째로 빠진다 → 대형주를 직접 후보에 넣는다.)
+_MAJOR_NAMES: dict[str, str] = {
+    "005930": "삼성전자", "000660": "SK하이닉스", "042700": "한미반도체",
+    "373220": "LG에너지솔루션", "006400": "삼성SDI", "247540": "에코프로비엠",
+    "005380": "현대차", "000270": "기아",
+    "207940": "삼성바이오로직스", "068270": "셀트리온",
+    "012450": "한화에어로스페이스", "047810": "한국항공우주",
+    "009540": "HD한국조선해양", "010140": "삼성중공업", "042660": "한화오션",
+    "034020": "두산에너빌리티", "052690": "한전기술", "010120": "LS ELECTRIC",
+    "035420": "NAVER", "035720": "카카오",
+    "105560": "KB금융", "055550": "신한지주", "086790": "하나금융지주",
+    "277810": "레인보우로보틱스", "454910": "두산로보틱스", "058610": "에스피지",
+    "352820": "하이브", "035900": "JYP Ent.",
+    "051910": "LG화학", "011170": "롯데케미칼",
+    "005490": "POSCO홀딩스", "004020": "현대제철",
+    "017670": "SK텔레콤", "030200": "KT",
+    "000720": "현대건설", "006360": "GS건설",
+    "015760": "한국전력", "036460": "한국가스공사",
+    "011200": "HMM", "028670": "팬오션",
+    "090430": "아모레퍼시픽", "051900": "LG생활건강",
+    "139480": "이마트", "023530": "롯데쇼핑",
+}
+
 # 지금까지 만든 '가장 완전한' 테마 섹터 세트를 기억한다. 콜드/불안정으로 이번 빌드가
 # 몇 개만 나오면(레이트리밋 예산 컷) 이 완전 세트로 대체해 SECTOR FLOW가 '2개만
 # 뜨는' 문제를 막는다(약간 stale해도 부분보다 낫다). 완전 세트를 새로 받으면 갱신.
@@ -304,15 +352,19 @@ class KiwoomAdapter(BaseAdapter):
         # 블로킹 조회 = 보유 먼저 + 테마(부분이라도 SECTOR FLOW 즉시 반영). 보유는 예산 안에
         # 완주하고 테마 나머지는 워머가 채운다. 캐시 히트면 즉시 반환하므로 평소엔 안 느리다.
         blocking = held_codes + [c for c in theme_codes if c not in set(held_codes)]
-        work = asyncio.gather(
-            self._fetch_flows(client, blocking),
-            self._attach_history(client, positions),
-            return_exceptions=True,
-        )
+        global _snapshot_busy
+        _snapshot_busy = True  # 이 구간엔 워머가 양보 → 첫 로딩이 레이트리밋을 독점
         try:
+            work = asyncio.gather(
+                self._fetch_flows(client, blocking),
+                self._attach_history(client, positions),
+                return_exceptions=True,
+            )
             await asyncio.wait_for(work, timeout=14.0)  # 보유 ~10종목 완주(≈8s)+여유
         except (asyncio.TimeoutError, Exception):
             pass
+        finally:
+            _snapshot_busy = False
 
         # 워머 대상 = 보유+랭킹+테마 전체. 계속 미리 받아둔다(호버/스냅샷은 이 캐시를 읽음).
         start_warm(set(held_codes) | {m.symbol for m in ranking} | theme_codes)
@@ -323,11 +375,47 @@ class KiwoomAdapter(BaseAdapter):
             hit = _flow_cache.get(code)
             return hit[1] if hit and now2 - hit[0] < _FLOW_TTL else None
 
+        def cached_quote(code: str):
+            hit = _quote_cache.get(code)
+            return hit[1] if hit and now2 - hit[0] < _FLOW_TTL else None
+
         for p in kr:
             cf = cached_flow(p.symbol)
             if cf:
                 p.investors, p.investorPeriods = cf
                 p.investorsMock = False
+
+        # ── 랭킹 종목의 수급 = ka10059 실데이터(당일 순매수 금액, 억원) ──
+        # '외국인' 탭은 이 값으로 정렬된다. ka10034의 수량순/환산값은 실제와 어긋나므로
+        # 쓰지 않는다(삼성전자 환산 3,377억 vs 실제 807억).
+        for m in ranking:
+            cf = cached_flow(m.symbol)
+            if cf:
+                m.investors, m.investorPeriods = cf
+                m.investorsMock = False
+
+        # 대형주(테마 대장주)를 랭킹 후보로 합류 — ka10034가 수량순이라 고가주가 통째로
+        # 빠지는 문제 보정(SK하이닉스 +1,037억인데 순위에 없던 원인). 시세는 ka10059
+        # 응답에 같이 온 값을 재사용하므로 추가 조회 없음.
+        have = {m.symbol for m in ranking}
+        for code in theme_codes:
+            if code in have:
+                continue
+            cf, q = cached_flow(code), cached_quote(code)
+            if not cf or not q:
+                continue
+            ranking.append(
+                MarketStock(
+                    symbol=code,
+                    name=_MAJOR_NAMES.get(code, code),
+                    price=q["price"],
+                    ret=q["ret"],
+                    volume=int(q["volume"]),
+                    investors=cf[0],
+                    investorPeriods=cf[1],
+                    investorsMock=False,
+                )
+            )
 
         # 테마 섹터 = 대표종목 당일 수급 합산 (캐시에 있는 것만 — 부분→완전 점진 채움)
         sectors: list[SectorFlow] = []
@@ -517,10 +605,9 @@ class KiwoomAdapter(BaseAdapter):
         ordered = [c for c in codes if not (c in seen or seen.add(c))]
         if not ordered:
             return {}
-        sem = asyncio.Semaphore(4)  # 레이트리밋 대비 (실측상 4가 스로틀링 최소)
 
         async def one(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | None:
-            async with sem:
+            async with _flow_sem:  # 워머와 공유하는 전역 동시성(총 4)
                 return await _fetch_one_flow(client, code)
 
         results = await asyncio.gather(*(one(c) for c in ordered))
@@ -647,27 +734,23 @@ class KiwoomAdapter(BaseAdapter):
                 volume=int(abs(_num(_f(r, "trde_qty", "거래량", "acml_vol", "now_trde_qty")))),
                 investors=InvestorFlow(),
             )
-        # 외국인 순매수 상위(ka10034): 응답은 순매수 '수량'만 주므로(금액 필드 없음)
-        # 순매수금액(억원) ≈ 순매수량 × 현재가로 환산해 investors.foreign에 싣는다.
-        # 프론트 '외국인' 탭이 이 값으로 재정렬·표시. 이미 있는 종목이면 값만 채운다.
+        # ka10034는 '외국인 순매수 후보 발굴'에만 쓴다 — 정렬이 금액이 아니라 '수량(주)'
+        # 이라 순위 자체를 믿으면 안 된다(1위가 저가 ETF 962만주, SK하이닉스는 +1,037억을
+        # 사도 5.7만주뿐이라 100위 밖으로 탈락). 수량×현재가 환산도 실제와 4배씩 어긋났다
+        # (ka10034 dt=1과 ka10059 당일이 서로 다른 날짜 기준). 따라서 여기선 종목만 담고,
+        # 외국인 순매수 '금액'은 fetch()에서 ka10059 실데이터로 채운다.
         for r in frgn[:15]:
             code = _clean_code(_f(r, "stk_cd", "종목코드"))
-            if not code:
+            if not code or code in merged:
                 continue
-            qty = _num(_f(r, "netprps_qty"))
-            prc = abs(_num(_f(r, "cur_prc")))
-            eok = qty * prc / 1e8
-            if code in merged:
-                merged[code].investors.foreign = eok
-            else:
-                merged[code] = MarketStock(
-                    symbol=code,
-                    name=str(_f(r, "stk_nm", "종목명", default=code)),
-                    price=prc,
-                    ret=0.0,
-                    volume=int(abs(_num(_f(r, "trde_qty")))),
-                    investors=InvestorFlow(foreign=eok),
-                )
+            merged[code] = MarketStock(
+                symbol=code,
+                name=str(_f(r, "stk_nm", "종목명", default=code)),
+                price=abs(_num(_f(r, "cur_prc"))),
+                ret=0.0,
+                volume=int(abs(_num(_f(r, "trde_qty")))),
+                investors=InvestorFlow(),
+            )
         if not merged and last_err:
             # 상승/하락/거래량 세 소스 다 실패 — 진짜 장애. 원인을 올려서 fetch()가
             # warning으로 화면에 보이게 한다(비었다고 조용히 넘기면 "오늘 랭킹 없음"과

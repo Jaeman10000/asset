@@ -48,9 +48,9 @@ async function getJSON<T>(path: string, signal?: AbortSignal, timeoutMs = REQUES
 
 export function fetchSnapshot(signal?: AbortSignal, fresh = false): Promise<PortfolioSnapshot> {
   // fresh=true: 백엔드 7초 캐시 + 수급/일봉 캐시까지 비우고 즉시 재조회(수동 새로고침).
-  // 콜드 로딩 땐 보유 종목 수급(ka10059)을 블로킹으로 다 받느라 ~14초 걸릴 수 있어
-  // 스냅샷만 타임아웃을 넉넉히(30초) 준다. 캐시가 데워진 뒤엔 즉시 반환된다.
-  return getJSON<PortfolioSnapshot>(`/portfolio/snapshot${fresh ? '?fresh=1' : ''}`, signal, 30_000);
+  // 콜드 로딩 땐 보유 수급(ka10059)을 블로킹으로 다 받고 랭킹/대장주까지 채우느라
+  // 수십 초 걸릴 수 있어 스냅샷만 타임아웃을 넉넉히(60초) 준다. 캐시가 데워진 뒤엔 즉시.
+  return getJSON<PortfolioSnapshot>(`/portfolio/snapshot${fresh ? '?fresh=1' : ''}`, signal, 60_000);
 }
 
 export function fetchSourceStatus(signal?: AbortSignal): Promise<SourceStatus> {
