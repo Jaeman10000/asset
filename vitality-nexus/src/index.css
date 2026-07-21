@@ -1378,6 +1378,12 @@ body {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+/* '집계 전' — 값이 0이라서가 아니라 아직 안 나온 것. 수치가 아니므로 흐리게 구분 */
+.inv-val.pending {
+  color: var(--dim);
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+}
 .inv-note {
   font-size: 8px;
   color: var(--sub);

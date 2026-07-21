@@ -109,6 +109,12 @@ function InvestorBars({
     ...(hasP ? periods!.flatMap((p) => rows.map((r) => Math.abs(p[r.key]))) : []),
     1,
   );
+  // 키움은 외국인·기관은 장중 실시간으로 주지만 '개인 당일치'는 장 마감 후에 채운다
+  // (실측 삼성전자 07-21: 외 149,852 · 기 373,088 · 개 0 → 합계가 제로섬이 안 됨.
+  //  07-20 이전 날짜는 개인도 값이 있고 합계가 0에 수렴). 그래서 당일 개인 0은 '안 샀다'가
+  //  아니라 '아직 집계 전'이다 — +0억으로 쓰면 오해되므로 그대로 표기한다.
+  const indivPending =
+    !mock && inv.individual === 0 && (inv.foreign !== 0 || inv.inst !== 0);
   return (
     <div className={`inv-section ${hasP ? 'has-periods' : ''}`}>
       <div className="inv-title">
@@ -140,9 +146,15 @@ function InvestorBars({
                 style={{ width: `${w}%`, background: r.color, color: r.color }}
               />
             </div>
-            <span className="inv-val" style={{ color: v >= 0 ? 'var(--up)' : 'var(--down)' }}>
-              {hasP ? fmtNum(v) : fmtEok(v)}
-            </span>
+            {indivPending && r.key === 'individual' ? (
+              <span className="inv-val pending" title="키움은 개인 당일 순매수를 장 마감 후 확정한다">
+                집계 전
+              </span>
+            ) : (
+              <span className="inv-val" style={{ color: v >= 0 ? 'var(--up)' : 'var(--down)' }}>
+                {hasP ? fmtNum(v) : fmtEok(v)}
+              </span>
+            )}
             {hasP &&
               periods!.map((p) => {
                 const pv = p[r.key];
@@ -164,7 +176,9 @@ function InvestorBars({
           ? hasP
             ? '당일=장중 잠정 · 20/60일=누적 순매수 · 모의 데이터'
             : '외국인·기관은 당일 장중 잠정치 · 모의 데이터'
-          : '당일=최근 거래일 · 20/60일=누적 순매수 · 키움 실데이터'}
+          : indivPending
+            ? '당일=최근 거래일 · 개인 당일치는 장 마감 후 확정 · 키움 실데이터'
+            : '당일=최근 거래일 · 20/60일=누적 순매수 · 키움 실데이터'}
       </div>
     </div>
   );
