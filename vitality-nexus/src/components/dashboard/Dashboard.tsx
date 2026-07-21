@@ -15,7 +15,7 @@ import { Spark, CoinIcon } from './shared';
  *   우:   오늘의 시장 랭킹 (상승/하락/거래량/외국인/기관)
  */
 
-type RankTabKey = 'up' | 'down' | 'volume' | 'foreign';
+type RankTabKey = 'up' | 'down' | 'value' | 'foreign';
 
 // 암호화폐 행에 어느 거래소인지 표기 (같은 코인이 업비트·빗썸 양쪽에 있으면 2행)
 const EXCHANGE_LABEL: Record<string, string> = {
@@ -31,9 +31,16 @@ const EXCHANGE_LABEL: Record<string, string> = {
 const RANK_TABS: { key: RankTabKey; label: string }[] = [
   { key: 'up', label: '상승' },
   { key: 'down', label: '하락' },
-  { key: 'volume', label: '거래량' },
+  // '거래량(주식 수)'이 아니라 '거래대금(돈)' 기준 — 주식 수로 줄 세우면 저가주가 무조건
+  // 유리해서 왜곡된다(실측: 삼성전자 6.9조가 흥아해운 1,034억보다 아래로 밀림).
+  { key: 'value', label: '거래대금' },
   { key: 'foreign', label: '외국인' },
 ];
+
+/** 거래대금(억) — 백엔드 실제값 우선, 없으면 현재가×거래량으로 근사 */
+function tradeValue(m: MarketStock): number {
+  return m.value ?? (m.price * m.volume) / 1e8;
+}
 
 function sortRanking(list: MarketStock[], tab: RankTabKey): MarketStock[] {
   // 상승/하락/거래량은 '오늘의 시장 순위' 그 자체여야 하므로 키움 공식 랭킹
@@ -44,8 +51,8 @@ function sortRanking(list: MarketStock[], tab: RankTabKey): MarketStock[] {
       return out.sort((a, b) => b.ret - a.ret);
     case 'down':
       return out.sort((a, b) => a.ret - b.ret);
-    case 'volume':
-      return out.sort((a, b) => b.volume - a.volume);
+    case 'value':
+      return out.sort((a, b) => tradeValue(b) - tradeValue(a));
     case 'foreign':
       return out.sort((a, b) => b.investors.foreign - a.investors.foreign);
   }
@@ -58,8 +65,12 @@ function rankMetric(m: MarketStock, tab: RankTabKey): { text: string; color: str
     case 'up':
     case 'down':
       return { text: pct(m.ret), color: m.ret >= 0 ? 'var(--up)' : 'var(--down)' };
-    case 'volume':
-      return { text: (m.volume / 1e6).toFixed(1) + 'M', color: 'var(--life)' };
+    case 'value': {
+      const v = tradeValue(m);
+      // 1조 이상은 '조'로 접어서 표기 (삼성전자 6.9조 같은 값이 자릿수로 뭉개지지 않게)
+      const text = v >= 10_000 ? (v / 10_000).toFixed(1) + '조' : Math.round(v).toLocaleString('ko-KR') + '억';
+      return { text, color: 'var(--life)' };
+    }
     case 'foreign':
       return {
         text: eok(m.investors.foreign),

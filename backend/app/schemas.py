@@ -69,6 +69,9 @@ class MarketStock(BaseModel):
     price: float
     ret: float  # 등락률 %
     volume: int  # 거래량 (주)
+    # 거래대금(억원). 키움이 주는 실제값(ka10030 trde_amt, 백만원)을 우선 쓰고,
+    # 그 필드가 없는 TR은 현재가×거래량으로 근사한다(실측 오차 ±5% 이내).
+    value: float = 0.0
     investors: InvestorFlow  # 수급 (외국인/기관/개인/프로그램, 억원)
     investorPeriods: list[InvestorPeriod] = Field(default_factory=list)  # 20일/60일 누적
     investorsMock: bool = False  # 이 종목 수급이 모의인지 (키움 실데이터면 False)

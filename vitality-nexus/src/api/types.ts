@@ -54,6 +54,8 @@ export interface MarketStock {
   price: number;
   ret: number;
   volume: number;
+  /** 거래대금(억원) — 키움 실제값 우선, 없으면 현재가×거래량 근사 */
+  value?: number;
   investors: InvestorFlow;
   investorPeriods?: InvestorPeriod[]; // 20일/60일 누적 수급
   investorsMock?: boolean; // 수급이 모의인지 (키움 실데이터면 false)

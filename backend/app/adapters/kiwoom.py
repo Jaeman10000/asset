@@ -45,7 +45,10 @@ _HIST_LEN = 120  # 보관 일봉 개수(스파크라인·차트용)
 # +29.84%인데 하루 거래대금이 3천만원, 엔젠바이오·비케이홀딩스는 2억이다. 몇 천만원으로
 # 만들어지는 상한가는 시장 신호가 아니라 노이즈다. 50억이면 이런 껍데기는 걸러지면서
 # 실제 자금이 들어온 상한가(에브리봇 114억·코스모로보틱스 342억)는 살아남는다.
-_MIN_TRDE_PRICA = 50e8
+_MIN_TRDE_PRICA_EOK = 50.0  # 억원
+# ka10030의 trde_amt(거래대금) 단위 = 백만원 → 억원 환산(÷100). 실측 교차검증: 흥아해운
+# trde_amt 109,463 = 1,095억, 현재가×거래량 근사 1,042억 (오차 +5%).
+_AMT_MN_TO_EOK = 100.0
 # 키움이 32비트 한계로 잘라 보내는 쓰레기 거래량(2^32-1). 실제값이 아니므로 '미상' 처리
 # (실측: ka10030 거래량 1위 KODEX 200선물인버스2X = 4,294,967,295).
 _QTY_OVERFLOW = 4294967295.0
@@ -448,6 +451,7 @@ class KiwoomAdapter(BaseAdapter):
                     price=q["price"],
                     ret=q["ret"],
                     volume=int(q["volume"]),
+                    value=round(q["price"] * q["volume"] / 1e8, 1),
                     investors=cf[0],
                     investorPeriods=cf[1],
                     investorsMock=False,
@@ -778,7 +782,10 @@ class KiwoomAdapter(BaseAdapter):
                 qty = abs(_num(_f(r, "now_trde_qty", "trde_qty", "거래량", "acml_vol")))
                 if qty >= _QTY_OVERFLOW:
                     qty = 0.0  # 32비트 오버플로우 값 → 신뢰 불가
-                if price * qty < _MIN_TRDE_PRICA:
+                # 거래대금: 키움 실제값(ka10030 trde_amt) 우선, 없으면 현재가×거래량 근사
+                raw_amt = _num(_f(r, "trde_amt"))
+                value = raw_amt / _AMT_MN_TO_EOK if raw_amt else price * qty / 1e8
+                if value < _MIN_TRDE_PRICA_EOK:
                     continue
                 out.append(
                     MarketStock(
@@ -787,6 +794,7 @@ class KiwoomAdapter(BaseAdapter):
                         price=price,
                         ret=_num(_f(r, "flu_rt", "등락률", "prdy_ctrt", "chg_rt", "fluc_rt")),
                         volume=int(qty),
+                        value=round(value, 1),
                         investors=InvestorFlow(),
                     )
                 )
@@ -812,12 +820,16 @@ class KiwoomAdapter(BaseAdapter):
             if _is_etf_or_pref(name, r.get("stk_cls")):
                 continue  # ETF·우선주 제외 (외국인 후보도 실제 회사만)
             qty = abs(_num(_f(r, "trde_qty")))
+            if qty >= _QTY_OVERFLOW:
+                qty = 0.0
+            price = abs(_num(_f(r, "cur_prc")))
             merged[code] = MarketStock(
                 symbol=code,
                 name=name,
-                price=abs(_num(_f(r, "cur_prc"))),
+                price=price,
                 ret=0.0,
-                volume=int(0 if qty >= _QTY_OVERFLOW else qty),
+                volume=int(qty),
+                value=round(price * qty / 1e8, 1),
                 investors=InvestorFlow(),
                 # 외국인 탭 후보일 뿐 — 상승/하락/거래량은 키움 공식 랭킹만 쓴다.
                 flowOnly=True,
