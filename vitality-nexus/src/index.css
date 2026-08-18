@@ -1435,6 +1435,141 @@ body {
     0 0 40px -12px rgba(43, 230, 200, 0.25);
   backdrop-filter: blur(14px);
 }
+/* KR 주식 상세 모드 — 차트 옆에 수급·메타 사이드가 붙어 넓어진다 */
+.chart-panel.detail {
+  width: min(940px, 94vw);
+}
+.chart-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(230px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.chart-tag {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--sub);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 1px 7px;
+  letter-spacing: 0.04em;
+}
+.chart-star {
+  font-size: 10.5px;
+  color: var(--event);
+  border: 1px solid rgba(242, 214, 117, 0.45);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: rgba(242, 214, 117, 0.06);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.chart-star:hover {
+  background: rgba(242, 214, 117, 0.14);
+}
+.chart-star.on {
+  background: rgba(242, 214, 117, 0.16);
+  font-weight: 700;
+}
+.cp-sub {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--sub);
+}
+.chart-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding-left: 16px;
+  min-width: 0;
+}
+.cs-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.cs-title small {
+  color: var(--sub);
+  letter-spacing: 0.02em;
+  margin-left: 6px;
+}
+.cs-inv {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto auto auto;
+  gap: 5px 10px;
+  font-family: var(--mono);
+  align-items: center;
+}
+.cs-inv > em {
+  font-style: normal;
+  font-size: 8.5px;
+  color: var(--sub);
+  text-align: right;
+}
+.cs-inv-row {
+  display: contents;
+}
+.cs-inv-row .who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--dim);
+  min-width: 0;
+}
+.cs-inv-row .who i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.cs-inv-row .who .bar {
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  min-width: 20px;
+}
+.cs-inv-row .who .bar b {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+.cs-inv-row .v {
+  font-size: 10px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cs-inv-row .v.pending {
+  color: var(--sub);
+  font-size: 8.5px;
+}
+.cs-empty {
+  font-size: 10px;
+  color: var(--sub);
+}
+.cs-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 7px 14px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+  margin-top: auto;
+}
+.cs-meta .k {
+  font-size: 9.5px;
+  color: var(--sub);
+}
+.cs-meta .v {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: right;
+}
 .chart-head {
   display: flex;
   align-items: center;
@@ -2026,4 +2161,344 @@ body {
   font-size: 11px;
   color: rgba(223, 233, 234, 0.45);
   line-height: 1.5;
+}
+
+/* ══════════ v0.2 종목 검색 ══════════ */
+
+/* 상단바 검색 캡슐 — 항상 보이는 진입점 */
+.search-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 22px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(43, 230, 200, 0.3);
+  color: var(--dim);
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: 0 0 12px -5px rgba(43, 230, 200, 0.4);
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.search-capsule:hover {
+  border-color: rgba(43, 230, 200, 0.55);
+  color: var(--txt, #dfe9ea);
+  box-shadow: 0 0 16px -4px rgba(43, 230, 200, 0.55);
+}
+.search-capsule svg {
+  color: var(--life);
+}
+.search-capsule kbd {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--sub);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 0 5px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* 검색 팔레트 (command palette) */
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200; /* 차트 패널(150)보다 위 */
+  background: rgba(3, 5, 7, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 11vh;
+  pointer-events: auto;
+}
+.palette {
+  width: min(540px, 92vw);
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(150deg, rgba(9, 26, 22, 0.98), rgba(5, 15, 12, 0.98));
+  border: 1px solid rgba(43, 230, 200, 0.4);
+  box-shadow:
+    0 24px 70px -18px rgba(0, 0, 0, 0.85),
+    0 0 40px -8px rgba(43, 230, 200, 0.3);
+}
+.pal-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(43, 230, 200, 0.14);
+}
+.pal-input input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #dfe9ea;
+  font-size: 14px;
+  font-family: inherit;
+}
+.pal-input input::placeholder {
+  color: var(--sub);
+  font-size: 12px;
+}
+.pal-hint {
+  display: flex;
+  gap: 5px;
+}
+.pal-hint kbd {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--sub);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.pal-list {
+  padding: 6px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.pal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.pal-item.sel,
+.pal-item:hover {
+  background: rgba(43, 230, 200, 0.1);
+  border-color: rgba(43, 230, 200, 0.35);
+}
+.pal-main {
+  flex: 1;
+  min-width: 0;
+}
+.pal-nm {
+  font-size: 13px;
+  color: #dfe9ea;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pal-nm b {
+  color: var(--life);
+  font-weight: 700;
+}
+.pal-nm .held-chip {
+  font-size: 8.5px;
+  color: var(--life);
+  border: 1px solid rgba(43, 230, 200, 0.4);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 7px;
+  vertical-align: 1px;
+}
+.pal-meta {
+  display: flex;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+.pal-meta .mkt {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 0 5px;
+}
+.pal-go {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--sub);
+  white-space: nowrap;
+}
+.pal-item.sel .pal-go,
+.pal-item:hover .pal-go {
+  color: var(--life);
+}
+.pal-sect {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--sub);
+  padding: 8px 12px 4px;
+}
+.pal-empty {
+  padding: 14px 12px;
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.7;
+}
+
+/* 우측 컬럼 (랭킹 + 관심종목) */
+.col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+.col-right .ranking-card {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ★ 관심종목 카드 */
+.watch-card {
+  flex: none;
+  max-height: 34%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.watch-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.watch-card h3 .dot.gold {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--event);
+  box-shadow: 0 0 6px var(--event);
+}
+.watch-card h3 .exch {
+  margin-left: auto;
+  font-size: 8.5px;
+  color: var(--sub);
+  letter-spacing: 0.04em;
+}
+.watch-list {
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.watch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.watch-row:hover {
+  background: rgba(43, 230, 200, 0.06);
+  border-color: rgba(43, 230, 200, 0.2);
+}
+.w-star {
+  color: var(--event);
+  font-size: 11px;
+  flex: none;
+}
+.w-name {
+  font-size: 11.5px;
+  color: #dfe9ea;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.w-name small {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--sub);
+  margin-left: 5px;
+}
+.w-spark {
+  flex: none;
+  margin-left: auto;
+}
+.w-price {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--dim);
+  min-width: 74px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.w-ret {
+  font-family: var(--mono);
+  font-size: 10px;
+  min-width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.w-remove {
+  background: none;
+  border: none;
+  color: var(--sub);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+.w-remove:hover {
+  color: var(--down);
+  background: rgba(255, 255, 255, 0.05);
+}
+.watch-empty {
+  font-size: 10.5px;
+  color: var(--sub);
+  line-height: 1.8;
+  padding: 4px 2px;
+}
+.watch-empty kbd {
+  font-family: var(--mono);
+  font-size: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 0 5px;
+}
+.watch-empty b {
+  color: var(--event);
+  font-weight: 600;
+}
+
+/* 랭킹 행 클릭 가능 표시 */
+.rank-row {
+  cursor: pointer;
+}
+
+/* 크립토 호버 지표 */
+.cx-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.cx-row {
+  margin-top: 7px;
+}
+.cx-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cx-line span {
+  font-size: 10.5px;
+  color: var(--dim);
+}
+.cx-line b {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #dfe9ea;
+  font-variant-numeric: tabular-nums;
+}
+.cx-row p {
+  margin: 2px 0 0;
+  font-size: 8.5px;
+  color: var(--sub);
+  line-height: 1.55;
 }

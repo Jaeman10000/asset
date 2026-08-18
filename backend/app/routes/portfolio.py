@@ -191,6 +191,79 @@ async def get_flow(code: str) -> dict:
     }
 
 
+@router.get("/stocks/master")
+async def get_stock_master() -> dict:
+    """전 종목 마스터(KOSPI+KOSDAQ ≈4,300) — 검색 자동완성용. 서버 하루 1회 캐시.
+    프론트는 이걸 한 번 받아 로컬에서 검색하므로 타이핑 중 API 호출이 없다."""
+    from ..services.stock_master import fetch_master
+
+    items = await fetch_master()
+    return {"count": len(items), "items": items}
+
+
+@router.get("/stocks/info/{code}")
+async def get_stock_info(code: str) -> dict:
+    """단일 종목 기본정보(ka10001) — 검색 상세 헤더·52주·시총·PER 등.
+    장중 60초 캐시, 장외엔 캐시 유지(값이 안 변함)."""
+    from ..adapters.kiwoom import fetch_stock_info
+
+    info = await fetch_stock_info(code)
+    return {"code": code, "info": info}
+
+
+@router.get("/watchlist")
+async def get_watchlist() -> dict:
+    from ..services.watchlist import load_watchlist
+
+    return {"items": load_watchlist()}
+
+
+class WatchlistBody(BaseModel):
+    items: list[dict]
+
+
+@router.put("/watchlist")
+async def put_watchlist(body: WatchlistBody) -> dict:
+    from ..services.watchlist import save_watchlist
+
+    return {"items": save_watchlist(body.items)}
+
+
+@router.get("/watchlist/quotes")
+async def get_watchlist_quotes() -> dict:
+    """관심종목 시세 한 방 조회 — 행마다 현재가·등락률 + 스파크라인(최근 30일 종가).
+    ka10001은 장중 60초 캐시·캔들은 5분 캐시라 폴링해도 호출이 적다."""
+    import asyncio as _aio
+
+    from ..adapters.kiwoom import fetch_candles, fetch_stock_info
+    from ..services.watchlist import load_watchlist
+
+    items = load_watchlist()
+    sem = _aio.Semaphore(4)
+
+    async def one(it: dict) -> dict:
+        async with sem:
+            info = await fetch_stock_info(it["code"])
+            candles = await fetch_candles(it["code"], "D", 30)
+        row = {"code": it["code"], "name": it["name"], "spark": [c["c"] for c in candles]}
+        if info:
+            row.update(price=info["price"], ret=info["ret"], name=info["name"] or it["name"])
+        return row
+
+    rows = await _aio.gather(*(one(it) for it in items))
+    return {"items": list(rows)}
+
+
+@router.get("/crypto/context")
+async def get_crypto_context(symbols: str = "") -> dict:
+    """크립토 시장 지표 — 도미넌스·공포탐욕 + 코인별 글로벌 시세(김프 계산용).
+    무료 공개 API(코인게코·alternative.me), 서버 캐시 2~30분."""
+    from ..services.crypto_context import get_context
+
+    syms = [s.strip() for s in symbols.split(",") if s.strip()][:20]
+    return await get_context(syms)
+
+
 @router.get("/debug/kiwoom")
 async def debug_kiwoom() -> dict:
     """키움 실제 응답 원문을 그대로 반환 — 필드 매핑 확정용(로컬 전용).

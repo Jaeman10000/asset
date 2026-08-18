@@ -63,6 +63,52 @@ export interface MarketStock {
   flowOnly?: boolean;
 }
 
+/** 차트/상세 패널이 받는 대상 — 보유 포지션·랭킹 종목·검색 결과를 모두 표현 */
+export interface ChartTarget {
+  symbol: string;
+  name: string;
+  assetType: 'stock' | 'crypto';
+  region?: 'KR' | 'US';
+  currency: 'KRW' | 'USD';
+  /** 없으면 패널이 /stocks/info로 채움 (KR 주식만 가능) */
+  price?: number;
+  ret?: number;
+  /** 검색 결과에서 온 경우 시장·업종 태그 */
+  market?: string;
+  industry?: string;
+  /** 크립토 라인 폴백용 */
+  history?: number[];
+}
+
+/** 종목 마스터 1행 (검색 자동완성) */
+export interface MasterStock {
+  code: string;
+  name: string;
+  market: string;
+  industry: string;
+}
+
+/** ka10001 종목 기본정보 */
+export interface StockInfo {
+  code: string;
+  name: string;
+  price: number;
+  ret: number;
+  change: number;
+  open: number;
+  high: number;
+  low: number;
+  volume: number;
+  value: number; // 거래대금(억)
+  w52h: number;
+  w52l: number;
+  marketCap: number; // 억원
+  per: number;
+  pbr: number;
+  roe: number;
+  foreignRate: number; // 외국인 소진율 %
+}
+
 export interface SectorFlow {
   region: Region;
   id: string;

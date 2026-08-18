@@ -265,6 +265,54 @@ async def fetch_flow(code: str) -> tuple[InvestorFlow, list[InvestorPeriod]] | N
     return await _fetch_one_flow(client, code)
 
 
+# ── 종목 기본정보 (ka10001) — 검색 상세 패널·관심종목 시세용 ──
+# 실응답으로 확정한 필드(삼성중공업 010140):
+#   cur_prc(-21250, 부호=방향) flu_rt(-4.71, ka10027과 같은 직접 %) pred_pre(전일대비)
+#   trde_qty(주) 250hgst/250lwst(52주 고저) mac(시가총액, 억원) flo_stk(상장주식수, 천주)
+#   per/pbr/roe/eps  for_exh_rt(외국인 소진율 %)  open_pric/high_pric/low_pric
+_INFO_TTL_OPEN = 60.0  # 한국장 중 1분 캐시. 장외엔 _cache_ok가 무기한 유효 처리.
+_info_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
+
+async def fetch_stock_info(code: str) -> dict[str, Any] | None:
+    code = _clean_code(code)
+    hit = _info_cache.get(code)
+    if hit and _cache_ok(hit[0], _INFO_TTL_OPEN, kr_session()):
+        return hit[1]
+    client = KiwoomClient()
+    if not client.configured:
+        return hit[1] if hit else None
+    try:
+        r = await client.call("stkinfo", "ka10001", {"stk_cd": code})
+    except Exception:
+        return hit[1] if hit else None
+    if r.get("return_code") != 0:
+        return hit[1] if hit else None
+    price = abs(_num(r.get("cur_prc")))
+    qty = abs(_num(r.get("trde_qty")))
+    info = {
+        "code": code,
+        "name": str(r.get("stk_nm") or code),
+        "price": price,
+        "ret": _num(r.get("flu_rt")),  # ka10001 flu_rt는 직접 %(실측 -4.71)
+        "change": _num(r.get("pred_pre")),
+        "open": abs(_num(r.get("open_pric"))),
+        "high": abs(_num(r.get("high_pric"))),
+        "low": abs(_num(r.get("low_pric"))),
+        "volume": int(qty),
+        "value": round(price * qty / 1e8, 1),  # 거래대금(억) 근사
+        "w52h": abs(_num(r.get("250hgst"))),
+        "w52l": abs(_num(r.get("250lwst"))),
+        "marketCap": _num(r.get("mac")),  # 억원 (실측: 삼성중공업 187,000 = 18.7조)
+        "per": _num(r.get("per")),
+        "pbr": _num(r.get("pbr")),
+        "roe": _num(r.get("roe")),
+        "foreignRate": _num(r.get("for_exh_rt")),  # 외국인 소진율 %
+    }
+    _info_cache[code] = (time.time(), info)
+    return info
+
+
 # ── 백그라운드 수급 워머 ──────────────────────────────────────────────────
 # 유저 요청: 호버할 때 받지 말고, 보유·랭킹이 정해지면 '미리미리' 받아놔라.
 # 키움 레이트리밋(ka10059 ~40종목=32초, 세마포어 4가 최적)이라 한 번에 다 못 받으므로,
@@ -327,6 +375,7 @@ def clear_caches() -> None:
     _hist_cache.clear()
     _candle_cache.clear()
     _quote_cache.clear()
+    _info_cache.clear()
     _rank_cache.update(at=0.0, rows=[])
     _us_cache.update(at=0.0, rows=[])
 

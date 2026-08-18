@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchFlow, type FlowResp } from '../../api/client';
+import { fetchCryptoContext, fetchFlow, type CryptoContext, type FlowResp } from '../../api/client';
 import type { InvestorFlow, InvestorPeriod, MarketStock, Position } from '../../api/types';
 import { krwCompact, pct } from '../../util/format';
 
@@ -13,6 +13,8 @@ export interface HoverInfo {
   name: string;
   symbol: string;
   sector?: string | null;
+  /** crypto면 수급 대신 크립토 시장 지표(김프·도미넌스·공포탐욕)를 보여준다 */
+  assetType?: 'stock' | 'crypto';
   held: boolean;
   price: number;
   currency: 'KRW' | 'USD';
@@ -32,6 +34,7 @@ export function fromPosition(p: Position): HoverInfo {
     name: p.name,
     symbol: p.symbol,
     sector: p.sector,
+    assetType: p.assetType,
     held: true,
     price: p.price,
     currency: p.currency,
@@ -50,6 +53,7 @@ export function fromMarket(m: MarketStock, held: boolean): HoverInfo {
   return {
     name: m.name,
     symbol: m.symbol,
+    assetType: 'stock',
     held,
     price: m.price,
     currency: 'KRW',
@@ -187,13 +191,18 @@ function InvestorBars({
 export function HoverCard({ target }: { target: HoverTarget | null }) {
   const info = target?.info;
   const symbol = info?.symbol;
-  const isKR = info?.currency === 'KRW';
+  const isCrypto = info?.assetType === 'crypto';
+  // 크립토도 currency가 KRW(업비트/빗썸 원화가)라서, assetType으로 확실히 구분해야
+  // BTC 같은 심볼로 ka10059(주식 수급)를 조회하는 헛발질을 막는다.
+  const isKR = info?.currency === 'KRW' && !isCrypto;
   // 스냅샷에 이미 수급(20/60일 누적 포함)이 실려 있으면(보유 종목=로딩 때 블로킹으로 다
   // 받아둠) 재조회하지 않고 그대로 쓴다.
   const hasFullFlow = !!(info?.investors && info?.periods && info.periods.length > 0);
   // 아직 안 실린 KR 종목(랭킹 등)만 조회 — 백그라운드 워머가 미리 채워둔 캐시라 즉시 히트.
   const canFetch = !!symbol && isKR && !info?.investorsMock && !hasFullFlow;
   const [live, setLive] = useState<{ sym: string; data: FlowResp } | null>(null);
+  // 크립토 시장 지표 (김프·도미넌스·공포탐욕) — 클라 3분 + 서버 2~30분 캐시라 가볍다
+  const [ctx, setCtx] = useState<CryptoContext | null>(null);
 
   useEffect(() => {
     if (!canFetch || !symbol) return;
@@ -205,6 +214,17 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
       cancel = true;
     };
   }, [symbol, canFetch]);
+
+  useEffect(() => {
+    if (!isCrypto || !symbol) return;
+    let cancel = false;
+    fetchCryptoContext([symbol])
+      .then((d) => !cancel && setCtx(d))
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [isCrypto, symbol]);
 
   if (!target || !info) return null;
   const h = info;
@@ -263,10 +283,87 @@ export function HoverCard({ target }: { target: HoverTarget | null }) {
         </div>
       )}
 
+      {/* 크립토 — 수급 대신 '왜 오르내리는지' 시장 지표. 각 수치의 의미를 함께 표기
+          (유저 요청: 수치가 뭘 뜻하는지도 알려달라). */}
+      {isCrypto && (
+        <div className="cx-section">
+          <div className="inv-title">
+            크립토 시장 지표 <span className="inv-unit">2~30분 캐시</span>
+          </div>
+          {(() => {
+            const coin = symbol ? ctx?.coins?.[symbol.toUpperCase()] : undefined;
+            const kimchi =
+              coin?.krw && h.price ? (h.price / coin.krw - 1) * 100 : null;
+            const fg = ctx?.fearGreed;
+            const fgKo = fg
+              ? ({
+                  'Extreme Fear': '극단적 공포',
+                  Fear: '공포',
+                  Neutral: '중립',
+                  Greed: '탐욕',
+                  'Extreme Greed': '극단적 탐욕',
+                }[fg.label] ?? fg.label)
+              : null;
+            const fgColor = fg
+              ? fg.value <= 45
+                ? 'var(--down)'
+                : fg.value >= 55
+                  ? 'var(--up)'
+                  : 'var(--dim)'
+              : 'var(--dim)';
+            return (
+              <>
+                {kimchi != null && (
+                  <div className="cx-row">
+                    <div className="cx-line">
+                      <span>김치 프리미엄</span>
+                      <b style={{ color: kimchi >= 0 ? 'var(--up)' : 'var(--down)' }}>
+                        {(kimchi >= 0 ? '+' : '−') + Math.abs(kimchi).toFixed(2)}%
+                      </b>
+                    </div>
+                    <p>국내 거래소가가 글로벌 시세보다 비싼 정도 — 높으면 국내 과열, 음수면 국내 저평가</p>
+                  </div>
+                )}
+                {coin?.usd != null && (
+                  <div className="cx-row">
+                    <div className="cx-line">
+                      <span>글로벌 시세</span>
+                      <b>${coin.usd >= 100 ? Math.round(coin.usd).toLocaleString('en-US') : coin.usd.toLocaleString('en-US')}</b>
+                    </div>
+                    <p>CoinGecko 기준 국제 가격 — 국내가와의 차이가 위 김치 프리미엄</p>
+                  </div>
+                )}
+                {ctx?.global && (
+                  <div className="cx-row">
+                    <div className="cx-line">
+                      <span>BTC 도미넌스</span>
+                      <b>{ctx.global.btcDominance.toFixed(1)}%</b>
+                    </div>
+                    <p>전체 크립토 시총 중 비트코인 비중 — 오르면 자금이 비트로 몰림(알트 약세), 내리면 알트 장세</p>
+                  </div>
+                )}
+                {fg && (
+                  <div className="cx-row">
+                    <div className="cx-line">
+                      <span>공포·탐욕 지수</span>
+                      <b style={{ color: fgColor }}>
+                        {fg.value} · {fgKo}
+                      </b>
+                    </div>
+                    <p>0=극단적 공포(과매도권, 역발상 매수 신호로도 봄) · 100=극단적 탐욕(과열, 조정 주의)</p>
+                  </div>
+                )}
+                {!ctx && <div className="inv-loading">지표 불러오는 중…</div>}
+              </>
+            );
+          })()}
+        </div>
+      )}
+
       {/* 수급현황 — 당일 + 20/60일 누적. 모의면 그대로, 실데이터 KR이면 on-demand 조회분
           우선(스냅샷에 없던 종목도 호버 즉시 채움). 오늘치가 0이어도 20/60일 누적을 보여
           주므로 숨기지 않는다. */}
-      {(() => {
+      {!isCrypto && (() => {
         if (h.investorsMock) {
           return h.investors ? (
             <InvestorBars inv={h.investors} periods={h.periods} mock />

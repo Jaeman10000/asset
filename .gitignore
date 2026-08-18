@@ -17,6 +17,7 @@ backend/__pycache__/
 backend/**/__pycache__/
 *.pyc
 backend/data/holdings.json
+backend/data/watchlist.json
 backend/data/vitality.db
 backend/dist/
 backend/build/

@@ -160,6 +160,20 @@ export default function App() {
       <header className="topbar">
         <span className="brand">VITALITY NEXUS</span>
         <span className="brand-sub">LIVING DASHBOARD · HEART AT THE CENTER</span>
+        {/* 종목 검색 진입점 — 클릭 또는 '/' 로 팔레트 열기 (Dashboard가 이벤트 수신) */}
+        <button
+          type="button"
+          className="search-capsule"
+          onClick={() => window.dispatchEvent(new CustomEvent('vn:search-open'))}
+          title="시장 전체 종목 검색"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          종목 검색
+          <kbd>/</kbd>
+        </button>
         <div className="market-pills">
           {/* 로딩 중엔 상단에 항상 보이게 — 콜드/새로고침이 십수 초 걸리므로
               "멈춘 게 아니라 받아오는 중"이 눈에 보여야 한다. */}

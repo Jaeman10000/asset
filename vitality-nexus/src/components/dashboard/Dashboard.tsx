@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { MarketStock, PortfolioSnapshot, Position } from '../../api/types';
+import type { ChartTarget, MarketStock, PortfolioSnapshot, Position } from '../../api/types';
 import { krwCompact, krw, pct } from '../../util/format';
 import { HoverCard, fromMarket, fromPosition, type HoverInfo, type HoverTarget } from './HoverCard';
 import { ChartPanel } from './ChartPanel';
+import { SearchPalette } from './SearchPalette';
+import { WatchlistCard } from './WatchlistCard';
 import { sectorHue, type RingSector } from '../organic-core/HoloSectorRings';
 import { Spark, CoinIcon } from './shared';
 
@@ -267,6 +269,7 @@ function RankRow({
   tab,
   onEnter,
   onLeave,
+  onOpen,
 }: {
   m: MarketStock;
   rank: number;
@@ -274,6 +277,8 @@ function RankRow({
   tab: RankTabKey;
   onEnter: (e: React.MouseEvent) => void;
   onLeave: () => void;
+  /** 클릭 → 캔들 차트 상세 (유저 요청: 랭킹 종목도 눌러서 차트 본다) */
+  onOpen: () => void;
 }) {
   const metric = rankMetric(m, tab);
   const { trigger } = useRipple();
@@ -286,6 +291,7 @@ function RankRow({
         onEnter(e);
       }}
       onMouseLeave={onLeave}
+      onClick={onOpen}
     >
       <span className="rank-no">{rank}</span>
       <div className="rank-mid">
@@ -479,6 +485,8 @@ export function Dashboard({
   const [rankTab, setRankTab] = useState<RankTabKey>('up');
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [selId, setSelId] = useState<string | null>(null);
+  const [selTarget, setSelTarget] = useState<ChartTarget | null>(null);
+  const [palOpen, setPalOpen] = useState(false);
   const t = snapshot.totals;
   // 섹터 flow·수급이 모의면 '샘플' 워터마크 (구버전 백엔드엔 없으므로 기본 false).
   const marketMock = snapshot.marketMock ?? false;
@@ -510,16 +518,57 @@ export function Dashboard({
     [snapshot, rankTab],
   );
 
-  // 실시간 차트로 선택된 종목 — 현재 스냅샷에서 다시 찾아 폴링마다 갱신되게 함
-  const selected = useMemo(
-    () => snapshot.positions.find((p) => p.id === selId) ?? null,
-    [snapshot, selId],
-  );
+  // 실시간 차트로 선택된 대상 — 보유(selId, 폴링마다 최신 포지션으로 갱신) 또는
+  // 외부 종목(selTarget: 랭킹·검색·관심종목).
+  const selected: ChartTarget | null = useMemo(() => {
+    if (selTarget) return selTarget;
+    const p = snapshot.positions.find((pos) => pos.id === selId);
+    if (!p) return null;
+    return {
+      symbol: p.symbol,
+      name: p.name,
+      assetType: p.assetType,
+      region: p.region ?? undefined,
+      currency: p.currency,
+      price: p.price,
+      ret: p.ret,
+      history: p.history,
+    };
+  }, [snapshot, selId, selTarget]);
   // 차트를 열 때 호버 카드(수급)는 닫아 겹치지 않게 한다
   const openChart = (p: Position) => {
     hover.onLeave();
+    setSelTarget(null);
     setSelId(p.id);
   };
+  // 랭킹·검색·관심종목 등 '보유 아님' 종목 열기
+  const openTarget = (t: ChartTarget) => {
+    hover.onLeave();
+    setSelId(null);
+    setSelTarget(t);
+  };
+  const closeChart = () => {
+    setSelId(null);
+    setSelTarget(null);
+  };
+
+  // 검색 팔레트: '/' 단축키(입력 중엔 무시) + 상단바 캡슐(vn:search-open 이벤트)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/') return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      e.preventDefault();
+      setPalOpen(true);
+    };
+    const onOpen = () => setPalOpen(true);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('vn:search-open', onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('vn:search-open', onOpen);
+    };
+  }, []);
 
   // 심장과 동일하게 3~5초 주기로 느리게(총액 후광 맥동). 심박 시각 부담 완화.
   const beatSec = Math.min(5, Math.max(3, 5 - (bpm - 40) / 40));
@@ -578,7 +627,8 @@ export function Dashboard({
           <SectorFlowLanes kr={krSectors} us={usSectors} mock={marketMock} />
         </div>
 
-        {/* ── 우측: 오늘의 시장 랭킹 ── */}
+        {/* ── 우측: 오늘의 시장 랭킹 + ★관심종목 ── */}
+        <div className="col-right">
         <div className={`card ranking-card${rankingMock ? ' is-mock' : ''}`}>
           <h3>
             <span className="dot" />
@@ -615,16 +665,37 @@ export function Dashboard({
                   tab={rankTab}
                   onEnter={hover.onEnter(fromMarket(m, held))}
                   onLeave={hover.onLeave}
+                  onOpen={() =>
+                    openTarget({
+                      symbol: m.symbol,
+                      name: m.name,
+                      assetType: 'stock',
+                      region: 'KR',
+                      currency: 'KRW',
+                      price: m.price,
+                      ret: m.ret,
+                    })
+                  }
                 />
               );
             })}
             {ranking.length === 0 && <div className="list-empty">랭킹 로딩…</div>}
           </div>
         </div>
+
+        {/* ── ★ 관심종목 — 검색으로 찾은 종목 고정 ── */}
+        <WatchlistCard onOpen={openTarget} refreshTick={snapshot.fetchedAt} />
+        </div>
       </div>
 
       <HoverCard target={hover.target} />
-      <ChartPanel position={selected} tick={snapshot.fetchedAt} onClose={() => setSelId(null)} />
+      <ChartPanel target={selected} tick={snapshot.fetchedAt} onClose={closeChart} />
+      <SearchPalette
+        open={palOpen}
+        heldSymbols={heldSymbols}
+        onSelect={openTarget}
+        onClose={() => setPalOpen(false)}
+      />
     </div>
   );
 }
