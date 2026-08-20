@@ -207,6 +207,65 @@ export async function fetchCryptoContext(symbols: string[], signal?: AbortSignal
   return data;
 }
 
+// ── 기간 손익 (도넛 카드 기간 칩) ──
+
+export interface PerfPeriod {
+  won: number;
+  pct: number;
+  baseTs: number;
+  coveredDays: number;
+}
+export interface PerfResp {
+  periods: Record<string, PerfPeriod>;
+  total?: number;
+  ts?: number;
+}
+
+let _perf: { at: number; data: PerfResp } | null = null;
+
+export async function fetchPerf(signal?: AbortSignal): Promise<PerfResp> {
+  if (_perf && Date.now() - _perf.at < 60_000) return _perf.data;
+  const data = await getJSON<PerfResp>('/portfolio/perf', signal, 15_000);
+  _perf = { at: Date.now(), data };
+  return data;
+}
+
+// ── 마켓 뉴스 (언론사 RSS) ──
+
+export interface NewsItem {
+  source: string;
+  title: string;
+  link: string;
+  ts: number;
+}
+
+let _news: { at: number; items: NewsItem[] } | null = null;
+
+export async function fetchNews(signal?: AbortSignal): Promise<NewsItem[]> {
+  if (_news && Date.now() - _news.at < 600_000) return _news.items;
+  const r = await getJSON<{ items: NewsItem[] }>('/news', signal, 15_000);
+  _news = { at: Date.now(), items: r.items ?? [] };
+  return _news.items;
+}
+
+// ── 수급 시그널 (시장 전체/내 보유) ──
+
+export interface SignalRow {
+  code: string;
+  name: string;
+  foreign: number;
+  inst: number;
+  net: number;
+}
+export interface SignalResp {
+  buys: SignalRow[];
+  sells: SignalRow[];
+}
+
+export function fetchSignalTop(scope: 'market' | 'held', signal?: AbortSignal): Promise<SignalResp> {
+  return getJSON<SignalResp>(`/signal/top?scope=${scope}`, signal, 15_000);
+}
+
 // ── 보유종목 편집 (holdings.json) ──
 
 export interface HoldingInput {

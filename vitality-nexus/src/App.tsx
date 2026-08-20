@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
@@ -6,7 +6,6 @@ import { KiwoomPanel } from './components/dashboard/KiwoomPanel';
 import { CryptoPanel } from './components/dashboard/CryptoPanel';
 import { SettingsPanel, settingsAvailable } from './components/dashboard/SettingsPanel';
 import { AuroraVeil } from './components/dashboard/AuroraVeil';
-import { OrganicCoreScene } from './components/organic-core/OrganicCoreScene';
 import type { RingSector } from './components/organic-core/HoloSectorRings';
 import { usePortfolio } from './store/portfolio';
 import { portfolioBpm } from './util/heart';
@@ -16,24 +15,6 @@ import { portfolioBpm } from './util/heart';
  * 배경(아래→위): AuroraVeil(초저해상도 안개, 렉 없음) → 3D 심장 씬(투명) → 글래스 UI.
  * 프로토타입의 정보 구조(3열 그리드, 시장 랭킹, 수급 호버)를 exe의 질감으로 렌더.
  */
-
-/**
- * SceneBoundary — 3D 심장 씬(WebGL/R3F)에서 던진 에러를 여기서 잡아 씬만 숨긴다.
- * 이 경계가 없으면 씬 오류가 RootErrorBoundary까지 올라가 앱 전체가 빈 화면이
- * 된다(CTO 지적). GPU가 약하거나 컨텍스트 로스트가 나도 대시보드는 계속 쓰인다.
- */
-class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  componentDidCatch(error: unknown) {
-    console.warn('[scene] 3D 씬 오류 — 씬 없이 계속 진행', error);
-  }
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
 
 /** 우하단 실측 FPS (심장 씬이 노출하는 __renderCount 기준) */
 function FpsMeter() {
@@ -109,25 +90,7 @@ export default function App() {
 
   const bpm = snapshot ? portfolioBpm(snapshot.totals.total.pnlPct) : 72;
 
-  // 홀로그램 섹터 링 + 하단 리드아웃 공용 데이터.
-  // 순서 = 수급 '규모' 순위: KR은 |외국인+기관| 절대값 큰 순(=오늘 외국인·기관이 가장
-  // 크게 사고판 섹터가 1위). 부호 큰 순(양수 먼저)으로 하면 수급 거의 없는 섹터(+47억)가
-  // 수급 최대 섹터(반도체 ±1,375억)보다 위로 올라오는 말이 안 되는 정렬이 돼서 바꿨다.
-  // 매수/매도 방향은 레인의 좌우 막대로 표시된다. US는 등락률 내림차순.
-  const krSectors: RingSector[] = useMemo(
-    () =>
-      (snapshot?.sectorFlows ?? [])
-        .filter((s) => s.region === 'KR')
-        .map((s) => ({
-          name: s.name,
-          ret: s.ret ?? 0,
-          foreign: s.foreign ?? 0,
-          inst: s.inst ?? 0,
-          individual: s.individual ?? 0,
-        }))
-        .sort((a, b) => Math.abs(b.foreign! + b.inst!) - Math.abs(a.foreign! + a.inst!)),
-    [snapshot],
-  );
+  // 레이더 US 필용 — KR 테마는 Dashboard가 snapshot.sectorFlows에서 직접 쓴다(members 포함).
   const usSectors: RingSector[] = useMemo(
     () =>
       (snapshot?.sectorFlows ?? [])
@@ -142,20 +105,6 @@ export default function App() {
       {/* 배경 1: 안개 (초저해상도 셰이더 + CSS 블러 → 렉 없이 고급 안개)
           디버그: ?noveil 로 끄고 격리 가능 */}
       {!new URLSearchParams(window.location.search).has('noveil') && <AuroraVeil />}
-      {/* 배경 2: 3D 심장 + 홀로그램 섹터 링 + 파티클 (투명 캔버스).
-          Bloom은 기본 OFF: (1) MeshTransmissionMaterial(유리 심장)을 매 프레임 재샘플·
-          재증폭해 시간이 지나면 심장이 하얗게 뭉개지는 피드백 루프를 만들고,
-          (2) 약한 GPU(Intel UHD)에서 fps를 절반으로 깎는다. 홀로그램 발광은 궤도·노드·
-          파티클의 가산 스프라이트가 자체적으로 낸다. 실험용으로 ?bloom 로 켤 수 있음. */}
-      <div className="scene-bg">
-        <SceneBoundary>
-          <OrganicCoreScene
-            bpm={bpm}
-            bloom={new URLSearchParams(window.location.search).has('bloom')}
-          />
-        </SceneBoundary>
-      </div>
-
       {/* 상단 바 (프로토타입: 브랜드 + 마켓 상태 필) */}
       <header className="topbar">
         <span className="brand">VITALITY NEXUS</span>
@@ -197,7 +146,7 @@ export default function App() {
       </header>
 
       {snapshot ? (
-        <Dashboard snapshot={snapshot} bpm={bpm} krSectors={krSectors} usSectors={usSectors} />
+        <Dashboard snapshot={snapshot} bpm={bpm} usSectors={usSectors} />
       ) : conn === 'offline' ? (
         <div className="boot-msg">
           <div className="boot-offline">

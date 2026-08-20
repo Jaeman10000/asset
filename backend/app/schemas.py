@@ -88,6 +88,8 @@ class SectorFlow(BaseModel):
     foreign: float | None = None
     inst: float | None = None
     individual: float | None = None
+    # 테마 구성 대장주별 수급 (레이더 호버 패널용) — [{code,name,foreign,inst}]
+    members: list[dict] = Field(default_factory=list)
     # 미국만
     ret: float | None = None  # 전일 등락률
     volume: float | None = None

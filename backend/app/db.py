@@ -56,6 +56,26 @@ def save_snapshot(fetched_at: int, payload_json: str) -> None:
         conn.close()
 
 
+def total_series() -> list[tuple[int, float]]:
+    """(fetched_at ms, 총자산) 시계열 — 기간 손익 계산용 (v0.3 도넛 카드 기간 칩).
+    payload 전체 파싱 대신 SQLite json1로 총액만 뽑는다(4,900행 ≈ 0.9s → 호출부 캐시).
+    초기 빈 스냅샷(총액 0)은 기간 수익률 분모를 망치므로 제외."""
+    conn = _connect()
+    try:
+        cur = conn.execute(
+            """
+            SELECT fetched_at,
+                   CAST(json_extract(payload, '$.totals.total.value') AS REAL) AS v
+            FROM snapshots
+            WHERE v > 0
+            ORDER BY fetched_at
+            """
+        )
+        return cur.fetchall()
+    finally:
+        conn.close()
+
+
 def recent_snapshots(limit: int = 100) -> list[tuple[int, str]]:
     conn = _connect()
     try:

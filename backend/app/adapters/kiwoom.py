@@ -227,7 +227,13 @@ async def _fetch_one_flow(
     code = _clean_code(code)
     cached = _flow_cache.get(code)
     if cached and _flow_fresh(cached[0]):
-        return cached[1]
+        # 장 마감 부근 키움이 일시적으로 전부 0을 주는 경우가 있다(실측: 마감 직후
+        # 삼성전자 flow 전부 0). 장외엔 캐시가 무기한 유효라 그 0이 다음날까지 박제됨 —
+        # all-zero 캐시는 120초만 신뢰하고 다시 받아본다(진짜 0이면 다시 0이 올 뿐).
+        inv0 = cached[1][0]
+        all_zero = inv0.foreign == 0 and inv0.inst == 0 and inv0.individual == 0
+        if not (all_zero and time.time() - cached[0] > 120):
+            return cached[1]
     dt = datetime.now().strftime("%Y%m%d")
     try:
         data = await client.call(
@@ -367,6 +373,48 @@ def start_warm(codes: "set[str] | list[str]") -> None:
         _warm_task = loop.create_task(_warm_loop())
 
 
+# 보유 종목 이름 맵 — fetch()가 갱신. 수급 시그널 '내 보유' 스코프가 사용.
+_held_state: dict[str, dict[str, str]] = {"names": {}}
+
+
+async def flow_top(scope: str = "market", n: int = 6) -> dict[str, list[dict[str, Any]]]:
+    """수급 시그널 — 수급 추적 풀(_flow_cache: 랭킹+테마 대장주+보유+관심)에서
+    오늘 |외국인+기관| 큰 순으로 사는 중/파는 중을 뽑는다.
+
+    scope='held'면 보유 종목만. 키움엔 '전 종목 기관 수급 랭킹' TR이 없으므로
+    market도 전수 스캔이 아니라 추적 풀 기준(≈90종목) — 프론트에 그렇게 표기한다.
+    이름: 보유맵 → 대장주맵 → 종목 마스터(하루 캐시) 순으로 해석.
+    """
+    held = _held_state["names"]
+    names: dict[str, str] = {}
+    if scope != "held":
+        try:
+            from ..services.stock_master import fetch_master
+
+            names = {it["code"]: it["name"] for it in await fetch_master()}
+        except Exception:
+            pass
+    rows: list[dict[str, Any]] = []
+    for code, (ts, built) in list(_flow_cache.items()):
+        if not _flow_fresh(ts):
+            continue
+        if scope == "held" and code not in held:
+            continue
+        inv = built[0]
+        net = inv.foreign + inv.inst
+        if inv.foreign == 0 and inv.inst == 0:
+            continue
+        name = held.get(code) or _MAJOR_NAMES.get(code) or names.get(code)
+        if not name:
+            continue  # 이름 없는 코드(ETF 등 마스터 밖)는 시그널에 안 올림
+        rows.append(
+            {"code": code, "name": name, "foreign": round(inv.foreign), "inst": round(inv.inst), "net": round(net)}
+        )
+    buys = sorted((r for r in rows if r["net"] > 0), key=lambda r: r["net"], reverse=True)[:n]
+    sells = sorted((r for r in rows if r["net"] < 0), key=lambda r: r["net"])[:n]
+    return {"buys": buys, "sells": sells}
+
+
 def clear_caches() -> None:
     """수동 새로고침 시 캐시를 모두 비워 즉시 재조회하게 한다.
     장외에는 랭킹·미국잔고·수급이 캐시로 고정되므로, '새로고침'이 그걸 뚫는 유일한
@@ -503,7 +551,9 @@ class KiwoomAdapter(BaseAdapter):
                 self._attach_history(client, positions),
                 return_exceptions=True,
             )
-            await asyncio.wait_for(work, timeout=14.0)  # 보유 ~10종목 완주(≈8s)+여유
+            # 보유 ~10종목 완주 보장 — 14s에선 랭킹 TR·관심종목 조회와 경합 시 뒤쪽
+            # 보유 종목이 잘려 mock이 꽂히는 사고가 났다(실측: 삼성전자 누락). 20s로.
+            await asyncio.wait_for(work, timeout=20.0)
         except (asyncio.TimeoutError, Exception):
             pass
         finally:
@@ -561,20 +611,38 @@ class KiwoomAdapter(BaseAdapter):
                 )
             )
 
+        # 보유 종목 이름 맵 — 수급 시그널 '내 보유' 스코프용 (모듈 상태로 기억)
+        _held_state["names"] = {p.symbol: p.name for p in kr}
+
         # 테마 섹터 = 대표종목 당일 수급 합산 (캐시에 있는 것만 — 부분→완전 점진 채움)
+        # members: 대장주별 외/기 수급 (레이더 호버 패널) — 순매수 큰 순으로 정렬해 실음.
         sectors: list[SectorFlow] = []
         for name, tcodes in _THEME_SECTORS:
-            members = [cf[0] for c in tcodes if (cf := cached_flow(c))]
-            if not members:
+            flows = [(c, cf[0]) for c in tcodes if (cf := cached_flow(c))]
+            if not flows:
                 continue
+            members = sorted(
+                (
+                    {
+                        "code": c,
+                        "name": _MAJOR_NAMES.get(c, c),
+                        "foreign": round(f.foreign),
+                        "inst": round(f.inst),
+                    }
+                    for c, f in flows
+                ),
+                key=lambda m: m["foreign"] + m["inst"],
+                reverse=True,
+            )
             sectors.append(
                 SectorFlow(
                     region="KR",
                     id=name,
                     name=name,
-                    foreign=round(sum(m.foreign for m in members)),
-                    inst=round(sum(m.inst for m in members)),
-                    individual=round(sum(m.individual for m in members)),
+                    foreign=round(sum(f.foreign for _, f in flows)),
+                    inst=round(sum(f.inst for _, f in flows)),
+                    individual=round(sum(f.individual for _, f in flows)),
+                    members=members,
                 )
             )
         # 이번 빌드가 더 완전하면(같거나 많으면) 갱신, 아니면 마지막 완전 세트로 대체 →

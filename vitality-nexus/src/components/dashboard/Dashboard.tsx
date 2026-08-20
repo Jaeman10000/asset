@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ChartTarget, MarketStock, PortfolioSnapshot, Position } from '../../api/types';
-import { krwCompact, krw, pct } from '../../util/format';
+import { krwCompact, pct } from '../../util/format';
 import { HoverCard, fromMarket, fromPosition, type HoverInfo, type HoverTarget } from './HoverCard';
 import { ChartPanel } from './ChartPanel';
 import { SearchPalette } from './SearchPalette';
+import { PortfolioDonut } from './PortfolioDonut';
+import { SectorRadar } from './SectorRadar';
+import { SignalCard } from './SignalCard';
+import { NewsCard } from './NewsCard';
 import { WatchlistCard } from './WatchlistCard';
-import { sectorHue, type RingSector } from '../organic-core/HoloSectorRings';
+import type { RingSector } from '../organic-core/HoloSectorRings';
 import { Spark, CoinIcon, StockBadge } from './shared';
 
 /**
@@ -323,174 +327,13 @@ function RankRow({
   );
 }
 
-/**
- * 하단 SECTOR FLOW — 각 섹터가 "수급이 흐르는 레인".
- *
- * 리스트가 아니라 흐름이다: 트랙 중앙(=수급 균형)을 기준으로 순매수는 우(→),
- * 순매도는 좌(←)로 색 막대가 뻗고, 그 위를 빛 입자가 방향대로 흐른다.
- * 강할수록 빠르고 밝게 — 오늘 돈이 크게 움직인 섹터가 저절로 눈에 들어온다.
- *   · 값/정렬 일치: KR = 외국인+기관 순매수(억원, App 정렬 기준과 동일한 값을 표시),
- *     US = 전일 등락률. 정렬은 부호값 내림차순 → 위=최대 순매수, 아래=최대 순매도.
- *   · dot 색 = 3D 궤도 노드와 동일(지배 투자자/등락 방향) → 링↔레인 상호참조.
- *   · 컴포지터 전용: 막대는 transform:scaleX(전환), 흐름은 translate3d(무한) 뿐.
- */
-// 외국인·기관 색은 호버 카드(InvestorBars)와 동일하게 맞춘다.
-const FOREIGN_COLOR = '#fbbf24'; // 외국인(금색)
-const INST_COLOR = '#34d399'; // 기관(청록)
-
-function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
-  // 순매수/순매도를 두 그룹으로 쪼개니 한 방향에 보이는 개수가 적어진다는 지적 →
-  // HTS처럼 [순매수][순매도] 토글 버튼으로 바꿔, 선택한 방향의 '전체'를 보여준다.
-  // KR = 외국인+기관 합계 부호로 분류. US는 수급 데이터가 없어(야후 가격) 전일 등락률
-  // 부호로 분류(순매수=상승 섹터 / 순매도=하락 섹터). 각 방향 1·2·3위에 금은동.
-  const [dir, setDir] = useState<'buy' | 'sell'>('buy');
-
-  // ── 한국: 섹터별로 외국인·기관을 각각의 막대로(중앙=0, 좌=매도/우=매수) ──
-  const krCol = (sectors: RingSector[]) => {
-    const maxAbs = Math.max(
-      ...sectors.flatMap((s) => [Math.abs(s.foreign ?? 0), Math.abs(s.inst ?? 0)]),
-      300, // 바닥값 — 조용한 날 막대 폭주 방지
-    );
-    const net = (s: RingSector) => (s.foreign ?? 0) + (s.inst ?? 0);
-    const seg = (v: number) => {
-      const w = Math.min(Math.abs(v) / maxAbs, 1) * 50; // 반폭 %
-      const buy = v >= 0;
-      return { left: buy ? 50 : 50 - w, width: w };
-    };
-    const fmt = (v: number) =>
-      (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('ko-KR');
-    const rows =
-      dir === 'buy'
-        ? sectors.filter((s) => net(s) > 0).sort((a, b) => net(b) - net(a))
-        : sectors.filter((s) => net(s) < 0).sort((a, b) => net(a) - net(b));
-    return (
-      <div className="flow-col">
-        <div className="flow-head">
-          한국 · KRX
-          <em>외국인/기관 순매수(억)</em>
-        </div>
-        {rows.length ? (
-          rows.map((s, i) => {
-            const f = seg(s.foreign ?? 0);
-            const g = seg(s.inst ?? 0);
-            return (
-              <div className={`flow-lane kr2${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
-                <span className="fl-rk">{i + 1}</span>
-                <span className="fl-name">{s.name}</span>
-                <div className="fl2-track">
-                  <div className="fl2-axis" />
-                  <div
-                    className="fl2-bar for"
-                    style={{ left: `${f.left}%`, width: `${f.width}%`, background: FOREIGN_COLOR, color: FOREIGN_COLOR }}
-                  />
-                  <div
-                    className="fl2-bar org"
-                    style={{ left: `${g.left}%`, width: `${g.width}%`, background: INST_COLOR, color: INST_COLOR }}
-                  />
-                </div>
-                <div className="fl2-vals">
-                  <span style={{ color: FOREIGN_COLOR }}>
-                    <b>외</b>
-                    {fmt(s.foreign ?? 0)}
-                  </span>
-                  <span style={{ color: INST_COLOR }}>
-                    <b>기</b>
-                    {fmt(s.inst ?? 0)}
-                  </span>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="fl-empty">오늘 {dir === 'buy' ? '순매수' : '순매도'} 섹터 없음</div>
-        )}
-      </div>
-    );
-  };
-
-  // ── 미국: 전일 등락률 단일 막대(가격 변화라 방향=색). 수급 데이터가 없어 등락률 부호로 분류 ──
-  const usCol = (sectors: RingSector[]) => {
-    const maxAbs = Math.max(...sectors.map((s) => Math.abs(s.ret)), 0.5);
-    const rows =
-      dir === 'buy'
-        ? sectors.filter((s) => s.ret >= 0).sort((a, b) => b.ret - a.ret)
-        : sectors.filter((s) => s.ret < 0).sort((a, b) => a.ret - b.ret);
-    return (
-      <div className="flow-col">
-        <div className="flow-head">
-          미국 · SPDR
-          <em>전일 등락률{dir === 'buy' ? ' · 상승' : ' · 하락'}</em>
-        </div>
-        {rows.length ? (
-          rows.map((s, i) => {
-            const v = s.ret;
-            const buy = v >= 0;
-            const mag = Math.max(Math.abs(v) / maxAbs, 0.05);
-            const dur = `${(2.6 - mag * 1.75).toFixed(2)}s`;
-            const bright = (0.28 + mag * 0.5).toFixed(2);
-            const dirColor = buy ? 'var(--up)' : 'var(--down)';
-            return (
-              <div className={`flow-lane${i < 3 ? ` rank-${i + 1}` : ''}`} key={s.name}>
-                <span className="fl-rk">{i + 1}</span>
-                <i className="fl-dot" style={{ background: `hsl(${sectorHue(s, 'us')}, 82%, 60%)` }} />
-                <span className="fl-name">{s.name}</span>
-                <div className={`fl-track ${buy ? 'buy' : 'sell'}`}>
-                  <div className="fl-fill" style={{ ['--mag' as string]: mag, color: dirColor }} />
-                  <div
-                    className="fl-belt"
-                    style={{ ['--dur' as string]: dur, ['--bright' as string]: bright }}
-                  >
-                    <span className="fl-belt-i" />
-                  </div>
-                </div>
-                <span className="fl-val" style={{ color: dirColor }}>
-                  {(v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1)}%
-                </span>
-              </div>
-            );
-          })
-        ) : (
-          <div className="fl-empty">{dir === 'buy' ? '상승' : '하락'} 섹터 없음</div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className={`card sector-flow${mock ? ' is-mock' : ''}`}>
-      <h3>
-        <span className="dot" />
-        SECTOR FLOW · 수급 흐름 레인
-        {mock ? (
-          <span className="mock-badge">⚠ 샘플 데이터</span>
-        ) : (
-          <div className="flow-dir">
-            <button type="button" className={dir === 'buy' ? 'on buy' : ''} onClick={() => setDir('buy')}>
-              순매수
-            </button>
-            <button type="button" className={dir === 'sell' ? 'on sell' : ''} onClick={() => setDir('sell')}>
-              순매도
-            </button>
-          </div>
-        )}
-      </h3>
-      <div className="flow-cols">
-        {krCol(kr)}
-        {usCol(us)}
-      </div>
-    </div>
-  );
-}
-
 export function Dashboard({
   snapshot,
   bpm,
-  krSectors,
   usSectors,
 }: {
   snapshot: PortfolioSnapshot;
   bpm: number;
-  krSectors: RingSector[];
   usSectors: RingSector[];
 }) {
   const hover = useHover();
@@ -504,6 +347,11 @@ export function Dashboard({
   const marketMock = snapshot.marketMock ?? false;
   // 랭킹은 별도 플래그 — 키움 연동되면 랭킹만 실데이터라 '샘플' 딱지가 사라진다.
   const rankingMock = snapshot.rankingMock ?? marketMock;
+  // 레이더용 KR 테마 (members 포함 — 호버 패널이 추가 API 없이 그린다)
+  const krFlows = useMemo(
+    () => (snapshot.sectorFlows ?? []).filter((s) => s.region === 'KR'),
+    [snapshot],
+  );
 
   // 데이터 갱신 순간 = 총합 카드 하나가 금색 플래시 (스펙: 갱신 순간만 발광)
   useEffect(() => {
@@ -582,9 +430,6 @@ export function Dashboard({
     };
   }, []);
 
-  // 심장과 동일하게 3~5초 주기로 느리게(총액 후광 맥동). 심박 시각 부담 완화.
-  const beatSec = Math.min(5, Math.max(3, 5 - (bpm - 40) / 40));
-
   // v0.3: '주식 총합' 대신 '총 자산'을 첫 타일로 (디자인 확정 — KPI 최상위는 총액)
   const tiles = [
     { lbl: '총 자산', b: t.total },
@@ -614,30 +459,13 @@ export function Dashboard({
           <ListCard title="한국 주식 상세" exch="실시간" positions={kr} empty="보유 종목 없음" hover={hover} onSelect={openChart} />
           <ListCard title="미국 주식 상세" exch="실시간" positions={us} empty="보유 종목 없음" hover={hover} onSelect={openChart} />
           <ListCard title="암호화폐 상세" exch="업비트 · 빗썸" positions={crypto} empty="보유 종목 없음" hover={hover} onSelect={openChart} />
+          <NewsCard />
         </div>
 
-        {/* ── 중앙: 홀로그램 무대 (심장+궤도는 배경 씬) + 총액 + 섹터 리드아웃 ── */}
+        {/* ── 중앙: 자산구성 도넛(심장 중앙) + 섹터 흐름 레이더 (v0.3 확정 레이아웃) ── */}
         <div className="col-center">
-          <div className="heart-overlay">
-            <div className="heart-label">
-              <span className="dot" />
-              SYSTEM PULSE
-              <span className="bpm-badge">{bpm} BPM</span>
-            </div>
-
-            <div className="heart-space" />
-
-            <div className="heart-center-info" style={{ ['--beat' as string]: `${beatSec}s` }}>
-              <div className="total-halo" aria-hidden />
-              <div className="lbl">TOTAL PORTFOLIO</div>
-              <div className="total">{t.total.value > 0 ? krw(t.total.value) : '—'}</div>
-              <div className="pnl" style={{ color: t.total.pnlPct >= 0 ? 'var(--up)' : 'var(--down)' }}>
-                {pct(t.total.pnlPct)}
-              </div>
-            </div>
-          </div>
-
-          <SectorFlowLanes kr={krSectors} us={usSectors} mock={marketMock} />
+          <PortfolioDonut totals={t} bpm={bpm} refreshTick={snapshot.fetchedAt} />
+          <SectorRadar krFlows={krFlows} usSectors={usSectors} mock={marketMock} onOpen={openTarget} />
         </div>
 
         {/* ── 우측: 오늘의 시장 랭킹 + ★관심종목 ── */}
@@ -698,6 +526,7 @@ export function Dashboard({
 
         {/* ── ★ 관심종목 — 검색으로 찾은 종목 고정 ── */}
         <WatchlistCard onOpen={openTarget} refreshTick={snapshot.fetchedAt} />
+        <SignalCard onOpen={openTarget} refreshTick={snapshot.fetchedAt} />
         </div>
       </div>
 

@@ -112,6 +112,14 @@ export interface StockInfo {
   foreignRate: number; // 외국인 소진율 %
 }
 
+/** 테마 구성 대장주 1개의 수급 (레이더 호버 패널) */
+export interface SectorMember {
+  code: string;
+  name: string;
+  foreign: number;
+  inst: number;
+}
+
 export interface SectorFlow {
   region: Region;
   id: string;
@@ -120,6 +128,8 @@ export interface SectorFlow {
   foreign?: number | null;
   inst?: number | null;
   individual?: number | null;
+  /** 테마 구성 대장주별 수급 — 레이더 호버 패널용 */
+  members?: SectorMember[];
   ret?: number | null; // 미국만 — 전일 등락률(%)
   volume?: number | null;
 }

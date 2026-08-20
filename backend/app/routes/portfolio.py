@@ -101,11 +101,10 @@ async def _build_snapshot() -> PortfolioSnapshot:
     if not any(s.region == "KR" for s in sector_flows):
         sector_flows.extend(mock_market.kr_sector_flows())
         market_mock = True
-    for p in positions:
-        if p.assetType == "stock" and p.region == "KR" and p.investors is None:
-            p.investors = mock_market.investors_for(p.symbol)
-            p.investorPeriods = mock_market.investor_periods_for(p.symbol)
-            p.investorsMock = True
+    # (v0.4에서 제거) 보유 종목 수급이 아직 안 받아졌을 때 mock을 주입하던 로직 —
+    # 키움 실연동 후엔 '가짜 수급이 진짜처럼' 보이는 해악만 남는다(실측: 삼성전자에
+    # program=+14 같은 존재하지 않는 값이 꽂힘). 못 받았으면 그냥 비워두고,
+    # 호버 시 on-demand(/flow)가 채운다 — 실데이터만 원칙.
     # 시장 랭킹: 키움 실데이터가 있으면 그걸(rankingMock=False), 없으면 모의로
     if real_ranking:
         market_ranking = real_ranking
@@ -193,6 +192,67 @@ async def get_flow(code: str) -> dict:
         "investors": inv.model_dump(),
         "investorPeriods": [p.model_dump() for p in periods],
     }
+
+
+_perf_cache: dict = {"at": 0.0, "data": None}
+
+
+@router.get("/portfolio/perf")
+async def get_portfolio_perf() -> dict:
+    """기간별 손익 (v0.3 도넛 카드 기간 칩) — 스냅샷 DB 시계열에서 계산.
+    기간 시작 직전 스냅샷을 기준선으로: 손익 = 현재총액 − 기준총액. 60초 캐시."""
+    import time as _t
+
+    from ..db import total_series
+
+    now = _t.time()
+    if _perf_cache["data"] and now - _perf_cache["at"] < 60:
+        return _perf_cache["data"]
+    series = await run_in_threadpool(total_series)
+    out: dict = {"periods": {}}
+    if series:
+        cur_ts, cur_v = series[-1]
+        day = 86400_000
+        spans = {"D": day, "W": 7 * day, "M": 30 * day, "6M": 182 * day, "1Y": 365 * day, "ALL": None}
+        for label, span in spans.items():
+            if span is None:
+                base = series[0]
+            else:
+                cutoff = cur_ts - span
+                # 기간 시작 '직전' 스냅샷 (없으면 기간 내 첫 스냅샷)
+                before = [r for r in series if r[0] <= cutoff]
+                base = before[-1] if before else series[0]
+            b_ts, b_v = base
+            won = cur_v - b_v
+            out["periods"][label] = {
+                "won": round(won),
+                "pct": round(won / b_v * 100, 2) if b_v else 0.0,
+                "baseTs": b_ts,
+                # 데이터가 기간을 다 못 덮으면(예: 6M인데 DB가 34일치) 실제 커버 일수 표기
+                "coveredDays": round((cur_ts - b_ts) / day, 1),
+            }
+        out["total"] = round(cur_v)
+        out["ts"] = cur_ts
+    _perf_cache.update(at=now, data=out)
+    return out
+
+
+@router.get("/news")
+async def get_news() -> dict:
+    """마켓 뉴스 — 언론사 공개 RSS 수집 (10분 캐시, stale-on-error)."""
+    from ..services.news_feed import fetch_news
+
+    items = await fetch_news()
+    return {"items": items}
+
+
+@router.get("/signal/top")
+async def get_flow_top(scope: str = "market") -> dict:
+    """수급 시그널 — 추적 풀에서 오늘 외+기 순매수/순매도 상위. scope=market|held.
+    (/flow/top으로 두면 /flow/{code}가 'top'을 종목코드로 삼켜버려 경로를 분리했다)"""
+    from ..adapters.kiwoom import flow_top
+
+    return await flow_top("held" if scope == "held" else "market")
 
 
 @router.get("/stocks/master")
