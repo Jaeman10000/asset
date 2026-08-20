@@ -1,5 +1,6 @@
-import { Component, Suspense, type ReactNode } from 'react';
+import { Component, Suspense, useRef, type ReactNode } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
+import type { Group } from 'three';
 import { HeartCore } from '../organic-core/HeartCore';
 import { HEART_COLOR } from '../organic-core/lifeColors';
 
@@ -32,26 +33,40 @@ function RenderTick() {
   return null;
 }
 
+/** 천천히 자전 — 유리 재질의 하이라이트가 계속 흐르며 입체감이 산다 */
+function Spin({ children }: { children: ReactNode }) {
+  const ref = useRef<Group>(null);
+  useFrame((_, dt) => {
+    if (ref.current) ref.current.rotation.y += dt * 0.35;
+  });
+  return <group ref={ref}>{children}</group>;
+}
+
 export function HeartOrb({ bpm, size = 150 }: { bpm: number; size?: number }) {
   return (
     <div className="heart-orb" style={{ width: size, height: size }}>
       <OrbBoundary>
         <Canvas
-          dpr={1}
+          dpr={window.devicePixelRatio > 1 ? 1.5 : 1}
           gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
-          camera={{ position: [0, 0, 4.4], fov: 38 }}
+          camera={{ position: [0, 0, 3.9], fov: 38 }}
         >
           <RenderTick />
-          <ambientLight intensity={0.35} />
+          {/* 저퀄 지적(어둡고 납작) 수선 — 키/림 라이트로 유리질 광택 살림 */}
+          <ambientLight intensity={0.55} />
+          <directionalLight position={[2.5, 3, 4]} intensity={1.4} />
+          <pointLight position={[-3, -1, 2]} intensity={0.6} color={HEART_COLOR} />
           <Suspense fallback={null}>
-            <HeartCore
-              modelPath="/models/heart.glb"
-              bpm={bpm}
-              attenuationColor={HEART_COLOR}
-              scale={1.05}
-              transmissionRes={128}
-              backside={false}
-            />
+            <Spin>
+              <HeartCore
+                modelPath="/models/heart.glb"
+                bpm={bpm}
+                attenuationColor={HEART_COLOR}
+                scale={1.18}
+                transmissionRes={192}
+                backside={false}
+              />
+            </Spin>
           </Suspense>
         </Canvas>
       </OrbBoundary>

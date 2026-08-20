@@ -140,7 +140,7 @@ export function SectorRadar({
 
       <div className="radar-wrap">
         <div className="radar-left">
-          <svg width="260" height="244" viewBox="0 0 260 244">
+          <svg width="312" height="293" viewBox="0 0 260 244">
             {/* 그리드 링 */}
             <polygon points={ring(RMAX)} fill="none" stroke="rgba(255,255,255,.06)" />
             <polygon points={ring((RMAX + R0) / 2)} fill="none" stroke="rgba(255,255,255,.05)" />
@@ -247,7 +247,7 @@ export function SectorRadar({
               기관
             </span>
           </div>
-          {ranked.slice(0, 8).map((s, i) => (
+          {ranked.map((s, i) => (
             <div
               key={s.name}
               className={`row${i < 3 ? ` m${i + 1}` : ''}${hoverName === s.name ? ' hover' : ''}`}
@@ -263,7 +263,6 @@ export function SectorRadar({
               </span>
             </div>
           ))}
-          {ranked.length > 8 && <div className="rl-more">나머지 {ranked.length - 8}개 — 호버로 탐색</div>}
 
           {/* US 섹터 필 (등락률) */}
           <div className="us-pills">

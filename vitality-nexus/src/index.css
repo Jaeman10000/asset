@@ -429,7 +429,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
   padding-right: 2px;
 }
 .list::-webkit-scrollbar {
@@ -497,7 +497,7 @@ body {
 .mini-holding {
   /* v0.3 2줄 행 — 1줄: 로고·이름(안 잘림)·수익률 / 2줄: 현재가·수량·평가금·스파크 */
   display: block;
-  padding: 6px 8px;
+  padding: 8px 9px;
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -517,10 +517,8 @@ body {
    ① 들어온 지점에서 물결이 퍼진다(.ripple, 돌 던진 잔잔한 물).
    ② 행 자체가 젤리처럼 잠깐 꿈틀한다(rowWobble). 둘 다 transform만 = 컴포지터 전용,
       레이아웃 영향 없음. 진입 시 1회 재생(연속 루프 아님). */
-.mini-holding:hover,
-.rank-row:hover {
-  animation: rowWobble 0.55s cubic-bezier(0.34, 1.45, 0.64, 1);
-}
+/* (v0.4.1 제거) hover 시 rowWobble — 행을 세로 10% 찌그러뜨려 커서가 경계를 이탈
+   → hover 해제/재진입 무한 반복 = 호버 카드 깜빡임의 범인. 물결(.ripple)만 유지. */
 @keyframes rowWobble {
   0% {
     transform: scale(1, 1);
@@ -1107,7 +1105,8 @@ body {
 }
 .rank-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* v0.4.1: 로고 배지 열 추가 — 3열 정의에 배지가 끼어 이름이 밀리던 버그 수정 */
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   padding: 6px 8px;
@@ -2163,7 +2162,13 @@ body {
 /* ══════════ v0.2 종목 검색 ══════════ */
 
 /* 상단바 검색 캡슐 — 항상 보이는 진입점 */
+.topbar {
+  position: relative;
+}
 .search-capsule {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -2339,14 +2344,15 @@ body {
   min-height: 0;
 }
 .col-right .ranking-card {
-  flex: 1;
-  min-height: 0;
+  flex: none; /* 5개+더보기 고정 — 관심종목이 늘어도 안 찌그러짐 */
+}
+.col-right {
+  overflow-y: auto; /* 그래도 넘치면 컬럼 스크롤 (행 겹침 금지) */
 }
 
 /* ★ 관심종목 카드 */
 .watch-card {
-  flex: none;
-  max-height: 34%;
+  flex: none; /* 랭킹 카드를 짓누르지 않게 — 목록은 카드 내부 스크롤 */
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -2376,16 +2382,17 @@ body {
 }
 .watch-list {
   overflow-y: auto;
+  max-height: 200px; /* 6~7행 — 넘치면 스크롤 (랭킹 공간 보호) */
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
 }
 .watch-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 7px;
+  padding: 6.5px 7px;
   border-radius: 8px;
   cursor: pointer;
   border: 1px solid transparent;
@@ -2549,13 +2556,13 @@ body {
   padding-left: 27px; /* 배지 폭 + 간격만큼 들여쓰기 — 1줄과 시각 정렬 */
 }
 .mh-price {
-  font-size: 9.5px;
-  color: var(--dim);
+  font-size: 10.5px;
+  color: #c6cdd9;
   font-variant-numeric: tabular-nums;
 }
 .mh-qty {
-  font-size: 8px;
-  color: var(--sub);
+  font-size: 9px;
+  color: var(--dim);
   font-variant-numeric: tabular-nums;
 }
 .mh-l2 .spark {
@@ -2634,6 +2641,7 @@ body {
   display: flex;
   gap: 18px;
   align-items: center;
+  padding-bottom: 14px; /* BPM 라벨 자리 */
 }
 .donut-hold {
   position: relative;
@@ -2651,7 +2659,7 @@ body {
 .orb-bpm {
   position: absolute;
   left: 50%;
-  bottom: 22px;
+  bottom: -17px; /* 링 바깥 아래 — 심장/링에 안 가림 */
   transform: translateX(-50%);
   font-family: var(--mono);
   font-size: 8px;
@@ -2800,7 +2808,7 @@ body {
 }
 .radar-wrap {
   display: grid;
-  grid-template-columns: 268px 1fr;
+  grid-template-columns: 320px 1fr;
   gap: 14px;
   align-items: start;
   min-height: 0;
@@ -2808,12 +2816,18 @@ body {
 }
 .radar-left {
   min-width: 0;
+  position: relative;
 }
 .hoverpane {
-  margin-top: 6px;
+  position: absolute; /* 레이아웃을 밀지 않는 오버레이 (레이더 하단에 겹침) */
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  z-index: 6;
   border-radius: 12px;
   padding: 9px 11px;
-  background: rgba(124, 92, 240, 0.08);
+  backdrop-filter: blur(10px);
+  background: rgba(20, 15, 38, 0.94);
   border: 1px solid rgba(167, 139, 250, 0.4);
   box-shadow: 0 8px 24px -10px rgba(124, 92, 240, 0.5);
 }
@@ -2865,7 +2879,7 @@ body {
   grid-template-columns: 15px minmax(0, 1fr) 64px 64px;
   gap: 8px;
   align-items: center;
-  padding: 4.5px 7px;
+  padding: 5.5px 7px;
   border-radius: 9px;
   font-size: 11.5px;
   cursor: default;
@@ -2968,7 +2982,7 @@ body {
   grid-template-columns: minmax(0, 1fr) 62px 62px;
   gap: 8px;
   align-items: center;
-  padding: 4.5px 6px;
+  padding: 6px 6px;
   border-radius: 9px;
   cursor: pointer;
 }
@@ -3066,4 +3080,23 @@ body {
   font-size: 7.5px;
   color: var(--sub);
   white-space: nowrap;
+}
+
+
+/* 챔피언 더보기/접기 */
+.rank-more {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--sub);
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  padding: 6px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}
+.rank-more:hover {
+  color: var(--life);
+  border-color: rgba(167, 139, 250, 0.4);
 }

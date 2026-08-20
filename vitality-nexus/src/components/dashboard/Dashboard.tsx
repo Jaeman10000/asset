@@ -338,7 +338,7 @@ export function Dashboard({
 }) {
   const hover = useHover();
   const [rankTab, setRankTab] = useState<RankTabKey>('up');
-  const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const [rankMore, setRankMore] = useState(false); // 5개 기본, 더보기로 6~10위
   const [selId, setSelId] = useState<string | null>(null);
   const [selTarget, setSelTarget] = useState<ChartTarget | null>(null);
   const [palOpen, setPalOpen] = useState(false);
@@ -352,14 +352,6 @@ export function Dashboard({
     () => (snapshot.sectorFlows ?? []).filter((s) => s.region === 'KR'),
     [snapshot],
   );
-
-  // 데이터 갱신 순간 = 총합 카드 하나가 금색 플래시 (스펙: 갱신 순간만 발광)
-  useEffect(() => {
-    const idx = Math.floor(snapshot.fetchedAt / 1000) % 4;
-    setFlashIdx(idx);
-    const id = setTimeout(() => setFlashIdx(null), 900);
-    return () => clearTimeout(id);
-  }, [snapshot.fetchedAt]);
 
   const { kr, us, crypto, heldSymbols } = useMemo(() => {
     const ps = [...snapshot.positions];
@@ -430,29 +422,8 @@ export function Dashboard({
     };
   }, []);
 
-  // v0.3: '주식 총합' 대신 '총 자산'을 첫 타일로 (디자인 확정 — KPI 최상위는 총액)
-  const tiles = [
-    { lbl: '총 자산', b: t.total },
-    { lbl: 'KR 주식', b: t.kr },
-    { lbl: 'US 주식', b: t.us },
-    { lbl: '암호화폐', b: t.crypto },
-  ];
-
   return (
     <div className="stage-wrap">
-      {/* ── 상단: 자산군 총합 4개 (크게) ── */}
-      <div className="totals-row">
-        {tiles.map((tile, i) => (
-          <div key={tile.lbl} className={`card total-card ${flashIdx === i ? 'event-flash' : ''}`}>
-            <div className="lbl">{tile.lbl}</div>
-            <div className="amt">{krwCompact(tile.b.value)}</div>
-            <div className="pct" style={{ color: tile.b.pnlPct >= 0 ? 'var(--up)' : 'var(--down)' }}>
-              {pct(tile.b.pnlPct)}
-            </div>
-          </div>
-        ))}
-      </div>
-
       <div className="stage">
         {/* ── 좌측: 3단 세로 리스트 (라인그래프, 클릭 시 실시간 차트) ── */}
         <div className="col-left">
@@ -495,7 +466,7 @@ export function Dashboard({
             {rankTab !== 'foreign' && <span className="rank-note">거래대금 50억↑</span>}
           </div>
           <div className="ranking-list">
-            {ranking.map((m, i) => {
+            {ranking.slice(0, rankMore ? 10 : 5).map((m, i) => {
               const held = heldSymbols.has(m.symbol);
               return (
                 <RankRow
@@ -521,6 +492,11 @@ export function Dashboard({
               );
             })}
             {ranking.length === 0 && <div className="list-empty">랭킹 로딩…</div>}
+            {ranking.length > 5 && (
+              <button type="button" className="rank-more" onClick={() => setRankMore((v) => !v)}>
+                {rankMore ? '접기 ▴' : '더보기 6–10위 ▾'}
+              </button>
+            )}
           </div>
         </div>
 

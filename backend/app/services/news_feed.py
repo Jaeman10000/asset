@@ -25,6 +25,19 @@ _FEEDS: list[tuple[str, str]] = [
 _TTL = 600.0
 _cache: dict[str, Any] = {"at": 0.0, "items": []}
 
+# '마켓' 뉴스만 — 연합 경제 피드는 생활경제(케이크 출시·전세보증…)까지 쏟아져
+# 잡뉴스가 섞였다(유저 지적). 제목에 시장 키워드가 있어야 통과.
+_MARKET_KW = (
+    "증시", "코스피", "코스닥", "주가", "주식", "상장", "반도체", "금리", "환율",
+    "외국인", "기관", "나스닥", "다우", "S&P", "연준", "FOMC", "실적", "급등", "급락",
+    "매수", "매도", "비트코인", "가상자산", "ETF", "채권", "유가", "수출", "삼성전자",
+    "SK하이닉스", "공모", "IPO", "배당", "시총", "장중", "마감",
+)
+
+
+def _is_market_news(title: str) -> bool:
+    return any(k in title for k in _MARKET_KW)
+
 
 def _parse_ts(s: str | None) -> int:
     if not s:
@@ -62,7 +75,7 @@ async def fetch_news(limit: int = 8) -> list[dict[str, Any]]:
                     title = _clean(item.findtext("title") or "")
                     link = (item.findtext("link") or "").strip()
                     ts = _parse_ts(item.findtext("pubDate"))
-                    if not title or title in seen_titles:
+                    if not title or title in seen_titles or not _is_market_news(title):
                         continue
                     seen_titles.add(title)
                     items.append({"source": source, "title": title, "link": link, "ts": ts})

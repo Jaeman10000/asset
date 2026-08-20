@@ -67,7 +67,9 @@ export function PortfolioDonut({
   const spanDays: Record<string, number> = { D: 1, W: 7, M: 30, '6M': 182, '1Y': 365 };
   const short =
     p && period !== 'ALL' && p.coveredDays < (spanDays[period] ?? 0) * 0.9
-      ? `· 실측 ${Math.round(p.coveredDays)}일치`
+      ? p.coveredDays < 1
+        ? `· 실측 ${Math.max(1, Math.round(p.coveredDays * 24))}시간치`
+        : `· 실측 ${Math.round(p.coveredDays)}일치`
       : '';
 
   return (
