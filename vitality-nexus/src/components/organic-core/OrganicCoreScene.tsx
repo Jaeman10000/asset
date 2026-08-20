@@ -8,7 +8,7 @@ import { AuroraBackground } from './AuroraBackground';
 import { LifeParticles } from './LifeParticles';
 import { ReflectiveFloor } from './ReflectiveFloor';
 import { useAdaptiveQuality, QUALITY_LEVELS } from './useAdaptiveQuality';
-import { LIFE_COLOR } from './lifeColors';
+import { HEART_COLOR, LIFE_COLOR } from './lifeColors';
 
 /**
  * OrganicCoreScene — 심장 코어의 전체 대기감 버전.
@@ -100,7 +100,7 @@ export function OrganicCoreScene({
 
       {/* 바닥 먼 가장자리를 어둠에 녹여 하드 라인 제거 (오로라는 커스텀 셰이더라
           fog의 영향을 받지 않음 — 배경 밝기는 유지된다) */}
-      <fog attach="fog" args={['#050709', 9, 22]} />
+      <fog attach="fog" args={['#070810', 9, 22]} />
 
       {/* 배경 안개 (제일 뒤) */}
       {aurora && config.aurora && <AuroraBackground color={LIFE_COLOR} depth={-8} />}
@@ -126,7 +126,7 @@ export function OrganicCoreScene({
         <HeartCore
           modelPath="/models/heart.glb"
           bpm={bpm}
-          attenuationColor={LIFE_COLOR}
+          attenuationColor={HEART_COLOR}
           scale={0.9}
           transmissionRes={256}
           backside={false}

@@ -6,7 +6,7 @@ import { ChartPanel } from './ChartPanel';
 import { SearchPalette } from './SearchPalette';
 import { WatchlistCard } from './WatchlistCard';
 import { sectorHue, type RingSector } from '../organic-core/HoloSectorRings';
-import { Spark, CoinIcon } from './shared';
+import { Spark, CoinIcon, StockBadge } from './shared';
 
 /**
  * Dashboard — 심장이 중앙 무대(홀로그램), 정보가 주위에 떠 있는 구성.
@@ -155,22 +155,33 @@ function MiniRow({
         onSelect(p);
       }}
     >
-      <div className="n">
-        {/* 암호화폐만 코인 로고를 이름 앞에 */}
-        {p.assetType === 'crypto' && <CoinIcon symbol={p.symbol} />}
-        {p.name}
-        {/* 암호화폐는 종목명=심볼이라 코드 대신 거래소를 표기 — 같은 코인이 업비트·
-            빗썸 양쪽에 있으면 2행으로 나오는데 어느 거래소 것인지 구분해준다.
-            주식은 기존대로 종목코드를 표기(이름≠코드). */}
+      {/* v0.3 2줄 행 — 1줄: 로고·이름(절대 안 잘림)·수익률 / 2줄: 현재가·수량·평가금·스파크.
+          유저 지적: 한 줄에 욱여넣으면 '두산에너빌리티' 같은 이름이 …으로 잘렸다. */}
+      <div className="mh-l1">
+        {p.assetType === 'crypto' ? (
+          <CoinIcon symbol={p.symbol} />
+        ) : (
+          <StockBadge name={p.name} symbol={p.symbol} />
+        )}
+        <span className="mh-name">{p.name}</span>
+        {/* 암호화폐는 종목명=심볼이라 코드 대신 거래소를 표기. 주식은 종목코드. */}
         {p.assetType === 'crypto' ? (
           <small className={`ex-tag ${p.exchange}`}>{EXCHANGE_LABEL[p.exchange] ?? p.exchange}</small>
         ) : (
-          p.symbol !== p.name && <small>{p.symbol}</small>
+          p.symbol !== p.name && <small className="mh-code">{p.symbol}</small>
         )}
+        <span className={`mh-ret ${up ? 'up' : 'down'}`}>{pct(p.ret)}</span>
       </div>
-      <Spark history={p.history} color="auto" width={56} height={18} />
-      <div className="v">{krwCompact(p.value)}</div>
-      <div className={`p ${up ? 'up' : 'down'}`}>{pct(p.ret)}</div>
+      <div className="mh-l2">
+        <span className="mh-price">
+          {p.currency === 'USD' ? '$' + p.price.toLocaleString('en-US') : '₩' + p.price.toLocaleString('ko-KR')}
+        </span>
+        <span className="mh-qty">
+          {p.qty.toLocaleString('ko-KR')}
+          {p.assetType === 'crypto' ? '개' : '주'} · {krwCompact(p.value)}
+        </span>
+        <Spark history={p.history} color="auto" width={52} height={14} />
+      </div>
     </div>
   );
 }
@@ -294,6 +305,7 @@ function RankRow({
       onClick={onOpen}
     >
       <span className="rank-no">{rank}</span>
+      <StockBadge name={m.name} symbol={m.symbol} size={18} />
       <div className="rank-mid">
         <div className="n">
           {m.name}
@@ -323,8 +335,8 @@ function RankRow({
  *   · 컴포지터 전용: 막대는 transform:scaleX(전환), 흐름은 translate3d(무한) 뿐.
  */
 // 외국인·기관 색은 호버 카드(InvestorBars)와 동일하게 맞춘다.
-const FOREIGN_COLOR = 'hsl(45, 90%, 65%)'; // 외국인(금색)
-const INST_COLOR = 'hsl(175, 80%, 60%)'; // 기관(청록)
+const FOREIGN_COLOR = '#fbbf24'; // 외국인(금색)
+const INST_COLOR = '#34d399'; // 기관(청록)
 
 function SectorFlowLanes({ kr, us, mock }: { kr: RingSector[]; us: RingSector[]; mock: boolean }) {
   // 순매수/순매도를 두 그룹으로 쪼개니 한 방향에 보이는 개수가 적어진다는 지적 →
@@ -573,10 +585,11 @@ export function Dashboard({
   // 심장과 동일하게 3~5초 주기로 느리게(총액 후광 맥동). 심박 시각 부담 완화.
   const beatSec = Math.min(5, Math.max(3, 5 - (bpm - 40) / 40));
 
+  // v0.3: '주식 총합' 대신 '총 자산'을 첫 타일로 (디자인 확정 — KPI 최상위는 총액)
   const tiles = [
+    { lbl: '총 자산', b: t.total },
     { lbl: 'KR 주식', b: t.kr },
     { lbl: 'US 주식', b: t.us },
-    { lbl: '주식 총합', b: t.stock },
     { lbl: '암호화폐', b: t.crypto },
   ];
 

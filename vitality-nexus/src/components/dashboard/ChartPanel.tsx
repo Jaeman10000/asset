@@ -29,8 +29,8 @@ const PERIODS: { key: ChartPeriod; label: string }[] = [
   { key: 'M', label: '월' },
 ];
 
-const UP = '#ef5350'; // 상승(빨강)
-const DOWN = '#3b82f6'; // 하락(파랑)
+const UP = '#ff5d73'; // 상승(코랄레드 — lifeColors.UP_COLOR와 동일)
+const DOWN = '#5b8cff'; // 하락(블루 — lifeColors.DOWN_COLOR와 동일)
 
 const fmtEok = (v: number) =>
   v >= 10_000 ? (v / 10_000).toFixed(1) + '조' : Math.round(v).toLocaleString('ko-KR') + '억';
@@ -235,9 +235,9 @@ export function ChartPanel({
   // 수급 막대 스케일 — 당일+20/60일 최대치 공통
   const invRows = flow?.investors
     ? ([
-        ['외국인', 'hsl(45, 90%, 65%)', flow.investors.foreign] as const,
-        ['기관', 'hsl(175, 80%, 60%)', flow.investors.inst] as const,
-        ['개인', 'hsl(220, 60%, 65%)', flow.investors.individual] as const,
+        ['외국인', '#fbbf24', flow.investors.foreign] as const,
+        ['기관', '#34d399', flow.investors.inst] as const,
+        ['개인', '#7dd3fc', flow.investors.individual] as const,
       ] as const)
     : null;
   const invMax = invRows

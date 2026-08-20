@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchStockMaster } from '../../api/client';
 import type { ChartTarget, MasterStock } from '../../api/types';
+import { StockBadge } from './shared';
 
 /**
  * SearchPalette — 시장의 모든 종목(KOSPI+KOSDAQ ≈4,300)을 이름·코드로 검색.
@@ -164,6 +165,7 @@ export function SearchPalette({
               onMouseEnter={() => setSel(i)}
               onClick={() => pick(s)}
             >
+              <StockBadge name={s.name} symbol={s.code} size={22} />
               <div className="pal-main">
                 <div className="pal-nm">
                   <Highlight name={s.name} q={q.trim()} />
@@ -183,6 +185,7 @@ export function SearchPalette({
               <div className="pal-sect">최근 본 종목</div>
               {recent.map((s) => (
                 <div key={s.code} className="pal-item" onClick={() => pick(s)}>
+                  <StockBadge name={s.name} symbol={s.code} size={22} />
                   <div className="pal-main">
                     <div className="pal-nm">{s.name}</div>
                     <div className="pal-meta">

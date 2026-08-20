@@ -138,8 +138,8 @@ function HeartGlow({ color, bpm, scale }: { color: string; bpm: number; scale: n
     const ctx = c.getContext('2d')!;
     const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     // 아주 부드러운 확산 — 딱딱한 코어 없이 심장 주위로 은은하게 번지게
-    g.addColorStop(0, 'rgba(220,255,248,0.5)');
-    g.addColorStop(0.3, 'rgba(120,240,220,0.24)');
+    g.addColorStop(0, 'rgba(255,226,232,0.5)');
+    g.addColorStop(0.3, 'rgba(255,110,135,0.24)');
     g.addColorStop(0.65, 'rgba(43,230,200,0.09)');
     g.addColorStop(1, 'rgba(43,230,200,0)');
     ctx.fillStyle = g;

@@ -1,5 +1,5 @@
 /* Vitality Nexus — 프로토타입(full-dashboard-v2.html) 3열 그리드 레이아웃 복원.
-   3D 심장·청록 색은 유지. 색 변수는 glass-cards.css의 --life/--event/--up/--down 공유. */
+   v0.3 OBSIDIAN VIOLET: 심장=크림슨(--heart), UI=바이올렛(--life). 단일 소스 lifeColors.ts. */
 
 :root {
   color-scheme: dark;
@@ -25,8 +25,8 @@ body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #dfe9ea;
   background:
-    radial-gradient(1200px 800px at 50% 42%, #0b1217 0%, #06090c 55%, #030507 100%)
-    #06090c;
+    radial-gradient(1200px 800px at 50% 42%, #0d0f1a 0%, #080a12 55%, #07080f 100%)
+    #080a12;
 }
 
 .dashboard {
@@ -151,8 +151,8 @@ body {
   padding: 22px 28px;
   border-radius: 16px;
   background: rgba(8, 13, 16, 0.82);
-  border: 1px solid rgba(43, 230, 200, 0.28);
-  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.75), 0 0 30px -10px rgba(43, 230, 200, 0.25);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.75), 0 0 30px -10px rgba(167, 139, 250, 0.25);
   backdrop-filter: blur(10px);
 }
 .empty-cta strong {
@@ -193,7 +193,7 @@ body {
   background: rgba(223, 233, 234, 0.35);
 }
 .market-pills .pill.live {
-  border-color: rgba(43, 230, 200, 0.35);
+  border-color: rgba(167, 139, 250, 0.35);
   color: var(--life);
 }
 .market-pills .pill.live i {
@@ -295,14 +295,14 @@ body {
   border-radius: 16px;
   background: linear-gradient(
     135deg,
-    rgba(43, 230, 200, 0.05) 0%,
+    rgba(167, 139, 250, 0.05) 0%,
     rgba(10, 16, 20, 0.32) 100%
   );
-  border: 1px solid rgba(43, 230, 200, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.14);
   backdrop-filter: blur(22px) saturate(1.1);
   box-shadow:
     0 10px 34px -10px rgba(0, 0, 0, 0.55),
-    0 0 24px -6px rgba(43, 230, 200, 0.16),
+    0 0 24px -6px rgba(167, 139, 250, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
   isolation: isolate; /* ::before 스포트라이트를 카드 내부(내용 아래)에 가둠 */
@@ -316,7 +316,7 @@ body {
   right: 15%;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(43, 230, 200, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.4), transparent);
 }
 /* ── 커서 추종 스포트라이트 — 마우스가 카드 위를 지날 때 청록빛이 따라다니며
    "살아있는" 반응을 준다. transform(translate)만 갱신 → 컴포지터 전용(리페인트 0).
@@ -334,8 +334,8 @@ body {
   pointer-events: none;
   background: radial-gradient(
     closest-side,
-    rgba(43, 230, 200, 0.14),
-    rgba(43, 230, 200, 0.05) 45%,
+    rgba(167, 139, 250, 0.14),
+    rgba(167, 139, 250, 0.05) 45%,
     transparent 72%
   );
   opacity: 0;
@@ -347,10 +347,10 @@ body {
   opacity: 1;
 }
 .card:hover {
-  border-color: rgba(43, 230, 200, 0.34);
+  border-color: rgba(167, 139, 250, 0.34);
   box-shadow:
     0 14px 42px -10px rgba(0, 0, 0, 0.62),
-    0 0 32px -6px rgba(43, 230, 200, 0.3),
+    0 0 32px -6px rgba(167, 139, 250, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .card h3 {
@@ -471,12 +471,12 @@ body {
   transition: background 0.18s ease, transform 0.18s ease;
 }
 .list-dot:hover {
-  background: rgba(43, 230, 200, 0.55);
+  background: rgba(167, 139, 250, 0.55);
 }
 .list-dot.on {
-  background: var(--life, #2be6c8);
+  background: var(--life, #a78bfa);
   transform: scale(1.35);
-  box-shadow: 0 0 6px rgba(43, 230, 200, 0.7);
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.7);
 }
 .list-arrow {
   background: none;
@@ -495,12 +495,9 @@ body {
   cursor: default;
 }
 .mini-holding {
-  display: grid;
-  /* 이름(가변) · 라인그래프 · 평가금액 · 등락% */
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 5px 7px;
+  /* v0.3 2줄 행 — 1줄: 로고·이름(안 잘림)·수익률 / 2줄: 현재가·수량·평가금·스파크 */
+  display: block;
+  padding: 6px 8px;
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -512,8 +509,8 @@ body {
   isolation: isolate;
 }
 .mini-holding:hover {
-  background: rgba(43, 230, 200, 0.06);
-  border-color: rgba(43, 230, 200, 0.25);
+  background: rgba(167, 139, 250, 0.06);
+  border-color: rgba(167, 139, 250, 0.25);
 }
 
 /* ── 살아있는 호버 — 마우스가 종목에 "들어오는 순간" 반응 ──
@@ -555,7 +552,7 @@ body {
     circle,
     transparent 20%,
     rgba(160, 252, 235, 0.72) 40%,
-    rgba(43, 230, 200, 0.24) 54%,
+    rgba(167, 139, 250, 0.24) 54%,
     transparent 70%
   );
   /* 애니메이션은 Web Animations API(useRipple)가 구동 — 여기선 초기 상태만 */
@@ -706,13 +703,13 @@ body {
   transform: translateX(-50%);
   width: 1px;
   height: 34px;
-  background: linear-gradient(180deg, transparent, rgba(43, 230, 200, 0.55));
+  background: linear-gradient(180deg, transparent, rgba(167, 139, 250, 0.55));
 }
 .heart-center-info .lbl {
   font-family: var(--mono);
   font-size: 8.5px;
   letter-spacing: 0.28em;
-  color: rgba(43, 230, 200, 0.66);
+  color: rgba(167, 139, 250, 0.66);
 }
 .heart-center-info .total {
   font-size: 32px;
@@ -720,7 +717,7 @@ body {
   color: #f2fbf9;
   font-variant-numeric: tabular-nums;
   text-shadow:
-    0 0 22px rgba(43, 230, 200, 0.4),
+    0 0 22px rgba(167, 139, 250, 0.4),
     0 2px 16px rgba(0, 0, 0, 0.7);
 }
 /* 심박 동기 펄스 — text-shadow 애니메이션은 매 프레임 리페인트라
@@ -733,7 +730,7 @@ body {
   width: 300px;
   height: 110px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(43, 230, 200, 0.3), transparent 72%);
+  background: radial-gradient(closest-side, rgba(167, 139, 250, 0.3), transparent 72%);
   filter: blur(8px);
   opacity: 0.3;
   animation: haloPulse var(--beat, 0.83s) ease-out infinite;
@@ -795,7 +792,7 @@ body {
   text-transform: uppercase;
   margin: 2px 0 6px;
   padding-bottom: 4px;
-  border-bottom: 1px solid rgba(43, 230, 200, 0.12);
+  border-bottom: 1px solid rgba(167, 139, 250, 0.12);
 }
 .flow-head em {
   font-style: normal;
@@ -1086,8 +1083,8 @@ body {
   cursor: pointer;
 }
 .ranking-tabs button.on {
-  background: rgba(43, 230, 200, 0.14);
-  border-color: rgba(43, 230, 200, 0.4);
+  background: rgba(167, 139, 250, 0.14);
+  border-color: rgba(167, 139, 250, 0.4);
   color: var(--life);
 }
 /* 거래대금 하한을 걸었다는 표기 — 순위에 구멍이 나는 이유를 숨기지 않는다 */
@@ -1125,8 +1122,8 @@ body {
   isolation: isolate;
 }
 .rank-row:hover {
-  background: rgba(43, 230, 200, 0.06);
-  border-color: rgba(43, 230, 200, 0.25);
+  background: rgba(167, 139, 250, 0.06);
+  border-color: rgba(167, 139, 250, 0.25);
 }
 .rank-row.rank-top {
   padding: 9px 10px;
@@ -1230,8 +1227,8 @@ body {
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(8, 12, 15, 0.96);
-  border: 1px solid rgba(43, 230, 200, 0.3);
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.8), 0 0 24px -8px rgba(43, 230, 200, 0.3);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.8), 0 0 24px -8px rgba(167, 139, 250, 0.3);
   backdrop-filter: blur(10px);
   pointer-events: none;
   font-family: var(--mono);
@@ -1304,12 +1301,12 @@ body {
 .inv-section {
   margin-top: 10px;
   padding-top: 8px;
-  border-top: 1px solid rgba(43, 230, 200, 0.12);
+  border-top: 1px solid rgba(167, 139, 250, 0.12);
 }
 .inv-title {
   font-size: 8.5px;
   letter-spacing: 0.18em;
-  color: rgba(43, 230, 200, 0.7);
+  color: rgba(167, 139, 250, 0.7);
   margin-bottom: 6px;
 }
 .inv-unit {
@@ -1428,11 +1425,11 @@ body {
   width: min(680px, 92vw);
   padding: 18px 20px 14px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(43, 230, 200, 0.06) 0%, rgba(8, 13, 16, 0.97) 60%);
-  border: 1px solid rgba(43, 230, 200, 0.28);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.06) 0%, rgba(8, 13, 16, 0.97) 60%);
+  border: 1px solid rgba(167, 139, 250, 0.28);
   box-shadow:
     0 24px 60px -16px rgba(0, 0, 0, 0.8),
-    0 0 40px -12px rgba(43, 230, 200, 0.25);
+    0 0 40px -12px rgba(167, 139, 250, 0.25);
   backdrop-filter: blur(14px);
 }
 /* KR 주식 상세 모드 — 차트 옆에 수급·메타 사이드가 붙어 넓어진다 */
@@ -1599,8 +1596,8 @@ body {
   color: var(--life);
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(43, 230, 200, 0.35);
-  background: rgba(43, 230, 200, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  background: rgba(167, 139, 250, 0.08);
 }
 .chart-live i {
   width: 5px;
@@ -1658,8 +1655,8 @@ body {
   color: #eef7f6;
 }
 .chart-period.on {
-  background: rgba(43, 230, 200, 0.16);
-  color: #2be6c8;
+  background: rgba(167, 139, 250, 0.16);
+  color: #a78bfa;
 }
 /* 캔들 차트 마지막 종가 기준선 */
 .cp-lastline {
@@ -1746,7 +1743,7 @@ body {
   right: 16px;
   bottom: 10px;
   font: 11px/1 var(--mono);
-  color: rgba(43, 230, 200, 0.45);
+  color: rgba(167, 139, 250, 0.45);
   pointer-events: none;
   z-index: 20;
 }
@@ -1771,7 +1768,7 @@ body {
   font-size: 11px;
   color: rgba(223, 233, 234, 0.7);
   background: rgba(6, 10, 12, 0.55);
-  border: 1px solid rgba(43, 230, 200, 0.15);
+  border: 1px solid rgba(167, 139, 250, 0.15);
   border-radius: 999px;
   backdrop-filter: blur(8px);
   cursor: pointer;
@@ -1807,7 +1804,7 @@ body {
   background: rgba(6, 10, 12, 0.6);
   padding: 5px 11px;
   border-radius: 999px;
-  border: 1px solid rgba(43, 230, 200, 0.15);
+  border: 1px solid rgba(167, 139, 250, 0.15);
   backdrop-filter: blur(8px);
 }
 .status-dot {
@@ -1820,8 +1817,8 @@ body {
   font-weight: 600;
 }
 .status-edit-btn {
-  background: rgba(43, 230, 200, 0.12);
-  border: 1px solid rgba(43, 230, 200, 0.3);
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.3);
   color: var(--life);
   font-size: 11px;
   padding: 3px 8px;
@@ -1829,11 +1826,11 @@ body {
   cursor: pointer;
 }
 .status-edit-btn:hover {
-  background: rgba(43, 230, 200, 0.22);
+  background: rgba(167, 139, 250, 0.22);
 }
 /* 새로고침 버튼 — 눈에 띄게(약간 밝게) + 누르면 아이콘 회전 */
 .refresh-btn {
-  background: rgba(43, 230, 200, 0.2);
+  background: rgba(167, 139, 250, 0.2);
   font-weight: 600;
 }
 .refresh-btn:disabled {
@@ -1865,8 +1862,8 @@ body {
 }
 .source-chip.on {
   color: var(--life);
-  background: rgba(43, 230, 200, 0.12);
-  border-color: rgba(43, 230, 200, 0.3);
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.3);
 }
 .source-chip.off {
   color: rgba(223, 233, 234, 0.35);
@@ -2010,8 +2007,8 @@ body {
 }
 .editor-add {
   align-self: flex-start;
-  background: rgba(43, 230, 200, 0.1);
-  border: 1px dashed rgba(43, 230, 200, 0.35);
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px dashed rgba(167, 139, 250, 0.35);
   color: var(--life);
   padding: 8px 14px;
   border-radius: 8px;
@@ -2045,9 +2042,9 @@ body {
   flex-direction: column;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid rgba(43, 230, 200, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.14);
   border-radius: 10px;
-  background: rgba(43, 230, 200, 0.03);
+  background: rgba(167, 139, 250, 0.03);
 }
 .crypto-group-title {
   font-weight: 600;
@@ -2127,8 +2124,8 @@ body {
   color: rgba(223, 233, 234, 0.5);
 }
 .mode-btn.active {
-  background: rgba(43, 230, 200, 0.12);
-  border-color: rgba(43, 230, 200, 0.4);
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.4);
 }
 .mode-btn.active strong {
   color: var(--life);
@@ -2174,17 +2171,17 @@ body {
   padding: 5px 14px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(43, 230, 200, 0.3);
+  border: 1px solid rgba(167, 139, 250, 0.3);
   color: var(--dim);
   font-size: 11px;
   cursor: pointer;
-  box-shadow: 0 0 12px -5px rgba(43, 230, 200, 0.4);
+  box-shadow: 0 0 12px -5px rgba(167, 139, 250, 0.4);
   transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 .search-capsule:hover {
-  border-color: rgba(43, 230, 200, 0.55);
+  border-color: rgba(167, 139, 250, 0.55);
   color: var(--txt, #dfe9ea);
-  box-shadow: 0 0 16px -4px rgba(43, 230, 200, 0.55);
+  box-shadow: 0 0 16px -4px rgba(167, 139, 250, 0.55);
 }
 .search-capsule svg {
   color: var(--life);
@@ -2217,17 +2214,17 @@ body {
   border-radius: 16px;
   overflow: hidden;
   background: linear-gradient(150deg, rgba(9, 26, 22, 0.98), rgba(5, 15, 12, 0.98));
-  border: 1px solid rgba(43, 230, 200, 0.4);
+  border: 1px solid rgba(167, 139, 250, 0.4);
   box-shadow:
     0 24px 70px -18px rgba(0, 0, 0, 0.85),
-    0 0 40px -8px rgba(43, 230, 200, 0.3);
+    0 0 40px -8px rgba(167, 139, 250, 0.3);
 }
 .pal-input {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 13px 16px;
-  border-bottom: 1px solid rgba(43, 230, 200, 0.14);
+  border-bottom: 1px solid rgba(167, 139, 250, 0.14);
 }
 .pal-input input {
   flex: 1;
@@ -2270,8 +2267,8 @@ body {
 }
 .pal-item.sel,
 .pal-item:hover {
-  background: rgba(43, 230, 200, 0.1);
-  border-color: rgba(43, 230, 200, 0.35);
+  background: rgba(167, 139, 250, 0.1);
+  border-color: rgba(167, 139, 250, 0.35);
 }
 .pal-main {
   flex: 1;
@@ -2291,7 +2288,7 @@ body {
 .pal-nm .held-chip {
   font-size: 8.5px;
   color: var(--life);
-  border: 1px solid rgba(43, 230, 200, 0.4);
+  border: 1px solid rgba(167, 139, 250, 0.4);
   border-radius: 4px;
   padding: 1px 5px;
   margin-left: 7px;
@@ -2394,8 +2391,8 @@ body {
   border: 1px solid transparent;
 }
 .watch-row:hover {
-  background: rgba(43, 230, 200, 0.06);
-  border-color: rgba(43, 230, 200, 0.2);
+  background: rgba(167, 139, 250, 0.06);
+  border-color: rgba(167, 139, 250, 0.2);
 }
 .w-star {
   color: var(--event);
@@ -2501,4 +2498,105 @@ body {
   font-size: 8.5px;
   color: var(--sub);
   line-height: 1.55;
+}
+
+
+/* ══════════ v0.3 OBSIDIAN VIOLET — 2줄 보유 행 · 로고 배지 · 장 상태 필 ══════════ */
+
+.stock-badge {
+  flex: none;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-family: var(--mono);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.35);
+  letter-spacing: 0;
+}
+.mh-l1 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.mh-name {
+  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #eceef4;
+  white-space: nowrap; /* 이름은 절대 안 자름 — 2줄 구조라 공간이 충분 */
+}
+.mh-code {
+  font-size: 7.5px;
+  color: var(--sub);
+  letter-spacing: 0.04em;
+}
+.mh-ret {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mh-ret.up { color: var(--up); }
+.mh-ret.down { color: var(--down); }
+.mh-l2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding-left: 27px; /* 배지 폭 + 간격만큼 들여쓰기 — 1줄과 시각 정렬 */
+}
+.mh-price {
+  font-size: 9.5px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.mh-qty {
+  font-size: 8px;
+  color: var(--sub);
+  font-variant-numeric: tabular-nums;
+}
+.mh-l2 .spark {
+  margin-left: auto;
+  flex: none;
+}
+
+/* 랭킹 행에 배지 들어갈 자리 */
+.rank-row .stock-badge {
+  margin-right: 2px;
+}
+
+/* 관심종목 행 배지 */
+.watch-row .stock-badge {
+  margin-right: 1px;
+}
+
+/* 장 상태 표시등 — 탭처럼 보이던 market-pills 대체. 초록=개장(갱신 중)/회색=마감(정지) */
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--sub);
+}
+.session-pill i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(230, 233, 244, 0.28);
+}
+.session-pill.open {
+  border-color: rgba(52, 211, 153, 0.4);
+  color: var(--emer, #34d399);
+}
+.session-pill.open i {
+  background: var(--emer, #34d399);
+  box-shadow: 0 0 6px var(--emer, #34d399);
 }

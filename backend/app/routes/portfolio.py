@@ -125,12 +125,16 @@ async def _build_snapshot() -> PortfolioSnapshot:
             )
         )
 
+    from ..services.market_hours import kr_session, us_session
+
     snapshot = PortfolioSnapshot(
         totals=_compute_totals(positions),
         positions=positions,
         sectorFlows=sector_flows,
         marketRanking=market_ranking,
         fetchedAt=int(time.time() * 1000),
+        krSession=kr_session(),
+        usSession=us_session(),
         errors=errors,
         # 설정 안 된 소스(키 미입력)는 정상 상태다 — 진짜 데이터 조회 실패가
         # 있을 때만 "추정치"로 표시한다 (스펙: isEstimate = UI에서 흐리게)

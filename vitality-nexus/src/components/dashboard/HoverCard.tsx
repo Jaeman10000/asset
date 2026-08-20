@@ -76,9 +76,9 @@ export interface HoverTarget {
 
 // 프로토타입의 투자자 색 (스펙: 파티클 색 정보 인코딩과 동일 계열)
 const INVESTOR_ROWS: { key: keyof InvestorFlow; label: string; color: string }[] = [
-  { key: 'foreign', label: '외국인', color: 'hsl(45, 90%, 65%)' },
-  { key: 'inst', label: '기관', color: 'hsl(175, 80%, 60%)' },
-  { key: 'individual', label: '개인', color: 'hsl(220, 60%, 65%)' },
+  { key: 'foreign', label: '외국인', color: '#fbbf24' },
+  { key: 'inst', label: '기관', color: '#34d399' },
+  { key: 'individual', label: '개인', color: '#7dd3fc' },
   { key: 'program', label: '프로그램', color: 'hsl(280, 60%, 70%)' },
 ];
 

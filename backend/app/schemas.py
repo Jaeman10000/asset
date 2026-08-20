@@ -128,3 +128,7 @@ class PortfolioSnapshot(BaseModel):
     # 시장 랭킹이 모의인지 (키움 랭킹 연동되면 False). 랭킹 카드 워터마크용 — 별도 플래그라
     # 랭킹만 실데이터가 돼도 섹터/수급 모의와 독립적으로 표시된다.
     rankingMock: bool = True
+    # 장 상태 (v0.3 상단 표시등) — 열려 있으면 해당 시장 데이터가 갱신 중, 닫혀 있으면
+    # 캐시 유지(장외 갱신 억제 정책)라는 걸 UI가 설명할 수 있다.
+    krSession: bool = False
+    usSession: bool = False

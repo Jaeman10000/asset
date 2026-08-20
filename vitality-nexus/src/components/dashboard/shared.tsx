@@ -43,6 +43,32 @@ export function CoinIcon({ symbol, size = 18 }: { symbol: string; size?: number 
   );
 }
 
+/**
+ * StockBadge — 종목 로고 배지 (v0.3 디자인).
+ * 공식 무료 로고 소스가 없으므로 1차는 종목별 고정 색 이니셜 배지(토스 스타일).
+ * 색은 심볼 해시로 고정되어 같은 종목은 항상 같은 색 → 스캔 시 로고처럼 기능한다.
+ */
+export function StockBadge({ name, symbol, size = 20 }: { name: string; symbol: string; size?: number }) {
+  const h = coinHue(symbol || name);
+  // 첫 글자(한글 1자 또는 영문 1~2자). 'LG전자'→'LG', '삼성전자'→'삼', 'SCHD'→'SC'
+  const m = name.trim().match(/^[A-Za-z]{1,2}/);
+  const initial = m ? m[0].toUpperCase() : name.trim().slice(0, 1);
+  return (
+    <span
+      className="stock-badge"
+      style={{
+        width: size,
+        height: size,
+        fontSize: initial.length > 1 ? size * 0.38 : size * 0.5,
+        background: `linear-gradient(135deg, hsl(${h}, 52%, 52%), hsl(${h}, 60%, 30%))`,
+      }}
+      aria-hidden
+    >
+      {initial}
+    </span>
+  );
+}
+
 /** 등락률 배지 — 상승 주황 / 하락 파랑 (한국 관례색) */
 export function Pct({ value, className }: { value: number; className?: string }) {
   return (

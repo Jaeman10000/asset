@@ -63,6 +63,9 @@ export interface MarketStock {
   flowOnly?: boolean;
 }
 
+// PortfolioSnapshot에 추가된 장 상태 필드는 아래 스냅샷 인터페이스 참조
+// (krSession/usSession — 상단 표시등: 열림=갱신 중, 닫힘=장외 캐시 유지)
+
 /** 차트/상세 패널이 받는 대상 — 보유 포지션·랭킹 종목·검색 결과를 모두 표현 */
 export interface ChartTarget {
   symbol: string;
@@ -154,6 +157,9 @@ export interface PortfolioSnapshot {
   marketMock?: boolean;
   /** 시장 랭킹이 모의인지 (키움 랭킹 연동되면 false) */
   rankingMock?: boolean;
+  /** 장 상태 (v0.3 상단 표시등) — true=개장(갱신 중), false=마감(장외 캐시 유지) */
+  krSession?: boolean;
+  usSession?: boolean;
 }
 
 /** 각 소스가 설정됐는지 (GET /config/sources) */

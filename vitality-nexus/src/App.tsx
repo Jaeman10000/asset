@@ -182,13 +182,15 @@ export default function App() {
               <i className="load-spin" />정보 불러오는 중…
             </span>
           )}
-          <span className="pill">
-            <i />KR 주식
+          {/* v0.3: 탭처럼 보이던 필 → 장 상태 표시등. 초록=개장(실시간 갱신 중),
+              회색=마감(장외 갱신 억제 정책으로 캐시 유지 — "왜 안 움직이지?"를 설명). */}
+          <span className={`session-pill${snapshot?.krSession ? ' open' : ''}`}>
+            <i />KR장 {snapshot?.krSession ? '개장중' : '마감'}
           </span>
-          <span className="pill">
-            <i />US 주식
+          <span className={`session-pill${snapshot?.usSession ? ' open' : ''}`}>
+            <i />US장 {snapshot?.usSession ? '개장중' : '마감'}
           </span>
-          <span className="pill live">
+          <span className="session-pill open">
             <i />CRYPTO 24H
           </span>
         </div>

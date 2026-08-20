@@ -12,8 +12,8 @@
 
 :root {
   /* injectLifeColorsToCSS()가 덮어씀. 폴백값. */
-  --life: #2be6c8;
-  --life-deep: #1a9e8c;
+  --life: #a78bfa;
+  --life-deep: #7c5cf0;
   --event: #f2d675;
 }
 
@@ -23,14 +23,14 @@
   border-radius: 18px;               /* 더 부드러운 라운드 */
   background: linear-gradient(
     135deg,
-    rgba(43, 230, 200, 0.04) 0%,     /* 청록 극미량 틴트 */
+    rgba(167, 139, 250, 0.04) 0%,     /* 청록 극미량 틴트 */
     rgba(255, 255, 255, 0.015) 100%
   );
   /* 하드 테두리 대신 청록 glow로 번지게 */
-  border: 1px solid rgba(43, 230, 200, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.12);
   box-shadow:
     0 8px 32px -8px rgba(0, 0, 0, 0.5),           /* 아래 그림자 (부상) */
-    0 0 24px -4px rgba(43, 230, 200, 0.15),        /* 청록 외곽 glow */
+    0 0 24px -4px rgba(167, 139, 250, 0.15),        /* 청록 외곽 glow */
     inset 0 1px 0 rgba(255, 255, 255, 0.06);       /* 상단 하이라이트 */
   backdrop-filter: blur(24px) saturate(1.1);
   transition:
@@ -80,10 +80,10 @@
 /* 심장 파장이 도착하는 순간 = 청록 맥동 (LIFE_COLOR).
    심장에서 나온 생명력이 카드에 닿는 순간. */
 .glass-card.pulse-hit {
-  border-color: rgba(43, 230, 200, 0.35);
+  border-color: rgba(167, 139, 250, 0.35);
   box-shadow:
     0 8px 32px -8px rgba(0, 0, 0, 0.5),
-    0 0 28px -2px rgba(43, 230, 200, 0.35),
+    0 0 28px -2px rgba(167, 139, 250, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition: box-shadow 0.1s ease-out, border-color 0.1s ease-out;
 }

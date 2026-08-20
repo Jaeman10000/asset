@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchWatchlistQuotes, saveWatchlist, type WatchQuote } from '../../api/client';
+import { StockBadge } from './shared';
 import type { ChartTarget } from '../../api/types';
 
 /**
@@ -108,6 +109,7 @@ export function WatchlistCard({
               }
             >
               <span className="w-star">★</span>
+              <StockBadge name={r.name} symbol={r.code} size={17} />
               <span className="w-name">
                 {r.name}
                 <small>{r.code}</small>
