@@ -415,7 +415,8 @@ body {
 /* ── 좌측: 3단 세로 리스트 ── */
 .col-left {
   display: grid;
-  grid-template-rows: 1fr 1fr 1fr;
+  /* 보유 3카드 균등 + 뉴스(내용만큼) — 뉴스가 4번째 자식이라 암묵 행이 생기던 것을 명시 */
+  grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
   gap: 12px;
   min-height: 0;
 }
@@ -2349,6 +2350,18 @@ body {
 .col-right {
   overflow-y: auto; /* 그래도 넘치면 컬럼 스크롤 (행 겹침 금지) */
 }
+/* 큰 화면에서 우측 하단이 텅 비던 문제 — 시그널 카드가 남는 세로를 채운다.
+   (실측 2560x1440: 시그널이 826px에서 끝나 1426까지 600px 공백) */
+.col-right .sig {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.col-right .sig .note {
+  margin-top: auto; /* 설명은 카드 바닥에 고정 — 행들이 위로 뭉치지 않게 */
+  padding-top: 8px;
+}
 
 /* ★ 관심종목 카드 */
 .watch-card {
@@ -2808,15 +2821,18 @@ body {
 }
 .radar-wrap {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 14px;
-  align-items: start;
+  align-items: stretch; /* 카드가 커지면 내부도 같이 늘어남 (상단 쏠림 방지) */
   min-height: 0;
   flex: 1;
 }
 .radar-left {
   min-width: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .hoverpane {
   position: absolute; /* 레이아웃을 밀지 않는 오버레이 (레이더 하단에 겹침) */
@@ -2873,6 +2889,19 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+.rlist .row {
+  flex: none;
+}
+/* 테마 목록이 길면 카드 안에서 스크롤 (카드 밖으로 넘치지 않게) */
+.rlist .rl-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.us-pills {
+  margin-top: auto; /* US 필은 항상 카드 바닥 */
 }
 .rlist .row {
   display: grid;

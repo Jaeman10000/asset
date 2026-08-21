@@ -9,6 +9,7 @@ import { AuroraVeil } from './components/dashboard/AuroraVeil';
 import type { RingSector } from './components/organic-core/HoloSectorRings';
 import { usePortfolio } from './store/portfolio';
 import { portfolioBpm } from './util/heart';
+import { startUiScale } from './util/uiScale';
 
 /**
  * App — Vitality Nexus.
@@ -62,6 +63,9 @@ export default function App() {
     start();
     return () => stop();
   }, [start, stop]);
+
+  // 큰 모니터에서 UI가 작아 보이지 않게 창 크기에 맞춰 웹뷰를 확대 (util/uiScale)
+  useEffect(() => startUiScale(), []);
 
   // 커서 추종 스포트라이트 — 마우스가 카드 위를 지날 때 청록빛이 따라오게
   // (.card::before의 --mx/--my를 갱신). rAF 스로틀 + transform만 갱신 → 저부담.

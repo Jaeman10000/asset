@@ -247,22 +247,25 @@ export function SectorRadar({
               기관
             </span>
           </div>
-          {ranked.map((s, i) => (
-            <div
-              key={s.name}
-              className={`row${i < 3 ? ` m${i + 1}` : ''}${hoverName === s.name ? ' hover' : ''}`}
-              onMouseEnter={() => setHoverName(s.name)}
-            >
-              <span className="rk">{i + 1}</span>
-              <span className="nm">{s.name}</span>
-              <span className="fv" style={{ color: (s.foreign ?? 0) >= 0 ? 'var(--up)' : 'var(--down)' }}>
-                {fmt(s.foreign ?? 0)}
-              </span>
-              <span className="ov" style={{ color: (s.inst ?? 0) >= 0 ? 'var(--up)' : 'var(--down)' }}>
-                {fmt(s.inst ?? 0)}
-              </span>
-            </div>
-          ))}
+          {/* 목록이 길어도 카드 밖으로 넘치지 않게 내부 스크롤 (US 필은 아래 고정) */}
+          <div className="rl-scroll">
+            {ranked.map((s, i) => (
+              <div
+                key={s.name}
+                className={`row${i < 3 ? ` m${i + 1}` : ''}${hoverName === s.name ? ' hover' : ''}`}
+                onMouseEnter={() => setHoverName(s.name)}
+              >
+                <span className="rk">{i + 1}</span>
+                <span className="nm">{s.name}</span>
+                <span className="fv" style={{ color: (s.foreign ?? 0) >= 0 ? 'var(--up)' : 'var(--down)' }}>
+                  {fmt(s.foreign ?? 0)}
+                </span>
+                <span className="ov" style={{ color: (s.inst ?? 0) >= 0 ? 'var(--up)' : 'var(--down)' }}>
+                  {fmt(s.inst ?? 0)}
+                </span>
+              </div>
+            ))}
+          </div>
 
           {/* US 섹터 필 (등락률) */}
           <div className="us-pills">
