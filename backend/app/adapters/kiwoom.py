@@ -447,6 +447,15 @@ _MAJOR_NAMES: dict[str, str] = dict(_CODE_NAME)
 # 몇 개만 나오면(레이트리밋 예산 컷) 이 완전 세트로 대체해 SECTOR FLOW가 '2개만
 # 뜨는' 문제를 막는다(약간 stale해도 부분보다 낫다). 완전 세트를 새로 받으면 갱신.
 _sector_state: dict[str, list[SectorFlow]] = {"last": []}
+# 테마별 '지금까지 가장 많이 채워진' 스냅샷 — theme -> (구성종목 수, SectorFlow).
+# 워머가 캐시를 갱신하는 도중 일부 종목이 만료되면 커버리지가 잠깐 내려앉는데,
+# 그때 부분집합으로 계산된 강도%가 화면에 튀는 걸 막는다.
+_sector_best: dict[str, tuple[int, SectorFlow]] = {}
+# 테마 강도%를 내보낼 최소 커버리지. 4종목 테마면 3종목 이상.
+# (50%로 뒀더니 전력/유틸 4종목 중 2종목 — 한국전력 빠진 채 — 거래대금 41억에
+#  순매수 16억이 잡혀 강도 +39.0%로 1위가 됐다. 큰 종목 하나가 빠지면 분모가
+#  통째로 사라지므로 개수 절반으론 부족하다.)
+_SECTOR_MIN_COVER = 0.75
 
 
 class KiwoomAdapter(BaseAdapter):
@@ -577,7 +586,12 @@ class KiwoomAdapter(BaseAdapter):
         sectors: list[SectorFlow] = []
         for name, tcodes in _THEME_SECTORS:
             flows = [(c, cf[0]) for c in tcodes if (cf := cached_flow(c))]
-            if not flows:
+            covered = len(flows)
+            if covered < _SECTOR_MIN_COVER * len(tcodes):
+                # 아직 덜 찼다 — 이전에 더 잘 채워진 게 있으면 그걸 그대로 쓴다
+                prev = _sector_best.get(name)
+                if prev:
+                    sectors.append(prev[1])
                 continue
             # 강도% 분모 — 수급을 준 종목의 거래대금만 더해야 분자/분모 대상이 일치한다
             val = sum(
@@ -607,9 +621,16 @@ class KiwoomAdapter(BaseAdapter):
                     inst=round(sum(f.inst for _, f in flows)),
                     individual=round(sum(f.individual for _, f in flows)),
                     value=round(val, 1) if val > 0 else None,
+                    covered=covered,
+                    slots=len(tcodes),
                     members=members,
                 )
             )
+            prev = _sector_best.get(name)
+            if prev is None or covered >= prev[0]:
+                _sector_best[name] = (covered, sectors[-1])
+            else:
+                sectors[-1] = prev[1]  # 커버리지가 내려간 순간엔 더 완전한 직전 값 유지
         # 이번 빌드가 더 완전하면(같거나 많으면) 갱신, 아니면 마지막 완전 세트로 대체 →
         # 콜드/불안정에도 SECTOR FLOW가 '몇 개만' 뜨는 일이 없다.
         if len(sectors) >= len(_sector_state["last"]):

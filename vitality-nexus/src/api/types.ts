@@ -132,6 +132,9 @@ export interface SectorFlow {
   members?: SectorMember[];
   /** 한국만 — 구성종목 당일 거래대금 합(억원). 장중 강도%의 분모 */
   value?: number | null;
+  /** 수급을 실제로 받은 구성종목 수 / 전체 — 부분 집계면 화면에 '3/4'로 표시 */
+  covered?: number | null;
+  slots?: number | null;
   ret?: number | null; // 미국만 — 전일 등락률(%)
   volume?: number | null;
 }

@@ -93,6 +93,10 @@ class SectorFlow(BaseModel):
     # 한국만 — 테마 구성종목 당일 누적 거래대금 합 (억원).
     # 아카이브의 강도%((외+기)/거래대금×100)를 장중에도 같은 식으로 계산하기 위한 분모.
     value: float | None = None
+    # 구성종목 중 수급을 실제로 받은 개수 / 전체 — 화면에서 '3/4'로 표시해
+    # 부분 집계임을 숨기지 않는다
+    covered: int | None = None
+    slots: int | None = None
     # 미국만
     ret: float | None = None  # 전일 등락률
     volume: float | None = None

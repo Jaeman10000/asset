@@ -205,6 +205,8 @@ function TodayLive({ onPick }: { onPick: (t: ChartTarget) => void }) {
           // 거래대금을 못 받은 구버전 백엔드/콜드 상태면 강도는 계산하지 않는다(허수 방지)
           strength: val > 0 ? (net / val) * 100 : null,
           leader: f.members?.[0] ?? null,
+          covered: f.covered ?? null,
+          slots: f.slots ?? null,
         };
       })
       .sort((a, b) => {
@@ -237,6 +239,11 @@ function TodayLive({ onPick }: { onPick: (t: ChartTarget) => void }) {
             <span className="mf-live-f" title="외국인 순매수">{signed(r.foreign)}</span>
             <span className="mf-live-i" title="기관 순매수">{signed(r.inst)}</span>
             <span className="mf-live-ld">
+              {r.covered != null && r.slots != null && r.covered < r.slots && (
+                <em className="mf-partial" title={`구성 ${r.slots}종목 중 ${r.covered}종목만 집계됨`}>
+                  {r.covered}/{r.slots}
+                </em>
+              )}
               {r.leader ? (
                 <button type="button" className="mf-link" onClick={() => onPick(toTarget(r.leader!.code, r.leader!.name))}>
                   {r.leader.name}
@@ -659,33 +666,46 @@ export function MoneyFlow() {
 
   return (
     <div className="mf-wrap">
-      <div className="mf-head">
-        <div className="mf-arc">
-          <strong>자금 흐름 아카이브</strong>
-          {arc ? (
-            <span className="mf-dim">
-              {arc.days}일 저장 · {fmtFull(arc.first)} ~ {fmtFull(arc.last)} · {fmtMB(arc.bytes)} · 로컬 보관
-            </span>
-          ) : (
-            <span className="mf-dim">불러오는 중…</span>
-          )}
-        </div>
-        <div className="mf-actions">
-          <div className="mf-seg">
-            {DAY_OPTIONS.map((d) => (
-              <button key={d} type="button" className={days === d ? 'on' : ''} onClick={() => setDays(d)}>
-                {d}일
-              </button>
-            ))}
+      <section className="card mf-card">
+        <h3>
+          <span className="dot" />
+          자금 흐름 아카이브
+          <span className="exch">로컬 보관 · 마감 후 자동 저장</span>
+        </h3>
+        <div className="mf-arc-body">
+          <dl className="mf-arc-stats">
+            <div>
+              <dt>저장 일수</dt>
+              <dd>{arc ? `${arc.days.toLocaleString()}일` : '—'}</dd>
+            </div>
+            <div>
+              <dt>기간</dt>
+              <dd className="sm">{arc ? `${fmtFull(arc.first)} ~ ${fmtFull(arc.last)}` : '—'}</dd>
+            </div>
+            <div>
+              <dt>용량</dt>
+              <dd>{arc ? fmtMB(arc.bytes) : '—'}</dd>
+            </div>
+          </dl>
+          {/* 이 칩은 아카이브가 아니라 아래 히트맵·계보가 보는 창을 바꾼다 — 라벨로 명시 */}
+          <div className="mf-arc-ctl">
+            <span className="mf-arc-ctl-lb">히트맵 기간</span>
+            <div className="mf-seg">
+              {DAY_OPTIONS.map((d) => (
+                <button key={d} type="button" className={days === d ? 'on' : ''} onClick={() => setDays(d)}>
+                  {d}일
+                </button>
+              ))}
+            </div>
+            <button type="button" className="mf-btn" onClick={() => void collect()} disabled={busy}>
+              {busy ? '수집 중…' : '오늘 수집'}
+            </button>
+            {msg && <div className="mf-arc-msg">{msg}</div>}
           </div>
-          <button type="button" className="mf-btn" onClick={() => void collect()} disabled={busy}>
-            {busy ? '수집 중…' : '오늘 수집'}
-          </button>
         </div>
-      </div>
+      </section>
 
       {err && <div className="mf-err">불러오지 못했습니다 — {err}</div>}
-      {msg && <div className="mf-msg">{msg}</div>}
 
       <section className="card mf-card">
         <h3>
