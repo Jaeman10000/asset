@@ -255,6 +255,52 @@ async def get_flow_top(scope: str = "market") -> dict:
     return await flow_top("held" if scope == "held" else "market")
 
 
+# 자금 흐름 API는 /moneyflow/* 네임스페이스 — /flow/{code}(종목 수급)가 경로 변수라
+# /flow/status 같은 이름을 종목코드로 삼켜버린다(실측: status가 code="status"로 처리됨).
+@router.get("/moneyflow/status")
+async def get_flow_status() -> dict:
+    """자금 흐름 아카이브 상태 — 저장 일수·기간·용량·폴더 경로."""
+    from ..services import flow_collector
+    return flow_collector.status()
+
+
+class CollectBody(BaseModel):
+    pages: int = 1  # 1=최근 100거래일, 5≈2년 소급
+
+
+@router.post("/moneyflow/collect")
+async def post_flow_collect(body: CollectBody) -> dict:
+    """수집 실행 — 백필(pages>1) 또는 최신 보충(pages=1). 이미 저장된 날짜는 건너뜀."""
+    from ..services import flow_collector
+    return await flow_collector.collect(pages=max(1, min(8, body.pages)))
+
+
+@router.get("/moneyflow/history")
+async def get_flow_history(days: int = 120) -> dict:
+    """히트맵·전이 분석용 테마 일별 시계열."""
+    from ..services import flow_store
+    rows = flow_store.sector_series(max(5, min(400, days)))
+    from ..services.themes import CODE_NAME
+    out = {}
+    dates = []
+    for date, theme, f, i, v, s, leader in rows:
+        if date not in out:
+            out[date] = {}
+            dates.append(date)
+        out[date][theme] = {
+            "foreign": f, "inst": i, "value": v, "strength": s,
+            "leader": CODE_NAME.get(leader or "", leader),
+        }
+    return {"dates": sorted(set(dates)), "byDate": out, "archive": flow_store.archive_stats()}
+
+
+@router.get("/moneyflow/forecast")
+async def get_flow_forecast() -> dict:
+    """예상 경로 — 후보 테마 top3 + 주도주 5 + 워크포워드 백테스트 적중률."""
+    from ..services import forecast
+    return await run_in_threadpool(forecast.forecast)
+
+
 @router.get("/stocks/master")
 async def get_stock_master() -> dict:
     """전 종목 마스터(KOSPI+KOSDAQ ≈4,300) — 검색 자동완성용. 서버 하루 1회 캐시.

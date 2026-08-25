@@ -43,4 +43,5 @@ export function injectLifeColorsToCSS() {
   root.style.setProperty('--down', DOWN_COLOR);
   root.style.setProperty('--gold', FOREIGN_COLOR);
   root.style.setProperty('--emer', INST_COLOR);
+  root.style.setProperty('--ice', INDIV_COLOR);
 }

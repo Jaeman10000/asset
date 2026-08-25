@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dashboard } from './components/dashboard/Dashboard';
+import { MoneyFlow } from './components/dashboard/MoneyFlow';
 import { StatusBar } from './components/dashboard/StatusBar';
 import { HoldingsEditor } from './components/dashboard/HoldingsEditor';
 import { KiwoomPanel } from './components/dashboard/KiwoomPanel';
@@ -58,6 +59,8 @@ export default function App() {
   const [kiwoomOpen, setKiwoomOpen] = useState(false);
   const [cryptoOpen, setCryptoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // 화면 전환 — 대시보드(실시간) ↔ 자금 흐름(로컬 아카이브 분석)
+  const [view, setView] = useState<'dash' | 'flow'>('dash');
 
   useEffect(() => {
     start();
@@ -113,6 +116,25 @@ export default function App() {
       <header className="topbar">
         <span className="brand">VITALITY NEXUS</span>
         <span className="brand-sub">LIVING DASHBOARD · HEART AT THE CENTER</span>
+        {/* 화면 전환 탭 — 대시보드는 실시간, 자금 흐름은 마감 후 저장된 아카이브 분석 */}
+        <nav className="view-tabs" aria-label="화면 전환">
+          <button
+            type="button"
+            className={view === 'dash' ? 'on' : ''}
+            aria-pressed={view === 'dash'}
+            onClick={() => setView('dash')}
+          >
+            대시보드
+          </button>
+          <button
+            type="button"
+            className={view === 'flow' ? 'on' : ''}
+            aria-pressed={view === 'flow'}
+            onClick={() => setView('flow')}
+          >
+            자금 흐름
+          </button>
+        </nav>
         {/* 종목 검색 진입점 — 클릭 또는 '/' 로 팔레트 열기 (Dashboard가 이벤트 수신) */}
         <button
           type="button"
@@ -149,7 +171,9 @@ export default function App() {
         </div>
       </header>
 
-      {snapshot ? (
+      {view === 'flow' ? (
+        <MoneyFlow />
+      ) : snapshot ? (
         <Dashboard snapshot={snapshot} bpm={bpm} usSectors={usSectors} />
       ) : conn === 'offline' ? (
         <div className="boot-msg">
@@ -166,7 +190,7 @@ export default function App() {
       )}
 
       {/* 빈 포트폴리오 — 첫 유저를 보유종목 추가로 유도 (온보딩 CTA) */}
-      {snapshot && snapshot.positions.length === 0 && (
+      {view === 'dash' && snapshot && snapshot.positions.length === 0 && (
         <div className="empty-cta">
           <strong>아직 보유 종목이 없어요</strong>
           <span>보유 종목을 추가하면 심장이 내 자산으로 뛰기 시작합니다.</span>

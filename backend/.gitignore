@@ -9,3 +9,8 @@ server*.log
 data/holdings.json
 data/watchlist.json
 data/vitality.db
+
+# 자금 흐름 아카이브 — 거래일 1개당 JSON 1개가 매일 늘어난다(현재 499일/6.9MB).
+# 깃에 넣으면 매일 커밋 노이즈 + 저장소 비대. 로컬 자산으로 보관한다.
+# (백업이 필요하면 backend/data/flow 폴더째 복사하면 되고, 지워도 ka10059로 재구성 가능)
+data/flow/

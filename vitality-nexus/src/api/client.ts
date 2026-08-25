@@ -266,6 +266,95 @@ export function fetchSignalTop(scope: 'market' | 'held', signal?: AbortSignal): 
   return getJSON<SignalResp>(`/signal/top?scope=${scope}`, signal, 15_000);
 }
 
+// ── 자금 흐름 (로컬 아카이브 + 예상 경로) ──
+
+export interface FlowArchive {
+  days: number;
+  first: string | null;
+  last: string | null;
+  bytes: number;
+  dir: string;
+}
+export interface FlowStatus {
+  running: boolean;
+  phase: string;
+  done: number;
+  total: number;
+  lastError: string | null;
+  archive: FlowArchive;
+}
+export interface SectorDay {
+  foreign: number;
+  inst: number;
+  value: number;
+  strength: number;
+  leader: string | null;
+}
+export interface FlowHistory {
+  dates: string[];
+  byDate: Record<string, Record<string, SectorDay>>;
+  archive: FlowArchive;
+}
+export interface ForecastLeader {
+  code: string;
+  name: string;
+  net5d: number;
+  ret: number;
+}
+export interface ForecastCandidate {
+  theme: string;
+  score: number;
+  trans: number;
+  transN: number;
+  accel: number;
+  room: number;
+  slots: number;
+  leaders: ForecastLeader[];
+}
+export interface Forecast {
+  ready: boolean;
+  reason?: string;
+  asOf?: string;
+  curLeader?: string | null;
+  sampleN?: number;
+  days: number;
+  candidates?: ForecastCandidate[];
+  backtest?: {
+    n: number; top1: number; top3: number;
+    top1pct: number; top3pct: number; base1: number; base3: number; themes: number;
+  };
+}
+
+export function fetchFlowStatus(signal?: AbortSignal): Promise<FlowStatus> {
+  return getJSON<FlowStatus>('/moneyflow/status', signal);
+}
+
+export function fetchFlowHistory(days = 120, signal?: AbortSignal): Promise<FlowHistory> {
+  return getJSON<FlowHistory>(`/moneyflow/history?days=${days}`, signal, 20_000);
+}
+
+export function fetchForecast(signal?: AbortSignal): Promise<Forecast> {
+  return getJSON<Forecast>('/moneyflow/forecast', signal, 30_000);
+}
+
+export interface CollectResult extends FlowStatus {
+  saved?: number;
+  scanned?: number;
+  seconds?: number;
+  skipped?: string;
+  error?: string;
+}
+
+export async function collectFlow(pages: number): Promise<CollectResult> {
+  const resp = await fetch(`${BASE}/moneyflow/collect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pages }),
+  });
+  if (!resp.ok) throw new Error(`수집 실패: HTTP ${resp.status}`);
+  return (await resp.json()) as CollectResult;
+}
+
 // ── 보유종목 편집 (holdings.json) ──
 
 export interface HoldingInput {

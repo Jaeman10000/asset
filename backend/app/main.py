@@ -23,6 +23,12 @@ _CLIENTLOG = data_path("clientlog.txt")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    # 자금 흐름 아카이브 — 테이블 준비 + 장 마감 후 자동 수집 스케줄러 기동.
+    # (앱이 꺼져 있던 날짜도 다음 실행 때 자동 보충된다 — ka10059가 100일치를 주므로)
+    from .services import flow_collector, flow_store
+
+    flow_store.init_flow_db()
+    flow_collector.start_scheduler()
     yield
 
 
