@@ -289,7 +289,9 @@ async def get_flow_history(days: int = 120) -> dict:
             dates.append(date)
         out[date][theme] = {
             "foreign": f, "inst": i, "value": v, "strength": s,
+            # 이름은 표시용, 코드는 클릭 시 상세(차트·PER·수급) 조회용
             "leader": CODE_NAME.get(leader or "", leader),
+            "leaderCode": leader,
         }
     return {"dates": sorted(set(dates)), "byDate": out, "archive": flow_store.archive_stats()}
 

@@ -8,6 +8,13 @@ import {
   type ForecastCandidate,
 } from '../../api/client';
 import { StockBadge } from './shared';
+import { ChartPanel } from './ChartPanel';
+import type { ChartTarget } from '../../api/types';
+
+/** 아카이브의 종목(코드+이름)을 상세 패널이 받는 형태로. 시세·정보는 패널이 직접 받아온다. */
+function toTarget(code: string, name: string): ChartTarget {
+  return { symbol: code, name, assetType: 'stock', region: 'KR', currency: 'KRW' };
+}
 
 /**
  * 자금 흐름 — 로컬에 쌓인 일별 아카이브(장 마감 후 자동 저장)를 읽어
@@ -75,7 +82,15 @@ function SignalBar({ label, value, max, tone }: { label: string; value: number; 
   );
 }
 
-function CandidateCard({ c, rank }: { c: ForecastCandidate; rank: number }) {
+function CandidateCard({
+  c,
+  rank,
+  onPick,
+}: {
+  c: ForecastCandidate;
+  rank: number;
+  onPick: (t: ChartTarget) => void;
+}) {
   // 세 신호의 '가중 후' 기여도를 같은 축에서 비교 — 어떤 신호가 이 후보를 밀어올렸는지 보이게
   const wTrans = c.trans * 0.45;
   const wAccel = Math.max(0, c.accel) * 2.2;
@@ -100,13 +115,15 @@ function CandidateCard({ c, rank }: { c: ForecastCandidate; rank: number }) {
         {c.leaders.length === 0 && <li className="mf-empty-li">주도주 데이터 없음</li>}
         {c.leaders.map((l) => (
           <li key={l.code}>
-            <StockBadge name={l.name} symbol={l.code} size={18} />
-            <span className="mf-ld-name">{l.name}</span>
-            <span className={`mf-ld-net ${l.net5d >= 0 ? 'pos' : 'neg'}`}>{signed(l.net5d)}</span>
-            <span className={`mf-ld-ret ${l.ret >= 0 ? 'pos' : 'neg'}`}>
-              {l.ret >= 0 ? '+' : ''}
-              {l.ret.toFixed(2)}%
-            </span>
+            <button type="button" onClick={() => onPick(toTarget(l.code, l.name))} title={`${l.name} 상세`}>
+              <StockBadge name={l.name} symbol={l.code} size={18} />
+              <span className="mf-ld-name">{l.name}</span>
+              <span className={`mf-ld-net ${l.net5d >= 0 ? 'pos' : 'neg'}`}>{signed(l.net5d)}</span>
+              <span className={`mf-ld-ret ${l.ret >= 0 ? 'pos' : 'neg'}`}>
+                {l.ret >= 0 ? '+' : ''}
+                {l.ret.toFixed(2)}%
+              </span>
+            </button>
           </li>
         ))}
       </ul>
@@ -114,7 +131,7 @@ function CandidateCard({ c, rank }: { c: ForecastCandidate; rank: number }) {
   );
 }
 
-function ForecastPanel({ fc }: { fc: Forecast | null }) {
+function ForecastPanel({ fc, onPick }: { fc: Forecast | null; onPick: (t: ChartTarget) => void }) {
   if (!fc) return <div className="mf-skel">예상 경로 계산 중…</div>;
   if (!fc.ready) return <div className="mf-empty">{fc.reason ?? '데이터가 부족합니다.'}</div>;
   const bt = fc.backtest;
@@ -150,7 +167,7 @@ function ForecastPanel({ fc }: { fc: Forecast | null }) {
       </div>
       <div className="mf-cands">
         {(fc.candidates ?? []).map((c, i) => (
-          <CandidateCard key={c.theme} c={c} rank={i + 1} />
+          <CandidateCard key={c.theme} c={c} rank={i + 1} onPick={onPick} />
         ))}
       </div>
       <p className="mf-disclaimer">
@@ -254,27 +271,34 @@ function Heatmap({
 
 // ── 주도주 계보 ──
 
-function Lineage({ hist }: { hist: FlowHistory }) {
+type LeaderRef = { code: string; name: string };
+
+function Lineage({ hist, onPick }: { hist: FlowHistory; onPick: (t: ChartTarget) => void }) {
   // 날짜별 1위 테마 → 같은 테마 연속 구간을 하나로 묶어 '며칠째'로 표시.
   // 순환(돈이 테마를 옮겨 다니는 것)이 목록만 봐도 보이게 하려는 것.
   const runs = useMemo(() => {
-    const daily: { date: string; theme: string; leader: string | null }[] = [];
+    const daily: { date: string; theme: string; leader: LeaderRef | null }[] = [];
     for (const d of [...hist.dates].reverse()) {
       const day = hist.byDate[d];
       if (!day) continue;
-      let best: { theme: string; s: number; leader: string | null } | null = null;
+      let best: { theme: string; s: number; leader: LeaderRef | null } | null = null;
       for (const [t, c] of Object.entries(day)) {
-        if (!best || c.strength > best.s) best = { theme: t, s: c.strength, leader: c.leader };
+        if (best && c.strength <= best.s) continue;
+        best = {
+          theme: t,
+          s: c.strength,
+          leader: c.leaderCode && c.leader ? { code: c.leaderCode, name: c.leader } : null,
+        };
       }
       if (best) daily.push({ date: d, theme: best.theme, leader: best.leader });
     }
-    const out: { theme: string; from: string; to: string; n: number; leaders: string[] }[] = [];
+    const out: { theme: string; from: string; to: string; n: number; leaders: LeaderRef[] }[] = [];
     for (const r of daily.slice(0, 30)) {
       const last = out[out.length - 1];
       if (last && last.theme === r.theme) {
         last.n += 1;
         last.from = r.date;
-        if (r.leader && !last.leaders.includes(r.leader)) last.leaders.push(r.leader);
+        if (r.leader && !last.leaders.some((x) => x.code === r.leader!.code)) last.leaders.push(r.leader);
       } else {
         out.push({ theme: r.theme, from: r.date, to: r.date, n: 1, leaders: r.leader ? [r.leader] : [] });
       }
@@ -292,7 +316,17 @@ function Lineage({ hist }: { hist: FlowHistory }) {
           </span>
           <span className="mf-ln-theme">{r.theme}</span>
           {r.n > 1 && <span className="mf-ln-run">{r.n}일</span>}
-          <span className="mf-ln-leaders">{r.leaders.slice(0, 3).join(' · ') || '—'}</span>
+          <span className="mf-ln-leaders">
+            {r.leaders.length === 0 && '—'}
+            {r.leaders.slice(0, 3).map((l, k) => (
+              <span key={l.code}>
+                {k > 0 && ' · '}
+                <button type="button" className="mf-link" onClick={() => onPick(toTarget(l.code, l.name))}>
+                  {l.name}
+                </button>
+              </span>
+            ))}
+          </span>
         </li>
       ))}
     </ol>
@@ -310,6 +344,9 @@ export function MoneyFlow() {
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [tip, setTip] = useState<Tip | null>(null);
+  // 종목 클릭 → 상세 패널(캔들·52주·시총·PER·외인소진율·수급·★관심).
+  // tick=0이면 실시간 append를 끈다 — 여긴 아카이브 화면이라 폴링 시세가 없다.
+  const [sel, setSel] = useState<ChartTarget | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (d: number) => {
@@ -388,7 +425,7 @@ export function MoneyFlow() {
           예상 경로
           <span className="exch">다음 거래일 후보 · 적중률 동반</span>
         </h3>
-        <ForecastPanel fc={fc} />
+        <ForecastPanel fc={fc} onPick={setSel} />
       </section>
 
       <section className="card mf-card">
@@ -430,8 +467,10 @@ export function MoneyFlow() {
           주도주 계보
           <span className="exch">날짜별 1위 테마 · 최근순</span>
         </h3>
-        {hist ? <Lineage hist={hist} /> : <div className="mf-skel">불러오는 중…</div>}
+        {hist ? <Lineage hist={hist} onPick={setSel} /> : <div className="mf-skel">불러오는 중…</div>}
       </section>
+
+      <ChartPanel target={sel} tick={0} onClose={() => setSel(null)} />
 
       {tip && (
         <div

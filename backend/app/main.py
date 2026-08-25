@@ -44,6 +44,8 @@ app = FastAPI(title="Vitality Nexus Backend", version="0.1.0", lifespan=lifespan
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",  # 앱이 8787을 잡고 있을 때 쓰는 예비 dev 포트
+    "http://127.0.0.1:5174",
     "http://tauri.localhost",
     "https://tauri.localhost",
     "tauri://localhost",

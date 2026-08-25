@@ -288,7 +288,8 @@ export interface SectorDay {
   inst: number;
   value: number;
   strength: number;
-  leader: string | null;
+  leader: string | null;      // 표시용 종목명
+  leaderCode?: string | null; // 클릭 시 상세 조회용 종목코드
 }
 export interface FlowHistory {
   dates: string[];
