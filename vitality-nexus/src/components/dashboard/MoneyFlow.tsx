@@ -9,7 +9,8 @@ import {
 } from '../../api/client';
 import { StockBadge } from './shared';
 import { ChartPanel } from './ChartPanel';
-import type { ChartTarget } from '../../api/types';
+import type { ChartTarget, SectorFlow } from '../../api/types';
+import { usePortfolio } from '../../store/portfolio';
 
 /** 아카이브의 종목(코드+이름)을 상세 패널이 받는 형태로. 시세·정보는 패널이 직접 받아온다. */
 function toTarget(code: string, name: string): ChartTarget {
@@ -174,6 +175,81 @@ function ForecastPanel({ fc, onPick }: { fc: Forecast | null; onPick: (t: ChartT
         점수는 전이확률·단기가속·순환여력 세 신호의 가중합입니다. 위 적중률은 예측 시점 이후 데이터를
         전혀 쓰지 않은 워크포워드 검증 결과이며, 투자 판단의 근거가 아니라 관측 기록입니다.
       </p>
+    </>
+  );
+}
+
+// ── 오늘(장중) 실시간 ──
+
+/**
+ * 아카이브는 마감 확정치라 '직전 거래일'까지만 보여준다. 오늘 장중 흐름은 대시보드가
+ * 이미 30초마다 받아오고 있으므로(snapshot.sectorFlows) 같은 데이터를 여기서도 쓴다.
+ * 강도% 정의는 아카이브와 동일하게 (외+기)/거래대금×100 — 두 화면의 숫자가 같은 뜻이 되게.
+ */
+function TodayLive({ onPick }: { onPick: (t: ChartTarget) => void }) {
+  const snapshot = usePortfolio((st) => st.snapshot);
+  const rows = useMemo(() => {
+    const kr = (snapshot?.sectorFlows ?? []).filter((f: SectorFlow) => f.region === 'KR');
+    return kr
+      .map((f) => {
+        const net = (f.foreign ?? 0) + (f.inst ?? 0);
+        const val = f.value ?? 0;
+        return {
+          theme: f.name,
+          foreign: f.foreign ?? 0,
+          inst: f.inst ?? 0,
+          net,
+          // 거래대금을 못 받은 구버전 백엔드/콜드 상태면 강도는 계산하지 않는다(허수 방지)
+          strength: val > 0 ? (net / val) * 100 : null,
+          leader: f.members?.[0] ?? null,
+        };
+      })
+      .sort((a, b) => {
+        if (a.strength != null && b.strength != null) return b.strength - a.strength;
+        return b.net - a.net;
+      });
+  }, [snapshot]);
+
+  if (!snapshot) return <div className="mf-skel">실시간 수급 불러오는 중…</div>;
+  if (rows.length === 0) return <div className="mf-empty">실시간 섹터 수급이 아직 없습니다.</div>;
+
+  const open = snapshot.krSession ?? false;
+  const noStrength = rows.every((r) => r.strength == null);
+  return (
+    <>
+      <div className="mf-live-note">
+        <span className={`mf-live-dot${open ? ' on' : ''}`} />
+        {open
+          ? '장중 미확정 — 30초마다 갱신되며, 마감 후 확정치가 아카이브에 저장됩니다'
+          : '장 마감 — 오늘 최종 수급(아카이브 저장 전)'}
+      </div>
+      <ol className="mf-live">
+        {rows.slice(0, 8).map((r, i) => (
+          <li key={r.theme}>
+            <span className="mf-live-rank">{i + 1}</span>
+            <span className="mf-live-theme">{r.theme}</span>
+            <span className="mf-live-str">
+              {r.strength == null ? '—' : `${r.strength >= 0 ? '+' : ''}${r.strength.toFixed(1)}%`}
+            </span>
+            <span className="mf-live-f" title="외국인 순매수">{signed(r.foreign)}</span>
+            <span className="mf-live-i" title="기관 순매수">{signed(r.inst)}</span>
+            <span className="mf-live-ld">
+              {r.leader ? (
+                <button type="button" className="mf-link" onClick={() => onPick(toTarget(r.leader!.code, r.leader!.name))}>
+                  {r.leader.name}
+                </button>
+              ) : (
+                '—'
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {noStrength && (
+        <p className="mf-note">
+          거래대금을 아직 못 받아 강도%를 계산하지 못했습니다 — 순매수 금액순으로 정렬했습니다.
+        </p>
+      )}
     </>
   );
 }
@@ -418,6 +494,15 @@ export function MoneyFlow() {
 
       {err && <div className="mf-err">불러오지 못했습니다 — {err}</div>}
       {msg && <div className="mf-msg">{msg}</div>}
+
+      <section className="card mf-card">
+        <h3>
+          <span className="dot" />
+          오늘 · 실시간
+          <span className="exch">장중 미확정 · 강도% 기준</span>
+        </h3>
+        <TodayLive onPick={setSel} />
+      </section>
 
       <section className="card mf-card">
         <h3>

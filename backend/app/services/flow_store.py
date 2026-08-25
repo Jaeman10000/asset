@@ -171,6 +171,34 @@ def rebuild_from_files() -> int:
     return n
 
 
+def reconcile() -> int:
+    """디스크의 JSON(원본)에만 있고 DB 인덱스엔 빠진 날짜를 채운다. 기동 시 1회.
+
+    JSON이 원본이고 SQLite는 재생성 가능한 인덱스라는 설계인데, 지금까지 인덱스를
+    맞추는 경로가 수집 시점밖에 없었다. 그래서 아카이브 폴더에 파일을 직접 넣거나
+    (다른 PC에서 복사, 백업 복원) DB만 지워진 경우 그 날짜들이 화면에서 통째로
+    안 보였다. 파일 기준으로 빠진 날짜만 채워 넣는다(전체 재구축보다 싸다).
+    """
+    init_flow_db()
+    on_disk = set(saved_dates())
+    if not on_disk:
+        return 0
+    conn = _db()
+    try:
+        indexed = {r[0] for r in conn.execute("SELECT DISTINCT date FROM sector_daily")}
+    finally:
+        conn.close()
+    missing = sorted(on_disk - indexed)
+    n = 0
+    for date in missing:
+        day = load_day(date)
+        if not day:
+            continue
+        upsert_day(date, day.get("stocks", []), day.get("sectors", []))
+        n += 1
+    return n
+
+
 def sector_series(limit_days: int = 400) -> list[tuple]:
     """(date, theme, foreign, inst, value, strength, leader) 최근 N일 — 히트맵·전이통계용."""
     conn = _db()

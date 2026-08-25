@@ -90,6 +90,9 @@ class SectorFlow(BaseModel):
     individual: float | None = None
     # 테마 구성 대장주별 수급 (레이더 호버 패널용) — [{code,name,foreign,inst}]
     members: list[dict] = Field(default_factory=list)
+    # 한국만 — 테마 구성종목 당일 누적 거래대금 합 (억원).
+    # 아카이브의 강도%((외+기)/거래대금×100)를 장중에도 같은 식으로 계산하기 위한 분모.
+    value: float | None = None
     # 미국만
     ret: float | None = None  # 전일 등락률
     volume: float | None = None

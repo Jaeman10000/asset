@@ -3257,6 +3257,65 @@ body {
 }
 .mf-empty-li { color: var(--dim); font-size: 11.5px; list-style: none; }
 
+/* ── 오늘(장중) 실시간 ── */
+.mf-live-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.mf-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  flex: none;
+}
+.mf-live-dot.on {
+  background: var(--emer);
+  box-shadow: 0 0 7px var(--emer);
+  animation: mfPulse 2s ease-in-out infinite;
+}
+@keyframes mfPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.mf-live {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 18px;
+}
+.mf-live li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 52px 62px 62px minmax(0, 1.1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.mf-live-rank {
+  font-size: 10px;
+  color: var(--dim);
+  text-align: center;
+}
+.mf-live-theme { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-live-str { text-align: right; font-weight: 700; color: var(--life); }
+.mf-live-f { text-align: right; color: var(--gold); font-size: 11px; }
+.mf-live-i { text-align: right; color: var(--emer); font-size: 11px; }
+.mf-live-ld { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 1250px) {
+  .mf-live { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ── 예상 경로 ── */
 .mf-fc-top {
   display: flex;

@@ -130,6 +130,8 @@ export interface SectorFlow {
   individual?: number | null;
   /** 테마 구성 대장주별 수급 — 레이더 호버 패널용 */
   members?: SectorMember[];
+  /** 한국만 — 구성종목 당일 거래대금 합(억원). 장중 강도%의 분모 */
+  value?: number | null;
   ret?: number | null; // 미국만 — 전일 등락률(%)
   volume?: number | null;
 }

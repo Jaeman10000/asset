@@ -259,6 +259,8 @@ async def _fetch_one_flow(
             # flu_rt는 1/100 단위(1273 = 12.73%) — 나누지 않으면 100배로 찍힌다.
             "ret": _num(r0.get("flu_rt")) / _KA10059_RT_DIV,
             "volume": abs(_num(r0.get("acc_trde_qty"))),
+            # 거래대금(백만원 → 억원). 실시간 섹터 강도%의 분모.
+            "valueEok": abs(_num(r0.get("acc_trde_prica"))) / _AMT_MN_TO_EOK,
         },
     )
     return built
@@ -577,6 +579,12 @@ class KiwoomAdapter(BaseAdapter):
             flows = [(c, cf[0]) for c in tcodes if (cf := cached_flow(c))]
             if not flows:
                 continue
+            # 강도% 분모 — 수급을 준 종목의 거래대금만 더해야 분자/분모 대상이 일치한다
+            val = sum(
+                float(q.get("valueEok") or 0.0)
+                for c, _f in flows
+                if (q := cached_quote(c))
+            )
             members = sorted(
                 (
                     {
@@ -598,6 +606,7 @@ class KiwoomAdapter(BaseAdapter):
                     foreign=round(sum(f.foreign for _, f in flows)),
                     inst=round(sum(f.inst for _, f in flows)),
                     individual=round(sum(f.individual for _, f in flows)),
+                    value=round(val, 1) if val > 0 else None,
                     members=members,
                 )
             )

@@ -28,6 +28,8 @@ async def lifespan(app: FastAPI):
     from .services import flow_collector, flow_store
 
     flow_store.init_flow_db()
+    # 디스크의 JSON이 원본 — 인덱스에 빠진 날짜가 있으면 채운다(백업 복원·수동 복사 대비)
+    flow_store.reconcile()
     flow_collector.start_scheduler()
     yield
 
