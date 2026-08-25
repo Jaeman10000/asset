@@ -3177,105 +3177,17 @@ body {
   max-height: calc(100vh - 96px);
 }
 
-/* 아카이브 카드 — 예상 경로와 같은 언어(좌: 지표, 우: 테두리 박스) */
+/* 아카이브 카드 — 예상 경로(mf-fc-top / mf-bt / mf-cands / mf-cand)를 그대로 재사용한다.
+   여기 있는 건 그 안에 들어가는 요소들의 보조 규칙뿐. */
 .mf-dim { color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
 
-.mf-arc-body {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-.mf-arc-stats {
-  display: flex;
-  gap: 26px;
-  margin: 0;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.mf-arc-stats > div { display: flex; flex-direction: column; gap: 3px; }
-.mf-arc-stats dt {
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sub);
-}
-.mf-arc-stats dd {
-  margin: 0;
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-}
-.mf-arc-stats dd.sm { font-size: 13px; font-weight: 700; color: var(--dim); }
-
-.mf-arc-ctl {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex-wrap: wrap;
-  padding: 9px 13px;
-  border-radius: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.03);
-}
-.mf-arc-ctl-lb {
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sub);
-}
-.mf-arc-msg {
-  flex-basis: 100%;
-  font-size: 10.5px;
-  color: #ddd6fe;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  padding-top: 6px;
-}
-
-.mf-seg {
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-.mf-seg button {
-  border: 0;
-  background: transparent;
-  color: var(--dim);
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 4px 11px;
-  border-radius: 7px;
-  cursor: pointer;
-  font-variant-numeric: tabular-nums;
-}
-.mf-seg button:hover { color: var(--fg); }
-.mf-seg button.on { color: #fff; background: rgba(167, 139, 250, 0.28); }
-.mf-seg.sm { margin-left: auto; text-transform: none; letter-spacing: 0; }
-.mf-seg.sm button { font-size: 10px; padding: 2px 8px; font-family: 'Segoe UI', system-ui, sans-serif; }
-
-.mf-btn {
-  border: 1px solid rgba(167, 139, 250, 0.4);
-  background: rgba(167, 139, 250, 0.14);
-  color: #ddd6fe;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.mf-btn:hover:not(:disabled) { background: rgba(167, 139, 250, 0.26); }
-.mf-btn:disabled { opacity: 0.5; cursor: default; }
+/* flex 컬럼 안에서 기본 flex-shrink:1이면 카드가 내용보다 작게 눌린다. .card는
+   overflow:hidden이라 눌린 만큼 그냥 잘려나간다(실측: 아카이브 카드 내용 460px가
+   136px로 잘림). 카드는 줄어들지 않게 고정하고 세로 스크롤은 래퍼가 담당. */
+.mf-card { padding: 14px 16px 15px; flex: none; }
 
 .mf-err {
+  flex: none;
   font-size: 12px;
   color: #fca5a5;
   background: rgba(248, 113, 113, 0.1);
@@ -3283,16 +3195,63 @@ body {
   border-radius: 10px;
   padding: 9px 13px;
 }
-/* flex 컬럼 안에서 기본 flex-shrink:1이면 카드가 내용보다 작게 눌려 히트맵이 잘린다
-   (실측: 그리드 338px인데 카드가 267px로 축소). 줄어들지 않게 고정하고 wrap이 스크롤. */
-.mf-card { padding: 14px 16px 15px; flex: none; }
-.mf-skel, .mf-empty {
+.mf-skel,
+.mf-empty {
   color: var(--dim);
   font-size: 12.5px;
   padding: 26px 4px;
   text-align: center;
 }
 .mf-empty-li { color: var(--dim); font-size: 11.5px; list-style: none; }
+
+.mf-seg.wide { width: 100%; }
+.mf-seg.wide button { flex: 1; text-align: center; }
+.mf-btn.wide { width: 100%; padding: 7px 0; }
+
+.mf-tile-note {
+  margin: 8px 0 0;
+  font-size: 10px;
+  line-height: 1.55;
+  color: var(--dim);
+  opacity: 0.78;
+}
+.mf-tile-msg {
+  margin: 7px 0 0;
+  font-size: 10.5px;
+  color: #ddd6fe;
+  background: rgba(167, 139, 250, 0.1);
+  border-radius: 7px;
+  padding: 5px 8px;
+}
+.mf-tile-kv { margin: 0; display: flex; flex-direction: column; gap: 5px; }
+.mf-tile-kv > div {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+.mf-tile-kv dt {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+.mf-tile-kv dd {
+  margin: 0;
+  font-size: 11px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-tile-kv dd.path {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--dim);
+  direction: rtl;      /* 경로가 길면 앞쪽을 자르고 끝(폴더명)이 보이게 */
+  text-align: left;
+}
 
 /* ── 오늘(장중) 실시간 ── */
 .mf-live-note {
@@ -3417,7 +3376,7 @@ body {
   background: rgba(255, 255, 255, 0.025);
 }
 .mf-cand.rank1 { border-color: rgba(251, 191, 36, 0.38); background: rgba(251, 191, 36, 0.05); }
-.mf-cand-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.mf-cand-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; min-height: 19px; }
 .mf-rank {
   width: 19px; height: 19px;
   display: grid; place-items: center;

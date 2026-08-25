@@ -32,6 +32,9 @@ function toTarget(code: string, name: string): ChartTarget {
  */
 
 const DAY_OPTIONS = [30, 60, 120, 250] as const;
+// backend/app/services/themes.py 와 같은 수. 표시 전용이라 API로 실어오진 않는다.
+const THEME_N = 19;
+const STOCK_N = 95;
 
 function fmtEok(v: number): string {
   const a = Math.abs(v);
@@ -672,37 +675,91 @@ export function MoneyFlow() {
           자금 흐름 아카이브
           <span className="exch">로컬 보관 · 마감 후 자동 저장</span>
         </h3>
-        <div className="mf-arc-body">
-          <dl className="mf-arc-stats">
-            <div>
-              <dt>저장 일수</dt>
-              <dd>{arc ? `${arc.days.toLocaleString()}일` : '—'}</dd>
+
+        <div className="mf-fc-top">
+          <div className="mf-fc-meta">
+            <span className="mf-fc-lead">
+              보관 위치 <b>로컬 PC</b>
+            </span>
+            <span className="mf-dim">
+              매 거래일 마감(15:40) 후 자동 저장 · 마지막 저장 {arc ? fmtFull(arc.last) : '—'}
+            </span>
+          </div>
+          <div className="mf-bt good">
+            <div className="mf-bt-row">
+              <span>저장 일수</span>
+              <b>{arc ? `${arc.days.toLocaleString()}일` : '—'}</b>
+              <em>{arc ? `${fmtFull(arc.first)} ~` : ''}</em>
             </div>
-            <div>
-              <dt>기간</dt>
-              <dd className="sm">{arc ? `${fmtFull(arc.first)} ~ ${fmtFull(arc.last)}` : '—'}</dd>
+            <div className="mf-bt-row">
+              <span>용량</span>
+              <b>{arc ? fmtMB(arc.bytes) : '—'}</b>
+              <em>{arc && arc.days ? `일평균 ${Math.round(arc.bytes / arc.days / 1024)}KB` : ''}</em>
             </div>
-            <div>
-              <dt>용량</dt>
-              <dd>{arc ? fmtMB(arc.bytes) : '—'}</dd>
+            <div className="mf-bt-foot">JSON 원본 + SQLite 색인 · 앱을 지워도 파일은 남습니다</div>
+          </div>
+        </div>
+
+        <div className="mf-cands">
+          <div className="mf-cand">
+            <div className="mf-cand-hd">
+              <span className="mf-cand-name">히트맵 기간</span>
+              <span className="mf-cand-score">{days}일</span>
             </div>
-          </dl>
-          {/* 이 칩은 아카이브가 아니라 아래 히트맵·계보가 보는 창을 바꾼다 — 라벨로 명시 */}
-          <div className="mf-arc-ctl">
-            <span className="mf-arc-ctl-lb">히트맵 기간</span>
-            <div className="mf-seg">
+            <div className="mf-seg wide">
               {DAY_OPTIONS.map((d) => (
                 <button key={d} type="button" className={days === d ? 'on' : ''} onClick={() => setDays(d)}>
                   {d}일
                 </button>
               ))}
             </div>
-            <button type="button" className="mf-btn" onClick={() => void collect()} disabled={busy}>
+            <p className="mf-tile-note">
+              아래 히트맵과 주도주 계보가 보는 창만 바꿉니다. 아카이브는 그대로 전부 남아 있습니다.
+            </p>
+          </div>
+
+          <div className="mf-cand">
+            <div className="mf-cand-hd">
+              <span className="mf-cand-name">수집</span>
+              <span className="mf-cand-score">{busy ? '진행 중' : '자동'}</span>
+            </div>
+            <button type="button" className="mf-btn wide" onClick={() => void collect()} disabled={busy}>
               {busy ? '수집 중…' : '오늘 수집'}
             </button>
-            {msg && <div className="mf-arc-msg">{msg}</div>}
+            {msg && <p className="mf-tile-msg">{msg}</p>}
+            <p className="mf-tile-note">
+              평소엔 마감 후 자동으로 저장됩니다. 앱을 며칠 꺼놨다면 이걸로 빠진 날짜를 메웁니다.
+            </p>
+          </div>
+
+          <div className="mf-cand">
+            <div className="mf-cand-hd">
+              <span className="mf-cand-name">수집 범위</span>
+              <span className="mf-cand-score">{THEME_N}테마</span>
+            </div>
+            <dl className="mf-tile-kv">
+              <div>
+                <dt>종목</dt>
+                <dd>{STOCK_N}종목</dd>
+              </div>
+              <div>
+                <dt>일별 항목</dt>
+                <dd>외국인 · 기관 · 거래대금 · 등락 · 종가</dd>
+              </div>
+              <div>
+                <dt>폴더</dt>
+                <dd className="path" title={arc?.dir ?? ''}>
+                  {arc?.dir ?? '—'}
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
+
+        <p className="mf-disclaimer">
+          거래일 하나가 JSON 파일 하나입니다. SQLite는 이 파일들로 언제든 다시 만들 수 있는 색인이라,
+          폴더만 복사해두면 그대로 백업입니다.
+        </p>
       </section>
 
       {err && <div className="mf-err">불러오지 못했습니다 — {err}</div>}
