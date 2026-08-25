@@ -3,9 +3,12 @@ import {
   collectFlow,
   fetchFlowHistory,
   fetchForecast,
+  fetchMomentum,
   type FlowHistory,
   type Forecast,
   type ForecastCandidate,
+  type Momentum,
+  type MomentumTheme,
 } from '../../api/client';
 import { StockBadge } from './shared';
 import { ChartPanel } from './ChartPanel';
@@ -254,6 +257,179 @@ function TodayLive({ onPick }: { onPick: (t: ChartTarget) => void }) {
   );
 }
 
+// ── 지금 주도 ──
+
+type MomSort = 'net' | 'strength';
+const MOM_DAYS = [5, 20, 60] as const;
+
+/**
+ * 예상 경로가 '아직 안 들어온 곳'을 찾는 반면, 이건 '이미 들어와서 끌고 가는 곳'이다.
+ *
+ * 정렬을 두 가지로 두는 이유(실측): 해운은 최근 20일 순매수 2,274억으로 금액순 6위지만
+ * 거래대금이 1.3조뿐이라 강도로는 +17.2%로 1위다. 반대로 바이오/제약은 5,718억으로
+ * 금액 1위지만 거래대금 9.9조라 강도는 +5.8%. 어느 쪽이 '주도'인지는 보는 사람이 정한다.
+ */
+function MomentumPanel({
+  mom,
+  days,
+  setDays,
+  onPick,
+}: {
+  mom: Momentum | null;
+  days: number;
+  setDays: (d: number) => void;
+  onPick: (t: ChartTarget) => void;
+}) {
+  const [sort, setSort] = useState<MomSort>('net');
+  const [open, setOpen] = useState<string | null>(null);
+
+  const rows = useMemo(() => {
+    const ts = [...(mom?.themes ?? [])];
+    if (sort === 'strength') {
+      // 강도가 없는 테마(거래대금 0)는 뒤로
+      ts.sort((a, b) => (b.strength ?? -Infinity) - (a.strength ?? -Infinity));
+    } else {
+      ts.sort((a, b) => b.net - a.net);
+    }
+    return ts;
+  }, [mom, sort]);
+
+  const max = useMemo(() => {
+    let m = 0;
+    rows.forEach((t) => {
+      const v = sort === 'strength' ? t.strength ?? 0 : t.net;
+      m = Math.max(m, Math.abs(v));
+    });
+    return m || 1;
+  }, [rows, sort]);
+
+  const controls = (
+    <div className="mf-mom-ctl">
+      <div className="mf-seg">
+        {MOM_DAYS.map((d) => (
+          <button key={d} type="button" className={days === d ? 'on' : ''} onClick={() => setDays(d)}>
+            {d}일
+          </button>
+        ))}
+      </div>
+      <div className="mf-seg">
+        <button type="button" className={sort === 'net' ? 'on' : ''} onClick={() => setSort('net')}>
+          금액순
+        </button>
+        <button type="button" className={sort === 'strength' ? 'on' : ''} onClick={() => setSort('strength')}>
+          강도순
+        </button>
+      </div>
+      {mom?.from && (
+        <span className="mf-dim">
+          {fmtFull(mom.from)} ~ {fmtFull(mom.to)}
+        </span>
+      )}
+    </div>
+  );
+
+  // 로딩/실패에도 기간·정렬 칩은 계속 붙여둔다 — 안 그러면 칩을 누른 순간 칩이 사라져
+  // 레이아웃이 튀고 연속으로 기간을 바꿀 수가 없다.
+  if (!mom) {
+    return (
+      <>
+        {controls}
+        <div className="mf-skel">지금 주도 계산 중…</div>
+      </>
+    );
+  }
+  if (!mom.ready) {
+    return (
+      <>
+        {controls}
+        <div className="mf-empty">{mom.reason ?? '데이터가 부족합니다.'}</div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {controls}
+      <ol className="mf-mom">
+        {rows.map((t, i) => (
+          <MomRow
+            key={t.theme}
+            t={t}
+            rank={i + 1}
+            sort={sort}
+            max={max}
+            open={open === t.theme}
+            onToggle={() => setOpen(open === t.theme ? null : t.theme)}
+            onPick={onPick}
+          />
+        ))}
+      </ol>
+      <p className="mf-note">
+        금액순은 절대 순매수(외국인+기관), 강도순은 거래대금 대비 비율입니다. 대형 테마는 금액이
+        크고 소형 테마는 강도가 높게 나오므로 둘을 같이 봐야 합니다. 테마를 누르면 주도주가 열립니다.
+      </p>
+    </>
+  );
+}
+
+function MomRow({
+  t,
+  rank,
+  sort,
+  max,
+  open,
+  onToggle,
+  onPick,
+}: {
+  t: MomentumTheme;
+  rank: number;
+  sort: MomSort;
+  max: number;
+  open: boolean;
+  onToggle: () => void;
+  onPick: (t: ChartTarget) => void;
+}) {
+  const v = sort === 'strength' ? t.strength ?? 0 : t.net;
+  const w = Math.min(100, (Math.abs(v) / max) * 100);
+  return (
+    <li className={open ? 'open' : ''}>
+      <button type="button" className="mf-mom-hd" onClick={onToggle} aria-expanded={open}>
+        <span className="mf-mom-rank">{rank}</span>
+        <span className="mf-mom-theme">{t.theme}</span>
+        <span className="mf-mom-bar">
+          <i className={v >= 0 ? 'pos' : 'neg'} style={{ width: `${w}%` }} />
+        </span>
+        <span className={`mf-mom-net ${t.net >= 0 ? 'pos' : 'neg'}`}>{signed(t.net)}</span>
+        <span className="mf-mom-str">
+          {t.strength == null ? '—' : `${t.strength >= 0 ? '+' : ''}${t.strength.toFixed(1)}%`}
+        </span>
+        <span className="mf-mom-days" title={`${t.nDays}일 중 ${t.posDays}일 순매수`}>
+          {t.streak > 0 && <em className="mf-streak">{t.streak}일 연속</em>}
+          {t.posDays}/{t.nDays}
+        </span>
+      </button>
+      {open && (
+        <ul className="mf-leaders mf-mom-leaders">
+          {t.leaders.length === 0 && <li className="mf-empty-li">주도주 데이터 없음</li>}
+          {t.leaders.map((l) => (
+            <li key={l.code}>
+              <button type="button" onClick={() => onPick(toTarget(l.code, l.name))} title={`${l.name} 상세`}>
+                <StockBadge name={l.name} symbol={l.code} size={18} />
+                <span className="mf-ld-name">{l.name}</span>
+                <span className={`mf-ld-net ${l.net >= 0 ? 'pos' : 'neg'}`}>{signed(l.net)}</span>
+                <span className={`mf-ld-ret ${l.ret >= 0 ? 'pos' : 'neg'}`}>
+                  {l.ret >= 0 ? '+' : ''}
+                  {l.ret.toFixed(2)}%
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 // ── 히트맵 ──
 
 type Metric = 'strength' | 'net';
@@ -415,6 +591,10 @@ export function MoneyFlow() {
   const [days, setDays] = useState<number>(120);
   const [hist, setHist] = useState<FlowHistory | null>(null);
   const [fc, setFc] = useState<Forecast | null>(null);
+  // 예상 경로(순환) ↔ 지금 주도(추세) — 일부러 반대 방향을 보므로 탭으로 나란히 둔다
+  const [pathTab, setPathTab] = useState<'forecast' | 'momentum'>('forecast');
+  const [momDays, setMomDays] = useState(20);
+  const [mom, setMom] = useState<Momentum | null>(null);
   const [metric, setMetric] = useState<Metric>('strength');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -444,6 +624,18 @@ export function MoneyFlow() {
     void load(days);
     return () => abortRef.current?.abort();
   }, [days, load]);
+
+  // 지금 주도 — 기간이 바뀔 때만 다시 받는다(탭 전환 시 재요청 없음)
+  useEffect(() => {
+    const ctrl = new AbortController();
+    setMom(null);
+    fetchMomentum(momDays, ctrl.signal)
+      .then((m) => !ctrl.signal.aborted && setMom(m))
+      .catch((e) => {
+        if (!ctrl.signal.aborted) setErr(e instanceof Error ? e.message : String(e));
+      });
+    return () => ctrl.abort();
+  }, [momDays]);
 
   const collect = useCallback(async () => {
     setBusy(true);
@@ -507,10 +699,32 @@ export function MoneyFlow() {
       <section className="card mf-card">
         <h3>
           <span className="dot" />
-          예상 경로
-          <span className="exch">다음 거래일 후보 · 적중률 동반</span>
+          {pathTab === 'forecast' ? '예상 경로' : '지금 주도'}
+          <span className="exch">
+            {pathTab === 'forecast' ? '아직 안 들어온 곳 · 적중률 동반' : '이미 들어와 끌고 가는 곳'}
+          </span>
+          <div className="mf-seg sm">
+            <button
+              type="button"
+              className={pathTab === 'forecast' ? 'on' : ''}
+              onClick={() => setPathTab('forecast')}
+            >
+              예상 경로
+            </button>
+            <button
+              type="button"
+              className={pathTab === 'momentum' ? 'on' : ''}
+              onClick={() => setPathTab('momentum')}
+            >
+              지금 주도
+            </button>
+          </div>
         </h3>
-        <ForecastPanel fc={fc} onPick={setSel} />
+        {pathTab === 'forecast' ? (
+          <ForecastPanel fc={fc} onPick={setSel} />
+        ) : (
+          <MomentumPanel mom={mom} days={momDays} setDays={setMomDays} onPick={setSel} />
+        )}
       </section>
 
       <section className="card mf-card">

@@ -334,6 +334,33 @@ export function fetchFlowHistory(days = 120, signal?: AbortSignal): Promise<Flow
   return getJSON<FlowHistory>(`/moneyflow/history?days=${days}`, signal, 20_000);
 }
 
+export interface MomentumTheme {
+  theme: string;
+  net: number;
+  foreign: number;
+  inst: number;
+  value: number;
+  strength: number | null;
+  streak: number;   // 최근 연속 순매수일
+  posDays: number;  // 창 안에서 순매수였던 날 수
+  nDays: number;
+  slots: number;
+  leaders: { code: string; name: string; net: number; ret: number }[];
+}
+export interface Momentum {
+  ready: boolean;
+  reason?: string;
+  days: number;
+  from?: string;
+  to?: string;
+  archiveDays?: number;
+  themes?: MomentumTheme[];
+}
+
+export function fetchMomentum(days = 20, signal?: AbortSignal): Promise<Momentum> {
+  return getJSON<Momentum>(`/moneyflow/momentum?days=${days}`, signal, 20_000);
+}
+
 export function fetchForecast(signal?: AbortSignal): Promise<Forecast> {
   return getJSON<Forecast>('/moneyflow/forecast', signal, 30_000);
 }

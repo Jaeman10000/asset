@@ -296,6 +296,15 @@ async def get_flow_history(days: int = 120) -> dict:
     return {"dates": sorted(set(dates)), "byDate": out, "archive": flow_store.archive_stats()}
 
 
+@router.get("/moneyflow/momentum")
+async def get_flow_momentum(days: int = 20) -> dict:
+    """지금 주도 — 최근 N거래일 누적 순매수 상위 테마 + 주도주.
+    forecast(순환 후보)와 반대 방향을 본다. 둘 다 필요해서 따로 낸다."""
+    from ..services import momentum as mom
+
+    return await run_in_threadpool(mom.momentum, days)
+
+
 @router.get("/moneyflow/forecast")
 async def get_flow_forecast() -> dict:
     """예상 경로 — 후보 테마 top3 + 주도주 5 + 워크포워드 백테스트 적중률."""
