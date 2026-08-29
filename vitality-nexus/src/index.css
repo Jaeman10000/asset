@@ -436,6 +436,14 @@ body {
   gap: 8px;
   padding-right: 2px;
 }
+/* 행은 절대 줄어들지 않는다. flex 자식 기본값이 flex-shrink:1이라 카드가 짧아지면
+   행이 세로로 눌리는데, .mini-holding이 overflow:hidden이라 눌린 만큼 글자가
+   가로로 썰려버린다(실측: 노트북 화면에서 좌측 3개 카드 전 행이 반토막).
+   행 높이는 고정하고, 넘치면 .list가 스크롤한다 — 아래 자동 페이지 크기와 함께
+   평소엔 스크롤도 안 생긴다. */
+.list-card .list > * {
+  flex: 0 0 auto;
+}
 .list::-webkit-scrollbar {
   width: 3px;
 }

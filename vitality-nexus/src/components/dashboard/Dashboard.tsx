@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChartTarget, MarketStock, PortfolioSnapshot, Position } from '../../api/types';
 import { krwCompact, pct } from '../../util/format';
 import { HoverCard, fromMarket, fromPosition, type HoverInfo, type HoverTarget } from './HoverCard';
@@ -132,6 +132,36 @@ function useRipple() {
 }
 
 /** 리스트 행 — 캡처 레퍼런스처럼 이름 · 라인그래프 · 값 · 등락%. 클릭 시 실시간 차트 */
+/**
+ * 리스트 칸에 실제로 들어가는 행 수. 행 높이를 렌더된 첫 행에서 재므로 화면 크기·
+ * 줌·폰트가 달라져도 맞는다. 컨테이너 높이는 카드 그리드가 정하고 자식 수에
+ * 영향받지 않아(.list는 flex:1 + overflow) 관찰 루프가 생기지 않는다.
+ */
+const ROW_GAP = 8;
+const ROW_H_FALLBACK = 46;
+
+function useFitCount(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [n, setN] = useState(5);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const calc = () => {
+      const h = el.clientHeight;
+      if (h <= 0) return;
+      const first = el.firstElementChild as HTMLElement | null;
+      const rowH = first?.offsetHeight || ROW_H_FALLBACK;
+      const fit = Math.floor((h + ROW_GAP) / (rowH + ROW_GAP));
+      setN(Math.max(1, fit));
+    };
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, n];
+}
+
 function MiniRow({
   p,
   onEnter,
@@ -207,7 +237,11 @@ function ListCard({
 }) {
   // 좁은 세로 칸에 전 종목을 욱여넣으면 행이 얇아져 안 보인다 → 페이지당 소수만
   // 보여주고 하단 점으로 넘긴다. 종목 수가 바뀌어도 페이지가 범위를 안 벗어나게 클램프.
-  const PAGE_SIZE = 5;
+  //
+  // 개수를 5로 못박아 뒀더니 노트북처럼 세로가 짧은 화면에서 5행이 안 들어가
+  // 마지막 행들이 잘렸다. 실제로 들어가는 만큼만 보여준다(행 높이는 렌더된 첫 행에서
+  // 측정 — 폰트·줌이 바뀌어도 따라간다).
+  const [listRef, PAGE_SIZE] = useFitCount();
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(positions.length / PAGE_SIZE));
   const cur = Math.min(page, pageCount - 1);
@@ -225,7 +259,7 @@ function ListCard({
           </span>
         )}
       </h3>
-      <div className="list">
+      <div className="list" ref={listRef}>
         {positions.length === 0 ? (
           <div className="list-empty">{empty}</div>
         ) : (
