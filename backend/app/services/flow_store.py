@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -25,10 +26,65 @@ from typing import Any, Iterable
 from ..paths import data_path
 
 
+def _docs_root() -> Path | None:
+    """문서\\VitalityNexus. 찾지 못하면 None."""
+    home = Path.home()
+    for name in ("Documents", "문서"):
+        d = home / name
+        if d.is_dir():
+            return d / "VitalityNexus"
+    return None
+
+
+_migrated = False
+
+
 def flow_dir() -> Path:
-    d = data_path("flow")
+    """자금 흐름 아카이브 폴더.
+
+    ⚠️ 앱 데이터 폴더(%APPDATA%\\com.jj.vitality-nexus)에 두면 안 된다 —
+    설치 관리자가 업데이트할 때 이전 버전 언인스톨러를 돌리고, 그게 앱 데이터를
+    통째로 지운다. 실측: 2026-08-25에 넣어둔 499일치가 8/26 v0.5.0 설치 때
+    사라지고(언인스톨러 10:54 → 새 파일 11:00) 100일로 재수집됐다.
+    수년치를 모으는 게 이 기능의 존재 이유인데 업데이트마다 리셋되면 의미가 없다.
+
+    그래서 설치 관리자가 건드리지 않는 문서 폴더에 둔다. 눈에 보이는 곳이라
+    백업(폴더 복사)도 쉽다. 예전 위치에 있던 파일은 최초 1회 옮겨온다.
+    """
+    global _migrated
+    env = os.environ.get("VITALITY_FLOW_DIR")
+    if env:
+        d = Path(env)
+    else:
+        root = _docs_root()
+        d = (root / "flow") if root else data_path("flow")
     d.mkdir(parents=True, exist_ok=True)
+
+    if not _migrated:
+        _migrated = True
+        try:
+            _migrate_legacy(d)
+        except Exception:
+            pass  # 이관 실패해도 신규 저장은 계속되어야 한다
     return d
+
+
+def _migrate_legacy(dest: Path) -> int:
+    """예전 위치(앱 데이터 폴더)에 남은 아카이브를 새 폴더로 복사한다.
+
+    원본은 지우지 않는다 — 옮기다 실패해도 데이터가 사라지지 않게.
+    """
+    legacy = data_path("flow")
+    if legacy.resolve() == dest.resolve() or not legacy.is_dir():
+        return 0
+    moved = 0
+    for src in legacy.glob("????-??-??.json"):
+        target = dest / src.name
+        if target.exists():
+            continue
+        shutil.copy2(src, target)
+        moved += 1
+    return moved
 
 
 def _db() -> sqlite3.Connection:
