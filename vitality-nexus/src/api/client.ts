@@ -305,10 +305,11 @@ export interface ForecastLeader {
 export interface ForecastCandidate {
   theme: string;
   score: number;
+  hold: number;    // 최근 5거래일 평균 강도 — 주신호
   trans: number;
   transN: number;
-  accel: number;
-  room: number;
+  accel: number;   // 점수 미반영, 참고용
+  room: number;    // 점수 미반영, 참고용
   slots: number;
   leaders: ForecastLeader[];
 }
@@ -355,6 +356,50 @@ export interface Momentum {
   to?: string;
   archiveDays?: number;
   themes?: MomentumTheme[];
+}
+
+// ── 순환 지도 (예측 아님 — 관측된 전이·상관만) ──
+
+export interface RotationTo {
+  theme: string;
+  n: number;
+  pct: number;
+  self: boolean;
+}
+export interface RotationTransition {
+  from: string;
+  n: number;
+  to: RotationTo[];
+}
+export interface RotationLink {
+  from: string;
+  to: string;
+  r: number;
+  p: number;
+  n: number;
+  self: boolean;
+  sign: '동행' | '경합';
+}
+export interface Rotation {
+  ready: boolean;
+  reason?: string;
+  lag?: number;
+  weeks: number;
+  from?: string;
+  to?: string;
+  themes?: number;
+  base?: number;
+  changeRate?: number;
+  alpha?: number;
+  tests?: number;
+  transitions?: RotationTransition[];
+  links?: RotationLink[];
+  selfLinks?: number;
+  crossLinks?: number;
+}
+
+export function fetchRotation(lag = 1, signal?: AbortSignal): Promise<Rotation> {
+  return getJSON<Rotation>(`/moneyflow/rotation?lag=${lag}`, signal, 30_000);
 }
 
 export function fetchMomentum(days = 20, signal?: AbortSignal): Promise<Momentum> {

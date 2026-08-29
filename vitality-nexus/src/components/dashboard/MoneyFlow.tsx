@@ -4,11 +4,13 @@ import {
   fetchFlowHistory,
   fetchForecast,
   fetchMomentum,
+  fetchRotation,
   type FlowHistory,
   type Forecast,
   type ForecastCandidate,
   type Momentum,
   type MomentumTheme,
+  type Rotation,
 } from '../../api/client';
 import { StockBadge } from './shared';
 import { ChartPanel } from './ChartPanel';
@@ -98,11 +100,11 @@ function CandidateCard({
   rank: number;
   onPick: (t: ChartTarget) => void;
 }) {
-  // 세 신호의 '가중 후' 기여도를 같은 축에서 비교 — 어떤 신호가 이 후보를 밀어올렸는지 보이게
-  const wTrans = c.trans * 0.45;
-  const wAccel = Math.max(0, c.accel) * 2.2;
-  const wRoom = Math.max(0, c.room) * 0.8;
-  const maxSig = Math.max(1, wTrans, wAccel, wRoom);
+  // 점수에 실제로 들어가는 두 신호만 막대로. 가속·여력은 검증에서 성능을 떨어뜨려
+  // 점수에서 뺐고(랜덤보다 나빴다), 아래 참고 줄에만 남긴다.
+  const wHold = c.hold * 1.0;
+  const wTrans = c.trans * 0.1;
+  const maxSig = Math.max(1, Math.abs(wHold), wTrans);
   return (
     <div className={`mf-cand rank${rank}`}>
       <div className="mf-cand-hd">
@@ -111,12 +113,15 @@ function CandidateCard({
         <span className="mf-cand-score">{c.score.toFixed(1)}</span>
       </div>
       <div className="mf-sigs">
+        <SignalBar label="지속" value={wHold} max={maxSig} tone="var(--up)" />
         <SignalBar label="전이" value={wTrans} max={maxSig} tone="var(--gold)" />
-        <SignalBar label="가속" value={wAccel} max={maxSig} tone="var(--emer)" />
-        <SignalBar label="여력" value={wRoom} max={maxSig} tone="var(--ice)" />
       </div>
       <div className="mf-sig-note">
-        전이 {c.trans.toFixed(1)}% ({c.transN}회) · 가속 {c.accel.toFixed(1)} · 여력 {c.room.toFixed(1)}
+        지속(5일 평균 강도) {c.hold.toFixed(1)} · 전이 {c.trans.toFixed(1)}% ({c.transN}회)
+        <br />
+        <span className="mf-sig-off">
+          참고(점수 미반영) — 가속 {c.accel.toFixed(1)} · 여력 {c.room.toFixed(1)}
+        </span>
       </div>
       <ul className="mf-leaders">
         {c.leaders.length === 0 && <li className="mf-empty-li">주도주 데이터 없음</li>}
@@ -178,8 +183,10 @@ function ForecastPanel({ fc, onPick }: { fc: Forecast | null; onPick: (t: ChartT
         ))}
       </div>
       <p className="mf-disclaimer">
-        점수는 전이확률·단기가속·순환여력 세 신호의 가중합입니다. 위 적중률은 예측 시점 이후 데이터를
-        전혀 쓰지 않은 워크포워드 검증 결과이며, 투자 판단의 근거가 아니라 관측 기록입니다.
+        점수 = 지속(최근 5거래일 평균 강도) × 1.0 + 전이확률 × 0.1. 가중치는 검증 구간을 보지 않은
+        과거 구간에서만 골랐습니다. 원래 쓰던 ‘가속·순환여력’은 검증에서 성능을 떨어뜨려 뺐습니다 —
+        특히 여력(소외된 곳)만 쓰면 Top3 12.0%로 랜덤(15.8%)보다 나빴습니다. 위 적중률은 예측 시점
+        이후 데이터를 전혀 쓰지 않은 워크포워드 검증 결과이며, 투자 판단의 근거가 아니라 관측 기록입니다.
       </p>
     </>
   );
@@ -440,6 +447,112 @@ function MomRow({
   );
 }
 
+// ── 순환 지도 ──
+
+/**
+ * 예측이 아니라 **관측**만 보여주는 탭. "반도체 다음은 로봇" 같은 통념이 우리
+ * 데이터에 실제로 있는지 직접 확인하라는 용도라서, 통과 못한 것도 숨기지 않는다.
+ *
+ * 다중비교 보정을 반드시 표기한다 — 19×19=361쌍을 동시에 보면 p<0.05짜리 우연이
+ * 18개쯤 저절로 나온다. 그걸 '발견'이라고 부르면 안 된다.
+ */
+function RotationPanel({ rot }: { rot: Rotation | null }) {
+  if (!rot) return <div className="mf-skel">순환 지도 계산 중…</div>;
+  if (!rot.ready) return <div className="mf-empty">{rot.reason ?? '데이터가 부족합니다.'}</div>;
+
+  const cross = rot.crossLinks ?? 0;
+  return (
+    <>
+      <div className="mf-fc-top">
+        <div className="mf-fc-meta">
+          <span className="mf-fc-lead">
+            주간 1위 교체율 <b>{rot.changeRate}%</b>
+          </span>
+          <span className="mf-dim">
+            {rot.weeks}주 관측 · {rot.from} ~ {rot.to} · 테마 {rot.themes}개
+          </span>
+        </div>
+        <div className={`mf-bt${cross > 0 ? ' mid' : ' bad'}`}>
+          <div className="mf-bt-row">
+            <span>자기지속 연결</span>
+            <b>{rot.selfLinks ?? 0}쌍</b>
+            <em>돈이 머문다</em>
+          </div>
+          <div className="mf-bt-row">
+            <span>타 테마 연결</span>
+            <b>{cross}쌍</b>
+            <em>돈이 옮겨간다</em>
+          </div>
+          <div className="mf-bt-foot">
+            {rot.tests}쌍 동시검정 · 본페로니 p &lt; {rot.alpha?.toExponential(1)}
+          </div>
+        </div>
+      </div>
+
+      <p className="mf-note mf-verdict">
+        {cross === 0 ? (
+          <>
+            <b>고정 순환 루트는 관측되지 않았습니다.</b> 통계적으로 살아남은 연결은 전부
+            ‘같은 테마가 다음 주에도 1위’ 뿐입니다.
+          </>
+        ) : (
+          <>
+            타 테마로 이어지는 연결이 <b>{cross}쌍</b> 관측됐습니다. 나머지는 자기지속입니다.
+          </>
+        )}
+      </p>
+
+      <div className="mf-rot-cols">
+        <div>
+          <h4 className="mf-sub">검정을 통과한 연결</h4>
+          <ul className="mf-links">
+            {(rot.links ?? []).length === 0 && <li className="mf-empty-li">통과한 연결이 없습니다.</li>}
+            {(rot.links ?? []).map((l) => (
+              <li key={`${l.from}-${l.to}`}>
+                <span className="mf-link-from">{l.from}</span>
+                <span className="mf-link-arrow">→</span>
+                <span className="mf-link-to">{l.to}</span>
+                <span className={`mf-link-tag ${l.self ? 'self' : l.sign === '경합' ? 'neg' : 'pos'}`}>
+                  {l.self ? '자기지속' : l.sign}
+                </span>
+                <span className="mf-link-r">r {l.r >= 0 ? '+' : ''}{l.r.toFixed(2)}</span>
+                <span className="mf-link-n">n={l.n}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="mf-sub">1위였던 다음 주, 실제 1위</h4>
+          <ul className="mf-trans">
+            {(rot.transitions ?? []).map((t) => (
+              <li key={t.from}>
+                <span className="mf-trans-from">
+                  {t.from}
+                  <em>{t.n}회</em>
+                </span>
+                <span className="mf-trans-to">
+                  {t.to.map((x, i) => (
+                    <span key={x.theme} className={x.self ? 'same' : ''}>
+                      {i > 0 && ' · '}
+                      {x.theme} {x.pct.toFixed(0)}%
+                    </span>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <p className="mf-disclaimer">
+        주간으로 묶어 봅니다(일간은 1위가 하루 만에 튀어 노이즈가 큽니다). 표의 %는 관측 빈도이고,
+        랜덤 기준선은 {rot.base}%입니다. 표본이 {rot.transitions?.[0]?.n ?? 0}회 안팎이라 개별 칸의
+        숫자는 우연일 수 있어, 왼쪽 목록에는 {rot.tests}쌍 동시검정을 통과한 것만 실었습니다.
+      </p>
+    </>
+  );
+}
+
 // ── 히트맵 ──
 
 type Metric = 'strength' | 'net';
@@ -602,7 +715,8 @@ export function MoneyFlow() {
   const [hist, setHist] = useState<FlowHistory | null>(null);
   const [fc, setFc] = useState<Forecast | null>(null);
   // 예상 경로(순환) ↔ 지금 주도(추세) — 일부러 반대 방향을 보므로 탭으로 나란히 둔다
-  const [pathTab, setPathTab] = useState<'forecast' | 'momentum'>('forecast');
+  const [pathTab, setPathTab] = useState<'forecast' | 'momentum' | 'rotation'>('forecast');
+  const [rot, setRot] = useState<Rotation | null>(null);
   const [momDays, setMomDays] = useState(20);
   const [mom, setMom] = useState<Momentum | null>(null);
   const [metric, setMetric] = useState<Metric>('strength');
@@ -634,6 +748,17 @@ export function MoneyFlow() {
     void load(days);
     return () => abortRef.current?.abort();
   }, [days, load]);
+
+  // 순환 지도 — 아카이브 전체를 훑으므로 화면 진입 시 한 번만
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetchRotation(1, ctrl.signal)
+      .then((r) => !ctrl.signal.aborted && setRot(r))
+      .catch(() => {
+        /* 순환 지도는 보조 정보 — 실패해도 나머지 화면은 그대로 */
+      });
+    return () => ctrl.abort();
+  }, []);
 
   // 지금 주도 — 기간이 바뀔 때만 다시 받는다(탭 전환 시 재요청 없음)
   useEffect(() => {
@@ -776,9 +901,13 @@ export function MoneyFlow() {
       <section className="card mf-card">
         <h3>
           <span className="dot" />
-          {pathTab === 'forecast' ? '예상 경로' : '지금 주도'}
+          {pathTab === 'forecast' ? '예상 경로' : pathTab === 'momentum' ? '지금 주도' : '순환 지도'}
           <span className="exch">
-            {pathTab === 'forecast' ? '아직 안 들어온 곳 · 적중률 동반' : '이미 들어와 끌고 가는 곳'}
+            {pathTab === 'forecast'
+              ? '다음 거래일 후보 · 적중률 동반'
+              : pathTab === 'momentum'
+                ? '이미 들어와 끌고 가는 곳'
+                : '예측 아님 · 관측된 연결만'}
           </span>
           <div className="mf-seg sm">
             <button
@@ -795,12 +924,21 @@ export function MoneyFlow() {
             >
               지금 주도
             </button>
+            <button
+              type="button"
+              className={pathTab === 'rotation' ? 'on' : ''}
+              onClick={() => setPathTab('rotation')}
+            >
+              순환 지도
+            </button>
           </div>
         </h3>
         {pathTab === 'forecast' ? (
           <ForecastPanel fc={fc} onPick={setSel} />
-        ) : (
+        ) : pathTab === 'momentum' ? (
           <MomentumPanel mom={mom} days={momDays} setDays={setMomDays} onPick={setSel} />
+        ) : (
+          <RotationPanel rot={rot} />
         )}
       </section>
 

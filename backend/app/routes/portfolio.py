@@ -305,6 +305,27 @@ async def get_flow_momentum(days: int = 20) -> dict:
     return await run_in_threadpool(mom.momentum, days)
 
 
+@router.get("/moneyflow/rotation")
+async def get_flow_rotation(lag: int = 1) -> dict:
+    """순환 지도 — 예측이 아니라 관측. 주간 전이표 + 다중비교 보정을 통과한
+    선행-후행 상관만 낸다. '공식 루트'가 실제로 있는지 눈으로 확인하는 용도."""
+    from ..services import rotation as rot
+
+    return await run_in_threadpool(rot.rotation, lag)
+
+
+@router.get("/moneyflow/route")
+async def get_flow_route(path: str, lag: int = 1) -> dict:
+    """특정 루트 검정 — path=반도체,로봇,전력/유틸 처럼 콤마로 넘긴다."""
+    from ..services import rotation as rot
+
+    names = [x.strip() for x in path.split(",") if x.strip()]
+    if len(names) < 2:
+        return {"route": names, "steps": [], "supported": False,
+                "error": "테마를 2개 이상 지정하세요"}
+    return await run_in_threadpool(rot.check_route, names, lag)
+
+
 @router.get("/moneyflow/forecast")
 async def get_flow_forecast() -> dict:
     """예상 경로 — 후보 테마 top3 + 주도주 5 + 워크포워드 백테스트 적중률."""

@@ -3491,6 +3491,100 @@ body {
   opacity: 0.78;
 }
 
+/* ── 순환 지도 ── */
+.mf-sig-off { color: var(--sub); }
+.mf-verdict {
+  margin: 4px 0 12px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--life);
+  font-size: 11.5px;
+  opacity: 1;
+}
+.mf-verdict b { color: var(--fg); }
+.mf-rot-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 20px;
+}
+.mf-sub {
+  margin: 0 0 7px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sub);
+  font-weight: 500;
+}
+.mf-links,
+.mf-trans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+.mf-links li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr) 58px 56px 42px;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.mf-link-from,
+.mf-link-to {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.mf-link-arrow { color: var(--sub); text-align: center; }
+.mf-link-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.mf-link-tag.self { color: var(--dim); background: rgba(255, 255, 255, 0.07); }
+.mf-link-tag.pos { color: var(--up); background: rgba(255, 93, 115, 0.14); }
+.mf-link-tag.neg { color: var(--down); background: rgba(91, 140, 255, 0.14); }
+.mf-link-r { text-align: right; color: var(--life); font-weight: 700; }
+.mf-link-n { text-align: right; font-size: 10px; color: var(--sub); }
+
+.mf-trans li {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 9px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.mf-trans-from { font-weight: 700; }
+.mf-trans-from em {
+  font-style: normal;
+  font-size: 9.5px;
+  color: var(--sub);
+  margin-left: 5px;
+}
+.mf-trans-to { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-trans-to .same { color: var(--gold); }
+
+@media (max-width: 1250px) {
+  .mf-rot-cols { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ── 지금 주도 ── */
 .mf-mom-ctl {
   display: flex;

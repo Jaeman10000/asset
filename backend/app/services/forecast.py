@@ -4,10 +4,23 @@
 없어 오히려 해롭다. 그래서 항상 워크포워드 백테스트(예측 시점 이후 데이터 절대 미참조)
 결과를 함께 반환하고, 랜덤 기준선(19테마 중 3개 = 15.8%)과 비교해 보여준다.
 
-점수 = 3개 신호의 가중합 (가중치는 손으로 정한 초기값 — 데이터가 쌓이면 튜닝 대상)
-  ① 전이확률  오늘 1위 테마 다음날 이 테마가 1위였던 과거 비율   × 0.45
-  ② 단기가속  최근 3일 평균 강도 − 10일 평균 강도 (조용한 매집)   × 2.20
-  ③ 순환여력  최근 10일 평균 강도의 음수 (소외된 정도)            × 0.80
+── v2에서 모델을 갈아엎은 이유 ──────────────────────────────────
+초기 모델은 '순환'을 가정했다: 전이확률 + 단기가속 + 순환여력(소외된 정도).
+503거래일(2024-08 ~ 2026-08)이 쌓인 뒤 검증해보니 그 가정이 틀렸다.
+
+  튜닝 구간과 검증 구간을 분리한 워크포워드 (검증 200일, 랜덤 Top3 = 15.8%)
+    현재 모델(전이·가속·여력)          Top1 10.5%  Top3 25.0%
+    지속만 (최근 5일 평균 강도 상위)     Top1 18.5%  Top3 36.0%   ← 압도
+    가속만                          Top1  9.5%  Top3 23.0%
+    여력만 (소외된 곳)                Top1  4.0%  Top3 12.0%   ← 랜덤보다 나쁨
+
+  주간 선행-후행 상관 전수검정(109주, 361쌍 × 시차 1~4주, 본페로니 보정)
+    통과한 쌍: 자기지속 6쌍 + 타 테마 1쌍(이차전지→전력/유틸 r=-0.38, 경합)
+    '반도체 → 로봇' 같은 고정 순환 루트: r=+0.005 (p=0.96) — 근거 없음
+
+즉 이 시장에서 실제로 관측되는 건 순환이 아니라 **지속(모멘텀)**이다.
+'소외된 곳이 다음 차례'라는 직관은 데이터상 랜덤보다도 못했다. 그래서 여력을 버리고
+지속을 주신호로 삼는다. 가중치는 검증 구간을 보지 않은 과거 구간에서만 골랐다.
 """
 from __future__ import annotations
 
@@ -17,7 +30,10 @@ from typing import Any
 from .themes import CODE_NAME, THEME_CODES
 from . import flow_store
 
-W_TRANS, W_ACCEL, W_ROOM = 0.45, 2.20, 0.80
+# 튜닝 구간(검증 200일과 겹치지 않는 과거 184일)에서 격자탐색으로 고른 값.
+# 가속·여력은 어떤 가중치를 줘도 성능이 떨어져 0으로 수렴했다.
+W_HOLD, W_TRANS = 1.0, 0.1
+HOLD_DAYS = 5      # 지속 = 최근 5거래일 평균 강도
 TOP_N = 3
 LEADERS_N = 5
 
@@ -42,6 +58,11 @@ def _leader_at(strength: dict[str, dict[str, float]], date: str) -> str | None:
     return best
 
 
+def _avg(series: dict[str, float], hist: list[str], k: int) -> float | None:
+    v = [series[d] for d in hist[-k:] if d in series]
+    return sum(v) / len(v) if v else None
+
+
 def _score_at(
     dates: list[str], strength: dict[str, dict[str, float]], idx: int
 ) -> tuple[str | None, list[dict[str, Any]], int]:
@@ -49,7 +70,7 @@ def _score_at(
     hist = dates[: idx + 1]
     cur = _leader_at(strength, hist[-1])
 
-    # ① 전이 빈도
+    # 전이 빈도 — 오늘 1위가 cur였을 때, 다음날 1위가 무엇이었나
     trans: dict[str, int] = defaultdict(int)
     total = 0
     for a, b in zip(hist, hist[1:]):
@@ -59,25 +80,23 @@ def _score_at(
                 trans[nb] += 1
                 total += 1
 
-    recent10 = hist[-10:]
-    recent3 = hist[-3:]
     out = []
     for theme, series in strength.items():
-        s3 = [series[d] for d in recent3 if d in series]
-        s10 = [series[d] for d in recent10 if d in series]
-        if not s3 or not s10:
+        hold = _avg(series, hist, HOLD_DAYS)
+        if hold is None:
             continue
-        avg3, avg10 = sum(s3) / len(s3), sum(s10) / len(s10)
+        a3 = _avg(series, hist, 3)
+        a10 = _avg(series, hist, 10)
         trans_p = (trans.get(theme, 0) / total * 100) if total else 0.0
-        accel = avg3 - avg10
-        room = -avg10
         out.append({
             "theme": theme,
-            "score": round(trans_p * W_TRANS + max(0.0, accel) * W_ACCEL + max(0.0, room) * W_ROOM, 1),
+            "score": round(hold * W_HOLD + trans_p * W_TRANS, 1),
+            "hold": round(hold, 1),
             "trans": round(trans_p, 1),
             "transN": trans.get(theme, 0),
-            "accel": round(accel, 1),
-            "room": round(room, 1),
+            # 아래 둘은 점수에 안 들어간다 — 참고용 진단값(위 docstring의 검증 결과 참고)
+            "accel": round(a3 - a10, 1) if (a3 is not None and a10 is not None) else 0.0,
+            "room": round(-a10, 1) if a10 is not None else 0.0,
         })
     out.sort(key=lambda x: -x["score"])
     return cur, out, total
@@ -104,7 +123,7 @@ def _leaders(theme: str, dates: list[str]) -> list[dict[str, Any]]:
     return out[:LEADERS_N]
 
 
-def backtest(dates: list[str], strength: dict[str, dict[str, float]], days: int = 60) -> dict[str, Any]:
+def backtest(dates: list[str], strength: dict[str, dict[str, float]], days: int = 200) -> dict[str, Any]:
     """워크포워드 검증 — 각 시점에서 그 이전 데이터만으로 예측하고 다음날 실제와 대조."""
     n = hit1 = hit3 = 0
     start = max(15, len(dates) - days - 1)  # 최소 15일은 학습 구간으로 남김
@@ -153,5 +172,5 @@ def forecast() -> dict[str, Any]:
         "candidates": cands,
         "backtest": backtest(dates, strength),
         "days": len(dates),
-        "weights": {"trans": W_TRANS, "accel": W_ACCEL, "room": W_ROOM},
+        "weights": {"hold": W_HOLD, "trans": W_TRANS, "holdDays": HOLD_DAYS},
     }
