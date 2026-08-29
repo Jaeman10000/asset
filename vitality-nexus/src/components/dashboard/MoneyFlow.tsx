@@ -11,6 +11,8 @@ import {
   type Momentum,
   type MomentumTheme,
   type Rotation,
+  type RouteCheck,
+  checkRoute,
 } from '../../api/client';
 import { StockBadge } from './shared';
 import { ChartPanel } from './ChartPanel';
@@ -449,106 +451,253 @@ function MomRow({
 
 // ── 순환 지도 ──
 
+/** 테마 이름 → 고정 색상. 타임라인에서 같은 테마가 같은 색이어야 '머문다'가 눈에 띈다. */
+function themeHue(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+}
+
+/** 루트 검사기 — 사용자가 믿는 순환 경로를 직접 넣어보고 데이터에 있는지 확인한다. */
+function RouteChecker({ themes }: { themes: string[] }) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const [res, setRes] = useState<RouteCheck | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const add = (t: string) => {
+    if (picked.length >= 4 || picked[picked.length - 1] === t) return;
+    setPicked([...picked, t]);
+    setRes(null);
+  };
+  const run = async () => {
+    if (picked.length < 2) return;
+    setBusy(true);
+    try {
+      setRes(await checkRoute(picked));
+    } catch {
+      setRes(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mf-route">
+      <h4 className="mf-sub">내가 아는 순환 루트, 데이터에 있나?</h4>
+      <p className="mf-tl-note">
+        테마를 순서대로 눌러 경로를 만든 뒤 <b>확인</b>을 누르세요. 예: 반도체 → 로봇 → 전력/유틸
+      </p>
+
+      <div className="mf-route-picked">
+        {picked.length === 0 && <span className="mf-route-ph">아래에서 테마를 골라주세요</span>}
+        {picked.map((t, i) => (
+          <span key={`${t}-${i}`} className="mf-route-chip">
+            {i > 0 && <em>→</em>}
+            <b style={{ borderColor: `hsl(${themeHue(t)},60%,55%)` }}>{t}</b>
+          </span>
+        ))}
+        {picked.length > 0 && (
+          <button
+            type="button"
+            className="mf-route-clear"
+            onClick={() => {
+              setPicked([]);
+              setRes(null);
+            }}
+          >
+            지우기
+          </button>
+        )}
+        <button type="button" className="mf-btn" disabled={picked.length < 2 || busy} onClick={() => void run()}>
+          {busy ? '확인 중…' : '확인'}
+        </button>
+      </div>
+
+      <div className="mf-route-pool">
+        {themes.map((t) => (
+          <button key={t} type="button" onClick={() => add(t)} disabled={picked.length >= 4}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {res && (
+        <div className={`mf-route-res ${res.supported ? 'ok' : res.okCount > 0 ? 'part' : 'no'}`}>
+          <div className="mf-route-head">
+            {res.supported
+              ? '이 경로는 데이터가 뒷받침합니다.'
+              : res.okCount > 0
+                ? `${res.stepCount}구간 중 ${res.okCount}구간만 근거가 있습니다.`
+                : '이 경로는 데이터에서 확인되지 않습니다.'}
+          </div>
+          <ul>
+            {res.steps.map((st, i) => (
+              <li key={i}>
+                <span className="mf-route-step">
+                  {st.from} <em>→</em> {st.to}
+                </span>
+                {st.error ? (
+                  <span className="mf-route-plain">{st.error}</span>
+                ) : (
+                  <>
+                    <span className="mf-route-plain">
+                      {st.from} 1위 <b>{st.led}번</b> 중 다음 주 {st.to} 1위 <b>{st.seen}번</b>
+                      <span className="mf-route-exp"> · 우연이라면 {st.expected}번쯤</span>
+                    </span>
+                    <span
+                      className={`mf-route-tag ${
+                        st.verdict === '근거 있음' ? 'vok' : st.verdict === '근거 없음' ? 'vno' : 'vmid'
+                      }`}
+                    >
+                      {st.verdict}
+                    </span>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
- * 예측이 아니라 **관측**만 보여주는 탭. "반도체 다음은 로봇" 같은 통념이 우리
- * 데이터에 실제로 있는지 직접 확인하라는 용도라서, 통과 못한 것도 숨기지 않는다.
+ * 순환 지도 — 예측이 아니라 **관측**만 보여준다.
  *
- * 다중비교 보정을 반드시 표기한다 — 19×19=361쌍을 동시에 보면 p<0.05짜리 우연이
- * 18개쯤 저절로 나온다. 그걸 '발견'이라고 부르면 안 된다.
+ * 처음 쓰는 사람이 "저게 뭐야?" 하지 않도록: 통계 용어(r, p, 본페로니, 'N쌍')를 앞에
+ * 두지 않는다. 대신 ① 한 줄 결론 ② 최근 흐름을 색 띠로 눈에 보이게 ③ '몇 번 중 몇 번'처럼
+ * 셀 수 있는 말 ④ 본인이 아는 루트를 직접 넣어보게 한다. 통계 상세는 접어 둔다.
  */
 function RotationPanel({ rot }: { rot: Rotation | null }) {
+  const [detail, setDetail] = useState(false);
   if (!rot) return <div className="mf-skel">순환 지도 계산 중…</div>;
   if (!rot.ready) return <div className="mf-empty">{rot.reason ?? '데이터가 부족합니다.'}</div>;
 
-  const cross = rot.crossLinks ?? 0;
+  // 구간을 너무 많이 넣으면 칸이 25px까지 좁아져 테마명이 잘린다(실측).
+  // 최근 14구간만 — 이름이 항상 읽히는 게 '눈으로 본다'는 목적에 더 중요하다.
+  const tl = (rot.timeline ?? []).slice(-14);
+  const maxRun = Math.max(1, ...tl.map((t) => t.weeks));
+  const stay = rot.stayPct ?? 0;
+  const base = rot.base ?? 5.3;
+
   return (
     <>
-      <div className="mf-fc-top">
-        <div className="mf-fc-meta">
-          <span className="mf-fc-lead">
-            주간 1위 교체율 <b>{rot.changeRate}%</b>
-          </span>
-          <span className="mf-dim">
-            {rot.weeks}주 관측 · {rot.from} ~ {rot.to} · 테마 {rot.themes}개
-          </span>
-        </div>
-        <div className={`mf-bt${cross > 0 ? ' mid' : ' bad'}`}>
-          <div className="mf-bt-row">
-            <span>자기지속 연결</span>
-            <b>{rot.selfLinks ?? 0}쌍</b>
-            <em>돈이 머문다</em>
-          </div>
-          <div className="mf-bt-row">
-            <span>타 테마 연결</span>
-            <b>{cross}쌍</b>
-            <em>돈이 옮겨간다</em>
-          </div>
-          <div className="mf-bt-foot">
-            {rot.tests}쌍 동시검정 · 본페로니 p &lt; {rot.alpha?.toExponential(1)}
-          </div>
-        </div>
+      <div className="mf-rot-lead">
+        <b>돈은 옮겨 다니기보다 그 자리에 머뭅니다.</b>
+        <span>
+          {rot.weeks}주({rot.from} ~ {rot.to})를 살펴봤습니다. 1위 테마가 다음 주에도 1위인 경우가{' '}
+          <b>
+            {rot.ledN}번 중 {rot.stayN}번({stay}%)
+          </b>{' '}
+          — 아무 관계가 없다면 {base}%여야 하는 값입니다. 반면 ‘이 테마 다음엔 저 테마’라는 고정 경로는
+          찾지 못했습니다.
+        </span>
       </div>
 
-      <p className="mf-note mf-verdict">
-        {cross === 0 ? (
-          <>
-            <b>고정 순환 루트는 관측되지 않았습니다.</b> 통계적으로 살아남은 연결은 전부
-            ‘같은 테마가 다음 주에도 1위’ 뿐입니다.
-          </>
-        ) : (
-          <>
-            타 테마로 이어지는 연결이 <b>{cross}쌍</b> 관측됐습니다. 나머지는 자기지속입니다.
-          </>
-        )}
-      </p>
-
-      <div className="mf-rot-cols">
-        <div>
-          <h4 className="mf-sub">검정을 통과한 연결</h4>
-          <ul className="mf-links">
-            {(rot.links ?? []).length === 0 && <li className="mf-empty-li">통과한 연결이 없습니다.</li>}
-            {(rot.links ?? []).map((l) => (
-              <li key={`${l.from}-${l.to}`}>
-                <span className="mf-link-from">{l.from}</span>
-                <span className="mf-link-arrow">→</span>
-                <span className="mf-link-to">{l.to}</span>
-                <span className={`mf-link-tag ${l.self ? 'self' : l.sign === '경합' ? 'neg' : 'pos'}`}>
-                  {l.self ? '자기지속' : l.sign}
-                </span>
-                <span className="mf-link-r">r {l.r >= 0 ? '+' : ''}{l.r.toFixed(2)}</span>
-                <span className="mf-link-n">n={l.n}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h4 className="mf-sub">1위였던 다음 주, 실제 1위</h4>
-          <ul className="mf-trans">
-            {(rot.transitions ?? []).map((t) => (
-              <li key={t.from}>
-                <span className="mf-trans-from">
-                  {t.from}
-                  <em>{t.n}회</em>
-                </span>
-                <span className="mf-trans-to">
-                  {t.to.map((x, i) => (
-                    <span key={x.theme} className={x.self ? 'same' : ''}>
-                      {i > 0 && ' · '}
-                      {x.theme} {x.pct.toFixed(0)}%
-                    </span>
-                  ))}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <h4 className="mf-sub">최근 흐름 · 칸 너비 = 1위를 지킨 주 수</h4>
+      <div className="mf-tl">
+        {tl.map((t, i) => (
+          <div
+            key={`${t.theme}-${t.from}-${i}`}
+            className="mf-tl-cell"
+            style={{
+              flexGrow: t.weeks,
+              background: `hsl(${themeHue(t.theme)},55%,${34 + (t.weeks / maxRun) * 18}%)`,
+            }}
+            title={`${t.theme} · ${t.from}${t.weeks > 1 ? ` ~ ${t.to}` : ''} · ${t.weeks}주 연속 1위`}
+          >
+            <span>{t.theme}</span>
+            {t.weeks > 1 && <em>{t.weeks}주</em>}
+          </div>
+        ))}
       </div>
-
-      <p className="mf-disclaimer">
-        주간으로 묶어 봅니다(일간은 1위가 하루 만에 튀어 노이즈가 큽니다). 표의 %는 관측 빈도이고,
-        랜덤 기준선은 {rot.base}%입니다. 표본이 {rot.transitions?.[0]?.n ?? 0}회 안팎이라 개별 칸의
-        숫자는 우연일 수 있어, 왼쪽 목록에는 {rot.tests}쌍 동시검정을 통과한 것만 실었습니다.
+      <p className="mf-tl-note">
+        칸 하나가 ‘1위였던 한 구간’입니다. 넓은 칸은 그 테마가 여러 주 연속 1위였다는 뜻이고, 좁은 칸이
+        이어지는 구간은 1위가 매주 갈아치워진 구간입니다. 그 순서에는 규칙이 없었습니다.
       </p>
+
+      <h4 className="mf-sub">테마별 버티는 힘 · 1위가 된 뒤 다음 주에도 1위였던 비율</h4>
+      <ul className="mf-sticky">
+        {(rot.stickiness ?? []).slice(0, 8).map((x) => (
+          <li key={x.theme}>
+            <span className="mf-sticky-name">{x.theme}</span>
+            <span className="mf-sticky-bar">
+              <i
+                style={{ width: `${Math.min(100, x.pct)}%`, background: `hsl(${themeHue(x.theme)},60%,55%)` }}
+              />
+              <u style={{ left: `${base}%` }} title={`아무 관계 없을 때 ${base}%`} />
+            </span>
+            <span className="mf-sticky-pct">{x.pct.toFixed(0)}%</span>
+            <span className="mf-sticky-n">
+              {x.led}번 중 {x.stayed}번
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mf-tl-note">
+        막대 위 세로선이 ‘아무 관계 없을 때’ 기대되는 {base}%입니다. 대부분이 그 선을 크게 넘습니다 —
+        1위를 한 테마는 다음 주에도 1위일 가능성이 높다는 뜻입니다.
+      </p>
+
+      <RouteChecker themes={rot.themeList ?? []} />
+
+      <button type="button" className="mf-more" onClick={() => setDetail(!detail)}>
+        {detail ? '통계 상세 접기 ▲' : '통계 상세 보기 ▼'}
+      </button>
+      {detail && (
+        <div className="mf-rot-cols">
+          <div>
+            <h4 className="mf-sub">검정을 통과한 연결</h4>
+            <p className="mf-tl-note">
+              테마 {rot.themes}개를 서로 짝지으면 {rot.tests}쌍입니다. 이만큼 한꺼번에 보면 우연히 ‘의미
+              있어 보이는’ 쌍이 18개쯤 저절로 생기므로, 기준을 훨씬 엄격하게 잡아(p &lt;{' '}
+              {rot.alpha?.toExponential(1)}) 통과한 것만 실었습니다. ‘자기지속’은 자기 자신과의 연결,
+              ‘경합’은 한쪽이 오르면 다른 쪽이 빠지는 관계입니다.
+            </p>
+            <ul className="mf-links">
+              {(rot.links ?? []).length === 0 && <li className="mf-empty-li">통과한 연결이 없습니다.</li>}
+              {(rot.links ?? []).map((l) => (
+                <li key={`${l.from}-${l.to}`}>
+                  <span className="mf-link-from">{l.from}</span>
+                  <span className="mf-link-arrow">→</span>
+                  <span className="mf-link-to">{l.to}</span>
+                  <span className={`mf-link-tag ${l.self ? 'self' : l.sign === '경합' ? 'neg' : 'pos'}`}>
+                    {l.self ? '자기지속' : l.sign}
+                  </span>
+                  <span className="mf-link-r">
+                    r {l.r >= 0 ? '+' : ''}
+                    {l.r.toFixed(2)}
+                  </span>
+                  <span className="mf-link-n">n={l.n}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="mf-sub">1위였던 다음 주, 실제 1위</h4>
+            <p className="mf-tl-note">관측 빈도입니다. 아무 관계 없을 때 기대값은 {base}%입니다.</p>
+            <ul className="mf-trans">
+              {(rot.transitions ?? []).map((t) => (
+                <li key={t.from}>
+                  <span className="mf-trans-from">
+                    {t.from}
+                    <em>{t.n}회</em>
+                  </span>
+                  <span className="mf-trans-to">
+                    {t.to.map((x, i) => (
+                      <span key={x.theme} className={x.self ? 'same' : ''}>
+                        {i > 0 && ' · '}
+                        {x.theme} {x.pct.toFixed(0)}%
+                      </span>
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </>
   );
 }

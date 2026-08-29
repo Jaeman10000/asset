@@ -3493,17 +3493,199 @@ body {
 
 /* ── 순환 지도 ── */
 .mf-sig-off { color: var(--sub); }
-.mf-verdict {
-  margin: 4px 0 12px;
-  padding: 8px 12px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.03);
-  border-left: 2px solid var(--life);
-  font-size: 11.5px;
-  opacity: 1;
+
+/* 한 줄 결론 — 화면에 들어오자마자 '무엇을 본 것인지'가 먼저 읽혀야 한다 */
+.mf-rot-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 14px;
+  margin-bottom: 14px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(167, 139, 250, 0.04));
+  border: 1px solid rgba(167, 139, 250, 0.25);
 }
-.mf-verdict b { color: var(--fg); }
+.mf-rot-lead > b { font-size: 15px; letter-spacing: -0.01em; }
+.mf-rot-lead > span { font-size: 11.5px; line-height: 1.65; color: var(--dim); }
+.mf-rot-lead > span b { color: var(--fg); }
+
+/* 최근 흐름 띠 — 칸 너비가 '몇 주 버텼나' */
+.mf-tl {
+  display: flex;
+  gap: 3px;
+  height: 46px;
+  margin-bottom: 7px;
+  overflow-x: auto;  /* 창이 아주 좁을 때만 스크롤 — 평소엔 다 들어간다 */
+}
+.mf-tl-cell {
+  flex: 1 1 0;
+  min-width: 52px;   /* 테마명이 잘리지 않는 최소 폭 */
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 3px;
+  overflow: hidden;
+  cursor: default;
+  transition: filter 0.15s;
+}
+.mf-tl-cell:hover { filter: brightness(1.25); }
+.mf-tl-cell span {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+.mf-tl-cell em {
+  font-style: normal;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+}
+.mf-tl-note {
+  margin: 0 0 16px;
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--dim);
+  opacity: 0.85;
+}
+.mf-tl-note b { color: var(--fg); opacity: 1; }
+
+/* 버티는 힘 막대 */
+.mf-sticky { list-style: none; margin: 0 0 7px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.mf-sticky li {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 42px 84px;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.mf-sticky-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-sticky-bar {
+  position: relative;
+  height: 9px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.mf-sticky-bar i { display: block; height: 100%; border-radius: 5px; transition: width 0.35s; }
+.mf-sticky-bar u {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+}
+.mf-sticky-pct { text-align: right; font-weight: 700; color: var(--fg); }
+.mf-sticky-n { text-align: right; font-size: 10px; color: var(--sub); }
+
+/* 루트 검사기 */
+.mf-route {
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+.mf-route-picked {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  min-height: 32px;
+  margin-bottom: 9px;
+}
+.mf-route-ph { font-size: 11px; color: var(--sub); }
+.mf-route-chip { display: inline-flex; align-items: center; gap: 7px; }
+.mf-route-chip em { font-style: normal; color: var(--sub); }
+.mf-route-chip b {
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid;
+  background: rgba(255, 255, 255, 0.05);
+}
+.mf-route-clear {
+  border: 0;
+  background: transparent;
+  color: var(--sub);
+  font-size: 10.5px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.mf-route-pool { display: flex; flex-wrap: wrap; gap: 4px; }
+.mf-route-pool button {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 10.5px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.mf-route-pool button:hover:not(:disabled) { background: rgba(167, 139, 250, 0.18); color: var(--fg); }
+.mf-route-pool button:disabled { opacity: 0.35; cursor: default; }
+
+.mf-route-res {
+  margin-top: 11px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid;
+}
+.mf-route-res.ok { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); }
+.mf-route-res.part { border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.07); }
+.mf-route-res.no { border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.07); }
+.mf-route-head { font-size: 12.5px; font-weight: 700; margin-bottom: 7px; }
+.mf-route-res ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.mf-route-res li {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 66px;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+}
+.mf-route-step { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mf-route-step em { font-style: normal; color: var(--sub); margin: 0 2px; }
+.mf-route-plain { color: var(--dim); font-variant-numeric: tabular-nums; }
+.mf-route-plain b { color: var(--fg); }
+.mf-route-exp { color: var(--sub); }
+.mf-route-tag {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.mf-route-tag.vok { color: var(--emer); background: rgba(52, 211, 153, 0.16); }
+.mf-route-tag.vmid { color: var(--gold); background: rgba(251, 191, 36, 0.16); }
+.mf-route-tag.vno { color: var(--dim); background: rgba(255, 255, 255, 0.07); }
+
+.mf-more {
+  margin-top: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: transparent;
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mf-more:hover { background: rgba(255, 255, 255, 0.05); color: var(--fg); }
+.mf-sig-off { color: var(--sub); }
 .mf-rot-cols {
+  margin-top: 12px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 20px;

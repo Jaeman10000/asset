@@ -121,10 +121,44 @@ def rotation(lag: int = 1) -> dict[str, Any]:
                 })
     links.sort(key=lambda x: -abs(x["r"]))
 
+    # ③ 실제 흐름 타임라인 — 최근 24주 1위를 그대로. 연속 구간은 묶어서 '머문 주수'로.
+    #    통계 용어 없이 "돈이 머문다"를 눈으로 보게 하는 게 목적이다.
+    timeline: list[dict[str, Any]] = []
+    for w, ld in list(zip(weeks, leaders))[-24:]:
+        if not ld:
+            continue
+        if timeline and timeline[-1]["theme"] == ld:
+            timeline[-1]["weeks"] += 1
+            timeline[-1]["to"] = w
+        else:
+            timeline.append({"theme": ld, "from": w, "to": w, "weeks": 1})
+
+    # ④ '머무는 힘' — 1위였던 다음 주에도 1위였던 비율. 사람 말로: 몇 번 중 몇 번.
+    sticky = []
+    for src in tot:
+        if tot[src] < MIN_TRANS:
+            continue
+        stayed = trans[src].get(src, 0)
+        sticky.append({
+            "theme": src,
+            "led": tot[src],
+            "stayed": stayed,
+            "pct": round(stayed / tot[src] * 100, 1),
+        })
+    sticky.sort(key=lambda x: -x["pct"])
+    stay_all = sum(x["stayed"] for x in sticky)
+    led_all = sum(x["led"] for x in sticky)
+
     return {
         "ready": True,
         "lag": lag,
         "weeks": len(weeks),
+        "themeList": themes,
+        "timeline": timeline,
+        "stickiness": sticky,
+        "stayPct": round(stay_all / led_all * 100, 1) if led_all else 0.0,
+        "stayN": stay_all,
+        "ledN": led_all,
         "from": weeks[0],
         "to": weeks[-1],
         "themes": n_theme,
@@ -140,22 +174,63 @@ def rotation(lag: int = 1) -> dict[str, Any]:
 
 
 def check_route(route: list[str], lag: int = 1) -> dict[str, Any]:
-    """사용자가 믿는 루트(예: 반도체→로봇→전력/유틸)가 데이터에 있는지 구간별로 검정."""
-    weeks, themes, series, _leaders = _weekly()
+    """사용자가 믿는 루트(예: 반도체→로봇→전력/유틸)가 데이터에 있는지 구간별로 검정.
+
+    통계값(r, p)만 주면 처음 보는 사람은 판단할 수 없다. 그래서 **셀 수 있는 형태**를
+    같이 낸다 — "A가 1위였던 10번 중 다음 주 B가 1위였던 건 1번(랜덤이면 0.5번)".
+    """
+    weeks, themes, series, leaders = _weekly()
     alpha = 0.05 / max(1, len(themes) ** 2)
+    base = 1 / max(1, len(themes))
+
+    # 1위 시퀀스에서 A→B가 실제로 몇 번 일어났나
+    tot: dict[str, int] = defaultdict(int)
+    pair_n: dict[tuple[str, str], int] = defaultdict(int)
+    for a, b in zip(leaders, leaders[lag:]):
+        if a and b:
+            tot[a] += 1
+            pair_n[(a, b)] += 1
+
     steps = []
     for a, b in zip(route, route[1:]):
         if a not in series or b not in series:
-            steps.append({"from": a, "to": b, "error": "없는 테마"})
+            steps.append({"from": a, "to": b, "error": "없는 테마입니다"})
             continue
         pairs = [(x, y) for x, y in zip(series[a][:-lag], series[b][lag:])
                  if x is not None and y is not None]
         got = _pearson(pairs)
-        if not got:
-            steps.append({"from": a, "to": b, "error": "표본 부족"})
-            continue
-        r, p = got
-        steps.append({"from": a, "to": b, "r": round(r, 3), "p": round(p, 4),
-                      "n": len(pairs), "significant": p < alpha})
-    return {"route": route, "lag": lag, "alpha": alpha, "steps": steps,
-            "supported": bool(steps) and all(s.get("significant") for s in steps)}
+        led = tot.get(a, 0)
+        seen = pair_n.get((a, b), 0)
+        step = {
+            "from": a, "to": b,
+            "led": led,                                  # A가 1위였던 횟수
+            "seen": seen,                                # 그 다음 주 B가 1위였던 횟수
+            "expected": round(led * base, 1),            # 랜덤이면 몇 번쯤
+            "n": len(pairs),
+        }
+        if got:
+            r, p = got
+            step["r"] = round(r, 3)
+            step["p"] = round(p, 4)
+            sig = p < alpha
+            step["significant"] = sig
+            # 사람이 읽는 판정 — 통계 유의성과 관측 빈도를 함께 본다
+            if sig and r > 0:
+                step["verdict"] = "근거 있음"
+            elif sig and r < 0:
+                step["verdict"] = "반대 방향"   # 유의하지만 음의 상관 = 경합
+            elif seen > led * base * 2 and seen >= 3:
+                step["verdict"] = "약한 흔적"
+            else:
+                step["verdict"] = "근거 없음"
+        else:
+            step["verdict"] = "표본 부족"
+        steps.append(step)
+
+    ok = [s for s in steps if s.get("verdict") == "근거 있음"]
+    return {
+        "route": route, "lag": lag, "alpha": alpha, "steps": steps,
+        "supported": bool(steps) and len(ok) == len(steps),
+        "okCount": len(ok),
+        "stepCount": len(steps),
+    }

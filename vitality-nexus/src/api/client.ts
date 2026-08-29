@@ -380,6 +380,48 @@ export interface RotationLink {
   self: boolean;
   sign: '동행' | '경합';
 }
+export interface RotationRun {
+  theme: string;
+  from: string;
+  to: string;
+  weeks: number;
+}
+export interface RotationSticky {
+  theme: string;
+  led: number;
+  stayed: number;
+  pct: number;
+}
+export interface RouteStep {
+  from: string;
+  to: string;
+  led?: number;
+  seen?: number;
+  expected?: number;
+  n?: number;
+  r?: number;
+  p?: number;
+  significant?: boolean;
+  verdict?: string;
+  error?: string;
+}
+export interface RouteCheck {
+  route: string[];
+  steps: RouteStep[];
+  supported: boolean;
+  okCount: number;
+  stepCount: number;
+  error?: string;
+}
+
+export function checkRoute(path: string[], signal?: AbortSignal): Promise<RouteCheck> {
+  return getJSON<RouteCheck>(
+    `/moneyflow/route?path=${encodeURIComponent(path.join(','))}`,
+    signal,
+    30_000,
+  );
+}
+
 export interface Rotation {
   ready: boolean;
   reason?: string;
@@ -396,6 +438,12 @@ export interface Rotation {
   links?: RotationLink[];
   selfLinks?: number;
   crossLinks?: number;
+  themeList?: string[];
+  timeline?: RotationRun[];
+  stickiness?: RotationSticky[];
+  stayPct?: number;
+  stayN?: number;
+  ledN?: number;
 }
 
 export function fetchRotation(lag = 1, signal?: AbortSignal): Promise<Rotation> {
