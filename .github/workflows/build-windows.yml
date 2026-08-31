@@ -53,6 +53,13 @@ jobs:
           mkdir -p ../vitality-nexus/src-tauri/binaries
           cp dist/vitality-backend.exe ../vitality-nexus/src-tauri/binaries/vitality-backend-x86_64-pc-windows-msvc.exe
 
+      # 포트폴리오 내보내기 도구 — 앱과 별개로 단독 실행되는 단일 exe.
+      # 앱을 안 깔아도 이것만 받아 쓸 수 있어서 릴리스에 따로 첨부한다.
+      - name: Backend — build portfolio export tool
+        run: |
+          cd backend
+          python scripts/build_export_tool.py
+
       # ── 프론트엔드 + Tauri 빌드 ──
       - name: Install frontend deps
         run: |
@@ -71,6 +78,7 @@ jobs:
           path: |
             vitality-nexus/src-tauri/target/release/bundle/msi/*.msi
             vitality-nexus/src-tauri/target/release/bundle/nsis/*-setup.exe
+            backend/dist/portfolio-export.exe
           if-no-files-found: error
 
       # ── 태그(v*) 푸시 시: GitHub Release에 인스톨러 자동 첨부 = 공개 다운로드 링크 ──
@@ -83,5 +91,6 @@ jobs:
           files: |
             vitality-nexus/src-tauri/target/release/bundle/msi/*.msi
             vitality-nexus/src-tauri/target/release/bundle/nsis/*-setup.exe
+            backend/dist/portfolio-export.exe
           generate_release_notes: true
           fail_on_unmatched_files: true

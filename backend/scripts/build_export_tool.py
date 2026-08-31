@@ -8,6 +8,7 @@
 메모장이 열린다. 앱이 켜져 있으면 앱 백엔드에서, 꺼져 있으면 키움/거래소를
 직접 호출하므로 앱과 별개로 단독 동작한다.
 """
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -42,11 +43,15 @@ def main() -> None:
     built = BACKEND_DIR / "dist" / "portfolio-export.exe"
     final = BACKEND_DIR / "dist" / "포트폴리오-내보내기.exe"
     if built.exists():
-        # PyInstaller --name 에 한글을 주면 빌드가 깨지는 환경이 있어 영문으로 만든 뒤 바꾼다
+        # 두 이름을 다 남긴다:
+        #   portfolio-export.exe    깃허브 릴리스 첨부용 (에셋 이름은 ASCII가 안전)
+        #   포트폴리오-내보내기.exe   바탕화면에 두고 쓸 때 알아보기 쉬운 이름
+        # PyInstaller --name 에 한글을 주면 빌드가 깨지는 환경이 있어 영문으로 만든 뒤 복사한다.
         final.unlink(missing_ok=True)
-        built.rename(final)
-    print(f"\nDone: {final}")
-    print("-> 바탕화면에 바로가기를 만들어 두고 쓰면 됩니다.")
+        shutil.copy2(built, final)
+    print(f"\nDone: {built}")
+    print(f"      {final}")
+    print("-> 바탕화면에 복사해 두고 더블클릭하면 됩니다.")
 
 
 if __name__ == "__main__":
