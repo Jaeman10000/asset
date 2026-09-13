@@ -3,7 +3,7 @@
 compute.py가 computed_kr.json 저장 뒤 make(d)를 부른다.
 
 JJ 기준(2026-09-12, 최우선):
-  - 완결형 '-습니다/-입니다'체. '팜/오름/샀음' 같은 축약 종결형, 'ㅋㅋ' 같은 채팅 기호 금지.
+  - 완결형 반말(-어/-야/-아/-까?). 음슴체(팜·샀음)는 계속 금지. '팜/오름/샀음' 같은 축약 종결형, 'ㅋㅋ' 같은 채팅 기호 금지.
   - 숫자는 풀어 쓴다(9.9조 → '9조 9천억', 2.3조 → '2조 3천억', 4,700억은 그대로).
   - 내부 장치(예고→검증 '확인 N번 중 M번', 연속 카운터)는 본문에서 뺀다. 넣어야 하면 한 문장으로 풀어 쓴다.
   - 첫 문단 2줄이 전부다(JJ 2026-09-13): 1줄은 독자가 오늘 이미 본 것(앱·뉴스의 코스피 등락)을 인정하고,
@@ -36,11 +36,11 @@ GROUPS = (("개인", "indiv"), ("외국인", "foreign"), ("기관", "inst"), ("�
 DAYC = {1: "하루", 2: "이틀째", 3: "사흘째", 4: "나흘째", 5: "닷새째", 6: "엿새째", 7: "이레째"}
 DAYN = {2: "이틀", 3: "사흘", 4: "나흘", 5: "닷새", 6: "엿새", 7: "이레"}
 CNT = {2: "두 번", 3: "세 번", 4: "네 번", 5: "다섯 번", 6: "여섯 번", 7: "일곱 번", 8: "여덟 번", 9: "아홉 번", 10: "열 번"}
-# 새 형식: 문단 사이 빈 줄을 포함한 전체 줄 수 8~18, 본문 500자 이내, 한 줄 38자(첫 줄 36자)
-# 줄 수 상한을 14에서 18로 올렸다 — 한 줄 38자·빈 줄 포함으로는 14줄 안에 목표 350자가 들어가지 않는다(JJ 2026-09-13).
-MAX_LINES, MIN_LINES, MAX_CHARS, MIN_CHARS, MAX_LINE, MAX_L1 = 18, 8, 500, 110, 38, 36
-MIN_BODY_LINES, MAX_FIGS = 6, 5   # 목표 350~420자로 길어지면서 숫자 하나를 더 허용한다(예전 4개는 250자 기준)
-TARGET_CHARS_MAX, TARGET_CHARS_MIN = 420, 350   # 상한 500은 그대로. 미달은 T2e가 잡는다(전에는 경고가 없었다)
+# 새 형식: 문단 사이 빈 줄을 포함한 전체 줄 수 8~20, 본문 500자 이내, 한 줄 36자(첫 줄 32자)
+# 반말로 바꾸면서 한 줄이 3~4자씩 짧아졌다 — 한 줄 상한을 36자로 내리고(한 호흡에 한 줄) 줄 수 상한을 20으로 올린다.
+MAX_LINES, MIN_LINES, MAX_CHARS, MIN_CHARS, MAX_LINE, MAX_L1 = 20, 8, 500, 110, 36, 32
+MIN_BODY_LINES, MAX_FIGS = 6, 5   # 목표 330~430자로 길어지면서 숫자 하나를 더 허용한다(예전 4개는 250자 기준)
+TARGET_CHARS_MAX, TARGET_CHARS_MIN = 430, 330   # 상한 500은 그대로. 미달은 T2e가 잡는다(JJ 2026-09-13: 330~430자)
 TAG = "#국장"                                    # 해시태그는 정확히 하나(스레드는 주제 태그를 하나만 받는다)
 
 
@@ -95,8 +95,12 @@ def join_g(ns):
     return gwa(ns[0]) + " " + ", ".join(ns[1:])
 
 
-def copula_past(w):  # 1,700억이었는데 / 2조 5천억이었는데
+def copula_past(w):  # 1,700억이었 / 2조 5천억이었
     return w + ("이었" if fin(w[-1]) else "였")
+
+
+def iya(w):  # 반말 계사: 6,600억이야 / 1조 2천억이야 / 반도체야
+    return w + ("이야" if fin(w[-1]) else "야")
 
 
 # ── numbers: the only way a figure enters the text ──
@@ -188,12 +192,12 @@ def miss_run(d):
 # 용어를 그대로 옮기지 않는다 — 만기·금통위는 처음 보는 사람이 모르는 말이라 뜻만 남긴다.
 CONTEXT = [
     (r"네 마녀|선물\s?옵션 만기|선물·옵션|동시만기|만기일",
-     ["오늘은 미리 걸어 둔 계약을 정리하는 날이었습니다.", "마침 네 마녀의 날이라 부르는 날이었습니다.",
-      "하필 걸어 둔 계약을 정리하는 날과 겹쳤습니다."]),
+     ["오늘은 미리 걸어 둔 계약을 정리하는 날이었어.", "마침 네 마녀의 날이라 부르는 날이었어.",
+      "하필 걸어 둔 계약을 정리하는 날이랑 겹쳤어."]),
     (r"AI 훈풍|AI 모멘텀",
-     ["기사 제목에는 AI 훈풍이라는 말이 많았습니다.", "뉴스 제목은 대부분 AI 훈풍이었습니다.", "기사들은 오늘을 AI 훈풍이라고 적었습니다."]),
-    (r"금통위", ["오늘은 한국은행이 금리를 정하는 날이었습니다.", "한국은행이 금리를 정하는 날과 겹쳤습니다.",
-                "마침 한국은행이 금리를 발표한 날이었습니다."]),
+     ["기사 제목에는 AI 훈풍이라는 말이 많았어.", "뉴스 제목은 대부분 AI 훈풍이었어.", "기사들은 오늘을 AI 훈풍이라고 적었어."]),
+    (r"금통위", ["오늘은 한국은행이 금리를 정하는 날이었어.", "한국은행이 금리를 정하는 날이랑 겹쳤어.",
+                "마침 한국은행이 금리를 발표한 날이었어."]),
 ]
 THEMES = ["반도체", "이차전지", "2차전지", "자동차", "금융", "은행", "증권", "보험", "바이오", "제약", "조선", "방산", "원전", "전력", "화학",
           "철강", "건설", "게임", "엔터", "인터넷", "통신", "유통", "화장품", "음식료", "로봇", "운송", "항공", "해운", "지주"]
@@ -215,167 +219,178 @@ def dn(n):
 
 # 0) 독자가 이미 본 것 — 첫 줄. 앱·뉴스에서 5초면 보는 코스피 등락을 먼저 인정하고 넘어간다.
 #    숫자는 fp(코스피 등락률) 하나만 쓴다. 같은 표현을 매일 반복하지 않도록 여섯 변형을 돌린다.
-SEEN_DOWN = ["코스피가 {p} 내렸다는 건 이미 보셨을 겁니다.",
-             "오늘 코스피가 {p} 내린 건 뉴스에서 보셨을 겁니다.",
-             "주식 앱을 켜면 {p} 하락이 떠 있을 겁니다.",
-             "오늘 {p} 하락은 앱만 켜도 보이는 숫자입니다.",
-             "코스피가 {p} 빠졌다는 것까지는 아실 겁니다.",
-             "{p} 내린 코스피는 아마 이미 보셨을 겁니다."]
-SEEN_UP = ["코스피가 {p} 올랐다는 건 이미 보셨을 겁니다.",
-           "오늘 코스피가 {p} 오른 건 뉴스에서 보셨을 겁니다.",
-           "주식 앱을 켜면 {p} 상승이 떠 있을 겁니다.",
-           "오늘 {p} 상승은 앱만 켜도 보이는 숫자입니다.",
-           "코스피가 {p} 올랐다는 것까지는 아실 겁니다.",
-           "{p} 오른 코스피는 아마 이미 보셨을 겁니다."]
+SEEN_DOWN = ["코스피 {p} 내린 건 이미 봤을 거야.",
+             "오늘 코스피 {p} 내린 건 뉴스에서 봤을 거야.",
+             "주식 앱 켜면 {p} 하락이 떠 있어.",
+             "오늘 {p} 하락은 앱만 켜도 보이는 숫자야.",
+             "코스피가 {p} 빠진 것까지는 알 거야.",
+             "{p} 내린 코스피는 아마 이미 봤을 거야."]
+SEEN_UP = ["코스피 {p} 오른 건 이미 봤을 거야.",
+           "오늘 코스피 {p} 오른 건 뉴스에서 봤을 거야.",
+           "주식 앱 켜면 {p} 상승이 떠 있어.",
+           "오늘 {p} 상승은 앱만 켜도 보이는 숫자야.",
+           "코스피가 {p} 오른 것까지는 알 거야.",
+           "{p} 오른 코스피는 아마 이미 봤을 거야."]
 # 1) 놓치는 사실 — 둘째 줄에는 반드시 숫자가 들어간다(첫 줄에서 본 코스피 숫자는 두 번 쓰지 않는다).
-IDX_DOWN = ["코스피는 오늘 {p} 내렸습니다.", "코스피가 내린 폭은 {p}입니다.", "오늘 코스피는 {p} 내린 자리에서 끝났습니다."]
-IDX_UP = ["코스피는 오늘 {p} 올랐습니다.", "코스피가 오른 폭은 {p}입니다.", "오늘 코스피는 {p} 오른 자리에서 끝났습니다."]
-HB_MORE_BUY = ["그 시간에 {nm_eun} 오히려 {f_eul} 더 샀습니다.",
-               "코스피가 밀리는 동안 {nm_ga} {f_eul} 샀습니다.",
-               "값이 내려간 그 시간에 {nm_eun} {f_eul} 받았습니다.",
-               "{nm_eun} 내려가는 값을 받아 {f_eul} 샀습니다."]
-HB_BIG_SELL = ["{nm_eun} 오늘 하루에만 {f_eul} 팔았습니다.",
-               "오늘 {nm_ga} 내놓은 금액은 {f}입니다.",
-               "{nm_ga} 하루에 판 금액이 {f}입니다.",
-               "하루 사이 {nm_ga} 던진 금액이 {f}입니다.",
-               "그 아래에서 {nm_ga} {f_eul} 팔았습니다.",
-               "그 시간에 {nm_eun} {f_eul} 내놓았습니다."]
-HB_FLIP_A = ["{nm_eun} 오후 2시까지 {f_eul} {vb}고 있었습니다.",
-             "오후 2시까지 {nm_eun} {f_eul} {vb}는 쪽이었습니다.",
-             "오후 2시만 해도 {nm_eun} {f_eul} {vb}고 있었습니다."]
-HB_FLIP_A0 = ["{nm_eun} 아침에는 {f_eul} {vb}는 쪽이었습니다.",
-              "아침만 해도 {nm_eun} {f_eul} {vb}고 있었습니다.",
-              "장이 열릴 때 {nm_eun} {f_eul} {vb}고 있었습니다."]
-HB_FLIP_B = ["그런데 장이 끝날 때 {nm_eun} {f_eul} {vb3}.",
+IDX_DOWN = ["코스피는 오늘 {p} 내렸어.", "오늘 코스피는 {p} 내려갔어.", "오늘 코스피는 {p} 내린 자리에서 끝났어."]
+IDX_UP = ["코스피는 오늘 {p} 올랐어.", "오늘 코스피는 {p} 올라갔어.", "오늘 코스피는 {p} 오른 자리에서 끝났어."]
+HB_MORE_BUY = ["그 시간에 {nm_eun} 오히려 {f_eul} 더 샀어.",
+               "코스피가 밀리는 동안 {nm_ga} {f_eul} 샀어.",
+               "값이 내려간 그 시간에 {nm_eun} {f_eul} 받았어.",
+               "{nm_eun} 내려가는 값을 받아 {f_eul} 샀어."]
+HB_BIG_SELL = ["{nm_eun} 오늘 하루에만 {f_eul} 팔았어.",
+               "오늘 {nm_ga} 내놓은 돈이 {f_ya}.",
+               "{nm_ga} 하루에 판 금액이 {f_ya}.",
+               "하루 사이 {nm_ga} 던진 금액이 {f_ya}.",
+               "그 아래에서 {nm_ga} {f_eul} 팔았어.",
+               "그 시간에 {nm_eun} {f_eul} 내놨어."]
+HB_FLIP_A = ["{nm_eun} 오후 2시까지 {f_eul} {vb}고 있었어.",
+             "오후 2시까지 {nm_eun} {f_eul} {vb}는 쪽이었어.",
+             "오후 2시만 해도 {nm_eun} {f_eul} {vb}고 있었어."]
+HB_FLIP_A0 = ["{nm_eun} 아침에는 {f_eul} {vb}는 쪽이었어.",
+              "아침만 해도 {nm_eun} {f_eul} {vb}고 있었어.",
+              "장이 열릴 때 {nm_eun} {f_eul} {vb}고 있었어."]
+HB_FLIP_B = ["그런데 장 끝날 때 {nm_eun} {f_eul} {vb3}.",
              "장이 끝나고 보니 {nm_eun} {f_eul} {vb3}.",
-             "그런데 끝나고 세어 보니 {nm_eun} {f_eul} {vb3}."]
-TP_BEFORE = ["오후 2시까지는 {f}이었습니다.", "오후 2시에 적힌 숫자는 {f}입니다.", "오후 2시만 해도 {f}이었습니다.",
-             "오후 2시에 세어 보면 {f}이었습니다."]
-TP_TAIL = ["나머지는 전부 장 마지막에 나왔습니다.", "그 뒤 한 시간 반 사이에 쏟아졌습니다.",
-           "차이는 전부 그 뒤 한 시간 반에서 생겼습니다."]
-TP_GROW = ["나머지는 전부 그 뒤 한 시간 반에 들어왔습니다.", "차이는 장이 끝나기 전 한 시간 반에서 생겼습니다.",
-           "그 뒤 한 시간 반 사이에 그만큼이 더 늘었습니다."]
-SELL_BOTH = ["오늘은 {s0}도 {s1}도 파는 쪽이었습니다.", "오늘은 {s0_gwa} {s1} 둘 다 팔았습니다.",
-             "{s0_gwa} {s1}이 나란히 파는 쪽에 섰습니다.", "정작 판 쪽은 {s0_gwa} {s1}입니다."]
+             "끝나고 세어 보니 {nm_eun} {f_eul} {vb3}."]
+TP_BEFORE = ["오후 2시까지는 {f_was}어.", "오후 2시에 적힌 숫자는 {f_ya}.", "오후 2시만 해도 {f_was}어.",
+             "오후 2시에 세어 보니 {f_was}어."]
+TP_TAIL = ["나머지는 전부 장 마지막에 나왔어.", "그 뒤 한 시간 반 사이에 쏟아졌어.",
+           "차이는 전부 그 뒤 한 시간 반에서 생겼어."]
+TP_GROW = ["나머지는 전부 그 뒤 한 시간 반에 들어왔어.", "차이는 장 끝나기 전 한 시간 반에서 생겼어.",
+           "그 뒤 한 시간 반 사이에 그만큼이 더 늘었어."]
+SELL_BOTH = ["오늘은 {s0}도 {s1}도 파는 쪽이었어.", "오늘은 {s0_gwa} {s1} 둘 다 팔았어.",
+             "{s0_gwa} {s1}이 나란히 파는 쪽에 섰어.", "정작 판 쪽은 {s0_gwa} {s1}이야."]
 # 코스피는 내렸는데 외국인과 기관이 받은 날 — 첫 줄(이미 본 것) 뒤에 붙는 '놓치는 사실'
-CONTRA_BUY = ["그 아래에서 외국인과 기관은 {f_eul} 샀습니다.",
-              "코스피가 빠지는 동안 외국인과 기관은 {f_eul} 샀습니다.",
-              "값이 내려가는 동안 외국인과 기관이 {f_eul} 받았습니다.",
-              "그 시간에 외국인과 기관은 {f_eul} 사들였습니다."]
-# 2) 질문 한 줄
-Q_WHO = ["그 주식은 누가 받아 갔을까요?", "그럼 그만큼은 누가 받은 걸까요?", "팔린 주식은 어디로 간 걸까요?",
-         "그 자리를 받아 간 쪽은 누구였을까요?", "그만큼을 받아 낸 쪽은 어디였을까요?", "그걸 다 받아 낸 쪽은 누구였을까요?"]
-Q_SOLD = ["그럼 그 주식을 판 쪽은 누구였을까요?", "그 주식은 누가 내놓은 걸까요?", "반대편에서 판 쪽은 어디였을까요?",
-          "그럼 그만큼을 판 쪽은 누구였을까요?"]
-Q_WHERE = ["오늘 돈은 어디로 갔을까요?", "그럼 돈은 어느 쪽으로 간 걸까요?", "오늘 돈이 모인 곳은 어디였을까요?",
-           "돈이 향한 곳은 어디였을까요?"]
+CONTRA_BUY = ["그 아래에서 외국인과 기관은 {f_eul} 샀어.",
+              "코스피가 빠지는 동안 외국인과 기관은 {f_eul} 샀어.",
+              "값이 내려가는 동안 외국인과 기관이 {f_eul} 받았어.",
+              "그 시간에 외국인과 기관은 {f_eul} 사들였어."]
+# 2) 질문 한 줄 — 가운데. 마지막 줄 질문(END_Q)과는 다른 뱅크다.
+Q_WHO = ["그 주식은 누가 받아 갔을까?", "그럼 그만큼은 누가 받은 걸까?", "팔린 주식은 어디로 간 걸까?",
+         "그 자리를 받아 간 쪽은 누구였을까?", "그만큼을 받아 낸 쪽은 어디였을까?", "그걸 다 받아 낸 쪽은 누구였을까?"]
+Q_SOLD = ["그럼 그 주식을 판 쪽은 누구였을까?", "그 주식은 누가 내놓은 걸까?", "반대편에서 판 쪽은 어디였을까?",
+          "그럼 그만큼을 판 쪽은 누구였을까?"]
+Q_WHERE = ["오늘 돈은 어디로 갔을까?", "그럼 돈은 어느 쪽으로 간 걸까?", "오늘 돈이 모인 곳은 어디였을까?",
+           "돈이 향한 곳은 어디였을까?"]
 # 3) 누가 받았나
-WHO_SB = ["{S_ga} 판 주식을 {B_ga} 받았습니다.", "{S_eun} 팔았고, 그만큼을 {B_ga} 받았습니다.",
-          "{S_ga} 내놓은 주식은 {B_ga} 받아 갔습니다."]
-WHO_TOP = ["그만큼을 받은 쪽은 {tb}입니다.", "그 주식을 받아 간 쪽은 {tb}입니다.", "받아 낸 곳은 {tb} 한 곳뿐입니다.",
-           "그걸 다 받아 간 곳은 {tb}입니다."]
-WHO_TOP_MOST = ["그 주식은 {most} {tb_ga} 받았습니다.", "받아 간 쪽은 {most} {tb}입니다.", "{most} {tb_ga} 받아 갔습니다.",
-                "{tb_ga} {most} 받아 낸 하루입니다."]
-WHO_TWO = ["그만큼을 받은 쪽은 {B2}입니다.", "그 주식은 {B2}이 나눠 받았습니다.", "받아 간 곳은 {B2} 두 곳입니다.",
-           "{B2}이 그만큼을 나눠서 받았습니다."]
-WHO_BUY2 = ["그 주식을 받아 간 쪽은 {B2}입니다.", "오늘 사들인 쪽은 {B2}입니다.", "그만큼을 받아 간 쪽은 {B2}입니다.",
-            "그 빈자리를 채운 쪽은 {B2}입니다."]
-WHO_ONE_BUY = ["가장 많이 산 쪽은 {tb}입니다.", "오늘 제일 많이 산 곳은 {tb}입니다.", "오늘 가장 많이 사들인 쪽은 {tb}입니다.",
-               "오늘 산 금액이 가장 큰 쪽은 {tb}입니다."]
-SOLD_AMT = ["{S_eun} 오늘 하루 {f_eul} 팔았습니다.", "오늘 {S_ga} 내놓은 금액은 {f}입니다.", "{S_ga} 판 만큼을 돈으로 치면 {f}입니다.",
-            "하루 사이 {S_ga} 판 금액이 {f}입니다.", "{S_eun} 하루 만에 {f_eul} 내놓았습니다."]
-BUY_AMT = ["{B_eun} 오늘 하루 {f_eul} 샀습니다.", "{B_ga} 받아 간 만큼은 {f}입니다.", "오늘 {B_ga} 사들인 금액은 {f}입니다.",
-           "{B_eun} 하루 만에 {f_eul} 받아 갔습니다."]
-SOLD_ALSO = ["{S_eun} 같은 날 {f_eul} 내놓았습니다.", "{S_ga} 함께 내놓은 금액은 {f}입니다.",
-             "{S_ga} 같이 판 금액도 {f}입니다."]
-SOLD_SIDE = ["그 주식을 판 쪽은 {S}입니다.", "반대편에서 판 쪽은 {S}입니다.", "주식을 내놓은 쪽은 {S}입니다.",
-             "오늘 파는 쪽에 선 곳은 {S}입니다."]
-RUN_AFTER = ["{tb_eun} {days} 내내 가장 많이 산 쪽입니다.", "{tb_eun} {days} 동안 하루도 멈추지 않았습니다.",
-             "{days} 내내 가장 많이 산 쪽도 {tb}입니다."]
-BOTH_BUY = ["둘 다 {dc} 사고 있습니다.", "둘 다 {dc} 사는 쪽입니다.", "둘이 {dc} 함께 사는 중입니다."]
+WHO_SB = ["{S_ga} 판 주식을 {B_ga} 받았어.", "{S_eun} 팔았고, 그만큼을 {B_ga} 받았어.",
+          "{S_ga} 내놓은 주식은 {B_ga} 받아 갔어."]
+WHO_TOP = ["그만큼을 받은 쪽은 {tb}이야.", "그 주식을 받아 간 쪽은 {tb}이야.", "받아 낸 곳은 {tb} 한 곳뿐이야.",
+           "그걸 다 받아 간 곳도 {tb}이야."]
+WHO_TOP_MOST = ["그 주식은 {most} {tb_ga} 받았어.", "받아 간 쪽은 {most} {tb}이야.", "{most} {tb_ga} 받아 갔어.",
+                "{tb_ga} {most} 받아 낸 하루야."]
+WHO_TWO = ["그만큼을 받은 쪽은 {B2}이야.", "그 주식은 {B2}이 나눠 받았어.", "받아 간 곳은 {B2} 두 곳이야.",
+           "{B2}이 그만큼을 나눠서 받았어."]
+WHO_BUY2 = ["그 주식을 받아 간 쪽은 {B2}이야.", "오늘 사들인 쪽은 {B2}이야.", "그만큼은 {B2}이 받아 갔어.",
+            "그 빈자리를 채운 쪽은 {B2}이야."]
+WHO_ONE_BUY = ["가장 많이 산 쪽은 {tb}이야.", "오늘 제일 많이 산 곳은 {tb}이야.", "오늘은 {tb_ga} 제일 많이 샀어.",
+               "오늘 산 금액이 가장 큰 쪽은 {tb}이야."]
+SOLD_AMT = ["{S_eun} 오늘 하루 {f_eul} 팔았어.", "오늘 {S_ga} 내놓은 돈이 {f_ya}.", "{S_ga} 판 만큼을 돈으로 치면 {f_ya}.",
+            "하루 사이 {S_ga} 판 금액이 {f_ya}.", "{S_eun} 하루 만에 {f_eul} 내놨어."]
+BUY_AMT = ["{B_eun} 오늘 하루 {f_eul} 샀어.", "{B_ga} 받아 간 만큼이 {f_ya}.", "오늘 {B_ga} 사들인 돈이 {f_ya}.",
+           "{B_eun} 하루 만에 {f_eul} 받아 갔어."]
+SOLD_ALSO = ["{S_eun} 같은 날 {f_eul} 내놨어.", "{S_ga} 함께 내놓은 돈이 {f_ya}.",
+             "{S_ga} 같이 판 금액도 {f_ya}."]
+SOLD_SIDE = ["그 주식을 판 쪽은 {S}이야.", "반대편에서 판 쪽은 {S}이야.", "주식을 내놓은 쪽은 {S}이야.",
+             "오늘 파는 쪽에 선 곳은 {S}이야."]
+RUN_AFTER = ["{tb_eun} {days} 내내 가장 많이 산 쪽이야.", "{tb_eun} {days} 동안 하루도 안 멈췄어.",
+             "{days} 내내 가장 많이 산 쪽도 {tb}이야."]
+BOTH_BUY = ["둘 다 {dc} 사고 있어.", "둘 다 {dc} 사는 쪽이야.", "둘이 {dc} 함께 사는 중이야."]
 # 코스닥 한 줄 — 코스피만 보면 놓치는 쪽(숫자는 쓰지 않는다)
-KD_SELL = ["코스닥에서도 {g_eun} 파는 쪽이었습니다.", "코스닥에서 가장 많이 판 쪽도 {g}입니다.",
-           "코스닥에서도 {g_ga} 제일 많이 내놓았습니다.", "코스닥에서 주식을 내놓은 쪽도 {g}입니다.",
-           "코스닥 쪽에서도 {g_eun} 파는 자리에 있었습니다."]
-KD_BUY = ["코스닥에서는 {g_ga} 사는 쪽이었습니다.", "코스닥에서는 {g_ga} 제일 많이 받았습니다.",
-          "코스닥에서 {g_eun} 받는 쪽이었습니다.", "코스닥에서 주식을 받아 간 쪽도 {g}입니다.",
-          "코스닥 쪽에서는 {g_ga} 사는 자리에 있었습니다."]
+KD_SELL = ["코스닥에서도 {g_eun} 파는 쪽이었어.", "코스닥에서 가장 많이 판 쪽도 {g}이야.",
+           "코스닥에서도 {g_ga} 제일 많이 내놨어.", "코스닥에서 주식을 내놓은 쪽도 {g}이야.",
+           "코스닥 쪽에서도 {g_eun} 파는 자리에 있었어."]
+KD_BUY = ["코스닥에서는 {g_ga} 사는 쪽이었어.", "코스닥에서는 {g_ga} 제일 많이 받았어.",
+          "코스닥에서 {g_eun} 받는 쪽이었어.", "코스닥에서 주식을 받아 간 쪽도 {g}이야.",
+          "코스닥 쪽에서는 {g_ga} 사는 자리에 있었어."]
 # 코스닥이 코스피와 얼마나 달랐나 — 숫자 없이 한 줄
-KD_MORE = ["코스닥은 코스피보다 더 크게 {mv}습니다.", "코스닥은 그보다 더 크게 {mv}습니다.",
-           "코스닥이 움직인 폭은 코스피보다 컸습니다.", "코스닥 쪽이 더 크게 {mv2} 하루입니다."]
-KD_LESS = ["코스닥도 비슷한 폭으로 {mv}습니다.", "코스닥은 코스피보다 조금 덜 {mv}습니다.",
-           "코스닥이 움직인 폭은 코스피보다 작았습니다.", "코스닥도 같은 쪽으로 {mv2} 하루입니다."]
-KD_OPP = ["코스닥은 거꾸로 {mv}습니다.", "코스닥만 반대쪽으로 {mv}습니다.",
-          "코스닥은 거꾸로 {mv2} 채로 끝났습니다.", "코스닥 쪽만 거꾸로 가 있었습니다."]
+KD_MORE = ["코스닥은 코스피보다 더 크게 {mv}어.", "코스닥은 그보다 더 크게 {mv}어.",
+           "코스닥이 움직인 폭은 코스피보다 컸어.", "코스닥 쪽이 더 크게 {mv2} 하루야."]
+KD_LESS = ["코스닥도 비슷한 폭으로 {mv}어.", "코스닥은 코스피보다 조금 덜 {mv}어.",
+           "코스닥이 움직인 폭은 코스피보다 작았어.", "코스닥도 같은 쪽으로 {mv2} 하루야."]
+KD_OPP = ["코스닥은 거꾸로 {mv}어.", "코스닥만 반대쪽으로 {mv}어.",
+          "코스닥은 거꾸로 {mv2} 채로 끝났어.", "코스닥 쪽만 거꾸로 가 있었어."]
 # 처음 보는 사람을 위한 한 줄 — 오늘 주인공이 누구인지 풀어서 설명한다
-INTRO_FOREIGN = ["외국인은 한국 주식을 사고파는 외국 투자자입니다.", "외국인은 바다 건너에서 들어온 돈이라고 보면 됩니다.",
-                 "여기서 외국인은 외국 국적의 투자자를 말합니다.", "외국인은 한국 밖에서 들어온 돈을 뜻합니다."]
-INTRO_INST = ["기관은 연기금이나 자산운용사 같은 큰 투자자입니다.", "기관은 남의 돈을 모아 굴리는 큰 투자자를 말합니다.",
-              "여기서 기관은 연기금이나 보험사 같은 곳입니다.", "기관은 사람이 아니라 회사가 굴리는 돈입니다."]
-INTRO_INDIV = ["개인은 증권 앱으로 직접 사고파는 사람들입니다.", "개인은 회사가 아니라 사람이 낸 돈을 말합니다.",
-               "여기서 개인은 직접 주문을 내는 사람들입니다.", "개인은 흔히 말하는 보통 투자자를 뜻합니다."]
-INTRO_OTHERS = ["회사들은 상장한 기업과 그 계열사를 부르는 말입니다.", "여기서 회사들은 상장한 기업 자신을 말합니다.",
-                "회사들은 사람도 기관도 아닌 기업 자신입니다.", "회사들은 기업이 직접 낸 돈을 뜻합니다."]
+INTRO_FOREIGN = ["외국인은 한국 주식을 사고파는 외국 투자자야.", "외국인은 바다 건너에서 들어온 돈이야.",
+                 "여기서 외국인은 외국 국적 투자자를 말해.", "외국인은 한국 밖에서 들어온 돈을 뜻해."]
+INTRO_INST = ["기관은 연기금이나 자산운용사 같은 큰 투자자야.", "기관은 남의 돈을 모아 굴리는 큰 투자자야.",
+              "여기서 기관은 연기금이나 보험사 같은 곳이야.", "기관은 사람이 아니라 회사가 굴리는 돈이야."]
+INTRO_INDIV = ["개인은 증권 앱으로 직접 사고파는 사람들이야.", "개인은 회사가 아니라 사람이 낸 돈이야.",
+               "여기서 개인은 직접 주문을 내는 사람들이야.", "개인은 흔히 말하는 보통 투자자를 뜻해."]
+INTRO_OTHERS = ["회사들은 상장한 기업과 그 계열사를 부르는 말이야.", "여기서 회사들은 상장한 기업 자신을 말해.",
+                "회사들은 사람도 기관도 아닌 기업 자신이야.", "회사들은 기업이 직접 낸 돈이야."]
 INTRO = {"외국인": INTRO_FOREIGN, "기관": INTRO_INST, "개인": INTRO_INDIV, "회사들": INTRO_OTHERS}
-SECOND_BUY = ["그다음으로 많이 산 쪽은 {g}입니다.", "그 뒤를 이어 산 쪽은 {g}입니다.",
-              "{g_ga} 그다음으로 많이 받아 갔습니다."]
+SECOND_BUY = ["그다음으로 많이 산 쪽은 {g}이야.", "그 뒤를 이어 산 쪽은 {g}이야.",
+              "{g_ga} 그다음으로 많이 받아 갔어."]
 # 하루 안에서 어떻게 움직였나 — 숫자 없이 한 줄(끝난 자리만 보면 놓치는 부분)
-DAY_LOWEND = ["코스피는 가장 낮은 자리에서 하루를 끝냈습니다.", "코스피는 내려간 그 자리 그대로 문을 닫았습니다.",
-              "끝날 때까지 아래에서 올라오지 못했습니다."]
-DAY_BOUNCE = ["코스피는 하루 중 더 아래까지 내려갔던 날입니다.", "한때는 지금 숫자보다 더 아래에 있었습니다.",
-              "바닥을 찍고 얼마쯤 올라온 채로 문을 닫았습니다."]
-DAY_HIGHEND = ["코스피는 가장 높은 자리에서 하루를 끝냈습니다.", "코스피는 올라간 그 자리 그대로 문을 닫았습니다.",
-               "끝날 때까지 위에서 내려오지 않았습니다."]
-DAY_FADE = ["코스피는 하루 중 더 위까지 올라갔던 날입니다.", "한때는 지금 숫자보다 더 위에 있었습니다.",
-            "꼭대기에서 얼마쯤 내려온 채로 문을 닫았습니다."]
+DAY_LOWEND = ["코스피는 가장 낮은 자리에서 하루를 끝냈어.", "코스피는 내려간 그 자리 그대로 문을 닫았어.",
+              "끝날 때까지 아래에서 못 올라왔어."]
+DAY_BOUNCE = ["코스피는 하루 중 더 아래까지 내려갔었어.", "한때는 지금 숫자보다 더 아래에 있었어.",
+              "바닥을 찍고 얼마쯤 올라온 채로 문을 닫았어."]
+DAY_HIGHEND = ["코스피는 가장 높은 자리에서 하루를 끝냈어.", "코스피는 올라간 그 자리 그대로 문을 닫았어.",
+               "끝날 때까지 위에서 안 내려왔어."]
+DAY_FADE = ["코스피는 하루 중 더 위까지 올라갔었어.", "한때는 지금 숫자보다 더 위에 있었어.",
+            "꼭대기에서 얼마쯤 내려온 채로 문을 닫았어."]
 # 며칠째 같은 쪽인지 — 다른 줄에 이미 '며칠째'가 있으면 넣지 않는다
-G_RUN = ["{g_ga} {vb4} 건 {dc}입니다.", "{g_eun} {dc} 같은 쪽에 서 있습니다.", "{dc} {vb4} 쪽도 {g}입니다."]
+G_RUN = ["{g_ga} {vb4} 건 {dc}야.", "{g_eun} {dc} 같은 쪽에 서 있어.", "{dc} {vb4} 쪽도 {g}이야."]
 # 4) 어디로 갔나 — 테마
-TH_IN = ["돈이 가장 많이 들어온 곳은 {th}입니다.", "오늘 돈이 가장 많이 간 곳은 {th}입니다.", "{th_ro} 들어온 돈이 가장 많습니다."]
-TH_IN_AMT = ["{th}에는 하루 동안 {f_ga} 들어왔습니다.", "{th} 한 곳에만 {f_ga} 들어왔습니다.", "{th_ro} 들어온 돈은 {f}입니다."]
-TH_OUT = ["돈이 가장 많이 빠진 곳은 {th}입니다.", "오늘 돈이 가장 많이 나온 곳은 {th}입니다.", "{th}에서 빠진 돈이 가장 많습니다."]
-TH_OUT_AMT = ["{th}에서는 하루 동안 {f_ga} 빠졌습니다.", "{th} 한 곳에서만 {f_ga} 나왔습니다.", "{th}에서 빠져나간 돈은 {f}입니다."]
-TH_KEEP = ["{th}에는 {dc} 돈이 들어오고 있습니다.", "{th_ro}는 {dc} 돈이 들어옵니다.", "{th}에 들어오는 돈은 {dc} 이어집니다.",
-           "{th}에 돈이 들어온 건 {dc}입니다."]
-# 5) 그래서 무슨 뜻 — 앞에서 한 말을 다시 하는 것은 뜻이 아니다. MEAN_*는 풀이, MEAN_*_B가 본문 마지막 줄이다.
-MEAN_OTHERS = ["회사가 자기 회사 주식을 사들이면 도는 주식이 줄어듭니다.",
-               "회사들이 받아 간 자리는 대개 자기 회사 주식입니다.",
-               "회사들이 받아 둔 주식은 한동안 시장에 나오지 않습니다."]
-MEAN_OTHERS_B = ["빠져나간 자리를 회사들이 자기 돈으로 메운 하루입니다.",
-                 "판 쪽은 시장 밖에 있고 회사들이 그 자리를 메웠습니다.",
-                 "결국 그 주식을 떠안은 쪽은 회사들입니다."]
-MEAN_FLIP = ["아침에 본 숫자와 장이 끝난 뒤 숫자가 서로 달랐습니다.",
-             "오전 숫자만 보고 적었다면 거꾸로 읽었을 하루입니다.",
-             "앞뒤가 서로 뒤집힌 하루였습니다."]
-MEAN_FLIP_B = ["하루를 중간에 끊어 보면 거꾸로 읽히는 날이 있습니다.",
-               "숫자는 장이 다 끝난 뒤에 세어야 뜻이 맞습니다.",
-               "오늘이 바로 중간에 보면 안 되는 날이었습니다."]
-MEAN_FI = ["외국인과 기관은 서로 다른 쪽에 설 때가 더 많습니다.",
-           "이 두 곳이 같은 쪽에 서는 날은 자주 나오지 않습니다.",
-           "오늘은 그 드문 날이었습니다."]
-MEAN_FI_B = ["둘이 같은 쪽에 서면 값은 한쪽으로 크게 기웁니다.",
-             "같은 쪽에 선 날은 값이 한 방향으로 크게 움직입니다.",
-             "한쪽으로만 밀리는 날은 대개 이런 날입니다."]
-MEAN_DEF = ["오늘 숫자로 확인되는 건 여기까지입니다.",
-            "여기까지가 오늘 숫자로 확인된 부분입니다.",
-            "값보다 사고판 쪽을 먼저 세어 본 하루입니다."]
-MEAN_DEF_B = ["누가 사고 누가 팔았는지만 그대로 적었습니다.",
-              "값이 아니라 사고판 쪽을 센 하루였습니다.",
-              "오늘은 여기까지만 숫자로 말할 수 있습니다."]
-WATCH_B = ["{when} {q} 보겠습니다.", "{when} {q} 확인해 보겠습니다.", "{when} {q} 지켜보겠습니다."]
+TH_IN = ["돈이 가장 많이 들어온 곳은 {th_ya}.", "오늘 돈이 가장 많이 간 곳은 {th_ya}.", "{th_ro} 들어온 돈이 가장 많아."]
+TH_IN_AMT = ["{th}에는 하루 동안 {f_ga} 들어왔어.", "{th} 한 곳에만 {f_ga} 들어왔어.", "{th_ro} 들어온 돈이 {f_ya}."]
+TH_OUT = ["돈이 가장 많이 빠진 곳은 {th_ya}.", "오늘 돈이 가장 많이 나온 곳은 {th_ya}.", "{th}에서 빠진 돈이 가장 많아."]
+TH_OUT_AMT = ["{th}에서는 하루 동안 {f_ga} 빠졌어.", "{th} 한 곳에서만 {f_ga} 나왔어.", "{th}에서 빠져나간 돈이 {f_ya}."]
+TH_KEEP = ["{th}에는 {dc} 돈이 들어오고 있어.", "{th_ro}는 {dc} 돈이 들어와.", "{th}에 들어오는 돈이 {dc} 이어지고 있어.",
+           "{th}에 돈이 들어온 건 {dc}야."]
+# 5) 그래서 무슨 뜻 — 앞에서 한 말을 다시 하는 것은 뜻이 아니다. MEAN_*는 풀이, MEAN_*_B가 뜻을 닫는 줄이다.
+#    본문 마지막 한 줄은 MEAN_*_B가 아니라 END_Q(독자에게 던지는 질문)가 맡는다.
+MEAN_OTHERS = ["회사가 자기 회사 주식을 사들이면 도는 주식이 줄어.",
+               "회사들이 받아 간 자리는 대개 자기 회사 주식이야.",
+               "회사들이 받아 둔 주식은 한동안 시장 밖에 있어."]
+MEAN_OTHERS_B = ["빠져나간 자리를 회사들이 자기 돈으로 메운 하루야.",
+                 "판 쪽은 시장 밖에 있고 회사들이 그 자리를 메웠어.",
+                 "결국 그 주식을 떠안은 쪽은 회사들이야."]
+MEAN_FLIP = ["아침에 본 숫자랑 장 끝난 뒤 숫자가 서로 달랐어.",
+             "오전 숫자만 보고 적었으면 거꾸로 읽었을 하루야.",
+             "앞뒤가 서로 뒤집힌 하루였어."]
+MEAN_FLIP_B = ["하루를 중간에 끊어 보면 거꾸로 읽히는 날이 있어.",
+               "숫자는 장이 다 끝난 뒤에 세야 뜻이 맞아.",
+               "오늘이 딱 중간에 보면 안 되는 날이었어."]
+MEAN_FI = ["외국인과 기관은 서로 다른 쪽에 설 때가 더 많아.",
+           "이 두 곳이 같은 쪽에 서는 날은 자주 안 나와.",
+           "오늘은 그 드문 날이었어."]
+MEAN_FI_B = ["둘이 같은 쪽에 서면 값은 한쪽으로 크게 기울어.",
+             "같은 쪽에 선 날은 값이 한 방향으로 크게 움직여.",
+             "한쪽으로만 밀리는 날은 대개 이런 날이야."]
+MEAN_DEF = ["오늘 숫자로 확인되는 건 여기까지야.",
+            "여기까지가 오늘 숫자로 확인된 부분이야.",
+            "값보다 사고판 쪽을 먼저 세어 본 하루야."]
+MEAN_DEF_B = ["누가 사고 누가 팔았는지만 그대로 적었어.",
+              "값이 아니라 사고판 쪽을 센 하루였어.",
+              "오늘은 여기까지만 숫자로 말할 수 있어."]
+# 6) 본문 마지막 한 줄 — 독자에게 던지는 질문(JJ 2026-09-13). 댓글이 붙는 글은 전부 질문으로 끝났다.
+#    숫자·'내일/월요일'은 넣지 않는다(T3 마지막 줄 숫자 금지, T14 예고 줄과 겹침).
+END_Q = ["너넨 이 돈 누가 받았다고 봐?",
+         "다들 이 돈이 어디로 갔다고 봐?",
+         "받아 간 쪽, 너넨 어디라고 봐?",
+         "너넨 오늘 숫자에서 뭐가 제일 이상해?",
+         "다들 이런 날 어디부터 봐?",
+         "너넨 오늘 어느 쪽이 더 이상해 보여?",
+         "다들 오늘 누가 제일 크게 움직였다고 봐?",
+         "너넨 이 숫자 중에 뭐가 제일 먼저 눈에 걸렸어?"]
+WATCH_B = ["{when} {q} 볼게.", "{when} {q} 확인해 볼게.", "{when} {q} 지켜볼게."]
 # 어제 예고 검증 — 내부 카운터 대신 풀어 쓴다
-CB_OK = ["어제 이어질지 보자고 한 {th} 쪽 돈은 오늘도 들어왔습니다.",
-         "어제 지켜보자고 적어 둔 {th} 쪽 돈은 오늘도 이어졌습니다.",
-         "{th_ro} 돈이 더 들어올지 어제 적어 뒀는데, 오늘도 들어왔습니다."]
-CB_MISS = ["어제 이어질지 보자고 한 {th} 쪽 돈은 오늘 끊겼습니다.",
-           "어제 지켜보자고 적어 둔 {th_ro}는 오늘 돈이 들어오지 않았습니다.",
-           "{th_ro} 돈이 더 들어올지 어제 적어 뒀는데, 오늘은 끊겼습니다."]
-CB_INV_OK = ["어제 이어질지 보자고 한 {th}은 오늘도 그대로였습니다.",
-             "어제 적어 둔 {th}은 오늘도 이어졌습니다.",
-             "{th}이 이어질지 어제 적어 뒀는데, 오늘도 그대로였습니다."]
-CB_INV_MISS = ["어제 이어질지 보자고 한 {th}은 오늘 끊겼습니다.",
-               "어제 적어 둔 {th}은 오늘 이어지지 않았습니다.",
-               "{th}이 이어질지 어제 적어 뒀는데, 오늘은 끊겼습니다."]
+CB_OK = ["어제 보자고 한 {th} 쪽 돈은 오늘도 들어왔어.",
+         "어제 적어 둔 {th} 쪽 돈은 오늘도 이어졌어.",
+         "{th_ro} 더 들어올지 어제 적어 뒀는데, 오늘도 들어왔어."]
+CB_MISS = ["어제 보자고 한 {th} 쪽 돈은 오늘 끊겼어.",
+           "어제 적어 둔 {th_ro}는 오늘 돈이 들어오지 않았어.",
+           "{th_ro} 더 들어올지 어제 적어 뒀는데, 오늘은 끊겼어."]
+CB_INV_OK = ["어제 보자고 한 {th}은 오늘도 그대로였어.",
+             "어제 적어 둔 {th}은 오늘도 이어졌어.",
+             "{th}이 이어질지 어제 적어 뒀는데, 오늘도 그대로였어."]
+CB_INV_MISS = ["어제 보자고 한 {th}은 오늘 끊겼어.",
+               "어제 적어 둔 {th}은 오늘 이어지지 않았어.",
+               "{th}이 이어질지 어제 적어 뒀는데, 오늘은 끊겼어."]
 
 
 def mask(line, themes=()):
@@ -428,7 +443,7 @@ def pick(bank, hist_masked, **kw):
     return fit[0]
 
 
-WATCH_LINE_RE = re.compile(r"(내일|월요일).*(보겠습니다|확인해 보겠습니다|지켜보겠습니다)\.?$")
+WATCH_LINE_RE = re.compile(r"(내일|월요일).*(볼게|확인해 볼게|지켜볼게)\.?$")
 VERDICT_RE = re.compile(r"끊겼|이어졌|들어오지 않|이어지지 않|그대로였")     # 테마 유입 문장('들어왔습니다')과 섞이지 않게 좁게
 CB_RE = re.compile(r"어제.*(보자고|지켜보자고|적어 둔|적어 뒀)")
 
@@ -455,6 +470,10 @@ def build(d, hist, rot=0):
         allowed[s] = True
         edge_ok[s] = edges(v, rv)
         return s
+
+    def fkw(s):
+        """숫자 한 덩이를 뱅크 자리표시자로 펼친다 — 6,600억 / 6,600억을 / 6,600억이 / 6,600억이야 / 6,600억이었."""
+        return {"f": s, "f_eul": eul(s), "f_ga": i_ga(s), "f_ya": iya(s), "f_was": copula_past(s)}
 
     # level (round thousand inside the day's range, named in a headline)
     T = next((t for t in range(math.ceil(lo / 1000) * 1000, int(hi) + 1, 1000)), None)
@@ -526,10 +545,10 @@ def build(d, hist, rot=0):
         if a > 0 and b > a:                                   # bought more into the close
             fb = fig(b)
             hero_figs.append(fb)
-            A.append((pick(HB_MORE_BUY, hist_masked, nm_eun=eun(nm), nm_ga=i_ga(nm), f=fb, f_eul=eul(fb)), None))
+            A.append((pick(HB_MORE_BUY, hist_masked, nm_eun=eun(nm), nm_ga=i_ga(nm), **fkw(fb)), None))
             if two_pm_ok:
                 fa = fig(a)
-                A.append((pick(TP_BEFORE, hist_masked, f=fa), "twopm"))
+                A.append((pick(TP_BEFORE, hist_masked, **fkw(fa)), "twopm"))
                 A.append((pick(TP_GROW, hist_masked), "tail"))
                 hero_figs.append(fa)
             S, B = join_g(sellers), join_g(buyers)
@@ -539,14 +558,14 @@ def build(d, hist, rot=0):
             if len(sellers) == 1:
                 s0 = dn(sellers[0])
                 fs = fig(inv[dict(GROUPS)[sellers[0]]])
-                W.append((pick(SOLD_AMT, hist_masked, S_eun=eun(s0), S_ga=i_ga(s0), f=fs, f_eul=eul(fs)), "amt"))
+                W.append((pick(SOLD_AMT, hist_masked, S_eun=eun(s0), S_ga=i_ga(s0), **fkw(fs)), "amt"))
         elif a < 0 and b < a:                                 # sold more into the close
             fb = fig(b)
             hero_figs.append(fb)
-            A.append((pick(HB_BIG_SELL, hist_masked, nm_eun=eun(nm), nm_ga=i_ga(nm), f=fb, f_eul=eul(fb)), None))
+            A.append((pick(HB_BIG_SELL, hist_masked, nm_eun=eun(nm), nm_ga=i_ga(nm), **fkw(fb)), None))
             if two_pm_ok:
                 fa = fig(a)
-                A.append((pick(TP_BEFORE, hist_masked, f=fa), "twopm"))
+                A.append((pick(TP_BEFORE, hist_masked, **fkw(fa)), "twopm"))
                 A.append((pick(TP_TAIL, hist_masked), "tail"))   # '그 뒤'는 오후 2시 줄이 있을 때만
                 hero_figs.append(fa)
             tot_b = sum(inv[dict(GROUPS)[n]] for n in buyers) or 1
@@ -557,7 +576,7 @@ def build(d, hist, rot=0):
                 W.append((pick(WHO_TWO, hist_masked, B2=join_g([tb, second])), None))
                 keep += [tbd, dn(second)]
                 ftw = fig(inv[dict(GROUPS)[tb]])
-                W.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), f=ftw, f_eul=eul(ftw)), "amt"))
+                W.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), **fkw(ftw)), "amt"))
             else:
                 most = "대부분" if share >= 0.6 else "주로"
                 W.append(((pick(WHO_TOP, hist_masked, tb=tbd) if share >= 0.9 else
@@ -573,15 +592,15 @@ def build(d, hist, rot=0):
             if s2nd and abs(inv[dict(GROUPS)[s2nd[0]]]) >= 1000:      # 판 쪽이 둘이면 나머지 한 곳의 금액도 적는다
                 sn = dn(s2nd[0])
                 fs2 = fig(inv[dict(GROUPS)[s2nd[0]]])
-                W.append((pick(SOLD_ALSO, hist_masked, S_eun=eun(sn), S_ga=i_ga(sn), f=fs2, f_eul=eul(fs2)), "amt2"))
+                W.append((pick(SOLD_ALSO, hist_masked, S_eun=eun(sn), S_ga=i_ga(sn), **fkw(fs2)), "amt2"))
                 keep.append(sn)
         else:                                                 # flip
             fa, fb = fig(a), fig(b)
             hero_figs += [fa, fb]
-            A.append((pick(HB_FLIP_A if two_pm_ok else HB_FLIP_A0, hist_masked, nm_eun=eun(nm), f=fa, f_eul=eul(fa),
+            A.append((pick(HB_FLIP_A if two_pm_ok else HB_FLIP_A0, hist_masked, nm_eun=eun(nm), **fkw(fa),
                            vb="사" if a > 0 else "팔"), None))
-            A.append((pick(HB_FLIP_B, hist_masked, nm_eun=eun(nm), f=fb, f_eul=eul(fb),
-                           vb3="판 쪽이었습니다" if b < 0 else "산 쪽이었습니다"), None))
+            A.append((pick(HB_FLIP_B, hist_masked, nm_eun=eun(nm), **fkw(fb),
+                           vb3="판 쪽이었어" if b < 0 else "산 쪽이었어"), None))
             Qb.append((pick(Q_WHO if b < 0 else Q_SOLD, hist_masked), "ask"))
             W.append((pick(WHO_BUY2, hist_masked, B2=join_g(by_amt[:2])), None))
             keep += [dn(x) for x in by_amt[:2]]
@@ -590,7 +609,7 @@ def build(d, hist, rot=0):
             if by_amt:
                 b0 = dn(by_amt[0])
                 ft = fig(inv[dict(GROUPS)[by_amt[0]]])
-                W.append((pick(BUY_AMT, hist_masked, B_eun=eun(b0), B_ga=i_ga(b0), f=ft, f_eul=eul(ft)), "amt"))
+                W.append((pick(BUY_AMT, hist_masked, B_eun=eun(b0), B_ga=i_ga(b0), **fkw(ft)), "amt"))
     elif hero == "level":
         # 인정 구간(첫 세 줄)에 코스피 숫자를 두 번 넣지 않는다 — '몇 거래일 만에 7천' 줄은 뺐다(JJ 2026-09-13).
         s2 = [n for n in sellers if n in ("개인", "외국인")]
@@ -598,7 +617,7 @@ def build(d, hist, rot=0):
         s0 = dn(big_s)
         fs = fig(inv[dict(GROUPS)[big_s]])
         hero_figs.append(fs)
-        A.append((pick(SOLD_AMT, hist_masked, S_eun=eun(s0), S_ga=i_ga(s0), f=fs, f_eul=eul(fs)), None))
+        A.append((pick(SOLD_AMT, hist_masked, S_eun=eun(s0), S_ga=i_ga(s0), **fkw(fs)), None))
         keep.append(s0)
         if len(s2) == 2:
             A.append((pick(SELL_BOTH, hist_masked, s0=dn(s2[0]), s1=dn(s2[1]), s0_gwa=gwa(dn(s2[0]))), "both"))
@@ -612,7 +631,7 @@ def build(d, hist, rot=0):
         if chg < 0:                                           # 코스피는 내렸는데 외국인과 기관이 받은 날
             fc = fig((inv.get("foreign") or 0) + (inv.get("inst") or 0))
             hero_figs.append(fc)
-            A.append((pick(CONTRA_BUY, hist_masked, f=fc, f_eul=eul(fc)), None))
+            A.append((pick(CONTRA_BUY, hist_masked, **fkw(fc)), None))
             n2 = min((c.get("inv_streak") or {}).get("foreign", {}).get("streak") or 0, (c.get("inv_streak") or {}).get("inst", {}).get("streak") or 0)
             if n2 >= 2:
                 A.append((pick(BOTH_BUY, hist_masked, dc=DAYC[min(n2, 7)]), "both"))
@@ -623,14 +642,14 @@ def build(d, hist, rot=0):
             if len(sellers) == 1:
                 s0 = dn(sellers[0])
                 fs = fig(inv[dict(GROUPS)[sellers[0]]])
-                W.append((pick(SOLD_AMT, hist_masked, S_eun=eun(s0), S_ga=i_ga(s0), f=fs, f_eul=eul(fs)), "amt"))
+                W.append((pick(SOLD_AMT, hist_masked, S_eun=eun(s0), S_ga=i_ga(s0), **fkw(fs)), "amt"))
             ftc = fig(inv[dict(GROUPS)[tb]])
-            W.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), f=ftc, f_eul=eul(ftc)), "amt2"))
+            W.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), **fkw(ftc)), "amt2"))
             keep.append(tbd)
         else:                                                 # 코스피는 올랐는데 개인과 외국인이 판 날
             fs = fig(inv["indiv"])
             hero_figs.append(fs)
-            A.append((pick(SOLD_AMT, hist_masked, S_eun="개인은", S_ga="개인이", f=fs, f_eul=eul(fs)), None))
+            A.append((pick(SOLD_AMT, hist_masked, S_eun="개인은", S_ga="개인이", **fkw(fs)), None))
             A.append((pick(SELL_BOTH, hist_masked, s0="개인", s1="외국인", s0_gwa="개인과"), "both"))
             Qb.append((pick(Q_WHO, hist_masked), "ask"))
             W.append((pick(WHO_BUY2, hist_masked, B2=join_g(by_amt[:2])), None))
@@ -644,28 +663,29 @@ def build(d, hist, rot=0):
                 fm = fig(m["t"])
                 hero_figs.append(fm)
                 A.append((pick(TH_IN_AMT if m["t"] > 0 else TH_OUT_AMT, hist_masked, th=m["theme"],
-                               th_ro=euro(m["theme"]), f=fm, f_ga=i_ga(fm)), None))
+                               th_ro=euro(m["theme"]), th_ya=iya(m["theme"]), **fkw(fm)), None))
                 th_used.add(m["theme"])
             else:
                 ft0 = fig(inv[dict(GROUPS)[tb]])
-                A.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), f=ft0, f_eul=eul(ft0)), None))
-            A.append((pick(TH_IN if m["t"] > 0 else TH_OUT, hist_masked, th=m["theme"], th_ro=euro(m["theme"])), "thq"))
+                A.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), **fkw(ft0)), None))
+            A.append((pick(TH_IN if m["t"] > 0 else TH_OUT, hist_masked, th=m["theme"], th_ro=euro(m["theme"]),
+                       th_ya=iya(m["theme"])), "thq"))
             hero_tokens.append(m["theme"])
             Qb.append((pick(Q_WHERE if m["t"] > 0 else Q_WHO, hist_masked), "ask"))
-            W.append((pick(WHO_ONE_BUY, hist_masked, tb=tbd), None))
+            W.append((pick(WHO_ONE_BUY, hist_masked, tb=tbd, tb_ga=i_ga(tbd)), None))
         else:
             ft0 = fig(inv[dict(GROUPS)[tb]])
             hero_figs.append(ft0)
-            A.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), f=ft0, f_eul=eul(ft0)), None))
-            A.append((pick(WHO_ONE_BUY, hist_masked, tb=tbd), "who1"))
+            A.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), **fkw(ft0)), None))
+            A.append((pick(WHO_ONE_BUY, hist_masked, tb=tbd, tb_ga=i_ga(tbd)), "who1"))
             Qb.append((pick(Q_SOLD, hist_masked), "ask"))
         W.append(((pick(SOLD_SIDE, hist_masked, S=join_g(sellers)) if sellers
-                   else "개인과 외국인, 기관, 회사들이 모두 샀습니다."), None))
+                   else "개인과 외국인, 기관, 회사들이 모두 샀어."), None))
         keep += [tbd] + [dn(x) for x in sellers]
         if sellers:
             ts = dn(min(sellers, key=lambda n: inv[dict(GROUPS)[n]]))      # 가장 많이 판 쪽
             fs = fig(inv[dict(GROUPS)[min(sellers, key=lambda n: inv[dict(GROUPS)[n]])]])
-            W.append((pick(SOLD_AMT, hist_masked, S_eun=eun(ts), S_ga=i_ga(ts), f=fs, f_eul=eul(fs)), "amt2"))
+            W.append((pick(SOLD_AMT, hist_masked, S_eun=eun(ts), S_ga=i_ga(ts), **fkw(fs)), "amt2"))
         if tb_run >= 3:
             W.append((pick(RUN_AFTER, hist_masked, tb_eun=eun(tbd), tb=tbd, days=DAYN[min(tb_run, 7)]), "run"))
             days_ok.add(DAYN[min(tb_run, 7)])
@@ -677,14 +697,14 @@ def build(d, hist, rot=0):
         m = max(th_in, key=lambda x: x["t"])
         fm = fig(m["t"])
         th_used.add(m["theme"])
-        X.append((pick(TH_IN_AMT, hist_masked, th=m["theme"], th_ro=euro(m["theme"]), f=fm, f_ga=i_ga(fm)), "theme"))
+        X.append((pick(TH_IN_AMT, hist_masked, th=m["theme"], th_ro=euro(m["theme"]), th_ya=iya(m["theme"]), **fkw(fm)), "theme"))
     # 돈이 가장 많이 빠져나간 곳도 한 줄 — 들어온 쪽만 말하면 절반만 말하는 셈이다
     th_out = [m for m in moves if m["t"] <= -1000 and abs(m["t"]) <= fi and m["theme"] not in th_used]
     if th_out:
         m = min(th_out, key=lambda x: x["t"])
         fo = fig(m["t"])
         th_used.add(m["theme"])
-        X.append((pick(TH_OUT_AMT, hist_masked, th=m["theme"], th_ro=euro(m["theme"]), f=fo, f_ga=i_ga(fo)), "thout"))
+        X.append((pick(TH_OUT_AMT, hist_masked, th=m["theme"], th_ro=euro(m["theme"]), th_ya=iya(m["theme"]), **fkw(fo)), "thout"))
     # 코스닥 한 줄 — 코스피만 보면 놓치는 쪽(숫자는 쓰지 않는다)
     kdi = (c.get("investors") or {}).get("kosdaq") or {}
     kd = [(n, kdi.get(kk) or 0) for n, kk in GROUPS if n != "기타법인"]
@@ -723,7 +743,8 @@ def build(d, hist, rot=0):
     watch_in_body = False      # 다음 거래일에 볼 것은 첫 답글(reply)이 맡는다 — 본문 마지막 줄은 '그래서 무슨 뜻'
     if (lead and lead["t"] > 0 and str(lead["state"]).startswith("쌓임") and lead["streak"] >= 2
             and lead["theme"] not in th_used and (not watch or watch["theme"] != lead["theme"])):
-        X.append((pick(TH_KEEP, hist_masked, th=lead["theme"], th_ro=euro(lead["theme"]), dc=DAYC[min(lead["streak"], 7)]), "keep"))
+        X.append((pick(TH_KEEP, hist_masked, th=lead["theme"], th_ro=euro(lead["theme"]), th_ya=iya(lead["theme"]),
+                       dc=DAYC[min(lead["streak"], 7)]), "keep"))
 
     # 며칠째 같은 쪽인지 — 이미 '며칠째'를 말한 줄이 있으면 넣지 않는다(겹쳐 쓰면 T17)
     if not any(STREAK_RE.search(x) for x, _ in A + W + X):
@@ -771,7 +792,8 @@ def build(d, hist, rot=0):
     elif (inv.get("foreign") or 0) * (inv.get("inst") or 0) > 0:
         mb, mb2 = MEAN_FI, MEAN_FI_B
     Z.append((pick(mb, hist_masked), "mean"))
-    Z.append((pick(mb2, hist_masked), None))         # 본문은 늘 이 줄로 닫는다
+    Z.append((pick(mb2, hist_masked), "meanb"))      # 뜻은 이 줄이 맡는다
+    Z.append((pick(END_Q, hist_masked), None))       # 본문은 늘 독자에게 던지는 질문으로 닫는다
 
     # 최소 줄 수 보장: A 2줄, W 2줄
     if len(A) < 2:
@@ -781,11 +803,11 @@ def build(d, hist, rot=0):
             W.append((pick(SOLD_SIDE, hist_masked, S=join_g(sellers)), "side2"))
         else:
             ft2 = fig(inv[dict(GROUPS)[tb]])
-            W.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), f=ft2, f_eul=eul(ft2)), "side2"))
+            W.append((pick(BUY_AMT, hist_masked, B_eun=eun(tbd), B_ga=i_ga(tbd), **fkw(ft2)), "side2"))
 
     # assemble: 문단 사이 빈 줄. 길이가 넘치면 DROP_ORDER 순서로 통째로 뺀다.
     DROP_ORDER = ["ctx", "grun", "kdc", "range", "2nd", "kd", "intro", "keep", "thout", "theme", "thq", "who1",
-                  "amt2", "amt", "side", "side2", "tail", "both", "run", "twopm", "mean", "ask"]
+                  "amt2", "amt", "side", "side2", "tail", "both", "run", "twopm", "meanb", "mean", "ask"]
     dropped = set()
 
     def render():
@@ -811,7 +833,7 @@ def build(d, hist, rot=0):
 
     # 넘칠 때마다 '가장 많이 나아지는' 묶음 하나만 뺀다(고정 순서로 줄줄이 빼면 아까운 줄까지 날아간다).
     # 가운데 질문 한 줄(ask)과 뜻 풀이(mean)는 정말 더 뺄 게 없을 때만 건드린다.
-    for pool in (DROP_ORDER[:-2], DROP_ORDER):
+    for pool in (DROP_ORDER[:-3], DROP_ORDER):
         while True:
             base = cost(render())
             if not base:
@@ -870,7 +892,7 @@ BAN_INTERP = ["판이 바", "주도주", "대세", "본격", "신호", "시그�
 BAN_PROMO = ["여러분", "보셨나요", "생각하시", "의견", "댓글", "팔로우", "구독", "저장해", "리포", "공유", "DM", "오픈채팅", "리딩방", "단톡", "텔레그램",
              "링크", "영상", "프로필",
              # 채널 고지·영상 안내는 본문이 아니라 첫 답글(reply) 몫이다 — 본문에 새어 들어오면 잡는다
-             "여기서 보실", "기록으로 남깁니다", "매일 확인합니다", "채널"]
+             "여기서 보실", "기록으로 남깁니다", "매일 확인합니다", "기록으로 남겨", "매일 확인해", "채널"]
 BAN_REC = ["사세요", "담아", "담으", "모아가", "모아 가", "기회", "목표가", "추천", "유망", "노려", "관심 종목", "볼 만한", "사도 될", "들어가도", "타이밍"]
 BAN_MONEY = ["확률", "승률", "부자", "돈 벌", "돈을 벌", "경제적 자유", "수익", "월급", "파이어", "계좌", "평단", "손실", "익절", "손절", "물렸", "물림",
              "추매", "물타", "불타", "몰빵", "풀매수", "담았", "담음"]
@@ -892,7 +914,8 @@ PRON_TRADE_RE = re.compile(r"(?:^|\s)(나|내가|저|제가|나도|저도|내|�
 TRADE_RE = re.compile(r"(?:^|\s)(샀\S*|사고|사는|사들\S*|산|팔았\S*|팔고|파는|판|던졌\S*|던진|받았\S*|받은|받는|받아)(?=\s|$)")
 PRONOUN_RE = re.compile(r"(?:^|\s)(얘네\S*|둘이|둘 다|셋 다|이쪽|그쪽|두 쪽)(?=\s|$)")
 ASK_RE = re.compile(r"누가|누구|어디|어느")
-EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF☀-➿←-⇿•※·▶]")
+EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF☀-➿]")     # 편당 0~1개까지 허용
+SYMBOL_RE = re.compile("[←-⇿•※·▶]")                        # 화살표·가운뎃점 같은 기호는 계속 금지
 STREAK_RE = re.compile(r"(이틀|사흘|나흘|닷새|엿새|이레|\d+일)째|내리|연속")
 REPEAT_RE = re.compile(r"(?:^|\s)또(?=\s)|연속|내리|만에|만이|다시|계속|(?:이틀|사흘|나흘|닷새|엿새|이레)째?")
 REACT_RE = re.compile(r"놀람|놀랐|놀랍|놀라운|웃김|웃겼|웃었|웃깁|의외|신기|궁금|어이없|황당|재밌")
@@ -914,16 +937,24 @@ def short_end(line):
     return bool(s) and jong(s[-1]) == 16
 
 
+# 반말 종결(JJ 2026-09-13). 음슴체(ㅁ 받침 종결)는 short_end가 따로 막는다 — 둘은 다른 검사다.
+#   평서: 샀어 / 회사들이야 / 가장 많아 / 사들였어 / 뜻해 / 봐 / 돼 / 안 나와 / 볼게
+#   질문: 받아 갔을까? / 어디라고 봐? / 뭐가 먼저 걸렸어? / 더 이상해 보여?
+# '-습니다/-입니다'는 이제 통과하지 못한다. '-요'(구어체)는 SPOKEN_END_RE가 따로 잡는다.
+DECL_END_RE = re.compile(r"(어|아|야|와|워|여|려|해|봐|돼|게)$")
+QUES_END_RE = re.compile(r"(까|야|어|아|해|봐|지|나|여|려|워)\?$")
+
+
 def tail_ok(line):
-    """완결형 종결인지 — '-습니다/-입니다.'로 끝나거나, 다음 줄로 이어지는 쉼표거나, '-까요?' 질문."""
+    """반말 종결인지 — 평서는 '-어/-야/-아/-해/-봐/-돼/-게.', 질문은 '-까?/-어?/-봐?', 이어지는 쉼표는 허용."""
     s = line.strip()
     if s.endswith(","):
         return True
     if s.endswith("?"):
-        return bool(re.search(r"(까요|나요)\?$", s))
+        return bool(QUES_END_RE.search(s))
     if not s.endswith("."):
         return False
-    return bool(re.search(r"니다", s))          # 습니다 / 입니다 / 들어옵니다
+    return bool(DECL_END_RE.search(s[:-1]))
 
 
 def history(d, n=5):
@@ -993,8 +1024,8 @@ def reply(d, comp, yt="{YT}"):
             when = WD[nx.weekday()] + "요일"
     elif base.weekday() == 4:
         when = "월요일"
-    lines = ["돈이 어디에 머무는지만 매일 확인합니다. 맞는지는 기록으로 남깁니다.",
-             f"영상 전체는 여기서 → {yt}"]
+    lines = ["돈이 어디에 머무는지만 매일 확인해. 맞는지는 기록으로 남겨.",
+             f"영상 전체는 여기 → {yt}"]
     if q:                                                    # 본문에는 없다 — 다음에 볼 것은 늘 여기로 온다
         v = WATCH_B[datetime.strptime(d, "%Y%m%d").toordinal() % len(WATCH_B)]
         lines.append(v.format(when=f"{when}은", q=q))
@@ -1032,7 +1063,7 @@ def check(text, tf, hist=(), seed="", extra_masked=()):
         why.append("T2 opener shape")
     # T2b 첫 줄은 '독자가 이미 본 것' — 지수 등락률 + 이미 봤다는 인정
     sf = tf.get("seen_fig")
-    if sf and (sf not in l1 or not re.search(r"보셨|아실|보이는|떠 있", l1)):
+    if sf and (sf not in l1 or not re.search(r"봤|알 거|보이는|떠 있", l1)):
         why.append("T2b 첫 줄이 '독자가 이미 본 것'이 아님")
     # T2c 둘째 줄은 '그것만 보면 놓치는, 숫자가 든 사실' — 빈손 예고는 금지
     if len(ne) >= 2 and not FIG_RE.search(ne[1]):
@@ -1073,10 +1104,10 @@ def check(text, tf, hist=(), seed="", extra_masked=()):
         why.append("T3 first 2시 mention without 오후")
     if re.search(r"\d+\.\d+조", body):
         why.append("T3 조 단위를 풀어 쓰지 않음 (9.9조 → 9조 9천억)")
-    # T4 register — 완결형 '-습니다/-입니다'체, 축약 종결·구어 종결 금지
+    # T4 register — 반말 '-어/-야/-아/-까?'체(JJ 2026-09-13). 축약 종결(음슴체)·구어 종결(-요)은 그대로 금지.
     for x in ne:
         if not tail_ok(x):
-            why.append(f"T4 완결형 종결 아님: {x}")
+            why.append(f"T4 반말 종결 아님: {x}")
         if short_end(x):
             why.append(f"T4 축약 종결형(음슴체): {x}")
         if SPOKEN_END_RE.search(x.strip()):
@@ -1096,8 +1127,10 @@ def check(text, tf, hist=(), seed="", extra_masked=()):
     chat = [wd for wd in BAN_CHAT if wd in body]
     if chat:
         why.append(f"T6 채팅 기호 {chat}")
-    if EMOJI_RE.search(body) or "#" in body:
-        why.append("T6 emoji/symbol/#")
+    if SYMBOL_RE.search(body) or "#" in body:
+        why.append("T6 symbol/#")
+    if len(EMOJI_RE.findall(body)) > 1:
+        why.append("T6 이모지는 편당 0~1개")
     # T7 existing forbidden module, per line
     for x in ne:
         f = forbidden.find_threads(x)
@@ -1171,13 +1204,19 @@ def check(text, tf, hist=(), seed="", extra_masked=()):
         for x in wl:
             if not re.search(r"사는지|파는지|들어오는지|빠지는지|돈", x) or not WATCH_LINE_RE.search(x) or (tf["watch"] and tf["watch"]["theme"] not in x):
                 why.append(f"T14 watch line must name theme+flow and end '보겠습니다': {x}")
-    # T15 questions
+    # T15 questions — 가운데 한 줄(ask) + 마지막 닫는 줄(END_Q). 그 밖의 물음표는 금지.
+    qmid = 1 if tf["ask_ok"] else 0
     qn = body.count("?")
-    if qn > (1 if tf["ask_ok"] else 0):
-        why.append("T15 question not allowed")
+    if qn > qmid + 1:
+        why.append(f"T15 question count {qn} > {qmid + 1}")
     for x in ne:
         if "?" in x and Q_BAN_RE.search(x):
             why.append("T15 banned question")
+    # T21 본문은 독자에게 던지는 질문으로 닫는다(JJ 2026-09-13 — 댓글이 붙는 글은 전부 질문으로 끝났다)
+    if not ne[-1].rstrip().endswith("?"):
+        why.append(f"T21 마지막 줄이 질문이 아님: {ne[-1]}")
+    if sum(1 for x in ne[:-1] if x.rstrip().endswith("?")) > qmid:
+        why.append("T21 가운데 질문이 한 줄을 넘음")
     # T16 stock / event names
     sn = [n for n in tf["stock_names"] if n in body]
     if sn:
@@ -1222,10 +1261,10 @@ def check(text, tf, hist=(), seed="", extra_masked=()):
 
 # ── final posts (body; publish appends "\n#국장") ──
 SAMPLES = {
-    "20260908": "0.58% 내린 코스피는 아마 이미 보셨을 겁니다.\n그 시간에 외국인은 오히려 6,600억을 더 샀습니다.\n오후 2시에 적힌 숫자는 1,700억입니다.\n그 뒤 한 시간 반 사이에 그만큼이 더 늘었습니다.\n\n그 주식은 누가 내놓은 걸까요?\n\n개인이 판 주식을 외국인과 기관, 회사들이 받았습니다.\n개인은 하루 만에 3조 1천억을 내놓았습니다.\n회사들은 사람도 기관도 아닌 기업 자신입니다.\n\n자동차에서 빠져나간 돈은 1,500억입니다.\n코스닥에서 가장 많이 판 쪽도 기관입니다.\n코스닥이 움직인 폭은 코스피보다 컸습니다.\n코스피는 내려간 그 자리 그대로 문을 닫았습니다.\n\n오늘은 그 드문 날이었습니다.\n한쪽으로만 밀리는 날은 대개 이런 날입니다.",
-    "20260909": "오늘 1.40% 상승은 앱만 켜도 보이는 숫자입니다.\n개인은 오늘 하루 2조 3천억을 팔았습니다.\n오늘은 개인도 외국인도 파는 쪽이었습니다.\n\n팔린 주식은 어디로 간 걸까요?\n\n그 주식을 받아 간 쪽은 회사들과 기관입니다.\n회사들은 기업이 직접 낸 돈을 뜻합니다.\n\n이차전지 한 곳에만 2,200억이 들어왔습니다.\n코스닥에서 주식을 받아 간 쪽도 외국인입니다.\n코스닥 쪽이 더 크게 오른 하루입니다.\n코스피는 하루 중 더 위까지 올라갔던 날입니다.\n기관은 나흘째 같은 쪽에 서 있습니다.\n\n어제 지켜보자고 적어 둔 반도체로는 오늘 돈이 들어오지 않았습니다.\n회사들이 받아 둔 주식은 한동안 시장에 나오지 않습니다.\n판 쪽은 시장 밖에 있고 회사들이 그 자리를 메웠습니다.",
-    "20260910": "주식 앱을 켜면 0.25% 하락이 떠 있을 겁니다.\n오늘 외국인이 내놓은 금액은 2조 5천억입니다.\n오후 2시까지는 3,500억이었습니다.\n그 뒤 한 시간 반 사이에 쏟아졌습니다.\n\n그만큼을 받아 낸 쪽은 어디였을까요?\n\n받아 간 쪽은 대부분 회사들입니다.\n회사들은 사흘 내내 가장 많이 산 쪽입니다.\n여기서 회사들은 상장한 기업 자신을 말합니다.\n\n반도체에서 빠져나간 돈은 1조 5천억입니다.\n코스닥에서는 기관이 사는 쪽이었습니다.\n그 뒤를 이어 산 쪽은 개인입니다.\n\n어제 이어질지 보자고 한 이차전지 쪽 돈은 오늘 끊겼습니다.\n회사들이 받아 간 자리는 대개 자기 회사 주식입니다.\n빠져나간 자리를 회사들이 자기 돈으로 메운 하루입니다.",
-    "20260911": "코스피가 1.76% 빠졌다는 것까지는 아실 겁니다.\n외국인이 하루에 판 금액이 2조 3천억입니다.\n\n그걸 다 받아 낸 쪽은 누구였을까요?\n\n받아 간 곳은 개인과 회사들 두 곳입니다.\n개인은 하루 만에 1조 9천억을 받아 갔습니다.\n반대편에서 판 쪽은 외국인과 기관입니다.\n기관이 함께 내놓은 금액은 1조 2천억입니다.\n개인은 흔히 말하는 보통 투자자를 뜻합니다.\n\n반도체에서는 하루 동안 3조 3천억이 빠졌습니다.\n코스닥에서는 개인이 제일 많이 받았습니다.\n금융에 돈이 들어온 건 이틀째입니다.\n\n어제 지켜보자고 적어 둔 금융 쪽 돈은 오늘도 이어졌습니다.\n외국인과 기관은 서로 다른 쪽에 설 때가 더 많습니다.\n둘이 같은 쪽에 서면 값은 한쪽으로 크게 기웁니다.",
+    "20260908": "주식 앱 켜면 0.58% 하락이 떠 있어.\n외국인은 내려가는 값을 받아 6,600억을 샀어.\n오후 2시에 세어 보니 1,700억이었어.\n나머지는 전부 그 뒤 한 시간 반에 들어왔어.\n\n그럼 그 주식을 판 쪽은 누구였을까?\n\n개인이 판 주식을 외국인과 기관, 회사들이 받았어.\n오늘 개인이 내놓은 돈이 3조 1천억이야.\n여기서 회사들은 상장한 기업 자신을 말해.\n\n자동차에서 빠져나간 돈이 1,500억이야.\n코스닥에서도 기관은 파는 쪽이었어.\n코스닥 쪽이 더 크게 내린 하루야.\n코스피는 가장 낮은 자리에서 하루를 끝냈어.\n외국인은 사흘째 같은 쪽에 서 있어.\n\n오늘은 그 드문 날이었어.\n같은 쪽에 선 날은 값이 한 방향으로 크게 움직여.\n너넨 이 돈 누가 받았다고 봐?",
+    "20260909": "오늘 1.40% 상승은 앱만 켜도 보이는 숫자야.\n하루 사이 개인이 판 금액이 2조 3천억이야.\n오늘은 개인도 외국인도 파는 쪽이었어.\n\n그 주식은 누가 받아 갔을까?\n\n그만큼은 회사들과 기관이 받아 갔어.\n회사들은 기업이 직접 낸 돈이야.\n\n이차전지로 들어온 돈이 2,200억이야.\n코스닥에서 외국인은 받는 쪽이었어.\n코스닥은 그보다 더 크게 올랐어.\n꼭대기에서 얼마쯤 내려온 채로 문을 닫았어.\n기관이 산 건 나흘째야.\n기사들은 오늘을 AI 훈풍이라고 적었어.\n\n반도체로 더 들어올지 어제 적어 뒀는데, 오늘은 끊겼어.\n회사들이 받아 둔 주식은 한동안 시장 밖에 있어.\n판 쪽은 시장 밖에 있고 회사들이 그 자리를 메웠어.\n받아 간 쪽, 너넨 어디라고 봐?",
+    "20260910": "코스피가 0.25% 빠진 것까지는 알 거야.\n외국인은 오늘 하루에만 2조 5천억을 팔았어.\n오후 2시까지는 3,500억이었어.\n그 뒤 한 시간 반 사이에 쏟아졌어.\n\n그걸 다 받아 낸 쪽은 누구였을까?\n\n받아 간 쪽은 대부분 회사들이야.\n회사들은 사흘 내내 가장 많이 산 쪽이야.\n회사들은 사람도 기관도 아닌 기업 자신이야.\n\n반도체에서는 하루 동안 1조 5천억이 빠졌어.\n코스닥에서는 기관이 제일 많이 받았어.\n그다음으로 많이 산 쪽은 개인이야.\n코스피는 하루 중 더 아래까지 내려갔었어.\n\n어제 적어 둔 이차전지로는 오늘 돈이 들어오지 않았어.\n회사들이 받아 간 자리는 대개 자기 회사 주식이야.\n빠져나간 자리를 회사들이 자기 돈으로 메운 하루야.\n다들 이 돈이 어디로 갔다고 봐?",
+    "20260911": "1.76% 내린 코스피는 아마 이미 봤을 거야.\n외국인이 하루에 판 금액이 2조 3천억이야.\n\n그럼 그만큼은 누가 받은 걸까?\n\n개인과 회사들이 그만큼을 나눠서 받았어.\n개인이 받아 간 만큼이 1조 9천억이야.\n그 주식을 판 쪽은 외국인과 기관이야.\n기관은 같은 날 1조 2천억을 내놨어.\n개인은 증권 앱으로 직접 사고파는 사람들이야.\n\n반도체 한 곳에서만 3조 3천억이 나왔어.\n코스닥에서 주식을 받아 간 쪽도 개인이야.\n한때는 지금 숫자보다 더 아래에 있었어.\n금융에 들어오는 돈이 이틀째 이어지고 있어.\n\n어제 보자고 한 금융 쪽 돈은 오늘도 들어왔어.\n이 두 곳이 같은 쪽에 서는 날은 자주 안 나와.\n둘이 같은 쪽에 서면 값은 한쪽으로 크게 기울어.\n너넨 오늘 숫자에서 뭐가 제일 이상해?",
 }
 OLD = {
     "20260909": "9월 9일 국장. 코스피가 1.40% 올라 7,052에 마감했습니다. 반도체 강세 속에 33거래일 만에 7000선을 다시 밟았습니다.\n\n눈에 띈 건 시간대였습니다. 오후 2시까지 외국인은 약 2,700억 순매수였는데, 마감엔 약 4,300억 순매도로 돌아섰습니다.\n\n돈은 이차전지로 갔습니다. 오늘 하루 약 2,200억이 들어왔고 외국인과 기관이 둘 다 샀습니다. 반대로 반도체에서는 약 960억이 빠졌습니다.\n\n어제 보자고 한 반도체는 오늘 끊겼습니다.\n\n개인은 약 2.3조를 팔았습니다. 지수가 오른 날 개인이 내놓는 그림입니다.\n\n내일은 이차전지 순매수가 이틀째 이어지는지가 관건입니다.\n\n돈이 어디에 머무는지만 매일 확인합니다. 맞는지는 기록으로 남깁니다.",
@@ -1233,67 +1272,79 @@ OLD = {
 }
 # one-line swaps into the newest seed ("first"=첫 줄, "mid"=가운데 줄, "last"=마지막 줄); every one must fail
 ADVERSARIAL = [
-    ("mid", "나도 오늘 반도체를 조금 담았습니다."),
-    ("mid", "외국인 매도 때문에 빠진 것으로 보입니다."),
-    ("mid", "지금이 기회일 수 있습니다."),
-    ("last", "여러분은 오늘 어떻게 보셨나요?"),
-    ("mid", "프로그램도 2조 9천억을 팔았습니다."),
-    ("mid", "기타법인은 1조 7천억, 기관은 4,600억을 샀습니다."),
+    ("mid", "나도 오늘 반도체 조금 담았어."),
+    ("mid", "외국인 매도 때문에 빠진 걸로 보여."),
+    ("mid", "지금이 기회일 수 있어."),
+    ("last", "여러분은 오늘 어떻게 보고 있어?"),
+    ("mid", "프로그램도 2조 9천억을 팔았어."),
+    ("mid", "기타법인은 1조 7천억, 기관은 4,600억을 샀어."),
     ("mid", "#주식 #코스피"),
     ("mid", "받은 건 대부분 기타법인ㅋㅋ"),
-    ("mid", "받은 쪽은 기타법인입니다 ㅎㅎ"),
-    ("first", "9월 11일 국장, 외국인이 2조 3천억을 팔았습니다."),
-    ("first", "오늘 코스피는 이렇게 끝났습니다."),
-    ("last", "내일은 반도체가 반등할 듯합니다."),
-    ("mid", "금융 쪽으로 돈이 몰릴 것 같습니다."),
-    ("mid", "오늘 조금 샀습니다."),
-    ("mid", "하나금융지주는 거의 움직이지 않았습니다."),
-    ("last", "확인 셋 중 이어진 건 하나입니다."),
-    ("last", "어제 보자던 금융은 두 번 연속 끊겼습니다."),
-    ("last", "내일은 금융이 오를지만 보겠습니다."),
-    ("mid", "하루 만에 판이 바뀌었습니다."),
-    ("first", "와 외국인이 약 2조 3천억을 던졌습니다."),
-    ("mid", "코스피는 7,000선을 지켰습니다."),
-    ("mid", "이건 좀 놀랍습니다."),
-    ("mid", "받은 쪽은 기타법인·기관·개인입니다."),
-    ("mid", "개미들은 또 털렸습니다."),
-    ("mid", "오후 2시만 해도 4,700억 넘게였습니다."),
-    ("mid", "만기라서 막판 물량이 나온 것입니다."),
-    ("first", "외국인이 2.3조를 팔았습니다."),
+    ("mid", "받은 쪽은 기타법인이야 ㅎㅎ"),
+    ("first", "9월 11일 국장, 외국인이 2조 3천억을 팔았어."),
+    ("first", "오늘 코스피는 이렇게 끝났어."),
+    ("last", "내일은 반도체가 반등할 듯해."),
+    ("mid", "금융 쪽으로 돈이 몰릴 것 같아."),
+    ("mid", "오늘 조금 샀어."),
+    ("mid", "하나금융지주는 거의 안 움직였어."),
+    ("last", "확인 셋 중 이어진 건 하나야."),
+    ("last", "어제 보자던 금융은 두 번 연속 끊겼어."),
+    ("last", "내일은 금융이 오를지만 볼게."),
+    ("mid", "하루 만에 판이 바뀌었어."),
+    ("first", "와 외국인이 약 2조 3천억을 던졌어."),
+    ("mid", "코스피는 7,000선을 지켰어."),
+    ("mid", "이건 좀 놀랐어."),
+    ("mid", "받은 쪽은 기타법인·기관·개인이야."),
+    ("mid", "개미들은 또 털렸어."),
+    ("mid", "오후 2시만 해도 4,700억 넘게였어."),
+    ("mid", "만기라서 막판 물량이 나온 거야."),
+    ("first", "외국인이 2.3조를 팔았어."),
     ("mid", "받은 건 개인이랑 기타법인"),
-    ("mid", "외국인은 사흘째 팔았고 기관도 이틀째 팔았습니다."),
+    ("mid", "외국인은 사흘째 팔았고 기관도 이틀째 팔았어."),
     ("last", "내일은 금융 순매수가 이어지는지만 봄"),
-    ("last", "내일은 금융 순매수가 이어지는지 봅니다ㅋㅋ"),
+    ("last", "내일은 금융 순매수가 이어지는지 볼게ㅋㅋ"),
     ("mid", "외국인이 던진 물량을 개인이 받았어요."),
     # 2026-09-13 새 규칙: 첫 줄은 '독자가 이미 본 것'이어야 하고, 번호 목록·채널 고지·영상 링크는 본문 밖이다
-    ("first", "코스피는 오늘 1.76% 내렸습니다."),
-    ("first", "외국인은 오늘 2조 3천억을 팔았습니다."),
-    ("first", "오늘 국장 마감을 정리합니다."),
-    ("mid", "1. 외국인이 팔았습니다."),
-    ("mid", "영상 전체는 여기서 보실 수 있습니다."),
-    ("mid", "구독과 알림 설정 부탁드립니다."),
-    ("last", "월요일은 금융 순매수가 이어지는지 보겠습니다."),
+    ("first", "코스피는 오늘 1.76% 내렸어."),
+    ("first", "외국인은 오늘 2조 3천억을 팔았어."),
+    ("first", "오늘 국장 마감을 정리해."),
+    ("mid", "1. 외국인이 팔았어."),
+    ("mid", "영상 전체는 여기서 볼 수 있어."),
+    ("mid", "구독이랑 알림 설정 부탁해."),
+    ("last", "월요일은 금융 순매수가 이어지는지 볼게."),
     # 2026-09-13 두 번째 지시: 쓰레드에 금융 용어를 쓰지 않는다 + 둘째 줄은 숫자가 든 사실이어야 한다
-    ("second", "그 아래에서 외국인은 파는 쪽이었습니다."),
-    ("second", "확인할 숫자는 따로 있습니다."),
-    ("second", "코스피는 7천 위에서 끝났습니다."),
-    ("mid", "외국인이 순매도로 돌아섰습니다."),
-    ("mid", "오늘 수급을 그대로 옮기면 이렇습니다."),
-    ("mid", "기타법인 자리는 자사주 매입일 때가 많습니다."),
-    ("mid", "정규장 체결 기준으로 집계한 숫자입니다."),
-    ("mid", "지수가 흔들린 건 변동성 탓입니다."),
-    ("mid", "오늘 거래대금은 평소보다 컸습니다."),
-    ("last", "받은 물량은 기타법인이 가져갔습니다."),
+    ("second", "그 아래에서 외국인은 파는 쪽이었어."),
+    ("second", "확인할 숫자는 따로 있어."),
+    ("second", "코스피는 7천 위에서 끝났어."),
+    ("mid", "외국인이 순매도로 돌아섰어."),
+    ("mid", "오늘 수급을 그대로 옮기면 이래."),
+    ("mid", "기타법인 자리는 자사주 매입일 때가 많아."),
+    ("mid", "정규장 체결 기준으로 집계한 숫자야."),
+    ("mid", "지수가 흔들린 건 변동성 탓이야."),
+    ("mid", "오늘 거래대금은 평소보다 컸어."),
+    ("last", "받은 물량은 기타법인이 가져갔어."),
+    # 2026-09-13 세 번째 지시(반말 전환): 합니다체·음슴체가 섞이면 안 되고, 마지막 줄은 질문이어야 한다
+    ("mid", "그만큼을 받은 쪽은 회사들입니다."),
+    ("mid", "받아 간 쪽은 회사들이라고 봅니다."),
+    ("mid", "그 주식은 회사들이 다 받아감"),
+    ("last", "오늘은 여기까지만 숫자로 말할 수 있어."),
+    ("last", "너넨 오늘 얼마나 샀어?"),
+    ("last", "너넨 오늘 계좌 봤어?"),
+    ("last", "너넨 내일 아침에 앱 켜 볼 거야?"),
+    ("mid", "다들 물렸지?"),
+    ("mid", "그럼 이건 누가 받았을까?"),
 ]
 DAYS = ("20260908", "20260909", "20260910", "20260911")
 # 뱅크 점검용 더미 값 — 모든 변형이 금지어·완결형·길이 검사를 통과하는지 본다
 DUMMY = {"p": "1.00%", "T": "7", "n": "33", "nm": "외국인", "nm_eun": "외국인은", "nm_ga": "외국인이",
-         "f": "1조 2천억", "f_eul": "1조 2천억을", "f_ga": "1조 2천억이", "vb": "사", "vb3": "판 쪽이었습니다",
+         "f": "1조 2천억", "f_eul": "1조 2천억을", "f_ga": "1조 2천억이", "f_ya": "1조 2천억이야", "f_was": "1조 2천억이었",
+         "vb": "사", "vb3": "판 쪽이었어",
          "s0": "개인", "s1": "외국인", "s0_gwa": "개인과", "S": "개인", "S_ga": "개인이", "S_eun": "개인은",
          "B": "기관", "B_ga": "기관이", "B_eun": "기관은", "B2": "기관과 회사들", "tb": "회사들",
          "tb_eun": "회사들은", "tb_ga": "회사들이", "most": "대부분", "days": "사흘", "dc": "이틀째",
          "g": "외국인", "g_eun": "외국인은", "g_ga": "외국인이", "vb4": "산", "mv": "올랐", "mv2": "오른",
-         "th": "이차전지", "th_ro": "이차전지로", "when": "내일은", "q": "이차전지로 돈이 이틀째 들어오는지"}
+         "th": "이차전지", "th_ro": "이차전지로", "th_ya": "이차전지야",
+         "when": "내일은", "q": "이차전지로 돈이 이틀째 들어오는지"}
 
 
 def audit_banks():
@@ -1320,7 +1371,7 @@ def audit_banks():
             if forbidden.find_threads(s):
                 bad.append(f"{name}: forbidden {forbidden.find_threads(s)} in {s}")
             if not tail_ok(s):
-                bad.append(f"{name}: 완결형 종결 아님 — {s}")
+                bad.append(f"{name}: 반말 종결 아님 — {s}")
             if short_end(s):
                 bad.append(f"{name}: 축약 종결형 — {s}")
             if any(ch in s for ch in BAN_CHAT):

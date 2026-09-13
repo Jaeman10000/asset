@@ -50,7 +50,7 @@ def _news(kind: str, base) -> dict:
 def _check_threads(body: str, reply: str, tag: str) -> list[str]:
     """쓰레드 본문 검사 — script_override.json으로 덮어쓴 것도 반드시 통과해야 한다.
     기준(JJ 2026-09-12): 처음 보는 사람이 그 글만 읽고 이해되게. 축약 종결형·채팅 기호·압축 숫자 금지."""
-    from checks import forbidden
+    from checks import forbidden, jargon
     bad: list[str] = []
     lines = [x for x in (body or "").strip().splitlines()]
     if not lines or lines[-1].strip() != tag:
@@ -69,6 +69,13 @@ def _check_threads(body: str, reply: str, tag: str) -> list[str]:
             bad.append(f"채팅 기호 — {x[:24]}")
         if re.search(r"\d+\.\d+조", x):
             bad.append(f"압축 숫자(9.9조 형태) — {x[:24]}")
+        # 반말 전환(JJ 2026-09-13) 뒤에도 override가 옛 합니다체로 나가던 구멍을 막는다
+        if re.search(r"(습니다|입니다|겁니다|까요|세요|십시오|드립니다)[.?!]?$", x):
+            bad.append(f"존댓말 — {x[:24]}")
+        if hits := jargon.find(x):
+            bad.append(f"금융 용어 {hits} — {x[:24]}")
+    if live and not live[-1].rstrip().endswith("?"):
+        bad.append(f"마지막 줄이 질문이 아님 — {live[-1][:24]}")
     return bad
 
 
