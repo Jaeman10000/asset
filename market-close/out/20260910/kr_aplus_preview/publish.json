@@ -1,0 +1,11 @@
+{
+ "date": "20260910",
+ "edition": "kr",
+ "results": {
+  "threads": {
+   "ok": false,
+   "error": "Threads 미연결 — python auth.py threads",
+   "at": "2026-09-10T16:30:02"
+  }
+ }
+}

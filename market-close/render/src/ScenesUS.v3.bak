@@ -1,0 +1,265 @@
+import React from "react";
+import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig, Easing } from "remotion";
+import { Chart } from "./Chart";
+import { Frame, S6 } from "./Scenes";
+import type { Cue } from "./Scenes";
+import { C, PAD, SIZE, FOOTER, colorOf, fmtPct } from "./tokens";
+import type { Props } from "./types";
+
+/** 미국편 v3 props (computed_us.json) */
+export type Etf = { symbol: string; name: string; open?: number; high?: number; low?: number; close?: number; pct: number; prev_close?: number;
+  value_ratio20?: number | null; streak?: number; pct5?: number | null; missing?: boolean };
+export type PropsUS = Props & {
+  edition: "us"; session_et: string; headline: string; index: Record<string, Etf | null>; qqq_points: { t: string; pct: number }[];
+  sectors: Etf[]; stocks: Etf[]; links: Record<string, Etf>; btc?: { price: number; chg_pct: number } | null;
+  prev_foreign?: { date: string; foreign: number } | null;
+  events: { kst: string; kst_spoken: string; what: string; react30?: number; react_close?: number }[];
+  tre: { y10?: number; chg_bp?: number | null }; wti: { wti?: number; chg_pct?: number; fresh?: boolean };
+  u3_title: string; weekend?: boolean;
+};
+type SP = { p: PropsUS; sub: string; cues?: Cue[] };
+
+const ease = Easing.out(Easing.cubic);
+const Reveal: React.FC<{ at: number; children: React.ReactNode; style?: React.CSSProperties }> = ({ at, children, style }) => {
+  const f = useCurrentFrame(); const { fps } = useVideoConfig();
+  const t = interpolate(f, [at, at + 0.45 * fps], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: ease });
+  return <div style={{ opacity: t, transform: `translateY(${(1 - t) * 24}px)`, ...style }}>{children}</div>;
+};
+const fade = (f: number, at: number, fps: number) => interpolate(f, [at, at + 0.4 * fps], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+const K: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
+  <div style={{ fontSize: SIZE.small, color: C.sub, letterSpacing: "0.02em", ...style }}>{children}</div>
+);
+const usd = (v?: number) => (v == null ? "—" : `$${v.toFixed(2)}`);
+const fmtEokKR = (v: number) => { const a = Math.abs(Math.round(v)); const s = a >= 10000 ? `${(a / 10000).toFixed(1).replace(/\.0$/, "")}조` : `${a.toLocaleString("ko-KR")}억`; return (v > 0 ? "＋" : v < 0 ? "−" : "") + s; };
+
+/** u0 훅 — 헤드라인(원인+결과)이 첫 화면 = 썸네일 */
+export const U0: React.FC<SP> = ({ p }) => {
+  const f = useCurrentFrame(); const { fps } = useVideoConfig();
+  const t = interpolate(f, [0, 0.6 * fps], [0, 1], { extrapolateRight: "clamp", easing: ease });
+  const q = p.index?.QQQ;
+  return (
+    <AbsoluteFill style={{ background: C.bg, color: C.text, fontFamily: "Pretendard, 'Noto Sans KR', sans-serif", fontVariantNumeric: "tabular-nums", justifyContent: "center", padding: `0 ${PAD}px` }}>
+      <div style={{ opacity: t, transform: `translateY(${(1 - t) * 24}px)` }}>
+        <K>{p.brand ?? "밤낮장"} · {p.date_label} 미국장 마감{p.weekend ? " · 주말 정리" : ""}</K>
+        <div style={{ fontSize: 88, fontWeight: 600, lineHeight: 1.2, letterSpacing: "-0.02em", marginTop: 28, wordBreak: "keep-all" }}>{p.headline}</div>
+        {q && (
+          <div style={{ marginTop: 56, display: "flex", alignItems: "baseline", gap: 24 }}>
+            <span style={{ fontSize: SIZE.small, color: C.sub }}>나스닥100 QQQ</span>
+            <span style={{ fontSize: 72, fontWeight: 600 }}>{usd(q.close)}</span>
+            <span style={{ fontSize: 44, fontWeight: 600, color: colorOf(q.pct) }}>{fmtPct(q.pct)}</span>
+          </div>
+        )}
+        {q && <div style={{ marginTop: 16, height: 14, width: `${Math.min(100, Math.abs(q.pct) * 25)}%`, background: colorOf(q.pct) }} />}
+      </div>
+      <div style={{ position: "absolute", left: PAD, right: PAD, bottom: 60, fontSize: SIZE.tiny, color: C.sub }}>{FOOTER}</div>
+    </AbsoluteFill>
+  );
+};
+
+/** u1 지수 넷 + QQQ 정규장 선 */
+export const U1: React.FC<SP> = ({ p, sub, cues }) => {
+  const f = useCurrentFrame(); const { fps } = useVideoConfig();
+  const prog = interpolate(f, [0.6 * fps, 4.0 * fps], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const labels = [0, fade(f, 2.4 * fps, fps), 0, fade(f, 3.2 * fps, fps), fade(f, 4.2 * fps, fps)];
+  const four: { k: string; e?: Etf | null }[] = [
+    { k: "나스닥100 QQQ", e: p.index?.QQQ }, { k: "S&P500 SPY", e: p.index?.SPY }, { k: "다우 DIA", e: p.index?.DIA }, { k: "필라델피아 반도체 SOXX", e: p.links?.SOXX },
+  ];
+  return (
+    <Frame sub={sub} cues={cues}>
+      <Reveal at={0}><K>{p.date_label} 미국장 · 전일 종가 대비</K></Reveal>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "36px 32px", marginTop: 32 }}>
+        {four.map((x, i) => (
+          <Reveal key={x.k} at={4 + i * 4}>
+            <K>{x.k}</K>
+            <div style={{ fontSize: 80, fontWeight: 600, lineHeight: 1.1, color: colorOf(x.e?.pct) }}>{fmtPct(x.e?.pct)}</div>
+            <K>{x.e ? `${usd(x.e.close)} · 고 ${x.e.high?.toFixed(2)} · 저 ${x.e.low?.toFixed(2)}` : "—"}</K>
+          </Reveal>
+        ))}
+      </div>
+      <div style={{ marginTop: 48 }}><Chart p={p} night={prog} day={0} labels={labels} mode="us" scale={1} /></div>
+    </Frame>
+  );
+};
+
+const Num: React.FC<{ k: string; v: string; c?: string; note: string }> = ({ k, v, c, note }) => (
+  <div>
+    <K>{k}</K>
+    <div style={{ fontSize: 84, fontWeight: 600, color: c ?? C.text, lineHeight: 1.1, marginTop: 6 }}>{v}</div>
+    <K style={{ marginTop: 6 }}>{note}</K>
+  </div>
+);
+
+/** u2 이벤트 1개 + 매크로 */
+export const U2: React.FC<SP> = ({ p, sub, cues }) => {
+  const e = (p.events ?? [])[0];
+  return (
+    <Frame sub={sub} cues={cues}>
+      <Reveal at={0}><K>간밤 이벤트 · {p.date_label}</K></Reveal>
+      <Reveal at={3} style={{ marginTop: 28 }}>
+        {e ? (
+          <>
+            <K>{e.kst ? e.kst.slice(11, 16) : ""} KST</K>
+            <div style={{ fontSize: SIZE.mid - 8, fontWeight: 600, lineHeight: 1.22, marginTop: 6 }}>{e.what}</div>
+            {e.react30 != null && (
+              <div style={{ fontSize: SIZE.small + 6, marginTop: 16, display: "flex", gap: 40 }}>
+                <span><span style={{ color: C.sub }}>발표 후 30분 </span><b style={{ color: colorOf(e.react30) }}>{fmtPct(e.react30)}</b></span>
+                {e.react_close != null && <span><span style={{ color: C.sub }}>이후 마감까지 </span><b style={{ color: colorOf(e.react_close) }}>{fmtPct(e.react_close)}</b></span>}
+              </div>
+            )}
+          </>
+        ) : <div style={{ fontSize: SIZE.mid - 8, fontWeight: 600 }}>예정 지표 없음</div>}
+      </Reveal>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px 40px", marginTop: 72 }}>
+        <Reveal at={14}><Num k="미 10년물" v={p.tre?.y10 != null ? `${p.tre.y10.toFixed(2)}%` : "—"} note={p.tre?.chg_bp ? `${p.tre.chg_bp > 0 ? "+" : ""}${p.tre.chg_bp}bp` : ""} /></Reveal>
+        <Reveal at={18}>{p.fx ? <Num k="환율" v={p.fx.close.toLocaleString("ko-KR", { minimumFractionDigits: 1 })} c={colorOf(p.fx.chg)} note={p.fx.chg != null ? `${p.fx.chg > 0 ? "+" : ""}${p.fx.chg}원` : ""} /> : <Num k="환율" v="—" note="" />}</Reveal>
+        <Reveal at={22}><Num k={`WTI${p.wti?.fresh ? "" : " · 최근 공식치"}`} v={p.wti?.wti != null ? `$${p.wti.wti.toFixed(2)}` : "—"} c={colorOf(p.wti?.chg_pct)} note={p.wti?.chg_pct != null ? fmtPct(p.wti.chg_pct) : ""} /></Reveal>
+        <Reveal at={26}><Num k="비트코인 · 업비트 24h" v={p.btc ? `${(p.btc.price / 1e6).toFixed(1)}백만` : "—"} c={colorOf(p.btc?.chg_pct)} note={p.btc ? fmtPct(p.btc.chg_pct) : ""} /></Reveal>
+      </div>
+    </Frame>
+  );
+};
+
+/** u3 서학개미 보관 상위 6종목 */
+export const U3: React.FC<SP> = ({ p, sub, cues }) => (
+  <Frame sub={sub} cues={cues}>
+    <Reveal at={0}><K>서학개미 보관액 상위 6종목 · 예탁결제원 기준</K></Reveal>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px 32px", marginTop: 36 }}>
+      {(p.stocks ?? []).slice(0, 6).map((x, i) => (
+        <Reveal key={x.symbol} at={4 + i * 4}>
+          <K>{x.name} · {x.symbol}</K>
+          <div style={{ fontSize: 80, fontWeight: 600, lineHeight: 1.1, color: colorOf(x.pct) }}>{fmtPct(x.pct)}</div>
+          <K>{usd(x.close)}{(x.streak ?? 0) >= 3 || (x.streak ?? 0) <= -3 ? ` · ${Math.abs(x.streak!)}일 연속 ${x.streak! > 0 ? "상승" : "하락"}` : ""}</K>
+        </Reveal>
+      ))}
+    </div>
+  </Frame>
+);
+
+/** u4 돈의 이동 — 섹터 상위 5·하위 3 + 레버리지 ETF */
+export const U4: React.FC<SP> = ({ p, sub, cues }) => {
+  const f = useCurrentFrame(); const { fps } = useVideoConfig();
+  const all = p.sectors ?? [];
+  const rows = all.length > 8 ? [...all.slice(0, 5), ...all.slice(-3)] : all;
+  const maxAbs = Math.max(0.5, ...all.map((s) => Math.abs(s.pct ?? 0)));
+  const lev = [p.links?.SOXL, p.links?.TQQQ].filter(Boolean) as Etf[];
+  return (
+    <Frame sub={sub} cues={cues}>
+      <Reveal at={0}><K>미국 섹터 ETF · 상위 5 · 하위 3 · 거래대금 배수 · 연속 상승일</K></Reveal>
+      <Reveal at={3} style={{ marginTop: 24 }}>
+        <div style={{ fontSize: SIZE.mid - 8, fontWeight: 600, lineHeight: 1.22 }}>{p.u3_title}</div>
+      </Reveal>
+      <div style={{ marginTop: 32, display: "grid", gridTemplateColumns: "210px 1fr 170px 150px", columnGap: 16, alignItems: "center" }}>
+        {rows.map((s, i) => {
+          const at = 10 + i * 3;
+          const w = interpolate(f, [at + 6, at + 6 + 0.6 * fps], [0, (Math.abs(s.pct ?? 0) / maxAbs) * 50], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: ease });
+          const pos = (s.pct ?? 0) >= 0;
+          const hot = (s.value_ratio20 ?? 0) >= 1.3;
+          const tag = [hot ? `${s.value_ratio20?.toFixed(1)}×` : "", (s.streak ?? 0) >= 3 ? `${s.streak}일↑` : ""].filter(Boolean).join(" ");
+          const gap = i === 5 && all.length > 8 ? 22 : 0;
+          const cell: React.CSSProperties = { height: 76, marginTop: gap, display: "flex", alignItems: "center", fontSize: 36, lineHeight: 1.2, whiteSpace: "nowrap" };
+          return (
+            <React.Fragment key={s.symbol}>
+              <Reveal at={at} style={cell}>{s.name}</Reveal>
+              <Reveal at={at} style={cell}>
+                <div style={{ position: "relative", height: 16, width: "100%" }}>
+                  <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 2, background: C.line }} />
+                  <div style={{ position: "absolute", top: 0, bottom: 0, background: colorOf(s.pct), ...(pos ? { left: "50%", width: `${w}%` } : { right: "50%", width: `${w}%` }) }} />
+                </div>
+              </Reveal>
+              <Reveal at={at} style={{ ...cell, fontSize: SIZE.tiny, color: C.sub }}>{tag}</Reveal>
+              <Reveal at={at} style={{ ...cell, justifyContent: "flex-end", fontWeight: 600, color: colorOf(s.pct) }}>{fmtPct(s.pct)}</Reveal>
+            </React.Fragment>
+          );
+        })}
+      </div>
+      {lev.length > 0 && (
+        <Reveal at={40} style={{ marginTop: 40, display: "flex", gap: 48, fontSize: SIZE.small + 6 }}>
+          {lev.map((x) => <span key={x.symbol}><span style={{ color: C.sub }}>{x.name} </span><b style={{ color: colorOf(x.pct) }}>{fmtPct(x.pct)}</b></span>)}
+        </Reveal>
+      )}
+    </Frame>
+  );
+};
+
+/** u5 국장 연결 + 오늘 볼 것 + 다음 관문 */
+export const U5: React.FC<SP> = ({ p, sub, cues }) => {
+  const ewy = p.links?.EWY; const sox = p.links?.SOXX;
+  return (
+    <Frame sub={sub} cues={cues}>
+      <Reveal at={0}><K>국장 연결 지표 · 오늘 국장에서 볼 것</K></Reveal>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px 32px", marginTop: 36 }}>
+        <Reveal at={4}><Num k="한국 ETF · EWY" v={fmtPct(ewy?.pct)} c={colorOf(ewy?.pct)} note={ewy ? usd(ewy.close) : ""} /></Reveal>
+        <Reveal at={8}><Num k="필라델피아 반도체 · SOXX" v={fmtPct(sox?.pct)} c={colorOf(sox?.pct)} note={sox ? usd(sox.close) : ""} /></Reveal>
+        <Reveal at={12}>{p.prev_foreign?.foreign != null ? <Num k={`전날 국장 외국인 · ${p.prev_foreign.date.slice(4, 6)}/${p.prev_foreign.date.slice(6)}`} v={fmtEokKR(p.prev_foreign.foreign)} c={colorOf(p.prev_foreign.foreign)} note="정규장 체결 기준" /> : <Num k="전날 국장 외국인" v="—" note="" />}</Reveal>
+        <Reveal at={16}><Num k="비트코인 · 24h" v={p.btc ? fmtPct(p.btc.chg_pct) : "—"} c={colorOf(p.btc?.chg_pct)} note={p.btc ? `${(p.btc.price / 1e6).toFixed(1)}백만 원` : ""} /></Reveal>
+      </div>
+      {(p.watch ?? []).slice(0, 1).map((w, i) => (
+        <Reveal key={i} at={24} style={{ marginTop: 64 }}>
+          <K>오늘 국장에서 체크</K>
+          <div style={{ fontSize: SIZE.body - 6, fontWeight: 600, lineHeight: 1.3, marginTop: 8 }}>{w.q}</div>
+          <K style={{ marginTop: 8 }}>→ {w.how}</K>
+        </Reveal>
+      ))}
+      <Reveal at={34} style={{ marginTop: 40 }}>
+        <K>{p.weekend ? "이번 주 관문" : "다음 관문"}</K>
+        <div style={{ fontSize: SIZE.small + 8, lineHeight: 1.7, marginTop: 8 }}>
+          {(p.schedule ?? []).slice(0, p.weekend ? 3 : 2).map((s, i) => <div key={i}><span style={{ color: C.sub, marginRight: 20 }}>{s.d.length >= 16 ? s.d.slice(5, 16).replace("-", "/") : s.d.slice(5)}</span>{s.t}</div>)}
+        </div>
+      </Reveal>
+    </Frame>
+  );
+};
+
+export const U6 = S6;
+
+/** Threads 카드(미국편) 1080×1350 */
+export const CardUS: React.FC<PropsUS> = (p) => {
+  const secs = (p.sectors ?? []).slice(0, 4);
+  const bot = (p.sectors ?? []).slice(-2).reverse();
+  const maxAbs = Math.max(0.5, ...(p.sectors ?? []).map((s) => Math.abs(s.pct ?? 0)));
+  const row = (s: Etf) => (
+    <div key={s.symbol} style={{ display: "grid", gridTemplateColumns: "150px 1fr 130px", alignItems: "center", columnGap: 14, fontSize: 26, marginBottom: 5 }}>
+      <span>{s.name}</span>
+      <div style={{ position: "relative", height: 10 }}><div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 2, background: C.line }} />
+        <div style={{ position: "absolute", top: 0, bottom: 0, background: colorOf(s.pct), ...((s.pct ?? 0) >= 0 ? { left: "50%", width: `${(Math.abs(s.pct ?? 0) / maxAbs) * 50}%` } : { right: "50%", width: `${(Math.abs(s.pct ?? 0) / maxAbs) * 50}%` }) }} /></div>
+      <span style={{ textAlign: "right", fontWeight: 600, color: colorOf(s.pct) }}>{fmtPct(s.pct)}</span>
+    </div>
+  );
+  const e = (p.events ?? [])[0];
+  return (
+    <AbsoluteFill style={{ background: C.bg, color: C.text, fontFamily: "Pretendard, 'Noto Sans KR', sans-serif", fontVariantNumeric: "tabular-nums", padding: "56px 96px 56px" }}>
+      <div style={{ fontSize: 26, color: C.sub }}>{p.date_label} 미국장 마감</div>
+      <div style={{ fontSize: 44, fontWeight: 600, lineHeight: 1.25, letterSpacing: "-0.01em", marginTop: 6, wordBreak: "keep-all" }}>{p.headline}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 22, borderTop: `2px solid ${C.line}`, paddingTop: 14 }}>
+        {[{ k: "나스닥100", e: p.index?.QQQ }, { k: "S&P500", e: p.index?.SPY }, { k: "다우", e: p.index?.DIA }, { k: "반도체 SOXX", e: p.links?.SOXX }].map((x) => (
+          <div key={x.k}><div style={{ fontSize: 22, color: C.sub }}>{x.k}</div><div style={{ fontSize: 40, fontWeight: 600, color: colorOf(x.e?.pct) }}>{fmtPct(x.e?.pct)}</div></div>
+        ))}
+      </div>
+      <div style={{ borderTop: `2px solid ${C.line}`, paddingTop: 12, marginTop: 16 }}>
+        <div style={{ fontSize: 26, color: C.sub, marginBottom: 6 }}>이벤트 · 금리 · 환율</div>
+        <div style={{ fontSize: 27, lineHeight: 1.5 }}>
+          {e ? <div><span style={{ color: C.sub }}>{e.kst ? e.kst.slice(11, 16) : ""}</span> {e.what}{e.react30 != null ? <span style={{ color: C.sub }}> · 30분 <b style={{ color: colorOf(e.react30) }}>{fmtPct(e.react30)}</b></span> : null}</div> : <div style={{ color: C.sub }}>예정 지표 없음</div>}
+          <div style={{ color: C.sub }}>10년물 {p.tre?.y10 != null ? `${p.tre.y10.toFixed(2)}%` : "—"}{p.tre?.chg_bp ? ` (${p.tre.chg_bp > 0 ? "+" : ""}${p.tre.chg_bp}bp)` : ""} · 환율 {p.fx ? `${p.fx.close.toLocaleString("ko-KR", { minimumFractionDigits: 1 })} (${p.fx.chg != null ? (p.fx.chg > 0 ? "+" : "") + p.fx.chg : ""})` : "—"}</div>
+        </div>
+      </div>
+      <div style={{ borderTop: `2px solid ${C.line}`, paddingTop: 12, marginTop: 16 }}>
+        <div style={{ fontSize: 26, color: C.sub, marginBottom: 6 }}>서학개미 보관 상위 · 국장 연결</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px 16px", fontSize: 27 }}>
+          {(p.stocks ?? []).slice(0, 6).map((x) => <div key={x.symbol}><span style={{ color: C.sub }}>{x.name} </span><b style={{ color: colorOf(x.pct) }}>{fmtPct(x.pct)}</b></div>)}
+          {p.links?.EWY && <div><span style={{ color: C.sub }}>한국 ETF EWY </span><b style={{ color: colorOf(p.links.EWY.pct) }}>{fmtPct(p.links.EWY.pct)}</b></div>}
+          {p.links?.SOXL && <div><span style={{ color: C.sub }}>SOXL </span><b style={{ color: colorOf(p.links.SOXL.pct) }}>{fmtPct(p.links.SOXL.pct)}</b></div>}
+          {p.links?.TQQQ && <div><span style={{ color: C.sub }}>TQQQ </span><b style={{ color: colorOf(p.links.TQQQ.pct) }}>{fmtPct(p.links.TQQQ.pct)}</b></div>}
+        </div>
+      </div>
+      <div style={{ borderTop: `2px solid ${C.line}`, paddingTop: 12, marginTop: 16 }}>
+        <div style={{ fontSize: 26, color: C.sub, marginBottom: 6 }}>미국 돈의 이동 · 섹터 ETF</div>
+        {secs.map(row)}{bot.map(row)}
+      </div>
+      <div style={{ borderTop: `2px solid ${C.line}`, paddingTop: 12, marginTop: 16, fontSize: 26, lineHeight: 1.45 }}>
+        {(p.watch ?? []).slice(0, 1).map((w, i) => <div key={i}><b style={{ fontWeight: 600 }}>오늘 국장 체크</b> {w.q} <span style={{ color: C.sub }}>→ {w.how}</span></div>)}
+        <div style={{ color: C.sub, marginTop: 4 }}>{(p.schedule ?? []).slice(0, 2).map((s) => `${s.d.length >= 16 ? s.d.slice(5, 16).replace("-", "/") : s.d.slice(5)} ${s.t}`).join(" · ")}</div>
+      </div>
+      <div style={{ position: "absolute", left: 96, right: 96, bottom: 24, fontSize: 20, color: C.sub }}>자동 생성 · AI 음성 · 운영자 규칙 · 추천 아님 · 출처 키움 REST · BLS · 미 재무부 · 업비트 · 예탁결제원</div>
+    </AbsoluteFill>
+  );
+};

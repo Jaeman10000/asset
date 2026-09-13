@@ -1,0 +1,9 @@
+{
+  "_note": "진행 중인 대규모 자사주 매입. 회사가 자기 주식을 사면 투자자별 수급에서 '기타법인'으로 잡힌다. 영상은 그날 기타법인 순매수 상위 종목이 여기 있고 기간 안일 때만 연결 문장을 쓴다. 새 발표가 나오면 사람이 추가.",
+  "programs": [
+    {"code": "000660", "name": "SK하이닉스", "size": "약 40조", "from": "2026-08-20", "to": "2026-11-19",
+     "src": "https://www.ebn.co.kr/news/articleView.html?idxno=1722100"},
+    {"code": "005930", "name": "삼성전자", "size": "15조(장내)", "from": "2026-08-24", "to": "2026-11-21",
+     "src": "https://www.joongangenews.com/news/articleView.html?idxno=543624"}
+  ]
+}

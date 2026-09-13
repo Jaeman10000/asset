@@ -1,0 +1,62 @@
+{
+ "entries": [
+  {
+   "date": "20260908",
+   "q": "반도체 순매수가 나흘째 이어지는지",
+   "check": {
+    "kind": "theme_continue",
+    "theme": "반도체",
+    "n": 4
+   },
+   "result": {
+    "date": "20260909",
+    "ok": false,
+    "t": -964,
+    "streak": -1
+   },
+   "backfilled": true
+  },
+  {
+   "date": "20260909",
+   "q": "이차전지 순매수가 이틀째 이어지는지",
+   "check": {
+    "kind": "theme_continue",
+    "theme": "이차전지",
+    "n": 2
+   },
+   "result": {
+    "date": "20260910",
+    "ok": false,
+    "t": -536,
+    "streak": -1
+   }
+  },
+  {
+   "date": "20260910",
+   "q": "금융 순매수가 이틀째 이어지는지",
+   "check": {
+    "kind": "theme_continue",
+    "theme": "금융",
+    "n": 2
+   },
+   "result": {
+    "date": "20260911",
+    "ok": true,
+    "t": 702,
+    "streak": 2
+   }
+  },
+  {
+   "date": "20260911",
+   "q": "외국인 순매도가 나흘째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": -1,
+    "n": 4
+   },
+   "result": null
+  }
+ ]
+}

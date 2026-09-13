@@ -1,0 +1,710 @@
+{
+  "week_start": "2026-09-08",
+  "week_end": "2026-09-11",
+  "build_date": "20260913",
+  "generated_at": "2026-09-11T17:05:00+09:00",
+  "verified_at": "2026-09-11T18:10:00+09:00",
+  "verified_meta": {
+    "checked_at": "2026-09-13",
+    "events_total": 30,
+    "events_verified": 30,
+    "events_use_in_script": 25,
+    "events_not_for_script": 5,
+    "added_this_round": 6,
+    "sessions_covered": ["2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11"],
+    "note": "9/11(금) 세션 6건 추가(CPI·실질임금·지수 반등·페드워치 확률·VIX·AI 서버 하드웨어). 'AI 서버 하드웨어'는 검증 결과가 전달 도중 잘려 sources URL이 비어 있어 confidence=medium이지만 use_in_script=false로 보류했습니다(pending 참조)."
+  },
+  "status": "partial",
+  "sessions_covered": ["2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11"],
+  "sessions_pending": [],
+  "rerun_with": "jobs/us_weekly_research_prompt.md",
+  "verification": {
+    "method": "news.json의 모든 이벤트·일정·스토리 후보에 대해 인용 URL 원문을 직접 열어 기사 존재, 날짜, 수치(실제/예상), market_link가 기사에 있는 연결인지, 문장 완곡성, 정치 항목 중립성을 확인. 확인 못 한 하위 주장은 삭제하거나 확인된 표현으로 교체. 화면 숫자는 computed_us_weekly.json과 대조. [2026-09-13] 9/11(금) 세션 검증 결과 6건을 추가 병합. 추가분은 BLS 원문·매체 본문 대조와 computed_us_weekly.json 9/11 종가 대조를 모두 거쳤고(전 수치 일치), 기존 9/4~9/10 24건은 오라클 이벤트의 '금요일 정규장 반응' 문장 한 곳만 보강했습니다.",
+    "events_total": 30,
+    "events_kept": 30,
+    "events_kept_with_corrections": 12,
+    "events_dropped": 0,
+    "events_not_for_script": 5,
+    "calendar_total": 11,
+    "calendar_kept": 11,
+    "story_candidates_total": 4,
+    "story_candidates_kept_rewritten": 4,
+    "banned_words_check": "때문/이유/덕분/탓/영향으로/나오자/힘입어 — 본문·market_link·스토리 후보에 없음(이투데이 기사 제목 속 '영향'은 출처 제목이라 그대로 둠)"
+  },
+  "events": [
+    {
+      "d": "2026-09-04",
+      "session": "2026-09-04",
+      "kind": "data",
+      "importance": 2,
+      "title": "[배경] 8월 고용 16.2만 명…9월 인상 확률 60% 안팎",
+      "what": "주간 직전 금요일(9/4) 발표된 8월 고용보고서에서 비농업 일자리는 16.2만 개 늘었고 실업률은 4.1%로 유지됐습니다(포춘). 인베스토피디아는 이를 예상보다 강한 고용이라고 표현했습니다.",
+      "actual_vs_expected": "비농업 +16.2만 명, 실업률 4.1%(전월과 같음). 컨센서스 수치는 이번 조사에서 직접 확인하지 못함(인베스토피디아: '예상보다 강함').",
+      "sources": [
+        {"outlet": "Fortune", "title": "As Wall Street shifts expectations towards a Fed rate hike, the White House turns up the pressure on Warsh's central bank", "url": "https://fortune.com/2026/09/07/wall-street-hike-expectations-kevin-warsh-fed-trump/", "published": "2026-09-07 07:17 ET"},
+        {"outlet": "Investopedia (Yahoo Finance)", "title": "Markets News, Sept. 8, 2026: Dow Drops, Indexes End Lower to Start Holiday-Shortened Week; Oil Prices Rise; Shares of Amgen, Salesforce Fall", "url": "https://finance.yahoo.com/markets/stocks/articles/markets-news-sept-8-2026-105557606.html", "published": "2026-09-08"}
+      ],
+      "market_link": "포춘은 CME 페드워치 기준 9월 15~16일 회의의 0.25%p 인상 확률을 58.4%로 전했고, 인베스토피디아는 8일 약 60%로 봤습니다. 강한 고용 지표와 인상 베팅 확대가 겹친 것으로 볼 수 있습니다.",
+      "assets": ["US2Y", "US10Y"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 포춘(9/7 07:17 ET) 162,000개·실업률 4.1% unchanged·페드워치 '58.4%'(3.75~4%로 0.25%p 인상). 인베스토피디아(9/8) 'hotter-than-expected'·'60% likelihood'. 발표일 9/4는 OMB 2026 주요 지표 일정표(고용보고서 9월 4일)로 확인. 포춘 원문에도 컨센서스 수치 없음 → 화면에 '예상 대비' 숫자 쓰지 말 것."
+    },
+    {
+      "d": "2026-09-04",
+      "session": "2026-09-04",
+      "kind": "politics",
+      "importance": 2,
+      "title": "[배경] 트럼프·밴스, 연준에 공개적으로 금리 인하 요구",
+      "what": "트럼프 대통령은 4일 트루스소셜에 고금리가 미국을 불리하게 만든다며 용납하지 않겠다는 글을 올리고, 금리가 내려가지 않으면 무역적자국과의 교역을 멈추겠다고 했습니다. 밴스 부통령도 앞서 연준의 도움이 있으면 좋겠다고 말했습니다(포춘).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Fortune", "title": "As Wall Street shifts expectations towards a Fed rate hike, the White House turns up the pressure on Warsh's central bank", "url": "https://fortune.com/2026/09/07/wall-street-hike-expectations-kevin-warsh-fed-trump/", "published": "2026-09-07 07:17 ET"}
+      ],
+      "market_link": "포춘은 월가가 인상 쪽으로 기대를 옮기는 가운데 백악관 압박이 이어졌다고 정리했습니다. 이 발언을 특정 가격 움직임과 직접 연결한 시황 기사는 이번 조사에서 확인되지 않았습니다.",
+      "assets": ["US2Y"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 포춘 원문 인용 'High interest rates put the U.S.A. at a very unfair disadvantage, and I won't allow that to happen!', 금리 안 내려가면 무역적자국과 교역 중단 위협, 게시 시점 'Friday afternoon'(=9/4). 밴스 발언('it would be nice to have some help from the Federal Reserve')은 포춘이 '지난주'로 인용(9/3 CNBC 링크) — 9/4 당일 발언이 아니어서 '앞서'로 고침. 의견·평가 없음, 중립 확인."
+    },
+    {
+      "d": "2026-09-05",
+      "session": "2026-09-08",
+      "kind": "policy",
+      "importance": 1,
+      "title": "연준 '블랙아웃' 기간(9/5~9/17)…연준 인사 정책 발언 자제",
+      "what": "FOMC 대외소통 규정상 회의(9/15~16) 둘째 주 전 토요일인 9/5 0시부터 회의 다음 날인 9/17 23시 59분(미 동부)까지 연준 인사들은 통화정책 관련 공개 발언을 삼갑니다. 이번 조사에서도 9/8~10 연준 인사의 정책 발언 보도는 찾지 못했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Federal Reserve", "title": "FOMC Policy on External Communications of Committee Participants", "url": "https://www.federalreserve.gov/monetarypolicy/files/FOMC_ExtCommunicationParticipants.pdf", "published": "reaffirmed 2026-01-27"},
+        {"outlet": "Federal Reserve", "title": "Meeting calendars and information (2026 FOMC: Sep 15-16, SEP 포함)", "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm", "published": "2026"}
+      ],
+      "market_link": "해당 없음(일정 사실). 연준 대신 지표·유가·정치 발언이 이번 주 금리 기대를 움직인 재료로 거론됐습니다.",
+      "assets": [],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 연준 PDF 7항 'begin at 12:00 a.m. Eastern Time the second Saturday before a meeting and end at 11:59 p.m. Eastern Time the day after a meeting'(2026-01-27 재확인본). 9/15(화) 회의 → 10일 전 토요일 9/5 시작, 9/17(목) 23:59 ET 종료로 계산 일치. 연준 달력에 2026년 9월 15~16일(*SEP) 확인. 수정: '9/17 자정'→'9/17 23시 59분', 제목의 '발언 없음'(부재 단정)→'발언 자제'."
+    },
+    {
+      "d": "2026-09-06",
+      "session": "2026-09-08",
+      "kind": "geopolitics",
+      "importance": 1,
+      "title": "미 특사, 모스크바·키이우 연쇄 회담…합의 발표는 없어",
+      "what": "위트코프·쿠슈너 특사가 9/5 모스크바에서 푸틴 대통령을, 9/6 키이우에서 젤렌스키 대통령을 만났습니다. 양측 모두 논의가 유익했다고 했지만 합의 발표는 없었고, 러시아·우크라이나는 정유시설과 곡물 수출항 공격을 이어갔습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Al Jazeera (AFP·Reuters)", "title": "US envoys hold 'substantive' talks with Zelenskyy in first visit to Kyiv", "url": "https://www.aljazeera.com/news/2026/9/6/us-envoys-hold-substantive-talks-with-zelenskyy-in-first-visit-to-kyiv", "published": "2026-09-06"},
+        {"outlet": "헤럴드경제", "title": "美 특사 종전안 논의에도…러·우크라, 정유시설·곡물항 겨냥 공격 이어가", "url": "https://biz.heraldcorp.com/article/10865532", "published": "2026-09-07 21:48 KST"}
+      ],
+      "market_link": "이번 주 미국 시황 기사들은 중동에 초점을 맞췄고, 우크라이나 소식을 주가·유가 움직임과 직접 연결한 보도는 확인되지 않았습니다.",
+      "assets": [],
+      "confidence": "low",
+      "verified": true,
+      "use_in_script": false,
+      "note": "확인: 알자지라 9/5 모스크바 푸틴·9/6 키이우 젤렌스키 회담, 크렘린 'highly useful', 위트코프 'substantive', 합의 발표 없음(백악관 '수주 내 다음 단계 발표'). 헤럴드경제: 랴잔 정유시설 이틀 연속 타격, 러시아의 이즈마일·초르노모르스크 곡물항 공격 확인. 사실은 맞지만 시장 연결 보도가 없어 대본 비권장."
+    },
+    {
+      "d": "2026-09-08",
+      "session": "2026-09-08",
+      "kind": "geopolitics",
+      "importance": 3,
+      "title": "후티 공격 뒤 사우디 일부 에너지시설 가동 중단…하르그섬 인근 이란 유조선 피격 보도",
+      "what": "8일(현지시간) 사우디 에너지부는 예멘 후티의 공격 뒤 남부 아브하·지잔·나지란 일대 일부 에너지시설 가동이 멈췄다고 밝혔고, 부상자는 73명으로 집계됐습니다(타임스오브이스라엘). 장 마감 무렵에는 이란 원유 수출 거점인 하르그섬 인근에서 이란 소형 유조선 1척이 미군 미사일 공격을 받았다는 보도도 나왔습니다(아주경제).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "The Times of Israel (외신 종합)", "title": "Houthi attack on Saudi oil facilities wounds 73, some operations halted", "url": "https://www.timesofisrael.com/houthi-attack-on-saudi-oil-facilities-wounds-73-some-operations-halted/", "published": "2026-09-08 10:41"},
+        {"outlet": "아주경제", "title": "[뉴욕증시 마감] 중동 확전 우려에 일제히 하락…다우 1.18%↓", "url": "https://www.ajunews.com/view/20260909070530952", "published": "2026-09-09 07:05 KST"},
+        {"outlet": "The Motley Fool", "title": "Stock Market Today, Sept. 8: Stocks Slide Amid Surging Oil Prices, Persistent Geopolotical Tenisons", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/08/stock-market-today-sept-8-stocks-slide-amid-surging-oil-prices-persistent-geopolotical-tenisons/", "published": "2026-09-08 17:16 ET"},
+        {"outlet": "Investopedia (Yahoo Finance)", "title": "Markets News, Sept. 8, 2026: Dow Drops, Indexes End Lower to Start Holiday-Shortened Week; Oil Prices Rise; Shares of Amgen, Salesforce Fall", "url": "https://finance.yahoo.com/markets/stocks/articles/markets-news-sept-8-2026-105557606.html", "published": "2026-09-08"}
+      ],
+      "market_link": "브렌트유는 97.92달러, WTI는 93.03달러로 올랐고 다우는 628포인트(1.18%) 내렸습니다(아주경제). 아주경제와 모틀리풀은 중동 긴장과 유가 상승을 이날 하락의 배경으로 짚었고, 인베스토피디아는 후티의 사우디 시설 공격 뒤 유가가 올랐다고 전했습니다.",
+      "assets": ["WTI", "DJI", "SPX"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정 3건. (1) '하르그섬 인근 미군-이란 충돌 보도가 이어졌다'는 일반화는 인용 기사로 확인 안 됨 → 아주경제 원문('하르그섬 인근에서 이란 소형 유조선 1척이 미군의 미사일 공격을 받았다는 보도')대로 좁힘. 타임스오브이스라엘·인베스토피디아에는 하르그섬 언급 없음. (2) 인베스토피디아는 지수 하락을 유가·중동과 직접 연결하지 않음 → 하락 배경 출처를 아주경제·모틀리풀('Rising crude oil prices and geopolitical tensions drove the selloff')로 교체. (3) '노동절 연휴 중' → 기사 기준 가동 중단 발표일 8일(화)로 정정. 확인: 아브하·카미스무샤이트·지잔·나지란, 부상 최소 73명, 일부 시설 가동 중단. 아주경제 다우 -628.03p(-1.18%), 브렌트 97.92(+0.95%), WTI 93.03(+1.69%) — computed WTI 93.03·DJI -1.18%와 일치."
+    },
+    {
+      "d": "2026-09-08",
+      "session": "2026-09-08",
+      "kind": "trade",
+      "importance": 2,
+      "title": "캐나다 200억 달러 보복관세 발효…트럼프 '봄바디어 판매 금지' 경고",
+      "what": "미국산 제품 200억 달러어치에 대한 캐나다의 보복관세가 8일 0시 발효됐습니다. 트럼프 대통령은 트루스소셜에 봄바디어 항공기를 미국에서 팔지 못하게 하겠다는 글을 올렸고, 봄바디어 주가는 약 3% 내렸습니다(CBS).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "CBS News", "title": "Bombardier caught in the crossfire of escalating U.S.-Canada trade feud", "url": "https://www.cbsnews.com/news/bombardier-trump-jets-canada-tariffs-us/", "published": "2026-09-08 17:33 EDT"},
+        {"outlet": "The Motley Fool", "title": "Stock Market Today, Sept. 8: Stocks Slide Amid Surging Oil Prices, Persistent Geopolotical Tenisons", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/08/stock-market-today-sept-8-stocks-slide-amid-surging-oil-prices-persistent-geopolotical-tenisons/", "published": "2026-09-08 17:16 ET"}
+      ],
+      "market_link": "모틀리풀은 이날 시장 심리를 누른 요인으로 유가와 함께 무역 긴장을 들었고, 인베스토피디아도 캐나다 보복관세를 함께 언급했습니다.",
+      "assets": ["SPX"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: CBS(9/8 17:33 EDT) 200억 달러, 'just after midnight Tuesday'(=9/8) 발효, 트럼프 'NO MORE SELLING BOMBARDIER IN THE UNITED STATES!', 봄바디어 약 3%↓. 모틀리풀 'U.S.-Canada trade friction, weighing on investor sentiment'. 인베스토피디아 'Canada's $20 billion in retaliatory tariffs ... went into effect Tuesday'. 정치 발언은 인용만, 의견 없음."
+    },
+    {
+      "d": "2026-09-08",
+      "session": "2026-09-08",
+      "kind": "company",
+      "importance": 2,
+      "title": "지수 약세 속 반도체는 강세…인텔 +9%, 퀄컴-아마존 AI칩 계약",
+      "what": "인텔은 10월 최대 10% 제품 가격 인상 계획이 알려진 가운데 약 9% 올랐고, 퀄컴은 아마존과 최대 600억 달러 규모 데이터센터 AI칩 계약 소식과 함께 장중 3~4.5% 올랐습니다(인베스토피디아·모틀리풀). AMD 5.9%, 브로드컴 3% 상승(아주경제).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Investopedia (Yahoo Finance)", "title": "Markets News, Sept. 8, 2026: Dow Drops, Indexes End Lower to Start Holiday-Shortened Week; Oil Prices Rise; Shares of Amgen, Salesforce Fall", "url": "https://finance.yahoo.com/markets/stocks/articles/markets-news-sept-8-2026-105557606.html", "published": "2026-09-08"},
+        {"outlet": "The Motley Fool", "title": "Stock Market Today, Sept. 8: Stocks Slide Amid Surging Oil Prices, Persistent Geopolotical Tenisons", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/08/stock-market-today-sept-8-stocks-slide-amid-surging-oil-prices-persistent-geopolotical-tenisons/", "published": "2026-09-08 17:16 ET"},
+        {"outlet": "아주경제", "title": "[뉴욕증시 마감] 중동 확전 우려에 일제히 하락…다우 1.18%↓", "url": "https://www.ajunews.com/view/20260909070530952", "published": "2026-09-09 07:05 KST"}
+      ],
+      "market_link": "아주경제는 반도체 강세가 지수 낙폭을 일부 제한했다고 전했고, 인베스토피디아도 메모리·광통신주 강세를 따로 정리했습니다.",
+      "assets": ["SOX", "AMD", "AVGO"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정: 퀄컴 '3~4%대' → 인베스토피디아 라이브 기사 안에서 3%(초반)와 4.5%(이후)로 두 번 나옴, 종가 등락률은 미확인 → '장중 3~4.5%'. 확인: 인텔 +9%(인베스토피디아)·+9.1%(아주경제), '10월 가격 인상'(인베스토피디아 'hike CPU prices 10% in October', 모틀리풀 'up to 10%'), 퀄컴-아마존 'worth up to $60 billion'(모틀리풀), AMD +5.9%·브로드컴 +3.0%(아주경제), 아주경제 '반도체주는 강세를 보이며 증시의 낙폭을 일부 제한했다'. computed SOX 9/8 +1.30%. 퀄컴 종가는 금요일 재실행 때 확인 권장."
+    },
+    {
+      "d": "2026-09-08",
+      "session": "2026-09-08",
+      "kind": "company",
+      "importance": 1,
+      "title": "헬스케어 약세 주도…암젠 -10%, 노바티스 -14%",
+      "what": "노바티스의 콜레스테롤 약 펠라카르센 3상 차질 소식과 함께 노바티스가 14%, 암젠이 10% 내렸습니다(인베스토피디아는 암젠 하락을 '경쟁 약물 임상 실패' 소식과 함께 전함). 스트라이커도 공급 차질 지속 소식 속 9% 내렸습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Investopedia (Yahoo Finance)", "title": "Markets News, Sept. 8, 2026: Dow Drops, Indexes End Lower to Start Holiday-Shortened Week; Oil Prices Rise; Shares of Amgen, Salesforce Fall", "url": "https://finance.yahoo.com/markets/stocks/articles/markets-news-sept-8-2026-105557606.html", "published": "2026-09-08"},
+        {"outlet": "The Motley Fool", "title": "Stock Market Today, Sept. 8: Stocks Slide Amid Surging Oil Prices, Persistent Geopolotical Tenisons", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/08/stock-market-today-sept-8-stocks-slide-amid-surging-oil-prices-persistent-geopolotical-tenisons/", "published": "2026-09-08 17:16 ET"}
+      ],
+      "market_link": "인베스토피디아는 이날 헬스케어가 S&P500 11개 업종 중 가장 약했다고 정리했고, 암젠이 다우에서 비중이 네 번째로 큰 종목이라며 다우를 압박했다고 전했습니다. 다우 낙폭(1.18%)이 S&P500(0.58%)보다 컸던 흐름과 겹친 것으로 볼 수 있습니다.",
+      "assets": ["DJI"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정: 원래 market_link의 '다우 낙폭이 S&P500보다 컸던 흐름과 겹칩니다'는 연구자 추론이었음 → 인베스토피디아 원문('Amgen's decline is pressuring the Dow ... fourth-largest weight in the index')으로 근거를 붙임. 확인: 헬스케어 'bringing up the rear among the benchmark index's 11 sectors', 암젠 10%↓(장중 5%→9%+ 업데이트, 'worst-performing stock in the S&P 500'), 노바티스 13~14%↓, 스트라이커 9%↓ 공급 차질, 모틀리풀 펠라카르센 3상 차질. computed 헬스케어(XLV) 주간 -3.38%로 11개 업종 최하위."
+    },
+    {
+      "d": "2026-09-08",
+      "session": "2026-09-08",
+      "kind": "fx",
+      "importance": 2,
+      "title": "베선트 \"이제 내가 하우스\"…엔화, 7개월 만의 강세권",
+      "what": "베선트 재무장관은 8일 텍사스 SMU 행사에서 엔화 개입 때 일본은행과 일본 당국의 움직임을 잘 안다며 엔 약세 베팅에 경고했습니다. 일본은행이 9월 17~18일 회의에서 기준금리를 1.25%로 올릴 것이란 관측이 우세합니다(트레이딩이코노믹스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "BeInCrypto (Yahoo Finance)", "title": "Treasury Secretary Bessent Dares Traders to Bet Against a Stronger Yen: 'I Am the House'", "url": "https://finance.yahoo.com/markets/currencies/articles/treasury-secretary-bessent-dares-traders-091530963.html", "published": "2026-09-09 18:15 KST"},
+        {"outlet": "Trading Economics", "title": "Japanese Yen (news 9/9~9/11)", "url": "https://tradingeconomics.com/japan/currency", "published": "2026-09-09~11"},
+        {"outlet": "Investopedia (Yahoo Finance)", "title": "Markets News, Sept. 8, 2026: Dow Drops, Indexes End Lower to Start Holiday-Shortened Week; Oil Prices Rise; Shares of Amgen, Salesforce Fall", "url": "https://finance.yahoo.com/markets/stocks/articles/markets-news-sept-8-2026-105557606.html", "published": "2026-09-08"}
+      ],
+      "market_link": "달러/엔은 9~10일 153엔대로 7개월 만의 엔화 강세권에 머물렀고, 트레이딩이코노믹스는 베선트 경고와 BOJ 인상 기대를 함께 배경으로 들었습니다. 달러인덱스는 8일 0.4% 내린 98.83이었습니다(인베스토피디아). 11일에는 미 PPI 뒤 154엔대로 되돌아왔습니다(트레이딩이코노믹스).",
+      "assets": ["USDJPY", "DXY"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 베선트 화요일(9/8) 남부감리교대(SMU) 발언 'I am the house now, so when we intervene with the Japanese yen, I have pretty good insight into ... what the Bank of Japan is going to do'. 트레이딩이코노믹스 9/10 'strongest level in seven months', BOJ 1.25% 인상 예상, 9/11 'weakened past 154 per dollar' US PPI 뒤. 인베스토피디아 'down 0.4% to 98.83'(장중 기준). 화면 숫자는 computed 기준: DXY 9/8 종가 98.84(-0.32%), 달러/엔 153.85→153.48→153.57. 출처 BeInCrypto는 가상자산 매체지만 트레이딩이코노믹스·BabyPips로 교차 확인됨."
+    },
+    {
+      "d": "2026-09-09",
+      "session": "2026-09-09",
+      "kind": "geopolitics",
+      "importance": 3,
+      "title": "미군, 이란 유조선 5척 파괴…이란은 '선박 10척 공격'",
+      "what": "미군은 이란 혁명수비대가 미 군함을 겨냥한 데 대한 대응으로 이란 유조선 5척을 파괴했다고 밝혔고, 이란은 호르무즈 해협 인근 선박 10척을 공격하고 요르단 미군 기지에 미사일을 쐈다고 했습니다. 로이터는 약 6개월째인 전쟁에서 가장 큰 규모의 해상 공격이 오갔다고 전했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Reuters (Defense News)", "title": "Iran and US hit tankers in biggest wave of attacks on shipping since war began", "url": "https://www.defensenews.com/news/your-military/2026/09/09/iran-and-us-hit-tankers-in-biggest-wave-of-attacks-on-shipping-since-war-began/", "published": "2026-09-09 15:30"},
+        {"outlet": "서울파이낸스", "title": "[뉴욕증시] 유가 101달러 '속수무책', 반도체 '선방'···SK하닉 7%↑·메타 6%↑", "url": "https://www.seoulfn.com/news/articleView.html?idxno=637627", "published": "2026-09-10 KST"},
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq fall as Treasury yields climb, oil tops $100", "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-september-9-dow-sp-500-nasdaq-futures-080411279.html", "published": "2026-09-10 05:04 KST(업데이트)"}
+      ],
+      "market_link": "브렌트유는 로이터 기준 7월 이후 처음 100달러를 넘었고 101.21달러(+3.36%)로 마감했습니다(서울파이낸스·아주경제). 같은 날 다우는 0.77%, 나스닥은 0.64% 내렸고, 야후파이낸스는 미·이란 긴장 고조를 주요 재료로 들었습니다.",
+      "assets": ["WTI", "SPX", "IXIC"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 로이터(Defense News 9/9 15:30) 미군 이란 유조선 5척 파괴(혁명수비대의 미 군함 미사일 공격 대응), 이란 호르무즈 인근 선박 10척 공격·요르단 동부 미군 기지 탄도미사일, 'biggest declared wave of tit-for-tat attacks on shipping ... since the start of the six-month-old war', 브렌트 'first time since July' 100달러 돌파. 서울파이낸스 다우 -0.77%·나스닥 -0.64%, 브렌트 101.21(+3.29달러). 아주경제(9/10) 브렌트 101.21(+3.36%). 야후 'US-Iran tensions' 주재료. 양측 주장을 각각 출처로 표기, 중립."
+    },
+    {
+      "d": "2026-09-09",
+      "session": "2026-09-09",
+      "kind": "rates",
+      "importance": 2,
+      "title": "재무부 국채 바이백 3배로 늘렸지만…10년물 2023년 이후 최고",
+      "what": "재무부는 10~20년물 국채를 최대 60억 달러 사들이는 바이백을 발표했습니다. 당초 예고한 20억 달러의 3배입니다(야후파이낸스, 블룸버그 기사 요약).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq fall as Treasury yields climb, oil tops $100", "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-september-9-dow-sp-500-nasdaq-futures-080411279.html", "published": "2026-09-10 05:04 KST(업데이트)"},
+        {"outlet": "Edward Conard Macro Roundup (Bloomberg 기사 요약)", "title": "Bessent's Upsized Buybacks Get Hit by Treasury-Market Reality", "url": "https://www.edwardconard.com/macro-roundup/bessent-triples-debt-buyback-but-market-shows-disappointment/", "published": "2026-09-09"},
+        {"outlet": "서울파이낸스", "title": "[뉴욕증시] 유가 101달러 '속수무책', 반도체 '선방'···SK하닉 7%↑·메타 6%↑", "url": "https://www.seoulfn.com/news/articleView.html?idxno=637627", "published": "2026-09-10 KST"}
+      ],
+      "market_link": "10년물 금리는 4.83~4.85%로 2023년 이후 최고, 30년물은 5.3%를 기록했습니다(야후파이낸스·블룸버그 요약). 블룸버그(요약)와 서울파이낸스는 매입 규모가 기대에 못 미쳤다는 실망이 금리 상승과 겹쳤다고 전했습니다.",
+      "assets": ["US10Y"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정: '통상 규모의 3배' → 원문은 '20억 달러에서 60억 달러로 3배'(야후 'triple its next bond buyback program', 블룸버그 요약 'tripling the initial $2 billion signal') → '당초 예고한 20억 달러의 3배'. 제목의 '그래도'(평가 어감) 완화. 확인: 10~20년물, 야후 10년물 4.83% 'highest level since October 2023', 30년물 5.3%, 블룸버그 요약 10년물 약 4.85%·투자자 실망, 서울파이낸스 기대 미달 실망. computed US10Y 9/9 4.83%(+3bp). 서울파이낸스가 적은 시장 기대치 금액은 단위가 불분명해 쓰지 말 것."
+    },
+    {
+      "d": "2026-09-09",
+      "session": "2026-09-09",
+      "kind": "company",
+      "importance": 3,
+      "title": "애플 첫 폴더블 '아이폰 듀오' 공개…당일 -0.28%, 다음 날 +3.56%",
+      "what": "존 터너스 CEO가 처음 주재한 행사에서 애플은 폴더블 아이폰 듀오(1,999달러부터)와 아이폰 18 프로, 애플워치 시리즈 12, 에어팟 5를 공개했습니다. 오펜하이머는 올해 듀오 공급을 800만~1,000만 대로 제한적으로 봤습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq fall as Treasury yields climb, oil tops $100", "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-september-9-dow-sp-500-nasdaq-futures-080411279.html", "published": "2026-09-10 05:04 KST(업데이트)"},
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq fall for fourth straight day as bond yields jump, oil stays above $100", "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-10-dow-sp-500-nasdaq-oil-gains-100-083717303.html", "published": "2026-09-11 06:20 KST(업데이트)"},
+        {"outlet": "Investing.com", "title": "Oppenheimer reiterates Perform on Apple stock after iPhone event", "url": "https://www.investing.com/news/analyst-ratings/oppenheimer-reiterates-perform-on-apple-stock-after-iphone-event-93CH-4895468", "published": "2026-09-10 06:52"},
+        {"outlet": "파이낸셜뉴스", "title": "[뉴욕증시] 유가·국채 금리 급등에 사흘째 하락…폴더블폰 진출 애플, 0.3%↓", "url": "https://www.fnnews.com/news/202609100525102585", "published": "2026-09-10 05:25 KST"},
+        {"outlet": "EBN", "title": "[EBN 데이터센터] 미국 증시, 기술주 약세에 일제히 하락 마감...필라델피아 반도체 2.66%↓", "url": "https://www.ebn.co.kr/news/articleView.html?idxno=1723845", "published": "2026-09-11 06:30 KST"}
+      ],
+      "market_link": "행사 당일 애플은 0.28% 내린 315.34달러였지만(파이낸셜뉴스), 다음 날 3.56% 올라 326.57달러로 마감했습니다(EBN). 야후파이낸스(10일 라이브)는 10일 상승을 듀오에 대한 월가의 호응과 함께 다뤘습니다.",
+      "assets": ["AAPL", "IXIC"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정: '10일 상승을 월가 반응과 함께 다뤘다'의 근거가 9/9 라이브 기사로 잘못 달려 있었음(9/9 기사는 10일 장을 다룰 수 없음) → 9/10 야후 라이브('Apple stock rose 3% as Wall Street warmed to the iPhone Duo')를 출처에 추가. 확인: 야후 9/9 터너스 첫 키노트, 듀오 1,999달러, 아이폰 18 프로, 워치 시리즈 12, 에어팟 5, 행사 중 'edged lower'. 인베스팅닷컴 오펜하이머 '8 million to 10 million units this year due to capacity and yield constraints'. 파이낸셜뉴스 -0.88달러(-0.28%) 315.34. EBN 326.57(+3.56%) = computed AAPL 종가 326.57. 야후 9/10 기사 속 오펜하이머의 '가장 성공적인 폴더블' 전망과 투자의견(Perform)은 추천으로 읽힐 수 있어 대본 사용 금지. 공급 추정치(800만~1,000만 대)는 투자의견이 아니지만 쓸 경우 '오펜하이머 추정'으로 명시."
+    },
+    {
+      "d": "2026-09-09",
+      "session": "2026-09-09",
+      "kind": "company",
+      "importance": 2,
+      "title": "메타, AI 비서 '뮤즈' 공개 뒤 6.55% 급등",
+      "what": "메타는 8일 이메일 발송·여행 예약·구매까지 대신하는 개인 AI 에이전트 '뮤즈'를 공개했습니다. 무료 요금제와 월 20달러·100달러 유료 요금제로 나옵니다(포브스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "The Motley Fool", "title": "Stock Market Today, Sept. 9: Meta Surges Over 6.5% on Muse AI Agent Launch", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/09/stock-market-today-sept-9-meta-surges-over-6-5-on-muse-ai-agent-launch/", "published": "2026-09-09 17:15 ET"},
+        {"outlet": "Forbes (Yahoo Finance)", "title": "Meta Shares Boosted After Muse AI Agent Launch", "url": "https://ca.finance.yahoo.com/news/meta-shares-boosted-muse-ai-142458476.html", "published": "2026-09-09 23:24 KST"}
+      ],
+      "market_link": "메타는 9일 6.55% 올라 653.69달러로 마감했습니다(모틀리풀). 같은 날 알파벳은 2.28% 내려 광고 관련주는 엇갈렸습니다(모틀리풀).",
+      "assets": ["META", "GOOGL"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 포브스 '화요일(9/8) 공개', 'send emails, book travel and make purchases', 무료·월 20달러·월 100달러 요금제. 모틀리풀(9/9 17:15 ET) 6.55%·653.69달러, 알파벳 -2.28%·스냅 -2.21%. 표현 수정: '결제' → 원문 'make purchases'에 맞춰 '구매'. 참고: 메타는 10일 -1.42%(644.38, EBN) — computed 주간 +4.48%."
+    },
+    {
+      "d": "2026-09-09",
+      "session": "2026-09-09",
+      "kind": "company",
+      "importance": 2,
+      "title": "SK하이닉스 ADR 7.05% 급등…상장 후 최고가",
+      "what": "7월 10일 나스닥에 상장한 SK하이닉스 ADR이 9일 198.63달러(+7.05%)로 상장 후 최고가를 기록했습니다. UBS는 D램·낸드 공급 부족이 2027년까지 이어질 것으로 봤습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "SBS Biz (English)", "title": "SK Hynix ADR Surges 7% to Record High Since Listing", "url": "https://news.sbs.co.kr/english/article.do?news_id=N1008746342", "published": "2026-09-10 09:40 KST"},
+        {"outlet": "이투데이", "title": "SK하이닉스 ADR 7% 급등…메모리 공급난 전망에 사상 최고", "url": "https://www.etoday.co.kr/news/view/2623932", "published": "2026-09-10 KST"},
+        {"outlet": "서울파이낸스", "title": "[뉴욕증시] 유가 101달러 '속수무책', 반도체 '선방'···SK하닉 7%↑·메타 6%↑", "url": "https://www.seoulfn.com/news/articleView.html?idxno=637627", "published": "2026-09-10 KST"}
+      ],
+      "market_link": "이투데이와 SBS는 메모리 공급 부족이 이어질 것이란 전망을 급등 배경으로 꼽았습니다. 필라델피아 반도체지수는 이날 0.37% 올랐습니다(서울파이낸스).",
+      "assets": ["SOX", "MU"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: SBS·이투데이·파이낸셜뉴스 모두 198.63달러(+7.05%), 7월 10일 상장, 상장 후 최고 종가(공모가 149달러 대비 33%↑, 이투데이). UBS 티모시 아쿠리 'D램과 낸드 모두 2027년까지 공급 부족'. 서울파이낸스 SOX +0.37%(11,931.32) = computed 일치. 두 기사에 나온 BofA '매수'·목표가 250달러는 추천으로 읽힐 수 있어 대본 사용 금지."
+    },
+    {
+      "d": "2026-09-09",
+      "session": "2026-09-09",
+      "kind": "politics",
+      "importance": 1,
+      "title": "트럼프 댈러스 연설: 이란 픽액스산 경고·'1인당 5,000달러' 공약",
+      "what": "트럼프 대통령은 9일 댈러스 공화당 중간선거 대회에서 이란 픽액스산 시설에 움직임이 보인다며 강하게 타격할 수 있다고 경고했습니다(로이터). 같은 자리에서 공화당이 상·하원을 지키면 성인 시민 1인당 5,000달러를 지급하겠다고 했고, 알자지라는 비용을 약 1.3조 달러로 추산했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Reuters (Business Recorder)", "title": "Trump says activity seen at Iran's Pickaxe Mountain, urges Tehran 'not to get cute'", "url": "https://www.brecorder.com/news/40438813/trump-says-activity-seen-at-irans-pickaxe-mountain-urges-tehran-not-to-get-cute", "published": "2026-09-10"},
+        {"outlet": "Al Jazeera", "title": "Trump promises $5,000 payouts if GOP wins midterms: Can the US afford it?", "url": "https://www.aljazeera.com/news/2026/9/10/trump-promises-5000-payouts-if-gop-wins-midterms-can-the-us-afford-it", "published": "2026-09-10"}
+      ],
+      "market_link": "두 발언을 당일 주가·금리 움직임과 직접 연결한 주요 시황 기사는 이번 조사에서 확인되지 않았습니다. 로이터는 전쟁에 따른 유가 상승이 중간선거 쟁점이 됐다고 짚었습니다.",
+      "assets": [],
+      "confidence": "low",
+      "verified": true,
+      "use_in_script": false,
+      "note": "확인: 로이터 'We notice there's a little activity at Pickaxe. I would advise Iran not to get cute because we will have to hit them very hard', 댈러스 공화당 중간선거 대회, 유가 상승이 중간선거 우려라는 로이터 서술. 알자지라 'I will issue a dividend to every adult citizen ... for $5,000', 비용 약 1.3조 달러는 알자지라 자체 계산(성인 시민 최대 2.7억 명 × 5,000달러). 문장 중립·의견 없음. 시장 연결 보도가 없고 선거 공약이라 정치색 오해 소지 → 대본 비권장."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "data",
+      "importance": 3,
+      "title": "8월 PPI 전년비 5.4%…예상(5.3%) 소폭 상회, 근원 전월비는 예상 하회",
+      "what": "8월 생산자물가는 전월비 0.4%, 전년비 5.4%였고 근원은 전월비 0.2%, 전년비 4.6%였습니다. 에너지가 4.2%, 경유가 24.1% 올랐습니다. 주간 신규 실업수당 청구는 20.6만 건이었습니다.",
+      "actual_vs_expected": "PPI 전월비 0.4% (예상 0.4%) / 전년비 5.4% (예상 5.3%, 7월 4.7%) / 근원 전월비 0.2% (예상 0.3%) / 근원 전년비 4.6% (예상 4.6%). 신규 실업수당 20.6만 (예상 20.5만), 계속청구 177만 (예상 178만).",
+      "sources": [
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq fall for fourth straight day as bond yields jump, oil stays above $100", "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-10-dow-sp-500-nasdaq-oil-gains-100-083717303.html", "published": "2026-09-11 06:20 KST(업데이트)"},
+        {"outlet": "BabyPips", "title": "U.S. Producer Prices Rise 0.4% in August 2026", "url": "https://www.babypips.com/news/headline-ppi-august-2026-results-energy-inflation-fed", "published": "2026-09-10 15:14 UTC"},
+        {"outlet": "BabyPips", "title": "Financial & Forex Market Recap – Sept. 10, 2026", "url": "https://www.babypips.com/news/financial-forex-market-recap-2026-09-10", "published": "2026-09-10"},
+        {"outlet": "이투데이", "title": "뉴욕증시 나흘째 하락…유가 고공행진·美 국채금리 급등 '이중 충격' 영향[종합]", "url": "https://www.etoday.co.kr/news/view/2624277", "published": "2026-09-11 06:55 KST"},
+        {"outlet": "서울경제", "title": "유가 108달러·美 10년물은 5% 육박…반도체주 급락[데일리국제금융]", "url": "https://www.sedaily.com/article/20089674", "published": "2026-09-11 05:43 KST"}
+      ],
+      "market_link": "이투데이는 10년물 금리 상승 배경으로 PPI 발표를 들었고, 베이비핍스는 발표 직후 달러인덱스가 99.12까지 올랐다고 전했습니다. CME 페드워치의 9월 인상 확률은 전날 61.2%에서 71.1%로 높아졌습니다(서울경제).",
+      "assets": ["US10Y", "US2Y", "DXY"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 야후 9/10 라이브에 실제·예상 전 항목 일치(0.4/0.4, 5.4/5.3, 0.2/0.3, 4.6/4.6, 20.6만/20.5만, 177만/178만). 베이비핍스 에너지 +4.2%·경유 +24.1%, 7월 전년비 4.7%, 리캡 'surged to 99.12 in early New York trade following the PPI release'. 이투데이 PPI 5.4%(예상 5.3%)가 금리 상승 배경. 서울경제 61.2%→71.1%. 수정: 7월 '4.7~4.8%' → 확인된 4.7%(베이비핍스), 제목 '헤드라인 상회·근원 하회'는 항목별로 달라 '전년비 상회·근원 전월비 하회'로 정확히. PPI 발표일 9/10은 OMB 일정표로도 확인. computed DXY 9/10 종가 99.09(+0.32%)."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "oil",
+      "importance": 3,
+      "title": "후티, 홍해 항구 모카 장악·사우디 생산 36년 만의 최저…WTI 102.48달러",
+      "what": "후티가 바브엘만데브 해협 쪽 항구도시 모카를 장악했고(유로뉴스), 사우디는 8월 원유 생산이 하루 623.8만 배럴로 1990년 이후 최저라고 OPEC에 보고했습니다(프로토테마). 이란이 지하시설에서 탄도미사일 생산을 재개했다는 월스트리트저널 보도도 전해졌습니다(이투데이).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Euronews", "title": "Houthis blitz Yemen's Red Sea coastline in push to seize Bab el-Mandeb", "url": "https://www.euronews.com/2026/09/10/houthis-seize-red-sea-port-city-in-push-to-seize-bab-el-mandeb", "published": "2026-09-10 13:24 CEST"},
+        {"outlet": "The National", "title": "Oil prices hit $105 per barrel as Houthis seize key Red Sea port", "url": "https://www.thenationalnews.com/business/energy/2026/09/10/oil-prices-hit-105-per-barrel-as-houthis-seize-key-red-sea-port/", "published": "2026-09-10 14:15"},
+        {"outlet": "ProtoThema English", "title": "Oil surges past $100 as Saudi production falls to 36-year low", "url": "https://en.protothema.gr/2026/09/10/oil-surges-past-100-as-saudi-production-falls-to-36-year-low/", "published": "2026-09-10"},
+        {"outlet": "Reuters (Business Recorder)", "title": "Oil jumps 6pc to USD107 on supply concerns", "url": "https://www.brecorder.com/news/40438978/oil-jumps-6pc-to-usd107-on-supply-concerns", "published": "2026-09-11 06:11"},
+        {"outlet": "이투데이", "title": "뉴욕증시 나흘째 하락…유가 고공행진·美 국채금리 급등 '이중 충격' 영향[종합]", "url": "https://www.etoday.co.kr/news/view/2624277", "published": "2026-09-11 06:55 KST"}
+      ],
+      "market_link": "WTI는 6.69% 오른 102.48달러로 5월 중순 이후 최고, 브렌트는 6.34% 오른 107.63달러로 마감했습니다(이투데이). 로이터는 전쟁 이후 최대 규모의 해상 공격과 모카 장악을 급등 배경으로 들었습니다.",
+      "assets": ["WTI"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정 2건. (1) '이란이 미 군함을 겨냥했다는 보도'는 9/10 기사로 확인 안 됨(혁명수비대의 미 군함 공격은 9/9 로이터 기사의 9/7~8 사건) → 9/9 이벤트에만 두고 여기서는 삭제. (2) '이란의 탄도미사일 조립 재개' → 이투데이 원문은 'WSJ가 이란이 지하시설에서 탄도미사일 생산을 재개했다고 보도' → '생산 재개, WSJ 보도(이투데이 인용)'로 교체. 확인: 유로뉴스 'seized control of the strategic Red Sea port city of Mokha ... on Thursday', 더내셔널 브렌트 105.4달러(장중), 프로토테마 623.8만 배럴·'lowest level since 1990', 로이터 'biggest spike in attacks on shipping since the Iran war began'·모카 장악, 이투데이 WTI 102.48(+6.69%, '5월 중순 이후 최고')·브렌트 107.63(+6.34%). computed WTI 9/10 102.48(+6.69%) 일치."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "oil",
+      "importance": 1,
+      "title": "OPEC, 올해 수요 증가 전망 5개월 연속 하향",
+      "what": "OPEC 월간보고서는 2026년 세계 원유 수요 증가 전망을 하루 38만 배럴로 다섯 달 연속 낮췄고, 2027년 전망은 올렸습니다(로이터).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Reuters (Investing.com)", "title": "OPEC further lowers 2026 global oil demand growth forecast", "url": "https://www.investing.com/news/commodities-news/opec-further-lowers-2026-global-oil-demand-growth-forecast-4895797", "published": "2026-09-10 08:03"}
+      ],
+      "market_link": "같은 날 유가는 공급 차질 우려 속 6% 넘게 올랐습니다. 수요 전망 하향을 유가 흐름과 연결한 시황 기사는 확인되지 않았습니다.",
+      "assets": ["WTI"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": false,
+      "note": "확인: 로이터(인베스팅닷컴 9/10 08:03) 2026년 수요 증가 38만 b/d, 'the fifth straight downward revision', 2027년 전망 상향. 사실은 맞으나 시장 연결 보도 없음 → 보조 사실로만, 대본 비권장."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "rates",
+      "importance": 3,
+      "title": "10년물 4.95%·30년물 19년 만의 최고…모기지 금리 7% 돌파",
+      "what": "미 10년물 금리는 11bp 올라 4.95%로 2023년 10월 이후 최고, 2년물은 4.56~4.58%(+13~15bp), 30년물은 5.37%로 19년 만의 최고였습니다(이투데이·서울경제). 30년 모기지 평균 금리는 7.07%로 1년여 만에 7%를 넘었습니다(야후파이낸스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "이투데이", "title": "뉴욕증시 나흘째 하락…유가 고공행진·美 국채금리 급등 '이중 충격' 영향[종합]", "url": "https://www.etoday.co.kr/news/view/2624277", "published": "2026-09-11 06:55 KST"},
+        {"outlet": "서울경제", "title": "유가 108달러·美 10년물은 5% 육박…반도체주 급락[데일리국제금융]", "url": "https://www.sedaily.com/article/20089674", "published": "2026-09-11 05:43 KST"},
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq fall for fourth straight day as bond yields jump, oil stays above $100", "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-10-dow-sp-500-nasdaq-oil-gains-100-083717303.html", "published": "2026-09-11 06:20 KST(업데이트)"},
+        {"outlet": "BabyPips", "title": "Financial & Forex Market Recap – Sept. 10, 2026", "url": "https://www.babypips.com/news/financial-forex-market-recap-2026-09-10", "published": "2026-09-10"}
+      ],
+      "market_link": "야후파이낸스와 서울경제는 금리와 유가 급등을 이날 3대 지수 하락의 배경으로 함께 짚었고, S&P500은 9/4부터 4거래일 연속 내렸습니다(베이비핍스: 6월 이후 최장). 이투데이는 금리 인상 전망 속 금 선물이 1.2% 내렸다고 전했습니다.",
+      "assets": ["US10Y", "US2Y", "GOLD", "SPX"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 이투데이 10년물 4.954%(+11bp, '2023년 10월 이후 최고')·2년물 4.56%(+13bp), 서울경제 10년물 4.95%(+11bp)·2년물 4.58%(+15bp)·30년물 5.37%(19년 만의 최고), 야후 모기지 7.07%('crossed 7% for the first time in over a year'), 야후 'surging oil prices ... and climbing Treasury yields'가 하락 배경, 베이비핍스 'fourth straight lower close and its longest losing streak since June', 이투데이 금 12월물 -1.2%('조기 금리 인상 전망 ... 이자를 지급하지 않는 금에 매도세'). 출처 표기 보강(금리 수치 = 이투데이·서울경제). 화면 숫자는 computed 기준: US10Y 4.95%(재무부 기준 +12bp), US2Y 4.56%(+13bp), GOLD 9/10 -1.17%."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "policy",
+      "importance": 1,
+      "title": "ECB, 6월에 이어 또 인상…예금금리 2.5%",
+      "what": "유럽중앙은행은 예금금리를 2.25%에서 2.5%로 0.25%p 올렸습니다. 6월 이후 두 번째 인상이며, 유로존 8월 물가는 3.3%, 에너지 물가는 14.3% 올랐습니다(유로뉴스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "Euronews", "title": "ECB hikes rates to 2.5% as energy shock pushes eurozone inflation higher", "url": "https://www.euronews.com/business/2026/09/10/ecb-hikes-rates-to-25-as-energy-shock-pushes-eurozone-inflation-higher", "published": "2026-09-10 14:24 CEST"},
+        {"outlet": "BabyPips", "title": "Financial & Forex Market Recap – Sept. 10, 2026", "url": "https://www.babypips.com/news/financial-forex-market-recap-2026-09-10", "published": "2026-09-10"}
+      ],
+      "market_link": "베이비핍스는 ECB 인상 뒤 유로가 상대적으로 버텼지만, 미 PPI 발표 뒤 달러가 주요 통화 전반에 강세였다고 전했습니다.",
+      "assets": ["DXY"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 유로뉴스 예금금리 2.25%→2.5%(주요 재융자금리 2.65%), 6월 11일 이후 두 번째 인상, 8월 물가 3.3%(7월 2.9%), 에너지 14.3%(7월 10.3%). 베이비핍스 'euro resilience despite broader dollar strength', 달러 'against every major'. 주의: 베이비핍스의 '2.65%'는 주요 재융자금리 — 화면에는 예금금리 2.5%로 통일."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "company",
+      "importance": 3,
+      "title": "반도체지수 -2.66%…마이크론 -4.9%·SK하이닉스 ADR -5.2%",
+      "what": "필라델피아 반도체지수가 2.66% 내린 11,614.17로 마감했습니다. 마이크론 4.9%, SK하이닉스 ADR 5.2%, 인텔 5.6%, 엔비디아 2.26%가 내렸고, 애플은 3.56% 올랐습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "서울경제", "title": "유가 108달러·美 10년물은 5% 육박…반도체주 급락[데일리국제금융]", "url": "https://www.sedaily.com/article/20089674", "published": "2026-09-11 05:43 KST"},
+        {"outlet": "EBN", "title": "[EBN 데이터센터] 미국 증시, 기술주 약세에 일제히 하락 마감...필라델피아 반도체 2.66%↓", "url": "https://www.ebn.co.kr/news/articleView.html?idxno=1723845", "published": "2026-09-11 06:30 KST"},
+        {"outlet": "24/7 Wall St.", "title": "Memory Stocks Slide as Rates and Oil Swamp JPMorgan's Overweight Call: SK Hynix Sinks 5%, Western Digital Drops 3%, Micron Slips", "url": "https://247wallst.com/investing/2026/09/10/memory-stocks-slide-as-rates-and-oil-swamp-jpmorgans-overweight-call-sk-hynix-sinks-5-western-digital-drops-3-micron-slips/", "published": "2026-09-10 09:22 ET"}
+      ],
+      "market_link": "서울경제는 금리 인상과 고유가가 경기를 둔화시킬 수 있다는 우려를 반도체 약세 배경으로 짚었고, 24/7 월스트리트는 금리·유가 같은 거시 여건이 메모리주 흐름을 주도했다고 봤습니다.",
+      "assets": ["SOX", "NVDA", "MU", "AAPL"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: EBN SOX 11,614.17(-317.16p, -2.66%)·엔비디아 218.36(-2.26%)·애플 326.57(+3.56%), 서울경제 마이크론 -4.9%·SK하이닉스 ADR -5.2%·인텔 -5.6%와 경기 둔화 우려 서술, 24/7 'Macro conditions have taken over'(10년물·유가 언급). 24/7 기사의 수치(SK하이닉스 -5%, 마이크론 -3%)는 9:22 ET 장중 기준이므로 종가는 서울경제·EBN 수치를 쓸 것. JP모건 '비중확대'는 추천으로 읽힐 수 있어 대본 사용 금지. computed SOX·NVDA·AAPL 일치."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "earnings",
+      "importance": 2,
+      "title": "오라클, 정규장 -5.38% 뒤 실적 발표…클라우드 인프라 +121%",
+      "what": "오라클은 장 마감 뒤 1분기(회계 2027) 매출 193억 달러(+30%), 조정 주당순이익 1.92달러를 발표했습니다. 클라우드 인프라 매출은 74억 달러(+121%), 잔여이행의무(RPO)는 6,640억 달러, 연간 매출 전망은 900억 달러 이상입니다.",
+      "actual_vs_expected": "조정 EPS 1.92달러 (예상 1.73달러, 인베스팅닷컴) / 매출 193억 달러 (사전 컨센서스 약 191.3억 달러, 24/7 월스트리트)",
+      "sources": [
+        {"outlet": "Investing.com", "title": "Oracle Q1 FY2027 slides: cloud infrastructure surges 121%, guides $90B+", "url": "https://www.investing.com/news/company-news/oracle-q1-fy2027-slides-cloud-infrastructure-surges-121-guides-90b-93CH-4897025", "published": "2026-09-10 18:16"},
+        {"outlet": "24/7 Wall St.", "title": "Oracle Jumped 36% in a Day After Last September's Earnings, but Traders Are Betting Against It Tonight", "url": "https://247wallst.com/investing/2026/09/10/oracle-jumped-36-in-a-day-after-last-septembers-earnings-but-traders-are-betting-against-it-tonight/", "published": "2026-09-10 13:58 ET"},
+        {"outlet": "서울경제", "title": "유가 108달러·美 10년물은 5% 육박…반도체주 급락[데일리국제금융]", "url": "https://www.sedaily.com/article/20089674", "published": "2026-09-11 05:43 KST"}
+      ],
+      "market_link": "정규장에서 5.38% 내린 152.94달러로 마친 뒤 시간외에서 159.58달러(+4.34%)까지 올랐고(인베스팅닷컴), 서울경제는 시간외 7% 상승으로 전했습니다. 금요일(9/11) 정규장에서는 1.74% 내렸습니다(모틀리풀 9/11 마감 집계 — 해당 집계의 기사 URL은 재수신 대기).",
+      "assets": ["ORCL"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "수정: 제목 '장중 -5.38%' → -5.38%는 정규장 종가 등락이므로 '정규장 -5.38%'. 확인: 인베스팅닷컴 매출 193억 달러(+30%), 비GAAP EPS 1.92달러(예상 1.73달러), OCI 74억 달러(+121%), RPO 6,640억 달러, FY2027 매출 'at least $90 billion', 종가 152.94(-5.38%), 시간외 159.58(+4.34%). 24/7 컨센서스 매출 191.3억 달러·EPS 1.7391달러(34명). 서울경제 시간외 +7%. 시간외 수치는 매체·시점마다 달라 금요일 정규장 확정치로 대체 권장. [2026-09-13 추가] 금요일 정규장 등락(-1.74%)은 모틀리풀 9/11 마감 집계로 전달받았으나 기사 URL이 함께 오지 않아 재확인 대상입니다."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-10",
+      "kind": "earnings",
+      "importance": 1,
+      "title": "어도비, 예상 웃돈 실적·CEO 교체 발표…시간외 -2.14%",
+      "what": "어도비는 3분기 매출 67.6억 달러(+13%), 조정 EPS 6.13달러로 예상을 웃돌고 연간 가이던스를 올렸습니다. 12월 1일부터 아닐 차크라바티가 샨타누 나라옌에 이어 CEO를 맡습니다.",
+      "actual_vs_expected": "매출 67.6억 달러·조정 EPS 6.13달러, 인베스팅닷컴 기준 예상 상회(컨센서스 수치는 원문에 없음)",
+      "sources": [
+        {"outlet": "Investing.com", "title": "Adobe Q3 FY2026 slides: strong results, CEO transition announced", "url": "https://www.investing.com/news/company-news/adobe-q3-fy2026-slides-strong-results-ceo-transition-announced-93CH-4897031", "published": "2026-09-10 18:27"}
+      ],
+      "market_link": "정규장 2.32% 하락(248.95달러) 뒤 시간외에서 2.14% 더 내렸습니다. 인베스팅닷컴은 무료 사용자 수익화 시점에 대한 우려가 실적 호조와 맞섰다고 전했습니다.",
+      "assets": ["ADBE"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 인베스팅닷컴(9/10 18:27 ET) 매출 67.6억 달러(+13%), 비GAAP EPS 6.13달러, 두 항목 모두 예상 상회(컨센서스 숫자 없음), 연간 가이던스 상향(매출 265.76억~266.26억 달러), 12/1 아닐 차크라바티 CEO 취임(나라옌 후임), 종가 248.95(-2.32%)·시간외 -2.14%(243.50), 'bringing users into the funnel' 우선에 따른 수익화 시점 우려. 단일 출처라 중요도 낮게 유지."
+    },
+    {
+      "d": "2026-09-10",
+      "session": "2026-09-09",
+      "kind": "fx",
+      "importance": 1,
+      "title": "원/달러 1,336원→1,340원대…유가 급등 속 위험선호 위축",
+      "what": "서울 외환시장에서 원/달러 환율은 9일 9.5원 내린 1,336.1원으로 마감했고(머니투데이), 10일 오전 6시 기준 1,340.6원으로 4.5원 올랐습니다(아주경제).",
+      "actual_vs_expected": "",
+      "sources": [
+        {"outlet": "머니투데이", "title": "원/달러 환율, 9.5원 내린 1336.1원", "url": "https://www.mt.co.kr/economy/2026/09/09/2026090915401356861", "published": "2026-09-09 15:40 KST"},
+        {"outlet": "아주경제", "title": "환율, 유가 급등에 1340원대로…위험선호 위축", "url": "https://www.ajunews.com/view/20260910091619062", "published": "2026-09-10 09:16 KST"}
+      ],
+      "market_link": "아주경제는 미·이란 충돌 속 유가와 미 국채금리가 급등하며 위험자산 선호가 약해진 것으로 풀이했습니다. 엔화 강세가 원화에도 함께 작용할 수 있다는 전문가 전망도 실었습니다.",
+      "assets": ["USDKRW"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확인: 머니투데이(9/9 15:40) 1,336.1원(-9.5원). 아주경제(9/10) 오전 6시 1,340.6원(+4.5원), 유가·미 국채금리 급등 속 위험선호 약화, 우리은행 민경원 이코노미스트 '엔화가 강세로 방향을 잡을 경우 원화 역시 이에 동조화될 수 있다'. 주의: computed USDKRW는 야후 KRW=X(런던 종가, 9/9 1,339.21)라 서울 종가 1,336.1원과 다름 — 한 화면에서 섞지 말 것."
+    },
+    {
+      "d": "2026-09-11",
+      "session": "2026-09-11",
+      "kind": "data",
+      "importance": 3,
+      "title": "美 8월 CPI 전월비 0.4%·전년비 3.4% 예상 부합…근원 전월비만 0.3%로 예상(0.2%) 상회",
+      "what": "미국 노동통계국(BLS)이 9월 11일 08:30 ET(한국 21:30)에 낸 8월 소비자물가지수는 계절조정 전월비 0.4%, 전년비 3.4%로 시장 전망치(전월비 0.4%·전년비 3.4%)에 부합했습니다. 에너지·식품을 뺀 근원 CPI는 전월비 0.3%로 전망치 0.2%를 0.1%p 웃돌았고(7월은 0.2%), 전년비는 2.4%로 전망치와 같으면서 7월 2.5%보다 낮아졌습니다. 헤드라인 전년비 3.4%는 7월과 같은 수준입니다. 세부 항목은 휘발유 +3.9%, 에너지 전월비 +2.1%(전년비 +16.3%), 주거비 +0.3%(전년비 +3.0%), 식품 +0.1%(전년비 +2.7%), 항공료 +2.7%(전년비 +23.4%)였고, BLS는 휘발유지수 상승분이 전체 상승분의 3분의 1 이상을 차지했다고 적었습니다. 이 발표는 9월 15~16일 FOMC를 나흘 앞두고 나왔습니다.",
+      "actual_vs_expected": "헤드라인 전월비 +0.4% (예상 +0.4%) / 헤드라인 전년비 3.4% (예상 3.4%, 7월 3.4%) / 근원 전월비 +0.3% (예상 +0.2%, 7월 +0.2%) / 근원 전년비 2.4% (예상 2.4%, 7월 2.5%)",
+      "our_data": "9/11 종가(computed_us_weekly.json): S&P500 7,656.98(+0.86%) · 나스닥 26,333.04(+0.96%) · 다우 52,573.29(+0.98%) · 필라델피아반도체 11,824.00(+1.81%) / VIX 15.84(-11.21%) / 미 10년물 4.96%(+1bp) · 2년물 4.63%(+7bp) / 달러지수 99.12 · 달러엔 154.48(+0.59%) · 원달러 1,348.17(+0.67%) / WTI 100.05(-2.37%) · 금 4,366.2(+0.04%). 주간(9/4 대비)으로는 2년물 +26bp · 10년물 +18bp로 단기물이 더 크게 올랐고, S&P -0.80% · 나스닥 -0.66% · 다우 -1.57%인 한 주의 마지막 세션이었습니다.",
+      "sources": [
+        {"outlet": "미국 노동통계국(BLS)", "title": "Consumer Price Index Summary — 2026 M08 Results (archived release)", "url": "https://www.bls.gov/news.release/archives/cpi_09112026.htm", "published": "2026-09-11 08:30 ET"},
+        {"outlet": "미국 노동통계국(BLS)", "title": "Consumer Price Index Summary (current release)", "url": "https://www.bls.gov/news.release/cpi.nr0.htm", "published": "2026-09-11 08:30 ET"},
+        {"outlet": "이데일리", "title": "미 근원물가 예상 웃돌자 9월 금리인상 확률 92%로 '껑충'", "url": "https://www.edaily.co.kr/News/Read?newsId=05926966645579136", "published": "2026-09-11 22:03 KST"},
+        {"outlet": "파이낸셜뉴스", "title": "예상 웃돈 美 근원물가에 9월 금리인상 전망 강화…시장 확률 86.3%", "url": "https://www.fnnews.com/news/202609120945509417", "published": "2026-09-12 10:10 KST"},
+        {"outlet": "헤럴드경제", "title": "[속보] 美 8월 근원 소비자물가 전월 대비 0.3%↑…예상치 웃돌아", "url": "https://biz.heraldcorp.com/article/10871026", "published": "2026-09-11 21:47 KST"},
+        {"outlet": "아주경제", "title": "미 8월 CPI 3.4%↑…월간 물가 0.4% 상승", "url": "https://www.ajunews.com/view/20260911213436907", "published": "2026-09-11 21:49 KST"},
+        {"outlet": "국민일보", "title": "美 8월 근원 소비자물가 예상치 상회…금리 인상 관측", "url": "https://www.kmib.co.kr/article/view.asp?arcid=9000011280", "published": "2026-09-11 22:29 KST"},
+        {"outlet": "CoinDesk", "title": "Core CPI rose a faster-than-forecast 0.3% in August, setting up possible Fed rate hike", "url": "https://www.coindesk.com/markets/2026/09/11/core-cpi-rose-a-faster-than-forecast-0-3-in-august-setting-up-fed-rate-hike", "published": "2026-09-11"},
+        {"outlet": "US Inflation Calculator", "title": "US CPI August 2026: Inflation Picks Up as Gas Prices Surge", "url": "https://www.usinflationcalculator.com/inflation/us-cpi-august-2026/100073342/", "published": "2026-09-11"}
+      ],
+      "market_link": "이데일리는 CME 페드워치 기준 다음 주 0.25%p 인상 확률이 발표 직전 69.4%에서 발표 후 91.6%로 올라섰다고 전했고, 파이낸셜뉴스는 같은 날 오후 기준 86.3%(전날 72.4%, 일주일 전인 9월 4일 59.4%)로 적었습니다. 이데일리는 발표 직후 2년물이 5bp 안팎 올라 4.63% 수준이 됐고, 10년물은 4.94%에서 4.97%까지 올랐다가 전 거래일 종가보다 2bp가량 낮은 수준까지 되돌렸다고 전했는데, 종가 기준으로는 2년물 +7bp·10년물 +1bp로 단기물이 더 크게 오른 하루였습니다. 코인데스크는 나스닥100 선물이 발표 뒤 장중 고점인 +0.8%까지 올라선 점을 짚었고, 정규장은 3대 지수와 반도체지수가 모두 상승 마감하고 VIX가 15.84로 11.21% 내린 흐름과 겹쳤습니다. 국민일보는 물가 하락 속도가 더디고 근원이 예상을 웃돈 점을 배경으로 연준이 매파적 기조를 유지하거나 추가 인상에 나설 수 있다는 관측이 나온다고 전했습니다.",
+      "assets": ["US2Y", "US10Y", "SPX", "IXIC", "VIX"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "BLS 9/11 08:30 ET 공식 릴리스(아카이브 URL)를 직접 열어 4개 수치와 세부 항목(휘발유 +3.9%, 에너지 +2.1%/+16.3%, 주거비 +0.3%/+3.0%, 식품 +0.1%/+2.7%, 항공료 +2.7%/+23.4%, '휘발유가 전체 상승분의 3분의 1 이상')을 모두 확인했고, 한국·영어 매체 6곳이 같은 숫자를 전했습니다. 결론: 헤드라인은 예상과 동일, 근원 전월비만 예상보다 높음, 근원 전년비는 예상과 같고 7월(2.5%)보다 낮아짐. [원안 수정 3건] (1) 원안의 '9월 FOMC를 앞두고 나온 마지막 물가 지표'는 근거를 찾지 못했고 computed의 calendar_next에 9/16 21:30 KST 수입·수출 물가지수가 FOMC 결정(9/17 03:00 KST) 앞에 잡혀 있어, '나흘 앞두고 나왔다'는 사실 표현으로 바꿨습니다. (2) 원안은 10년물을 '4.97%까지 올랐다가 일부 되돌렸다'고 적었으나 이데일리 본문은 '전 거래일 종가보다 2bp가량 낮은 수준까지' 되돌렸다고 적었고, computed 종가는 4.96%(+1bp)로 오히려 소폭 상승이어서 매체 장중 표현과 종가를 나눠 적었습니다. (3) 원안 note는 '근원 전년비 2.4% = 2021년 3월 이후 최저'를 usinflationcalculator만 적었다고 했으나, 이데일리 본문도 같은 표현을 썼습니다(매체 2곳). BLS 원문에는 해당 문구가 없으므로 영상에서 쓸 때는 매체 기준임을 밝혀야 합니다. [숫자 불일치] 금리인상 확률은 이데일리 91.6%(발표 직후, 9/11 22:03 KST), 파이낸셜뉴스 86.3%(당일 오후, 9/12 10:10 KST 기사), 코인데스크는 페드워치가 아닌 자체 표현으로 'nearly 100%'라 적어 편차가 큽니다. 시점·출처 차이로 보이므로 한 매체 기준을 밝히고 쓰는 편이 안전합니다. 국채금리도 매체 수치(코인데스크 2년물 4.61%, 이데일리 4.63%·10년물 4.91~4.97%)가 달라 computed 값(2년물 4.63%, 10년물 4.96%)을 우선했습니다. [출처 표기 수정] 국민일보 실제 제목은 '美 8월 근원 소비자물가 예상치 상회…금리 인상 관측'(22:29 등록, 23:40 수정)으로 원안 제목과 달라 바로잡았습니다. bls.gov/news.release/cpi.nr0.htm은 현재 8월분이 맞지만 다음 달이면 9월분으로 바뀌므로 아카이브 URL을 우선 인용하십시오. 미시간대 소비자심리 예비치는 이 담당 범위 밖입니다."
+    },
+    {
+      "d": "2026-09-11",
+      "session": "2026-09-11",
+      "kind": "data",
+      "importance": 1,
+      "title": "8월 실질 시간당임금 전월비 -0.1%·전년비 -0.3%…명목 시급 37.75달러",
+      "what": "BLS는 CPI와 같은 시각인 9월 11일 08:30 ET에 8월 실질임금(Real Earnings)도 냈습니다. 전체 근로자 기준 실질 평균 시간당임금은 전월비 0.1% 감소, 전년비 0.3% 감소였습니다. 명목 평균 시급은 0.3% 올라 37.65달러에서 37.75달러가 됐지만, 같은 기간 CPI-U 상승률 0.4%가 이를 웃돌면서 실질 기준으로는 줄었습니다. 주당 근로시간이 0.3% 늘어 실질 평균 주급은 전월비 +0.2%·전년비 +0.3%였습니다. 생산·비관리직은 실질 시급이 전월비 -0.1%·전년비 -0.1%, 실질 주급은 전월비 -0.1%·전년비 +0.1%였습니다.",
+      "actual_vs_expected": "컨센서스가 따로 집계되는 지표가 아니어서 예상치 비교 없음. 실질 시급 전월비 -0.1%·전년비 -0.3%, 명목 시급 +0.3%(37.65→37.75달러), 같은 달 CPI-U +0.4%.",
+      "our_data": "같은 세션 종가(computed_us_weekly.json): S&P500 7,656.98(+0.86%) · 나스닥 26,333.04(+0.96%) / 미 2년물 4.63%(+7bp). 주간 업종에서는 에너지 +1.69%만 강세였고 헬스케어 -3.55%, 소재 -2.84%가 가장 약했습니다.",
+      "sources": [
+        {"outlet": "미국 노동통계국(BLS)", "title": "Real Earnings Summary — 2026 M08 Results (archived release)", "url": "https://www.bls.gov/news.release/archives/realer_09112026.htm", "published": "2026-09-11 08:30 ET"},
+        {"outlet": "미국 노동통계국(BLS)", "title": "Real Earnings Summary (current release)", "url": "https://www.bls.gov/news.release/realer.nr0.htm", "published": "2026-09-11 08:30 ET"},
+        {"outlet": "4 Corner Resources", "title": "Real Wages Fell Again in August, Despite a Raise", "url": "https://www.4cornerresources.com/job-market-news/real-earnings-august-2026/", "published": "2026-09-11"}
+      ],
+      "market_link": "이 지표를 9/11 시장 움직임과 직접 연결한 보도는 확인되지 않았습니다. 4CornerResources는 명목 시급이 1년 새 3.1% 올라 37.75달러가 된 사이 물가가 3.4% 올랐다는 점을 구매력 측면에서 짚었습니다.",
+      "assets": [],
+      "confidence": "low",
+      "verified": true,
+      "use_in_script": false,
+      "note": "BLS 원문(9/11 08:30 ET 아카이브)과 현재 릴리스를 모두 열어 전 수치를 그대로 확인했습니다(실질 시급 -0.1%/-0.3%, 명목 +0.3% 37.65→37.75달러, CPI-U +0.4%, 주당 근로시간 +0.3%, 실질 주급 +0.2%/+0.3%, 생산·비관리직 -0.1%/-0.1%·-0.1%/+0.1%). 4CornerResources 본문도 열어 '시급 3.1% 상승 대 물가 3.4% 상승, 실질 시급 -0.3%'를 확인했습니다. 다만 이 지표를 9/11 시장 움직임과 명시적으로 연결한 보도를 찾지 못해 규칙 6절 기준대로 low로 뒀습니다. 영상에서는 CPI 이벤트의 보조 사실('물가가 임금을 앞질렀다')로 쓰는 편이 자연스럽습니다. [원안 수정] 원안 what의 '연 기준 명목 시급 +3.1%'는 BLS 릴리스 본문이 아니라 4CornerResources가 계산·서술한 값이어서 market_link로 옮겨 매체 기준임을 밝혔습니다. bls.gov/news.release/realer.nr0.htm은 지금은 8월분이 맞지만 다음 달 9월분으로 바뀌므로 아카이브 URL을 우선 인용하십시오."
+    },
+    {
+      "d": "2026-09-11",
+      "session": "2026-09-11",
+      "kind": "market",
+      "importance": 3,
+      "title": "뉴욕증시 5거래일 만에 반등…다우 +0.98%·S&P500 +0.86%·나스닥 +0.96%",
+      "what": "9월 11일 미국 정규장에서 다우는 509.19포인트(0.98%) 오른 52,573.29, S&P500은 65.28포인트(0.86%) 오른 7,656.98, 나스닥은 251.31포인트(0.96%) 오른 26,333.04로 마감했습니다. 러셀2000은 13.00포인트(0.45%) 오른 2,903.94였습니다(야후파이낸스 마감 집계). 9월 4일부터 이어지던 4거래일 연속 하락이 멈춘 세션으로, 한국 매체들은 '5거래일 만의 반등'으로 전했습니다. 장중에는 모틀리풀 미드데이 집계 기준 오전 11시 31분(ET)에 S&P500 7,672(+1.06%), 나스닥 26,423(+1.31%), 다우 52,560(+0.95%)까지 올랐다가 마감 무렵 상승폭을 일부 되돌렸습니다.",
+      "actual_vs_expected": "",
+      "our_data": "computed 기준 S&P500 7,656.98(+0.86%) / 나스닥 26,333.04(+0.96%) / 다우 52,573.29(+0.98%) / WTI 100.05(-2.37%)가 기사 수치와 소수점까지 일치합니다. computed의 필라델피아반도체 11,824.00(+1.81%)은 인용한 기사 어디에도 없고, VIX 15.84(-11.21%)는 야후파이낸스에서만 확인됐습니다.",
+      "sources": [
+        {"outlet": "파이낸셜뉴스", "title": "뉴욕증시, 5거래일 만 반등...유가 하락·CPI 불확실 해소 덕", "url": "https://www.fnnews.com/news/202609120913025965", "published": "2026-09-12 09:48 KST"},
+        {"outlet": "서울경제", "title": "뉴욕증시 5일만에 반등, 다우 1% ↑...유가하락·CPI 안도 영향", "url": "https://www.sedaily.com/article/20090081", "published": "2026-09-12 07:24 KST"},
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq end losing week on a high note as Fed rate-hike bets jump", "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-september-11-dow-sp-500-nasdaq-cpi-inflation-082201751.html", "published": "2026-09-12 06:51 KST 갱신"},
+        {"outlet": "The Motley Fool", "title": "Stock Market Midday, Sept. 11: Stocks Rise as Falling Oil Prices Outweigh Sticky Inflation", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/11/stock-market-midday-sept-11-stocks-rise-as-falling-oil-prices-outweigh-sticky-inflation/", "published": "2026-09-11 11:31 ET 기준"},
+        {"outlet": "CBC뉴스", "title": "뉴욕증시 5일 만에 반등… 유가 하락·CPI 안도감에 다우 0.98%·나스닥 0.96%↑", "url": "https://www.cbci.co.kr/news/articleView.html?idxno=606219", "published": "2026-09-13 00:00 KST"}
+      ],
+      "market_link": "파이낸셜뉴스·서울경제·CBC뉴스는 국제유가 반락과 8월 CPI가 시장 예상에서 크게 벗어나지 않은 점을 반등 배경으로 함께 짚었습니다. WTI(10월물)는 2.43달러(2.37%) 내린 100.05달러, 브렌트(11월물)는 3.02달러(2.81%) 내린 104.61달러로 마감했습니다(서울경제·파이낸셜뉴스 기준). 모틀리풀은 기사 제목에서 '유가 하락이 끈적한 물가를 앞섰다'는 구도로 정리했습니다. 한편 야후파이낸스 라이브 블로그는 같은 날 9월 미시간대 소비자심리 예비치가 47.8(8월 확정 51.7, 시장 예상 51)로 내려앉고 1년 기대인플레가 4.6%(전월 4.0%)로 올라섰다고 전했는데, 지수는 그와 반대 방향으로 움직였습니다.",
+      "assets": ["DJI", "SPX", "IXIC", "WTI"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "과제 브리핑의 '사흘 연속 하락 뒤 반등'은 매체 기준으로는 '4거래일 연속 하락(9/4·9/8·9/9·9/10) 뒤 5거래일 만의 반등'입니다. 후보가 market_link에 적었던 '이콘커런츠' 인용 2건은 실제로 연 URL이 sources에 없어 삭제했습니다. CNBC 기사(Dow rises 500 points…)는 본문이 403으로 막혀 넣지 않았습니다. 모틀리풀 미드데이 지수 레벨은 computed의 9/10 종가 대비 계산과 맞아떨어져 채택했습니다(7591.70→7672 = +1.06%, 26081.72→26423 = +1.31%, 52064.10→52560 = +0.95%)."
+    },
+    {
+      "d": "2026-09-11",
+      "session": "2026-09-11",
+      "kind": "policy",
+      "importance": 3,
+      "title": "CPI 발표 뒤 9월 FOMC 0.25%p 인상 확률 72.4%→86.3%(CME 페드워치)",
+      "what": "8월 CPI는 전월비 0.4%·전년비 3.4%로 시장 예상에 부합했고, 근원은 전월비 0.3%로 예상(0.2%)을 0.1%포인트 웃돌았습니다(파이낸셜뉴스·서울경제·CBC뉴스·야후파이낸스 4곳 본문 일치). 야후파이낸스는 근원 전년비를 2.4%로 적었습니다. CME 페드워치 기준 9월 15~16일 FOMC의 0.25%포인트 인상 확률은 발표 전날 72.4%에서 발표 뒤 86.3%로 올랐다고 서울경제·파이낸셜뉴스·CBC뉴스가 전했습니다.",
+      "actual_vs_expected": "CME 페드워치 9월 0.25%p 인상 확률: 전날 72.4% → 발표 뒤 86.3%(서울경제·파이낸셜뉴스·CBC뉴스). 다른 집계는 이데일리 69.4%→91.6%, 모틀리풀 86%(1주일 전 60%), FXStreet 인용 머니마켓 91%.",
+      "our_data": "computed 기준 미 10년물 4.96%(+1bp), 2년물 4.63%(+7bp). 주간으로는 2년물 +26bp, 10년물 +18bp로 단기물이 더 크게 올랐습니다. 달러지수 99.12, 달러엔 154.48(+0.59%), 원달러 1,348.17(+0.67%). FXStreet의 4.951%는 우리 10년물 4.96%와 1bp 이내 차이입니다.",
+      "sources": [
+        {"outlet": "서울경제", "title": "뉴욕증시 5일만에 반등, 다우 1% ↑...유가하락·CPI 안도 영향", "url": "https://www.sedaily.com/article/20090081", "published": "2026-09-12 07:24 KST"},
+        {"outlet": "파이낸셜뉴스", "title": "뉴욕증시, 5거래일 만 반등...유가 하락·CPI 불확실 해소 덕", "url": "https://www.fnnews.com/news/202609120913025965", "published": "2026-09-12 09:48 KST"},
+        {"outlet": "CBC뉴스", "title": "뉴욕증시 5일 만에 반등… 유가 하락·CPI 안도감에 다우 0.98%·나스닥 0.96%↑", "url": "https://www.cbci.co.kr/news/articleView.html?idxno=606219", "published": "2026-09-13 00:00 KST"},
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq end losing week on a high note as Fed rate-hike bets jump", "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-september-11-dow-sp-500-nasdaq-cpi-inflation-082201751.html", "published": "2026-09-12 06:51 KST 갱신"},
+        {"outlet": "FXStreet", "title": "US Treasury yields ease after CPI as Fed hike risks linger", "url": "https://www.fxstreet.com/news/us-treasury-yields-ease-after-cpi-but-fed-hike-risks-linger-202609111852", "published": "2026-09-11 18:52 GMT"},
+        {"outlet": "The Motley Fool", "title": "Stock Market Midday, Sept. 11: Stocks Rise as Falling Oil Prices Outweigh Sticky Inflation", "url": "https://www.fool.com/coverage/stock-market-today/2026/09/11/stock-market-midday-sept-11-stocks-rise-as-falling-oil-prices-outweigh-sticky-inflation/", "published": "2026-09-11 11:31 ET 기준"}
+      ],
+      "market_link": "야후파이낸스는 이 세션을 '인상 베팅이 뛴 가운데 하락한 한 주를 높은 음으로 끝냈다'는 제목으로 정리했습니다. 채권시장에서는 단기물이 더 크게 움직였습니다. FXStreet는 CPI 뒤 10년물이 1bp 내린 4.951%, 30년물은 장중 5.38%(2007년 이후 최고)를 찍고 2bp 내린 5.34%로 마감했다고 적었고, 서울경제·파이낸셜뉴스·CBC뉴스는 10년물이 CPI 직후 장중 4.99%까지 올라 5% 선에 다가섰다가 4.9%대 초중반으로 되밀렸다고 전했습니다.",
+      "assets": ["US2Y", "US10Y"],
+      "confidence": "high",
+      "verified": true,
+      "use_in_script": true,
+      "note": "확률 수치가 매체마다 갈립니다: CME 페드워치 72.4%→86.3%(한국 3개 매체, 본문 확인), 전날 72%→발표 뒤 '약 87~90%'(야후), 86%·1주일 전 60%(모틀리풀), 머니마켓 91%(FXStreet). 1주일 전 기준값도 50%(야후)와 60%(모틀리풀)로 다릅니다. CME 페드워치 공식 페이지의 9/11 스냅샷은 열지 못했습니다. 영상에서는 '72%대 → 86%대(CME 페드워치 기준)'로 쓰는 것이 가장 안전합니다. 후보 note에 있던 '로이터 인용 85%(선데이가디언)'는 본문을 열어 확인하지 못해 삭제했습니다. FXStreet 실제 제목은 'US Treasury yields ease after CPI as Fed hike risks linger'로, 후보가 적은 'but'이 아니라 'as'여서 고쳤습니다."
+    },
+    {
+      "d": "2026-09-11",
+      "session": "2026-09-11",
+      "kind": "market",
+      "importance": 1,
+      "title": "VIX 15.84로 11.21% 하락…주간으로는 여전히 +9%",
+      "what": "야후파이낸스 마감 집계 기준 VIX(변동성지수)는 2.00포인트(11.21%) 내린 15.84로 마감했습니다. 주 초 중동발 유가 급등과 금리 상승 구간에서 17.84(9/10)까지 올라 있던 변동성 지표가 금요일 하루에 크게 되밀린 모습입니다.",
+      "actual_vs_expected": "",
+      "our_data": "computed 기준 VIX 15.84(-11.21%), 9/10 17.84, 9/4 14.53, 주간 +9.02%.",
+      "sources": [
+        {"outlet": "Yahoo Finance", "title": "Stock market today: Dow, S&P 500, Nasdaq end losing week on a high note as Fed rate-hike bets jump", "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-september-11-dow-sp-500-nasdaq-cpi-inflation-082201751.html", "published": "2026-09-12 06:51 KST 갱신"}
+      ],
+      "market_link": "지수 반등·유가 반락과 같은 방향으로 움직인 것으로 풀이됩니다. 다만 9월 4일 종가 14.53 대비 주간으로는 9.02% 높아, 한 주 전체로 보면 변동성이 올라간 주간이었습니다(computed 기준).",
+      "assets": ["VIX"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": true,
+      "note": "VIX 마감 수치를 본문에서 확인한 매체는 야후파이낸스 라이브 블로그 1곳뿐이며, computed 값과 소수점까지 일치합니다(15.84 / -2.00 / -11.21%). 인용한 한국 마감 기사 3건은 VIX를 다루지 않아 매체 1곳 기준으로 medium을 유지했습니다."
+    },
+    {
+      "d": "2026-09-11",
+      "session": "2026-09-11",
+      "kind": "company",
+      "importance": 2,
+      "title": "AI 서버 하드웨어 강세…HPE 약 12%·델 약 11%대 상승",
+      "what": "24/7월스트리트 마감 집계 기준 휴렛팩커드엔터프라이즈(HPE)가 12.2% 오른 61.96달러, 델 테크놀로지스가 11.5% 오른 564.87달러, 온세미컨덕터가 8.1% 오른 75.86달러, 슈퍼마이크로컴퓨터가 7.2% 오른 40.08달러로 마감했습니다. 같은 매체는 '금요일 세션은 서버 하드웨어의 것이었다'고 적으면서, 클라우드플레어 -2.4%(303.72달러)·루브릭 -2.6%(86.6달러)처럼 소프트웨어·네트워킹 일부는 하드웨어와 다른 방향이었다고 덧붙였습니다. 모틀리풀 마감 집계는 같은 종목을 HPE +12.44%(62.09달러), 델 +11.98%(567.30달러)로 조금 다르게 적었고, 아리스타네트웍스 +5.61%(199.59달러)와 오라클 -1.74%를 함께 실었습니다.",
+      "actual_vs_expected": "",
+      "our_data": "computed_us_weekly.json에는 HPE·델·온세미·슈퍼마이크로 개별 종목이 없어 직접 대조할 수 없습니다. 같은 세션 지수는 필라델피아반도체 11,824.00(+1.81%)로 4대 지수 중 가장 크게 올랐고, 주간 업종은 기술 +0.21%였습니다(에너지 +1.69%만 더 강함).",
+      "sources": [
+        {"outlet": "24/7 Wall St.", "title": "(전달 중 잘림 — 기사 제목·URL 재수신 필요)", "url": "", "published": "2026-09-11"},
+        {"outlet": "The Motley Fool", "title": "(전달 중 잘림 — 기사 제목·URL 재수신 필요)", "url": "", "published": "2026-09-11"}
+      ],
+      "market_link": "24/7월스트리트는 이날을 '서버 하드웨어의 세션'으로 정리했고, 하드웨어가 오르는 사이 클라우드플레어·루브릭 같은 소프트웨어·네트워킹 일부는 반대로 내렸습니다. 모틀리풀 마감 집계에는 아리스타네트웍스 +5.61%, 오라클 -1.74%가 함께 실렸습니다. ※ 이 이벤트는 검증 결과가 전달되는 과정에서 market_link 뒷부분부터 잘려, 원문의 시장 연결 서술 전체는 재수신이 필요합니다.",
+      "assets": ["HPE", "DELL", "SMCI", "ON", "ORCL"],
+      "confidence": "medium",
+      "verified": true,
+      "use_in_script": false,
+      "note": "[전달 누락 — 재수신 필요] 이 항목은 '검증 통과' 목록으로 전달받았으나, 전달 도중 market_link 이후(시장 연결 서술 일부·원 note·sources)가 잘려 도착했습니다. what에 담긴 종목·등락률·매체명은 전달된 그대로 보존했고, 24/7 월스트리트·모틀리풀 기사 URL은 비어 있습니다. 출처 URL이 없는 상태로 대본에 넘기지 않기 위해 confidence는 medium이되 use_in_script는 false로 두었습니다(규칙상 low만 false이나, 검증 URL 부재를 이유로 둔 예외이며 pending에도 남겼습니다). 두 매체 수치가 서로 다르므로(HPE +12.2%/61.96달러 vs +12.44%/62.09달러, 델 +11.5%/564.87달러 vs +11.98%/567.30달러) 영상에서는 반드시 한 매체 기준을 밝혀야 합니다. 모틀리풀의 오라클 -1.74%는 9/10 오라클 실적 이벤트의 '금요일 정규장 반응' 자리에도 반영했습니다."
+    }
+  ],
+  "dropped_claims": [
+    {"event_title": "후티, 사우디 남부 에너지시설 공격…하르그섬 인근 충돌 보도", "claim": "하르그섬 인근에서 미군과 이란의 충돌 보도도 이어졌습니다", "reason": "인용 기사 어디에도 '충돌이 이어졌다'는 서술 없음. 아주경제의 '이란 소형 유조선 1척이 미군 미사일 공격을 받았다는 보도' 한 건만 확인 → 그 표현으로 교체."},
+    {"event_title": "후티, 사우디 남부 에너지시설 공격…하르그섬 인근 충돌 보도", "claim": "인베스토피디아는 중동 긴장과 유가 상승을 이날 하락의 배경으로 짚었습니다", "reason": "인베스토피디아는 유가 상승(후티 공격)과 지수 하락을 따로 서술, 직접 연결하지 않음 → 모틀리풀로 교체."},
+    {"event_title": "후티, 홍해 항구 모카 장악·사우디 생산 36년 만의 최저…WTI 102.48달러", "claim": "이란이 미 군함을 겨냥했다는 보도(9/10)", "reason": "9/10 인용 기사에서 확인 안 됨. 혁명수비대의 미 군함 공격은 9/9 로이터 기사 속 9/7~8 사건으로 9/9 이벤트에만 유지."},
+    {"event_title": "후티, 홍해 항구 모카 장악·사우디 생산 36년 만의 최저…WTI 102.48달러", "claim": "이란의 탄도미사일 조립 재개 보도", "reason": "원문(이투데이)은 'WSJ: 지하시설에서 탄도미사일 생산 재개' → '조립'을 '생산'으로, 출처를 WSJ(이투데이 인용)로 교체."},
+    {"event_title": "재무부 국채 바이백 3배로…그래도 10년물 2023년 이후 최고", "claim": "통상 규모의 3배", "reason": "원문은 '당초 예고한 20억 달러의 3배'. '통상 규모'는 확인 안 됨."},
+    {"event_title": "애플 첫 폴더블 '아이폰 듀오' 공개…", "claim": "야후파이낸스는 10일 상승을 듀오 공개에 대한 월가 반응과 함께 다뤘습니다 (출처: 9/9 라이브)", "reason": "9/9 라이브는 10일 장을 다룰 수 없음. 9/10 라이브에서 확인되어 출처 교체(주장 자체는 유지)."},
+    {"event_title": "8월 PPI 전년비 5.4%…", "claim": "7월 PPI 전년비 4.7~4.8%", "reason": "4.8%는 어느 출처에서도 확인 안 됨. 베이비핍스 4.7%만 유지."},
+    {"event_title": "지수 약세 속 반도체는 강세…", "claim": "퀄컴 3~4%대 상승", "reason": "인베스토피디아 라이브 안에서 3%·4.5% 두 수치(장중), 종가 미확인 → '장중 3~4.5%'로 표기."},
+    {"event_title": "오라클, 장중 -5.38% 뒤 실적 발표…", "claim": "장중 -5.38%", "reason": "-5.38%는 정규장 종가 등락 → '정규장'으로 정정."},
+    {"event_title": "헬스케어 약세 주도…", "claim": "다우 낙폭이 S&P500보다 컸던 흐름과 겹칩니다(근거 없이)", "reason": "근거 없는 연결이었음 → 인베스토피디아의 '암젠(다우 비중 4위) 하락이 다우를 압박' 서술로 근거를 붙여 유지."},
+    {"event_title": "연준 '블랙아웃' 기간…이번 주 연준 인사 정책 발언 없음", "claim": "제목의 '발언 없음'(부재 단정)·'9/17 자정'", "reason": "부재는 단정 불가 → '발언 자제'. 규정상 종료는 23:59 ET."},
+    {"story": 1, "claim": "중동 해상 충돌이 커질 때마다 유가와 미 국채금리가 함께 뛰었고", "reason": "'때마다'는 반복 인과 패턴 단정. 금리 상승은 매체들이 바이백 실망(9/9)·PPI(9/10)와 연결했지 중동과 직접 연결하지 않음 → 재작성."},
+    {"story": 2, "claim": "금요일 CPI 근원이 0.2%냐 0.3%냐가 그 사이 저울추로 볼 수 있습니다", "reason": "기사 근거 없는 추론. 야후 CPI 프리뷰는 모든 추정치가 0.2%로 반올림된다고 전함 → 베이비핍스 서술(PPI·CPI 모두 연준 결정 1주 전 발표)로 교체."}
+  ],
+  "calendar_next": [
+    {"date": "2026-09-15", "event_ko": "9월 뉴욕 연은 엠파이어스테이트 제조업지수 (예정일, 연은 달력상 15일)", "source": "https://www.newyorkfed.org/survey/empire/empiresurvey_overview", "verified": true, "note": "뉴욕 연은 2026 달력에 9월 '15' 표시 확인(보고서 링크는 아직 없음). 발표 시각은 페이지에 없어 표기하지 않음."},
+    {"date": "2026-09-15", "event_ko": "FOMC 정례회의 1일차 (9/15~16, 경제전망·점도표 포함 회의)", "source": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm", "verified": true, "note": "연준 달력 'September 15-16*'(* = SEP 포함) 확인."},
+    {"date": "2026-09-16", "event_ko": "8월 소매판매 (08:30 ET = 한국 21:30)", "source": "https://www.census.gov/economic-indicators/econcards/assets/pdf/censusreleaseglance_2026.pdf", "verified": true, "note": "OMB 2026 주요 지표 일정표(census.gov 호스팅) 'Advance Monthly Sales for Retail and Food Services' 9월 16일 확인. 08:30 ET는 통상 시각(일정표에 시각 없음)."},
+    {"date": "2026-09-16", "event_ko": "8월 수입·수출물가 (08:30 ET = 한국 21:30)", "source": "https://www.census.gov/economic-indicators/econcards/assets/pdf/censusreleaseglance_2026.pdf", "verified": true, "note": "같은 일정표 노동부 BLS 'U.S. Import and Export Price Indexes' 9월 16일 확인(발표 기관은 인구조사국이 아니라 BLS). 08:30 ET는 통상 시각."},
+    {"date": "2026-09-16", "event_ko": "FOMC 금리 결정·점도표 발표 (통상 14:00 ET = 한국 17일 03:00). 10일 기준 시장 인상 확률 약 70%", "source": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm", "verified": true, "note": "회의 날짜 확인. 14:00 ET는 관행(연준 달력에 시각 없음). '약 70%'는 베이비핍스 리캡(~70%)·야후(69%)·서울경제(71.1%)로 확인, 출처·시점별 차이가 있어 '약 70%' 표현 유지."},
+    {"date": "2026-09-16", "event_ko": "레나(Lennar) 3분기 실적 (장 마감 후, 컨퍼런스콜 17일 11:00 ET)", "source": "https://www.stocktitan.net/news/LEN/lennar-corporation-to-broadcast-its-third-quarter-2026-earnings-call-meyqoyz3tf1u.html", "verified": true, "note": "스톡타이탄(9/2 회사 공시) 9/16 'after the market closes', 콜 9/17 11:00 a.m. ET 확인."},
+    {"date": "2026-09-17", "event_ko": "8월 주택착공·건축허가", "source": "https://www.census.gov/economic-indicators/econcards/assets/pdf/censusreleaseglance_2026.pdf", "verified": true, "note": "OMB 일정표 'New Residential Construction' 9월 17일 확인."},
+    {"date": "2026-09-17", "event_ko": "9월 필라델피아 연은 제조업지수 (08:30 ET = 한국 21:30)", "source": "https://www.philadelphiafed.org/surveys-and-data/regional-economic-analysis/manufacturing-business-outlook-survey", "verified": true, "note": "필라델피아 연은 페이지 'September Manufacturing Business Outlook Survey – September 17, 2026 at 8:30 a.m.' 확인."},
+    {"date": "2026-09-17", "event_ko": "연준 블랙아웃 종료 (17일 23:59 ET) — 이후 연준 인사 발언 재개", "source": "https://www.federalreserve.gov/monetarypolicy/files/FOMC_ExtCommunicationParticipants.pdf", "verified": true, "note": "규정 7항 '11:59 p.m. Eastern Time the day after a meeting' 확인. 한국 시각으로는 18일 12:59."},
+    {"date": "2026-09-17", "event_ko": "일본은행 금융정책회의 (9/17~18) — 1.25%로 인상 관측", "source": "https://www.babypips.com/news/financial-forex-market-recap-2026-09-10", "source_2": "https://tradingeconomics.com/japan/currency", "verified": true, "note": "베이비핍스 리캡: 9/17~18 회의 앞두고 마스 가즈유키 위원 추가 인상 시사. '1.25%'는 베이비핍스가 아니라 트레이딩이코노믹스('anticipated BOJ rate increase to 1.25%') → source_2 추가. 베선트 기사(야후)는 '9월 18일 회의에서 0.25%p 인상 가능' 인용."},
+    {"date": "2026-09-18", "event_ko": "8월 산업생산·설비가동률 (연준)", "source": "https://www.census.gov/economic-indicators/econcards/assets/pdf/censusreleaseglance_2026.pdf", "verified": true, "note": "OMB 일정표 연준 'Industrial Production and Capacity Utilization' 9월 18일 확인."}
+  ],
+  "pending": [
+    "9월 미시간대 소비자심리 예비치 (9/11 10:00 ET = 한국 23:00) — 야후파이낸스 라이브 기준 예비치 47.8(8월 확정 51.7, 예상 51)·1년 기대인플레 4.6%(전월 4.0%)가 9/11 지수 반등 이벤트 market_link에 들어갔으나, 미시간대 원문 대조는 아직 못 함. 출처: https://www.sca.isr.umich.edu/",
+    "어도비(ADBE) 9/11 정규장 반응 — 미확인. 오라클은 9/11 정규장 -1.74%(모틀리풀 마감 집계)로 확인해 9/10 실적 이벤트에 반영했으나 그 집계의 기사 URL은 재수신 대기.",
+    "9/11 'AI 서버 하드웨어 강세'(HPE·델·온세미·슈퍼마이크로) — 이벤트는 추가했으나 검증 결과가 전달 도중 잘려 24/7 월스트리트·모틀리풀 기사 제목·URL이 없음. 재수신 전까지 use_in_script=false.",
+    "IEA 9월 석유시장보고서 — 9/11 발표로 검색되나 IEA 공식 페이지는 열지 못해 미확인",
+    "주말(9/12~13) 중동·우크라이나·트럼프 발언 등 새 사건 — 일요일 재조사 때 추가"
+  ],
+  "pending_checked": [
+    {"item": "8월 CPI 컨센서스", "verified": true, "note": "야후 CPI 프리뷰(9/11): 헤드라인 전월비 ~0.4%·전년비 ~3.4%, 근원 전월비 0.2%(중앙값 0.22%, 'Every estimate, ranging from just 0.16% to 0.24%, rounds to 0.2%')·전년비 2.4%(7월 2.5%) 확인. CPI·실질임금 9/11 발표는 OMB 일정표로 확인. 파이낸셜뉴스·토큰포스트·한국경제 링크는 이번 검증에서 열지 않음."},
+    {"item": "미시간대 소비자심리", "verified": true, "note": "미시간대 사이트: 8월 확정치 51.7, 1년 기대인플레 4.0%(7월 4.2%), 9월 예비치 'Friday, September 11, 2026 ... at 10am ET' 확인."}
+  ],
+  "story_candidates": [
+    "'100달러 유가, 5% 코앞 금리'의 한 주: 중동 해상 충돌 소식 속에 WTI는 사흘 연속 올라 102.48달러(목요일까지 주간 +12.02%)가 됐고, 국채 바이백 실망·PPI 발표와 겹치며 10년물 금리도 4.95%까지 올랐습니다. 3대 지수는 목요일까지 사흘 연속 내렸고, 매체들은 이를 다음 주 연준 금리 인상 가능성과 함께 다뤘습니다. (목요일까지 11개 업종 ETF 중 에너지(XLE +1.36%)만 상승 — 금요일 재확인)",
+    "백악관은 '내려라', 시장은 '올릴 확률 70%': 트럼프 대통령은 트루스소셜에 금리 인하를 요구했지만(포춘), CME 페드워치 기준 9월 인상 확률은 7일 58.4%(포춘)에서 10일 71.1%(서울경제)로 올라섰습니다. 베이비핍스는 PPI와 CPI가 모두 연준 결정 일주일 전에 나온다고 짚었습니다(금요일 CPI 예상: 근원 전월비 0.2%, 야후파이낸스).",
+    "AI 반도체의 롤러코스터: 화요일 메모리주 강세에 이어 수요일에는 메모리 공급 부족 전망 속 SK하이닉스 ADR이 상장 후 최고가(198.63달러, +7.05%)를 찍었지만, 목요일에는 금리·유가 급등과 겹치며 필라델피아 반도체지수가 2.66% 밀렸습니다(목요일까지 주간 -1.03%).",
+    "지수는 빠져도 개별 재료는 따로: 메타는 뮤즈 공개 뒤 수요일 6.55%, 애플은 폴더블 공개 다음 날 3.56% 올랐고, 오라클은 실적 발표 뒤 시간외에서 올랐습니다(금요일 정규장 반응은 재확인). 개별 재료가 지수 흐름과 엇갈린 한 주로 볼 수 있습니다."
+  ],
+  "story_candidates_verified": [
+    {"idx": 0, "verified": true, "rewritten": true, "note": "computed 확인: WTI 93.03→96.05→102.48(주간 +12.02%), US10Y 4.80→4.83→4.95, SPX·IXIC·DJI 3일 모두 하락, 섹터 중 XLE(+1.36%)만 플러스. 금리 상승 연결은 야후·블룸버그 요약(바이백 실망, 9/9)·이투데이(PPI, 9/10)가 근거. 원문의 '충돌이 커질 때마다 ~ 함께 뛰었고'(반복 인과 단정) 삭제."},
+    {"idx": 1, "verified": true, "rewritten": true, "note": "포춘 'Lower the interest rates ...'(트럼프)·58.4%, 서울경제 61.2%→71.1%, 포춘 제목 자체가 '월가 인상 기대 vs 백악관 압박' 구도라 대비 프레임은 기사 근거 있음(의견 아님). 원문의 'CPI 근원 0.2%냐 0.3%냐가 저울추'는 근거 없는 추론이라 베이비핍스 서술로 교체."},
+    {"idx": 2, "verified": true, "rewritten": true, "note": "화요일 메모리주 강세(인베스토피디아), SK하이닉스 ADR 최고가는 수요일(9/9) 하루 — 원문 '화·수에는 최고가'를 요일별로 정확히. computed SOX +1.30%/+0.37%/-2.66%, 주간 -1.03%."},
+    {"idx": 3, "verified": true, "rewritten": true, "note": "메타 9/9 +6.55%(모틀리풀), 애플 9/10 +3.56%(EBN, computed 종가 326.57), 오라클 시간외 상승(인베스팅닷컴 +4.34%, 서울경제 +7%). 메타는 10일 -1.42%라 '주간'이 아니라 '수요일' 등락임을 명시. 오라클은 금요일 정규장 확정 필요."}
+  ],
+  "source_caveats": [
+    "모틀리풀 9/8 기사는 다우 -0.60%로 적었지만 실제는 -1.18%(628포인트). 지수 수치는 computed_us_weekly.json을 우선할 것.",
+    "모틀리풀 9/9 기사의 애플 +3.6%는 실제로는 9/10 등락(9/9는 -0.28%).",
+    "10일 금리 수치는 매체마다 다름: 10년물 4.91%(야후 장중)~4.954%(이투데이), 2년물 4.53~4.58%. 화면 숫자는 computed 파일 기준.",
+    "10일 유가: 로이터 초판은 브렌트 107.08·WTI 101.62(장중), 최종 정산은 브렌트 107.63·WTI 102.48.",
+    "9월 인상 확률은 출처·시점마다 다름: 58.4%(9/7 포춘), 60%(9/8~9 야후·인베스토피디아), 61.2%→71.1%(9/9→9/10 서울경제), 69%(야후), 73% 이상(토큰포스트). '60% 안팎→70% 안팎'으로 표현 권장.",
+    "연속 하락 일수는 매체마다 기준이 다름(9/4 포함 여부). S&P500은 9/4~9/10 4거래일 연속 하락(야후·베이비핍스).",
+    "애널리스트 투자의견·목표주가(BofA·JP모건 SK하이닉스, 오펜하이머 애플 등)는 추천으로 읽힐 수 있어 대본에 쓰지 않음.",
+    "[검증 추가] 달러인덱스 9/8: 인베스토피디아 98.83(-0.4%, 장중) vs computed 종가 98.84(-0.32%) — 화면은 computed.",
+    "[검증 추가] 원/달러: 기사 속 서울 종가(9/9 1,336.1원)와 computed USDKRW(야후 KRW=X 런던 종가, 9/9 1,339.21원)는 기준이 다름 — 한 화면에 섞지 말 것.",
+    "[검증 추가] 10년물 9/10 상승폭: 기사 +11bp vs computed(재무부 par) +12bp — 화면은 computed.",
+    "[검증 추가] 24/7 월스트리트 메모리주 수치(SK하이닉스 -5%, 마이크론 -3%)는 9:22 ET 장중 — 종가는 서울경제(-5.2%, -4.9%) 사용.",
+    "[검증 추가] 인베스토피디아 9/8은 라이브 업데이트 기사라 같은 종목 수치가 여러 번 바뀜(암젠 5%→9%+→10%, 퀄컴 3%→4.5%, 노바티스 13%→14%). 종가 등락률로 쓰지 말고 '~% 안팎'으로.",
+    "[검증 추가] ECB: 예금금리 2.5%, 주요 재융자금리 2.65%(베이비핍스가 쓴 숫자). 화면은 예금금리로 통일.",
+    "[검증 추가] 토큰포스트 '73% 이상'은 이번 검증에서 열지 않음 — 쓰지 말 것."
+  ]
+}

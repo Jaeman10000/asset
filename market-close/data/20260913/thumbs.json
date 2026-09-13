@@ -1,0 +1,46 @@
+{
+ "out": "out/20260913/notice",
+ "cands": {
+  "D": {
+   "bg": "city", "tone": "neutral", "dim": 0.42,
+   "objects": [
+    {"k": "glow", "x": 760, "y": 1330, "r": 560, "color": "yellow", "a": 0.22},
+    {"k": "clock", "h": 3, "m": 30, "x": 90, "y": 1180, "size": 340, "color": "grey", "label": "지금", "strike": true},
+    {"k": "arrow", "x": 452, "y": 1310, "w": 190, "color": "yellow"},
+    {"k": "clock", "h": 8, "m": 0, "x": 640, "y": 1100, "size": 430, "color": "yellow", "label": "내일부터"}
+   ],
+   "badge": "9월 14일 월요일",
+   "lines": [
+    {"t": "밤 8시까지", "color": "yellow"},
+    {"t": "주식 거래"}
+   ]
+  },
+  "E": {
+   "bg": "city", "tone": "neutral", "dim": 0.44,
+   "objects": [
+    {"k": "glow", "x": 700, "y": 1380, "r": 520, "color": "yellow", "a": 0.20},
+    {"k": "phone", "x": 560, "y": 1050, "w": 400, "tone": "neutral", "rotate": -7, "label": "20:00"},
+    {"k": "clock", "h": 3, "m": 30, "x": 120, "y": 1300, "size": 330, "color": "white", "label": "오늘 주가"}
+   ],
+   "badge": "내일 9월 14일",
+   "lines": [
+    {"t": "밤 8시에도", "size": 0.92},
+    {"t": "거래되는데", "size": 0.92},
+    {"t": "주가는 3시 반?", "color": "yellow", "size": 0.96}
+   ]
+  },
+  "F": {
+   "bg": "market", "tone": "neutral", "dim": 0.52,
+   "objects": [
+    {"k": "glow", "x": 540, "y": 1420, "r": 620, "color": "yellow", "a": 0.24},
+    {"k": "clock", "h": 8, "m": 0, "x": 330, "y": 1160, "size": 480, "color": "yellow", "label": "밤 8시까지"}
+   ],
+   "badge": "내일부터",
+   "lines": [
+    {"t": "국장이", "size": 0.82},
+    {"t": "4시간 늘어납니다", "size": 0.78}
+   ],
+   "sub": "그런데 종가는 3시 반 그대로"
+  }
+ }
+}

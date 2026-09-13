@@ -1,0 +1,31 @@
+{
+ "mode": "auto",
+ "youtube": {
+  "privacy": "private",
+  "category": "25"
+ },
+ "tiktok": {
+  "privacy": "SELF_ONLY"
+ },
+ "threads": {
+  "enabled": true,
+  "media": "carousel",
+  "link_in_reply": true
+ },
+ "assets_branch": "assets",
+ "publish_at": {
+  "kr": "16:30"
+ },
+ "editions": {
+  "kr": true,
+  "us": false
+ },
+ "targets": [
+  "threads"
+ ],
+ "bgm": {
+  "enabled": true,
+  "file": "bgm/bgm_B_dark_arp.wav",
+  "volume": 0.07
+ }
+}
