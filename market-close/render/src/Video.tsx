@@ -68,7 +68,14 @@ export const Video: React.FC<Props> = (p) => {
             {(p as unknown as { glossary?: { scene: string; term: string; text: string } | null }).glossary?.scene === sc.id ? (
               <Glossary g={(p as unknown as { glossary: { scene: string; term: string; text: string } }).glossary} cues={(sc as unknown as { cues?: { start: number; end: number; text: string }[] }).cues} />
             ) : null}
-            {sc.audio ? <Audio src={staticFile(sc.audio)} /> : null}
+            {/* 문장별 조각이 있으면 제자리에 놓는다 — 조각 사이가 그대로 쉼이 된다(말이 끝나고 받아들일 틈) */}
+            {(sc as unknown as { audio_parts?: { file: string; at: number }[] }).audio_parts?.length
+              ? (sc as unknown as { audio_parts: { file: string; at: number }[] }).audio_parts.map((a, ai) => (
+                  <Sequence key={a.file} from={Math.round(a.at * fps)} name={`${sc.id}-${ai}`}>
+                    <Audio src={staticFile(a.file)} />
+                  </Sequence>
+                ))
+              : sc.audio ? <Audio src={staticFile(sc.audio)} /> : null}
           </Sequence>
         );
       })}

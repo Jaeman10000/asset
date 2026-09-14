@@ -25,6 +25,7 @@ from __future__ import annotations
 import base64
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
@@ -40,6 +41,9 @@ LUFS = -14                                       # 스트리밍 표준 음량
 TIMEOUT = 60          # 장면 하나에 60초를 넘기면 16:30 게시가 위험하다
 RETRIES = 3
 CTX = 300             # 스마트 이모션에 넘기는 앞뒤 문맥 길이
+PAUSE = 0.65          # 문장 끝 쉼(초) — JJ 2026-09-14: "정보 습득할 찰나에 새 정보가 나와서 힘들다"
+Q_PAUSE = 0.95        # 물음표로 끝난 문장 뒤 쉼. 질문은 답을 기다리게 두는 자리다
+WORKERS = 4           # 동시 호출(Lite 한도 5)
 
 # 타임스탬프를 글자에 맞춰 걸을 때 쓰는 정규화(공백·문장부호를 뺀 글자만 센다)
 _KEEP = re.compile(r"[^0-9A-Za-z가-힣%]")
@@ -277,3 +281,54 @@ def billed_chars(text: str, prev: str = "", nxt: str = "") -> int:
     """이번 호출로 나갈 글자 수(1크레딧 = 1글자). 문맥이 과금 대상인지는 확인되지 않아
     보수적으로 함께 센다 — 예산을 실제보다 넉넉히 잡는 쪽이 안전하다."""
     return len(text) + len(prev[-CTX:]) + len(nxt[:CTX])
+
+
+def synth_parts(text: str, out_dir, stem: str, voice: str | None = None, tempo: float | None = None,
+                prev: str = "", nxt: str = "",
+                pause: float | None = None, q_pause: float | None = None):
+    """문장마다 따로 만들고 사이에 쉼을 둔다. (총 길이, 문장 경계, 자막 큐, 오디오 조각, 청구 글자) 반환.
+
+    왜 이렇게 하나: 한 장면을 통으로 만들면 문장 사이 쉼이 0.3~0.4초밖에 안 나와서
+    숫자를 받아들일 틈이 없다. 타입캐스트의 쉼 표시(<|0.5s|>)는 단어 타임스탬프에
+    표시가 그대로 섞여 들어오고 길이도 들쭉날쭉해서 못 쓴다. 그래서 문장을 따로 만들고
+    Remotion이 제자리에 놓게 한다 — 사이는 그냥 무음이 된다(오디오를 붙일 필요가 없다).
+
+    덤으로 정렬이 정확해진다. 문장마다 자기 타임스탬프를 가지므로 글자 수를 좇을 일이 없다.
+    그리고 앞뒤 문장을 previous_text/next_text 로 넘기는 건 타입캐스트가 권하는 방식 그대로다."""
+    sents = sentences(text)
+    if not sents:
+        return 0.0, [], [], [], 0
+    pause = float(pause if pause is not None else (get_api_key("tts", "typecast_pause") or PAUSE))
+    q_pause = float(q_pause if q_pause is not None else (get_api_key("tts", "typecast_qpause") or Q_PAUSE))
+
+    jobs = [(i, s, out_dir / f"{stem}_{i:02d}.mp3",
+             sents[i - 1] if i else prev,
+             sents[i + 1] if i + 1 < len(sents) else nxt) for i, s in enumerate(sents)]
+
+    def run(j):
+        _i, sent, path, pv, nx = j
+        return synth(sent, path, voice, tempo, prev=pv, nxt=nx)
+
+    if len(jobs) > 1 and WORKERS > 1:
+        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            res = list(ex.map(run, jobs))
+    else:
+        res = [run(j) for j in jobs]
+
+    t = 0.0
+    parts, bounds, cues, billed = [], [], [], 0
+    for i, (sent, (dur, _b, words)) in enumerate(zip(sents, res)):
+        gap = 0.0 if i == len(sents) - 1 else (q_pause if sent.rstrip().endswith("?") else pause)
+        end = t + dur + gap
+        parts.append({"file": jobs[i][2].name, "at": round(t, 3)})
+        billed += len(sent)
+        bounds.append({"start": round(t, 3), "end": round(end, 3), "text": sent})
+        inner = cues_from_words(sent, words, [{"start": 0.0, "end": dur, "text": sent}])
+        if inner:
+            for c in inner:
+                cues.append({"start": round(t + c["start"], 3), "end": round(t + c["end"], 3), "text": c["text"]})
+        else:
+            cues.append({"start": round(t, 3), "end": round(end, 3), "text": sent})
+        cues[-1]["end"] = round(end, 3)          # 쉼 동안에도 방금 한 말을 화면에 남긴다
+        t = end
+    return round(t, 3), bounds, cues, parts, billed

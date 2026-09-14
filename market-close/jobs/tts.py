@@ -14,7 +14,7 @@ import edge_tts
 from _common import DATA, computed_path, load_json, log, out_dir, save_json
 from app.keychain import get_api_key  # noqa: E402
 
-GAP = 0.4           # 장면 끝 여유(초)
+GAP = 0.8           # 장면 끝 여유(초). 말이 끝나고 다음 장면이 바로 뜨면 받아들일 틈이 없다(JJ 2026-09-14)
 FPS = 30
 
 
@@ -105,6 +105,7 @@ async def _build(d: str, ed: str, od, scenes: list[dict], tc, voice: str) -> tup
     cache_p = od / ".tts_cache.json"
     cache = (load_json(cache_p) or {}) if tc else {}
     tempo = str(get_api_key("tts", "typecast_tempo") or 1.0)
+    pause = f'{get_api_key("tts", "typecast_pause") or ""}/{get_api_key("tts", "typecast_qpause") or ""}'
     t, srt, n = 0.0, [], 1
     manual_ids: list[str] = []
     billed = reused = 0
@@ -124,28 +125,37 @@ async def _build(d: str, ed: str, od, scenes: list[dict], tc, voice: str) -> tup
             txt = speakable(sc["tts"])
             prev = speakable(scenes[i - 1]["tts"]) if i else ""
             nxt = speakable(scenes[i + 1]["tts"]) if i + 1 < len(scenes) else ""
-            key = f"{voice}|{tempo}|{txt}"
+            key = f"{voice}|{tempo}|{pause}|{txt}"
             hit = cache.get(sc["id"])
-            if hit and hit.get("k") == key and p.exists() and p.stat().st_size > 1024:
-                dur, bounds, words = hit["dur"], hit["bounds"], hit["words"]
+            files_ok = hit and all((od / "voice" / x["file"]).exists() for x in (hit.get("parts") or []))
+            if hit and hit.get("k") == key and files_ok:
+                dur, bounds, cues, parts = hit["dur"], hit["bounds"], hit["cues"], hit["parts"]
                 reused += 1
             else:
-                dur, bounds, words = tc.synth(txt, p, voice, prev=prev, nxt=nxt)
-                billed += tc.billed_chars(txt)
-                cache[sc["id"]] = {"k": key, "dur": dur, "bounds": bounds, "words": words}
+                dur, bounds, cues, parts, n_ch = tc.synth_parts(txt, od / "voice", sc["id"], voice, prev=prev, nxt=nxt)
+                billed += n_ch
+                cache[sc["id"]] = {"k": key, "dur": dur, "bounds": bounds, "cues": cues, "parts": parts}
                 save_json(cache_p, cache)
-            cues = tc.cues_from_words(txt, words, bounds) or None
+            sc["audio_parts"] = [{"file": f"voice/{x['file']}", "at": x["at"]} for x in parts]
+            if p.exists():          # 통짜로 만들던 시절의 파일이 남아 public/voice 로 딸려 가지 않게
+                p.unlink()
         else:
             dur, bounds = await synth(speakable(sc["tts"]), p, voice)
         length = max(sc.get("min") or 4.0, dur + GAP)
         if sc["id"] in ("s0", "u0", "w0", "uw0", "n0") and dur > 10.5:
             log(d, "tts", f"⚠ 인트로 {dur}s > 10s — 대본을 줄여야 함")
-        sc.update({"audio": f"voice/{p.name}", "audio_sec": dur, "sec": round(length, 2), "start": round(t, 2),
+        cues = cues or make_cues(bounds)
+        if bounds:                       # 장면 끝 여유 동안 자막이 사라지지 않게 마지막 줄을 늘린다
+            bounds[-1]["end"] = round(max(bounds[-1]["end"], length - 0.05), 3)
+        if cues:
+            cues[-1]["end"] = round(max(cues[-1]["end"], length - 0.05), 3)
+        sc.update({"audio": None if sc.get("audio_parts") else f"voice/{p.name}",
+                   "audio_sec": dur, "sec": round(length, 2), "start": round(t, 2),
                    "frames": int(round(length * FPS)), "bounds": bounds})
         for b in bounds:
             srt.append(f"{n}\n{_srt_time(t + b['start'])} --> {_srt_time(t + b['end'])}\n{b['text']}\n")
             n += 1
-        sc["cues"] = cues or make_cues(bounds)
+        sc["cues"] = cues
         t += length
         log(d, "tts", f"{sc['id']}: 음성 {dur}s → 장면 {length:.1f}s ({sc['tts'][:40]}…)")
     label = voice + (f" (수동 {','.join(manual_ids)})" if manual_ids else "")
