@@ -17,7 +17,8 @@ BaseException이라 부르는 쪽의 `except Exception` 폴백을 그냥 통과�
   typecast:api_key         API 키 (studio.typecast.ai/developers/api/api-key)
   tts:engine               "typecast" 면 이 엔진을 쓴다(기본 edge)
   tts:typecast_voice       보이스 ID(tc_… 기본, uc_… 클론). 없으면 DEFAULT_VOICE
-  tts:typecast_tempo       0.5~2.0 말 빠르기(기본 1.0. 0.93이 edge와 같은 7.2자/초)
+  tts:typecast_tempo       0.5~2.0 말 빠르기. 보이스마다 기본 속도가 다르다 —
+                           김건은 0.82에서 7.5자/초(평일편 778자 → 1:46), 승재는 0.93에서 7.2자/초
 """
 from __future__ import annotations
 
@@ -34,7 +35,7 @@ SUBSCRIPTION = "https://api.typecast.ai/v1/users/me/subscription"
 MODEL = "ssfm-v30"
 # 타입캐스트 규약: 이 연동을 만든 출처와 에이전트를 계속 실어 보낸다
 UA = "typecast-direct/1 python typecast-integration/1 (source=api-docs; generated_by=claude-code)"
-DEFAULT_VOICE = "tc_67919fb54fd00e0217d2cff0"   # 승재 — 한국어 남성, 뉴스/아나운서
+DEFAULT_VOICE = "tc_61c2f7741330d213c238cba6"   # 김건 — 한국어 남성, 오디오북/다큐 (JJ 2026-09-14 선택)
 LUFS = -14                                       # 스트리밍 표준 음량
 TIMEOUT = 60          # 장면 하나에 60초를 넘기면 16:30 게시가 위험하다
 RETRIES = 3

@@ -1649,6 +1649,9 @@ def build_weekly(w: dict, news=None) -> dict:
     out = {"scenes": scenes, "title": title, "threads": threads, "threads_reply": reply, "hook_parts": hook_parts,
            "hook_type": htype, "picks": picks, "dropped": dropped, "est_sec": round(sum(est_sec(s["tts"]) for s in scenes), 1)}
     out["issues"] = validate(out, F, hit)
+    if out["est_sec"] > TARGET_SEC + 3:   # 트리머가 후보를 다 써도 못 줄인 경우 — 조용히 넘기면 2분 반짜리가 나간다
+        out["issues"] = list(out["issues"]) + [
+            f"길이 {out['est_sec']:.0f}초 > 목표 {TARGET_SEC:.0f}초 — 더 뷄 문장이 없다(대본을 줄여야 한다)"]
     return out
 
 

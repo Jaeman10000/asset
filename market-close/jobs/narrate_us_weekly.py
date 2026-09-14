@@ -1834,7 +1834,7 @@ def build_us_weekly(w: dict, news, prev=_AUTO) -> dict:
            "sessions": C["sessions"], "events_used": [{"d": e["d"], "title": e["title"], "outlets": e["outlets"][:2], "conf": e["conf"]} for e in evs
                                                       if any(e["spoken"][:-1] in s["tts"] for s in scenes if s["id"] == "uw4")],
            "releases_used": used_rel, "variants": dict(sorted(P.used.items())), "bank_sizes": dict(sorted(P.sizes.items())),
-           "build_date": bd, "total_chars": total, "est_sec": round(total / 6.6)}
+           "build_date": bd, "total_chars": total, "est_sec": round(total / 7.5)}
     out["checks"] = run_checks(out)
     return out
 
