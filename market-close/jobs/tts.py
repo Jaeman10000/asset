@@ -14,7 +14,7 @@ import edge_tts
 from _common import DATA, computed_path, load_json, log, out_dir, save_json
 from app.keychain import get_api_key  # noqa: E402
 
-GAP = 0.8           # 장면 끝 여유(초). 말이 끝나고 다음 장면이 바로 뜨면 받아들일 틈이 없다(JJ 2026-09-14)
+GAP = 0.6           # 장면 끝 여유(초). 말이 끝나고 다음 장면이 바로 뜨면 받아들일 틈이 없다(JJ 2026-09-14)
 FPS = 30
 
 
@@ -160,6 +160,10 @@ async def _build(d: str, ed: str, od, scenes: list[dict], tc, voice: str) -> tup
         log(d, "tts", f"{sc['id']}: 음성 {dur}s → 장면 {length:.1f}s ({sc['tts'][:40]}…)")
     label = voice + (f" (수동 {','.join(manual_ids)})" if manual_ids else "")
     if tc:
+        spoken = sum((s.get("audio_sec") or 0) for s in scenes)
+        chars = sum(len(speakable(s["tts"])) for s in scenes)
+        if spoken:      # 보이스를 바꾸면 같은 tempo라도 속도가 달라진다 — 눈에 보이게 남긴다
+            log(d, "tts", f"말 속도 {chars / spoken:.1f}자/초 (보정: python tts_calibrate.py)")
         left = tc.remaining_credits()
         log(d, "tts", f"타입캐스트 {billed}자 청구" + (f", {reused}장면 재사용" if reused else "")
             + (f" — 남은 크레딧 {left[0]:,}/{left[1]:,}" if left else ""))

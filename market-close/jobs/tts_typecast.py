@@ -36,13 +36,13 @@ SUBSCRIPTION = "https://api.typecast.ai/v1/users/me/subscription"
 MODEL = "ssfm-v30"
 # 타입캐스트 규약: 이 연동을 만든 출처와 에이전트를 계속 실어 보낸다
 UA = "typecast-direct/1 python typecast-integration/1 (source=api-docs; generated_by=claude-code)"
-DEFAULT_VOICE = "tc_61c2f7741330d213c238cba6"   # 김건 — 한국어 남성, 오디오북/다큐 (JJ 2026-09-14 선택)
+DEFAULT_VOICE = "tc_648aaee9248bcd37dad435e6"   # 무열 — 한국어 남성, 라디오/팟캐스트 (김건은 축 처진다는 JJ 지적)
 LUFS = -14                                       # 스트리밍 표준 음량
 TIMEOUT = 60          # 장면 하나에 60초를 넘기면 16:30 게시가 위험하다
 RETRIES = 3
 CTX = 300             # 스마트 이모션에 넘기는 앞뒤 문맥 길이
-PAUSE = 0.65          # 문장 끝 쉼(초) — JJ 2026-09-14: "정보 습득할 찰나에 새 정보가 나와서 힘들다"
-Q_PAUSE = 0.95        # 물음표로 끝난 문장 뒤 쉼. 질문은 답을 기다리게 두는 자리다
+PAUSE = 0.45          # 문장 끝 쉼(초) — JJ 2026-09-14: "정보 습득할 찰나에 새 정보가 나와서 힘들다"
+Q_PAUSE = 0.70        # 물음표로 끝난 문장 뒤 쉼. 질문은 답을 기다리게 두는 자리다
 WORKERS = 4           # 동시 호출(Lite 한도 5)
 
 # 타임스탬프를 글자에 맞춰 걸을 때 쓰는 정규화(공백·문장부호를 뺀 글자만 센다)
