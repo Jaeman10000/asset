@@ -423,7 +423,10 @@ def compute(d: str) -> dict:
         if st and forbidden.assist_ok(st, stock_names):
             watch[0]["stance"] = st
             watch[0]["assist"] = st
-        ledger.record(d, watch[0]["q"])
+        # A+ 형식이면 484행에서 '영상이 실제로 말한 약속'으로 기록한다. 여기서 구형식을 먼저 적어 두면
+        # 그쪽 기록이 남아, 다음 날 회수하는 약속이 영상에서 한 말과 어긋날 수 있다(2026-09-14).
+        if os.environ.get("KR_FORMAT", "aplus") != "aplus" or not inv:
+            ledger.record(d, watch[0]["q"])
     callback = ledger.verify(d, moves, (load_json(raw / "flows.json") or {}).get("moves") or [], inv, kosdaq)
 
     # 외국인·기관 연속일/전환 (이전 computed_kr 파일에서)
@@ -481,7 +484,8 @@ def compute(d: str) -> dict:
                                                "top_others": top_others, "buybacks": buybacks, "top_move": top_move})
             N = {**N, **aplus}
             watch = [{"q": aplus["next_q"], "how": f"{nxt} 15:40 수급에서 확인", "assist": ""}]
-            ledger.record(d, aplus["next_q"])
+            if not ledger.record(d, aplus["next_q"]):
+                log(d, "compute", f"⚠ 오늘 약속이 장부에 안 들어갔다 — 내일 회수가 빈다: {aplus['next_q']}")
             out_root = DATA.parent / "out"
             ep = 1 + sum(1 for x in out_root.iterdir() if x.is_dir() and x.name.isdigit() and "20260907" <= x.name < d and (x / "kr" / "video.mp4").exists())
             aplus["ep"] = ep

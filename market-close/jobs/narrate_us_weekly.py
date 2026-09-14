@@ -48,7 +48,8 @@ OUT_NAME = "narration_us_weekly.json"
 SIGN_OFF = "누가샀나 미국 주간 결산이었습니다. 평일엔 매일 오후 4시 30분에 국장 마감이 올라옵니다."
 TAG = "#미장"
 YT = "{YT}"
-MAX_FIGS = 5
+MAX_FIGS = 7              # 2026-09-14 JJ: "구독자가 늘려면 그만큼 가치 있는 정보를 줘야 한다."
+# 길이를 3분까지 열면서 장면당 숫자를 5개로 묶어 두면, 늘어난 시간이 해석이 아니라 같은 말 반복으로 채워진다.
 CERTAINTY = ["때문", "이유", "덕분", "탓", "영향으로", "나오자", "힘입어"]
 WD = "월화수목금토일"
 HOLIDAY_KO = {"labor day": "노동절", "thanksgiving": "추수감사절", "memorial day": "메모리얼 데이", "juneteenth": "준틴스",
@@ -456,8 +457,9 @@ class Pick:
         return t
 
 
-SCENE_CAP = {"uw0": 120, "uw1": 215, "uw2": 235, "uw3": 270, "uw4": 210, "uw5": 190, "uw6": 250}
-TOTAL_CAP = 1130          # 약 6.6자/초(인준 +20%) → 약 170초. 쇼츠 한도 180초 안.
+SCENE_CAP = {"uw0": 140, "uw1": 250, "uw2": 275, "uw3": 315, "uw4": 245, "uw5": 225, "uw6": 400}
+# uw6 을 크게 연 이유: 월요일 국장과 연결하는 말이 여기서 나온다. 월요일 평일편이 그걸 회수한다(weekend_watch.py).
+TOTAL_CAP = 1330          # 실측 7.85자/초(무열 tempo 1.1, 문장 쉼 포함) → 약 170초. 쇼츠 한도 180초 안.
 
 
 def assemble_all(sp: dict[str, list]) -> dict[str, list]:

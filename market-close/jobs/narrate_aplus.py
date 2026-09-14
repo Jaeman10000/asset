@@ -223,8 +223,15 @@ def _why_check(cb: dict | None) -> list[str]:
     kind, n = chk.get("kind"), chk.get("n") or 0
     if kind not in ("theme_continue", "inv_continue"):
         return []
-    where = "한 업종" if kind == "theme_continue" else "한 주체"
-    out = [f"하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다."]
+    # 업종 약속이면 '그 업종에', 주체 약속이면 '그 주체가' — where 를 만들어 놓고 문장에 안 쓰던 버그(2026-09-14).
+    # 외국인이 나흘째 파는지를 확인하면서 "그 업종에 돈이 자리를 잡는지"라고 말하면 회수 장면의 신뢰가 깎인다.
+    if kind == "theme_continue":
+        why = f"이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다."
+    else:
+        who = chk.get("name") or "그 주체"
+        way = "파는" if (chk.get("sign") or -1) < 0 else "사는"
+        why = f"이어지는지 보는 건 {who}이 {way} 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다."
+    out = [f"하루 수급은 그날 사정일 수 있습니다. {why}"]
     if n <= 2:
         out.append("이틀은 아직 이릅니다. 사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다.")
     else:

@@ -25,7 +25,7 @@ ED = "notice"
 ORDER = ["n0", "n1", "n2", "n3", "n4", "n5", "n6"]
 MIN_SEC = 2.0
 CPS = 7.2
-LIMIT, FLOOR = 170, 110      # 초. 안내편은 평일보다 길어도 되지만 3분은 절대 넘기지 않는다
+LIMIT, FLOOR = 172, 90       # 초. 3분(쇼츠 한도)은 절대 넘기지 않는다 — 넘기면 쇼츠 피드에서 빠진다
 
 
 def spec_path(d: str):

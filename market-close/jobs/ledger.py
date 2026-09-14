@@ -52,17 +52,18 @@ def _load() -> dict:
     return j
 
 
-def record(d: str, q: str) -> None:
-    """오늘의 예고를 저장(같은 날 재실행이면 덮어씀)."""
+def record(d: str, q: str) -> bool:
+    """오늘의 예고를 저장(같은 날 재실행이면 덮어씀). 기록됐으면 True."""
     chk = parse_q(q)
     if not chk:
-        log(d, "ledger", f"예고 형식 인식 못 함(기록 안 함): {q}")
-        return
+        log(d, "ledger", f"⚠ 예고 형식 인식 못 함(기록 안 함): {q}")
+        return False
     j = _load()
     j["entries"] = [e for e in j["entries"] if e.get("date") != d]
     j["entries"].append({"date": d, "q": q, "check": chk, "result": None})
     j["entries"].sort(key=lambda e: e["date"])
     save_json(LEDGER, j)
+    return True
 
 
 def _prev_entry(j: dict, d: str) -> dict | None:
