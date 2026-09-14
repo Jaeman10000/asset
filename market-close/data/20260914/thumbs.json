@@ -1,0 +1,67 @@
+{
+ "out": "out/20260914/kr",
+ "cands": {
+  "A": {
+   "bg": "city",
+   "tone": "down",
+   "dim": 0.38,
+   "badge": "9/14 국장 마감",
+   "objects": [
+    {
+     "k": "glow",
+     "x": 540,
+     "y": 1180,
+     "r": 520,
+     "color": "blue",
+     "a": 0.22
+    },
+    {
+     "k": "clock",
+     "h": 14,
+     "m": 0,
+     "x": 120,
+     "y": 1120,
+     "size": 380,
+     "color": "grey",
+     "label": "오후 2시"
+    },
+    {
+     "k": "arrow",
+     "x": 520,
+     "y": 1290,
+     "w": 200,
+     "color": "yellow",
+     "dir": "right"
+    },
+    {
+     "k": "clock",
+     "h": 15,
+     "m": 30,
+     "x": 720,
+     "y": 1120,
+     "size": 380,
+     "color": "yellow",
+     "label": "마감"
+    }
+   ],
+   "lines": [
+    {
+     "t": "오후 2시 5,100억",
+     "size": 0.78,
+     "color": "grey"
+    },
+    {
+     "t": "마감엔 3.3조",
+     "size": 1.0,
+     "color": "yellow"
+    },
+    {
+     "t": "누가 샀나?",
+     "size": 1.0
+    }
+   ],
+   "sub": "마지막 한 시간 반에 다섯 배",
+   "logo": true
+  }
+ }
+}

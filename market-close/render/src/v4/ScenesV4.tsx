@@ -153,6 +153,26 @@ export const S0V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   // 완전한 정지 화면이 된다(2026-09-14 점검). 이름 → 금액 → 대비 줄 순서로 켠다.
   const cl0 = cues ?? [];
   const a0 = cl0[0]?.start ?? 0;
+  if ((a as unknown as { hook_id?: string }).hook_id === "H07") {
+    const turn = cl0.find((c) => /^그런데/.test(c.text.trim()))?.start ?? (cl0[1]?.start ?? a0 + 3);
+    const snap = Math.abs((a.intraday?.snap?.[KEY[pr.name] ?? ""] as number | undefined) ?? 0);
+    const mult = snap ? Math.round((Math.abs(pr.amount) - snap) / snap) : 0;   // 말과 같은 계산: 더 나온 양 ÷ 오후 2시
+    return (
+      <Shell p={p} cues={cues} hideSub bg={<BgCity tone={tone} dim={0.15} />}>
+        <div style={{ position: "absolute", left: 64, right: 64, top: 250 }}>
+          <div style={{ fontSize: 60, fontWeight: 800, color: "#CFD6E4", ...pop(a0) }}>{pr.name} · 오후 2시까지</div>
+          <div style={{ fontSize: 150, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.05em", ...pop(a0 + 0.3) }}>{short(snap)}</div>
+          <div style={{ marginTop: 60, ...pop(turn) }}>
+            <div style={{ fontSize: 60, fontWeight: 800, color: YEL }}>그런데 마지막 한 시간 반에</div>
+            <div style={{ fontSize: 196, fontWeight: 900, lineHeight: 1.0, letterSpacing: "-0.05em", whiteSpace: "nowrap" }}>
+              <Grad tone={tone}>{short(Math.abs(pr.amount))}</Grad>
+            </div>
+            {mult >= 2 ? <div style={{ fontSize: 72, fontWeight: 900, color: YEL, marginTop: 8 }}>오후 2시의 {mult}배</div> : null}
+          </div>
+        </div>
+      </Shell>
+    );
+  }
   const a1 = cl0.find((c) => /코스피|코스닥|선을|지켰|되찾|내줬/.test(c.text))?.start ?? (cl0[1]?.start ?? a0 + 2.2);
   return (
     <Shell p={p} cues={cues} hideSub bg={<BgCity tone={tone} dim={0.15} />}>
@@ -399,10 +419,15 @@ export const S4V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   const tone = toneOf(avg);
   return (
     <Shell p={p} cues={cues} badge="오늘의 이슈" bg={<BgChip tone={tone} dim={0.55} />}>
-      <div style={{ position: "absolute", left: 64, right: 64, top: 300, ...pop(t0) }}>
-        <div style={{ fontSize: 44, fontWeight: 800, color: "#CFD6E4", letterSpacing: "0.02em", marginBottom: 14 }}>주말 사이</div>
-        <div style={{ fontSize: 88, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.04em", wordBreak: "keep-all",
-          textShadow: "0 6px 30px rgba(0,0,0,0.85)" }}>{ev?.label ?? ""}</div>
+      <div style={{ position: "absolute", left: 64, right: 64, top: 240 }}>
+        <div style={{ fontSize: 44, fontWeight: 800, color: "#CFD6E4", letterSpacing: "0.02em", marginBottom: 14, ...pop(t0) }}>오늘의 이슈</div>
+        <div style={{ fontSize: 84, fontWeight: 900, lineHeight: 1.14, letterSpacing: "-0.04em", wordBreak: "keep-all",
+          textShadow: "0 6px 30px rgba(0,0,0,0.85)", ...pop(t0 + 0.2) }}>{ev?.label ?? ""}</div>
+        {cl.filter((c) => c.start < t1).slice(0, 3).map((c, k) => (
+          <div key={k} style={{ fontSize: 40, fontWeight: 700, color: k % 2 ? "#FFFFFF" : "#CFD6E4", lineHeight: 1.3, marginTop: 14, wordBreak: "keep-all", ...pop(c.start + 0.1) }}>
+            {c.text.replace(/[.。]$/, "")}
+          </div>
+        ))}
       </div>
       {st.length ? (
         <>
@@ -458,6 +483,9 @@ export const S5V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   const rec = ck.record;
   const nq = ck.next_q.replace(/가 (\S+째 )?이어지는지$/, (_m, d1) => `가 ${d1 ?? ""}이어지는지`).replace(/\s+/g, " ");
   const okCol = v && v.ok ? GREEN : RED;
+  const wkCue = cl.find((x) => /주간 결산에선|주간 결산에서도/.test(x.text));
+  const cauCue = cl.find((x) => /다른 숫자입니다/.test(x.text));
+  const wkRows = (a as unknown as { weekend_watch?: { src: string; q: string; a: string }[] }).weekend_watch ?? [];
   if (askCue && f >= askCue.start * fps) {
     // 쌓인 카드를 다 내리고 질문만 남긴다. 사람들이 가장 많이 빠져나가는 자리라 화면을 한 번 리셋한다.
     return (
@@ -524,6 +552,20 @@ export const S5V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
           <div style={{ ...pop(recAt), fontSize: 46, fontWeight: 700, marginTop: 26, textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
             지금까지 확인 {rec.n}번 · 이어짐 <span style={{ color: GREEN, fontWeight: 900 }}>{rec.k}</span> · 끊김 <span style={{ color: RED, fontWeight: 900 }}>{rec.n - rec.k}</span>
           </div>
+        ) : null}
+        {wkCue && wkRows.length ? (
+          <Card color={YEL} style={{ ...pop(wkCue.start), marginTop: 26 }}>
+            <div style={{ fontSize: 34, fontWeight: 800, color: "#CFD6E4" }}>주말에 보자고 한 것</div>
+            {wkRows.slice(0, 2).map((r) => (
+              <div key={r.src} style={{ fontSize: 40, fontWeight: 800, marginTop: 6, wordBreak: "keep-all" }}>{r.src.replace(" 결산", "")} · {r.q}</div>
+            ))}
+          </Card>
+        ) : null}
+        {cauCue ? (
+          <Card color={RED} style={{ ...pop(cauCue.start), marginTop: 26 }}>
+            <div style={{ fontSize: 34, fontWeight: 800, color: "#CFD6E4" }}>읽을 때 조심할 것</div>
+            <div style={{ fontSize: 44, fontWeight: 900, marginTop: 6 }}>하루 크기 ≠ 며칠째</div>
+          </Card>
         ) : null}
         <Card color={YEL} style={{ ...pop(nextAt), marginTop: 40 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 40, fontWeight: 800, color: YEL }}>

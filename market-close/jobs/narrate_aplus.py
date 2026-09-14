@@ -162,7 +162,25 @@ def _others_top(c: dict) -> list[dict]:
     return [{"name": x["name"], "v": x["v"], "buyback": x["code"] in act} for x in (c.get("top_others") or [])[:2] if x.get("v", 0) > 0]
 
 
-def _others_link(c: dict, v0: float, lead: str = "이 가운데") -> list[str]:
+def _said_recently(d: str, needle: str, n: int = 3) -> bool:
+    """최근 n편 대사에 이 말이 있었으면 True — 용어 설명을 매일 되풀이하지 않는다(JJ 2026-09-14)."""
+    from _common import DATA, load_json
+    if not d:
+        return False
+    cur, seen = datetime.strptime(d, "%Y%m%d"), 0
+    for k in range(1, 15):
+        c = load_json(DATA / (cur - timedelta(days=k)).strftime("%Y%m%d") / "computed_kr.json")
+        if not c:
+            continue
+        if any(needle in (x.get("tts") or "") for x in c.get("scenes") or []):
+            return True
+        seen += 1
+        if seen >= n:
+            break
+    return False
+
+
+def _others_link(c: dict, v0: float, lead: str = "이 가운데", d: str = "") -> list[str]:
     """기타법인이 답인 날: 어느 종목을 샀는지(키움 종목별 합산) → 자사주 매입과 연결(진행 중인 매입이 기사로 확인된 종목만).
     데이터가 없으면 한계 문장. 연결은 '가능성이 큽니다'로만(단정 금지)."""
     top = [x for x in (c.get("top_others") or []) if x.get("v", 0) > 0][:2]
@@ -186,7 +204,8 @@ def _others_link(c: dict, v0: float, lead: str = "이 가운데") -> list[str]:
     if buy and inb:
         who = "두 회사 모두" if len(inb) == 2 else f"{inb[0]['name']}{'은' if _bat(inb[0]['name']) else '는'}"
         # 정의 한 줄 + 재정의 한 줄이면 끝난다. 같은 말을 세 문장으로 늘리면 길이 예산만 먹는다.
-        out.append("회사가 자기 주식을 사면 기타법인으로 잡힙니다.")
+        if not _said_recently(d, "자사주"):                  # 최근 3편에 자사주 얘기를 했으면 용어 설명은 뺀다(JJ 2026-09-14)
+            out.append("회사가 자기 주식을 사면 기타법인으로 잡힙니다.")
         if share >= 0.6 and len(inb) == len(top):
             out.append(f"바깥에서 새 돈이 들어온 게 아니라, {who} 자사주를 사들인 겁니다.")
         else:
@@ -342,8 +361,9 @@ def _hook_candidates(P: str, amt_bare: str, sold: bool, ct: dict, cb: dict | Non
             out.append(("H03", f"지난 편에서 {q} 보겠다고 했습니다. 오늘 답이 나왔습니다. {ask}"))
     # H07 시간 반전 — 오후 2시와 마감이 크게 갈린 날(플레이북 §5-3 T02)
     if intraday_gap:
+        _ask2 = "그럼 이 물량을 오늘 누가 샀을까요?" if sold else "그럼 이 물량을 오늘 누가 팔았을까요?"
         out.append(("H07", f"{josa(P)} 오후 2시까지 {intraday_gap[0]} {'팔지' if sold else '사지'} 않았습니다. "
-                           f"그런데 마지막 한 시간 반에 {intraday_gap[1]} 더 나왔습니다. {ask}"))
+                           f"그런데 마지막 한 시간 반에 {intraday_gap[1].replace('가', '인')} {obj(amt_bare)} {'팔았습니다' if sold else '샀습니다'}. {_ask2}"))
     # H06 완충 단정 — 기타법인이 그날 크게 받아 낸 날(자사주 연결)
     if others_big:
         out.append(("H06", f"오늘 {subj(P)} {gave} {amt_bare}, 받아 낸 쪽에 기타법인이 있었습니다. {ask}"))
@@ -553,9 +573,9 @@ def build_aplus(c: dict) -> dict:
                 prev_ans = pv
             else:
                 parts2.append(f"{obj(won(abs(v0)))} {'샀' if v0 > 0 else '팔았'}습니다.")
-            parts2 += _others_link(c, v0)
+            parts2 += _others_link(c, v0, d=d)
         else:
-            _rest = [x for x, _ in opp[1:2]] + [x for x, _ in same[:1]]
+            _rest = [x for x, _ in same[:1]] + [x for x, _ in opp[1:2] if x != "기타법인"]   # 반대로 간 주체부터
             _cands = [("D01", f"가장 많이 {verb_opp} 쪽은 {n0}입니다."),
                       ("T08", f"그럼 이 물량을 받아 간 곳은 어디였을까요? {n0}입니다." if sold
                               else f"그럼 이 물량을 내놓은 곳은 어디였을까요? {n0}입니다."),
@@ -631,7 +651,7 @@ def build_aplus(c: dict) -> dict:
     # 답이 아니어도 기타법인이 크게 샀으면(5,000억 이상) 어느 종목·자사주인지 연결(JJ 2026-09-11)
     oth = next(((n, v) for n, v in rest if n == "기타법인" and v * (1 if sold else -1) > 0 and abs(v) >= 5000), None)
     if oth and c.get("top_others"):
-        parts2 += _others_link(c, oth[1], lead="그 돈의")
+        parts2 += _others_link(c, oth[1], lead="그 돈의", d=d)
     for n, v in same[:1]:
         parts2.append(f"{n}도 {P}처럼 {obj(won(abs(v)))} {'팔았' if v < 0 else '샀'}습니다.")
     # 화면 단계 표지(문장 앞부분, 숫자 없는 부분만): 공개 이름 · 카운터 시작 · 막대 시작

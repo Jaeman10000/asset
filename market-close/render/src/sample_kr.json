@@ -1,7 +1,7 @@
 {
  "date": "20260914",
  "date_label": "9/14 월",
- "generated_at": "2026-09-14T16:16:47",
+ "generated_at": "2026-09-14T16:41:59",
  "sources": {
   "index": "키움",
   "investors": "키움 전 종목 합산 · 정규장 체결 기준(대량매매 제외)",
@@ -4859,7 +4859,7 @@
   {
    "id": "s0",
    "min": 4.0,
-   "tts": "외국인은 오후 2시까지 5,100억도 팔지 않았습니다. 그런데 마지막 한 시간 반에 다섯 배가 더 나왔습니다. 그럼 오늘 누가 샀을까요?",
+   "tts": "외국인은 오후 2시까지 5,100억도 팔지 않았습니다. 그런데 마지막 한 시간 반에 다섯 배인 3.3조를 팔았습니다. 그럼 이 물량을 오늘 누가 샀을까요?",
    "sub": "",
    "audio_parts": [
     {
@@ -4868,58 +4868,58 @@
     },
     {
      "file": "voice/s0_01.mp3",
-     "at": 3.663
+     "at": 3.768
     },
     {
      "file": "voice/s0_02.mp3",
-     "at": 7.117
+     "at": 7.745
     }
    ],
    "audio": null,
-   "audio_sec": 8.658,
-   "sec": 9.26,
+   "audio_sec": 9.887,
+   "sec": 10.49,
    "start": 0.0,
-   "frames": 278,
+   "frames": 315,
    "bounds": [
     {
      "start": 0.0,
-     "end": 3.663,
+     "end": 3.768,
      "text": "외국인은 오후 2시까지 5,100억도 팔지 않았습니다."
     },
     {
-     "start": 3.663,
-     "end": 7.117,
-     "text": "그런데 마지막 한 시간 반에 다섯 배가 더 나왔습니다."
+     "start": 3.768,
+     "end": 7.745,
+     "text": "그런데 마지막 한 시간 반에 다섯 배인 3조 3천억을 팔았습니다."
     },
     {
-     "start": 7.117,
-     "end": 9.208,
-     "text": "그럼 오늘 누가 샀을까요?"
+     "start": 7.745,
+     "end": 10.437,
+     "text": "그럼 이 물량을 오늘 누가 샀을까요?"
     }
    ],
    "cues": [
     {
      "start": 0.0,
-     "end": 3.663,
+     "end": 3.768,
      "text": "외국인은 오후 2시까지 5,100억도 팔지 않았습니다."
     },
     {
-     "start": 3.663,
-     "end": 7.117,
-     "text": "그런데 마지막 한 시간 반에 다섯 배가 더 나왔습니다."
+     "start": 3.768,
+     "end": 7.745,
+     "text": "그런데 마지막 한 시간 반에 다섯 배인 3조 3천억을 팔았습니다."
     },
     {
-     "start": 7.117,
-     "end": 9.208,
-     "text": "그럼 오늘 누가 샀을까요?"
+     "start": 7.745,
+     "end": 10.437,
+     "text": "그럼 이 물량을 오늘 누가 샀을까요?"
     }
    ]
   },
   {
    "id": "s2",
    "min": 8.0,
-   "tts": "기타법인은 아니었습니다. 개인입니다. 약 3조를 샀습니다. 기타법인도 약 1.5조를 샀습니다. 그 돈의 95%는 SK하이닉스와 삼성전자였습니다. 회사가 자기 주식을 사면 기타법인으로 잡힙니다. 바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
-   "sub": "기타법인은 아니었습니다. 개인입니다. 약 3조를 샀습니다. 기타법인도 약 1.5조를 샀습니다. 그 돈의 95%는 SK하이닉스와 삼성전자였습니다. 회사가 자기 주식을 사면 기타법인으로 잡힙니다. 바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
+   "tts": "기관은 아니었습니다. 개인입니다. 약 3조를 샀습니다. 기타법인도 약 1.5조를 샀습니다. 그 돈의 95%는 SK하이닉스와 삼성전자였습니다. 바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
+   "sub": "기관은 아니었습니다. 개인입니다. 약 3조를 샀습니다. 기타법인도 약 1.5조를 샀습니다. 그 돈의 95%는 SK하이닉스와 삼성전자였습니다. 바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
    "audio_parts": [
     {
      "file": "voice/s2_00.mp3",
@@ -4927,119 +4927,105 @@
     },
     {
      "file": "voice/s2_01.mp3",
-     "at": 1.991
+     "at": 1.887
     },
     {
      "file": "voice/s2_02.mp3",
-     "at": 3.538
+     "at": 3.434
     },
     {
      "file": "voice/s2_03.mp3",
-     "at": 5.529
+     "at": 5.295
     },
     {
      "file": "voice/s2_04.mp3",
-     "at": 8.435
+     "at": 8.227
     },
     {
      "file": "voice/s2_05.mp3",
-     "at": 12.699
+     "at": 12.621
     },
     {
      "file": "voice/s2_06.mp3",
-     "at": 16.179
-    },
-    {
-     "file": "voice/s2_07.mp3",
-     "at": 20.573
+     "at": 17.146
     }
    ],
    "audio": null,
-   "audio_sec": 23.943,
-   "sec": 24.54,
-   "start": 9.26,
-   "frames": 736,
+   "audio_sec": 20.228,
+   "sec": 20.83,
+   "start": 10.49,
+   "frames": 625,
    "bounds": [
     {
      "start": 0.0,
-     "end": 1.991,
-     "text": "기타법인은 아니었습니다."
+     "end": 1.887,
+     "text": "기관은 아니었습니다."
     },
     {
-     "start": 1.991,
-     "end": 3.538,
+     "start": 1.887,
+     "end": 3.434,
      "text": "개인입니다."
     },
     {
-     "start": 3.538,
-     "end": 5.529,
+     "start": 3.434,
+     "end": 5.295,
      "text": "약 3조를 샀습니다."
     },
     {
-     "start": 5.529,
-     "end": 8.435,
+     "start": 5.295,
+     "end": 8.227,
      "text": "기타법인도 약 1조 5천억을 샀습니다."
     },
     {
-     "start": 8.435,
-     "end": 12.699,
+     "start": 8.227,
+     "end": 12.621,
      "text": "그 돈의 95%는 SK하이닉스와 삼성전자였습니다."
     },
     {
-     "start": 12.699,
-     "end": 16.179,
-     "text": "회사가 자기 주식을 사면 기타법인으로 잡힙니다."
-    },
-    {
-     "start": 16.179,
-     "end": 20.573,
+     "start": 12.621,
+     "end": 17.146,
      "text": "바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다."
     },
     {
-     "start": 20.573,
-     "end": 24.493,
+     "start": 17.146,
+     "end": 20.778,
      "text": "기관도 외국인처럼 약 1조 2천억을 팔았습니다."
     }
    ],
    "cues": [
     {
      "start": 0.0,
-     "end": 1.991,
-     "text": "기타법인은 아니었습니다."
+     "end": 1.887,
+     "text": "기관은 아니었습니다."
     },
     {
-     "start": 1.991,
-     "end": 3.538,
+     "start": 1.887,
+     "end": 3.434,
      "text": "개인입니다."
     },
     {
-     "start": 3.538,
-     "end": 5.529,
+     "start": 3.434,
+     "end": 5.295,
      "text": "약 3조를 샀습니다."
     },
     {
-     "start": 5.529,
-     "end": 8.435,
+     "start": 5.295,
+     "end": 8.227,
      "text": "기타법인도 약 1조 5천억을 샀습니다."
     },
     {
-     "start": 8.435,
-     "end": 12.699,
+     "start": 8.227,
+     "end": 12.621,
      "text": "그 돈의 95%는 SK하이닉스와 삼성전자였습니다."
     },
     {
-     "start": 12.699,
-     "end": 16.179,
-     "text": "회사가 자기 주식을 사면 기타법인으로 잡힙니다."
-    },
-    {
-     "start": 16.179,
-     "end": 20.573,
+     "start": 12.621,
+     "end": 17.146,
      "text": "바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다."
     },
     {
-     "start": 20.573,
-     "end": 24.493,
+     "start": 17.146,
+     "end": 20.778,
      "text": "기관도 외국인처럼 약 1조 2천억을 팔았습니다."
     }
    ]
@@ -5070,7 +5056,7 @@
    "audio": null,
    "audio_sec": 14.411,
    "sec": 15.01,
-   "start": 33.8,
+   "start": 31.32,
    "frames": 450,
    "bounds": [
     {
@@ -5120,8 +5106,8 @@
   {
    "id": "s4",
    "min": 5.0,
-   "tts": "지난주 엔비디아 젠슨 황이 사이버보안을 AI의 다음 무대로 꼽은 데 이어, 오픈AI의 AI 에이전트가 시험 도중 개발자들이 쓰는 사이트를 무단으로 뚫었다는 소식까지 겹쳤습니다. 광통신 쪽에도 정부 국산화 국책사업과 해외 장기 공급계약 소식이 이어졌고요. 광통신·보안 관련주로 꼽힌 6종목은 평균 15.96% 올랐습니다.",
-   "sub": "지난주 엔비디아 젠슨 황이 사이버보안을 AI의 다음 무대로 꼽은 데 이어, 오픈AI의 AI 에이전트가 시험 도중 개발자들이 쓰는 사이트를 무단으로 뚫었다는 소식까지 겹쳤습니다. 광통신 쪽에도 정부 국산화 국책사업과 해외 장기 공급계약 소식이 이어졌고요. 광통신·보안 관련주로 꼽힌 6종목은 평균 15.96% 올랐습니다.",
+   "tts": "지난주 엔비디아 젠슨 황이 사이버보안을 AI의 다음 무대로 꼽은 데 이어, 오픈AI의 AI 에이전트가 시험 도중 개발자들이 쓰는 사이트를 무단으로 뚫었다는 소식까지 겹쳤습니다. 광통신 쪽에도 정부 국산화 국책사업과 해외 장기 공급계약 소식이 이어졌고요. 광통신·보안 관련주로 꼽힌 6종목은 평균 15.38% 올랐습니다.",
+   "sub": "지난주 엔비디아 젠슨 황이 사이버보안을 AI의 다음 무대로 꼽은 데 이어, 오픈AI의 AI 에이전트가 시험 도중 개발자들이 쓰는 사이트를 무단으로 뚫었다는 소식까지 겹쳤습니다. 광통신 쪽에도 정부 국산화 국책사업과 해외 장기 공급계약 소식이 이어졌고요. 광통신·보안 관련주로 꼽힌 6종목은 평균 15.38% 올랐습니다.",
    "audio_parts": [
     {
      "file": "voice/s4_00.mp3",
@@ -5129,55 +5115,55 @@
     },
     {
      "file": "voice/s4_01.mp3",
-     "at": 10.533
+     "at": 10.35
     },
     {
      "file": "voice/s4_02.mp3",
-     "at": 15.894
+     "at": 15.711
     }
    ],
    "audio": null,
-   "audio_sec": 20.701,
-   "sec": 21.3,
-   "start": 48.81,
-   "frames": 639,
+   "audio_sec": 20.309,
+   "sec": 20.91,
+   "start": 46.33,
+   "frames": 627,
    "bounds": [
     {
      "start": 0.0,
-     "end": 10.533,
+     "end": 10.35,
      "text": "지난주 엔비디아 젠슨 황이 사이버보안을 AI의 다음 무대로 꼽은 데 이어, 오픈AI의 AI 에이전트가 시험 도중 개발자들이 쓰는 사이트를 무단으로 뚫었다는 소식까지 겹쳤습니다."
     },
     {
-     "start": 10.533,
-     "end": 15.894,
+     "start": 10.35,
+     "end": 15.711,
      "text": "광통신 쪽에도 정부 국산화 국책사업과 해외 장기 공급계약 소식이 이어졌고요."
     },
     {
-     "start": 15.894,
-     "end": 21.251,
-     "text": "광통신·보안 관련주로 꼽힌 6종목은 평균 15.96% 올랐습니다."
+     "start": 15.711,
+     "end": 20.859,
+     "text": "광통신·보안 관련주로 꼽힌 6종목은 평균 15.38% 올랐습니다."
     }
    ],
    "cues": [
     {
-     "start": 0.227,
-     "end": 3.893,
+     "start": 0.098,
+     "end": 3.781,
      "text": "지난주 엔비디아 젠슨 황이 사이버보안을 AI의 다음 무대로 꼽은 데 이어"
     },
     {
-     "start": 3.893,
-     "end": 10.533,
+     "start": 3.781,
+     "end": 10.35,
      "text": "오픈AI의 AI 에이전트가 시험 도중 개발자들이 쓰는 사이트를 무단으로 뚫었다는 소식까지 겹쳤습니다."
     },
     {
-     "start": 10.533,
-     "end": 15.894,
+     "start": 10.35,
+     "end": 15.711,
      "text": "광통신 쪽에도 정부 국산화 국책사업과 해외 장기 공급계약 소식이 이어졌고요."
     },
     {
-     "start": 15.894,
-     "end": 21.251,
-     "text": "광통신·보안 관련주로 꼽힌 6종목은 평균 15.96% 올랐습니다."
+     "start": 15.711,
+     "end": 20.859,
+     "text": "광통신·보안 관련주로 꼽힌 6종목은 평균 15.38% 올랐습니다."
     }
    ]
   },
@@ -5235,7 +5221,7 @@
    "audio": null,
    "audio_sec": 47.774,
    "sec": 48.37,
-   "start": 70.11,
+   "start": 67.24,
    "frames": 1451,
    "bounds": [
     {
@@ -5385,7 +5371,7 @@
    "audio": null,
    "audio_sec": 4.578,
    "sec": 5.18,
-   "start": 118.49,
+   "start": 115.61,
    "frames": 155,
    "bounds": [
     {
@@ -5556,50 +5542,50 @@
    {
     "code": "411080",
     "name": "샌즈랩",
-    "pct": 22.14,
+    "pct": 25.23,
     "foreign": -10,
     "inst": 0,
     "indiv": 9,
-    "value": 797
+    "value": 813
    },
    {
     "code": "042510",
     "name": "라온시큐어",
-    "pct": 19.4,
+    "pct": 18.76,
     "foreign": 1,
     "inst": 0,
     "indiv": -1,
-    "value": 535
+    "value": 538
    },
    {
     "code": "391710",
     "name": "코닉오토메이션",
-    "pct": 11.23,
+    "pct": 8.26,
     "foreign": -1,
     "inst": 0,
     "indiv": 1,
-    "value": 47
+    "value": 48
    },
    {
     "code": "115440",
     "name": "우리넷",
-    "pct": 7.95,
+    "pct": 7.83,
     "foreign": -8,
     "inst": 0,
     "indiv": 7,
-    "value": 479
+    "value": 480
    },
    {
     "code": "203650",
     "name": "드림시큐리티",
-    "pct": 5.15,
+    "pct": 2.29,
     "foreign": -24,
     "inst": 0,
     "indiv": 25,
-    "value": 1062
+    "value": 1073
    }
   ],
-  "avg_pct": 15.96,
+  "avg_pct": 15.38,
   "n_up": 6,
   "n_down": 0
  },
@@ -5629,11 +5615,39 @@
  ],
  "news_items": [
   {
+   "title": "[마감시황] 코스피, 고유가·긴축 우려에 3%대 급락…6600선 마감",
+   "source": "신아일보",
+   "pub_kst": "2026-09-14 16:28",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5pZ1FLU05POTRacjU0dVdpYVRiQ2FPcG1CcVRObjRDOVZiM3VIREY2M1d6VmViWlhHZFFOYW9BUEltSlFJc1lPOWh5MFRuVzZzbE1Oc0JmdklMMU12ajlfa2h5WmpPRUxkM1k2NUFtQTE?oc=5"
+  },
+  {
+   "title": "코스피 3일 연속 하락, 6,600대 마감... 투자자들 '긴장 고조'",
+   "source": "공감신문",
+   "pub_kst": "2026-09-14 16:24",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBfMW5wTFloeEpjODZPT2pvUmxnRGp0MzlmbWVjMExuTXNzVFdtb0ttckpIM3RHNVp4SFptNFFGeU95QzFrWGlzbUN4NEdaM3dkTTI3UWt5bU5hMThYTWt0SkVveFFZTmtK?oc=5"
+  },
+  {
+   "title": "[마감시황] 코스피, 금리·유가·AI 악재에 3%대 급락…6600선 후퇴",
+   "source": "v.daum.net",
+   "pub_kst": "2026-09-14 16:19",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1HUUJRQllONW8xQjRLTy1qOF81WE0yNWt1dkMwZUhUMkk1Z1Q1QjV0LWc2QWszZ05aSEltcDQ3MmoxMV9TcUg1T1ZxcFJmaW8?oc=5"
+  },
+  {
+   "title": "[속보]하닉 6%급락 마감…코스피 3%↓ 3조 던진 외인",
+   "source": "munhwa.com",
+   "pub_kst": "2026-09-14 16:15",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1qRWUzaTBOVEI0TE0yZDJLY2hsRU1YRzVBbVhSa3NZaEJDTHFpV0tuOHNiVTBBRVRDM0pvOENkZzc0RXE5S0RjNXNjWWZIUU1E?oc=5"
+  },
+  {
    "title": "외국인 3.3조 '팔자'…코스피 3%대 급락, 6680선 마감",
    "source": "아시아경제",
    "pub_kst": "2026-09-14 16:13",
    "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5kWTBYa2FieW5PMmRYYkw3X2hpbUM0dmdUZlVZS1VvSW80SVNoNU1GN09CNlJJeUdsX0RJVFJUbjlHVkx1TGlKVUgzaVFmdU95QlRQYUNxc3l0SFQ3OG9qTw?oc=5"
+   "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE54TjNXM0lkeUMxc01lWVJtZHp2UDZ1NlpUX0wyUllLczAzMnVSNnlZMU1CM2NXN25GWW1tdXhRTk9EMERwUnozdUdkTXZYVV9aUGJGdnpzcG5pSGFNTmlhRUl3?oc=5"
   },
   {
    "title": "코스피, AI 속도 조절론에 3% 급락...6680선 마감",
@@ -5641,6 +5655,13 @@
    "pub_kst": "2026-09-14 16:10",
    "query": "코스피 마감",
    "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5JOGNzUWJXLTVBN1N0MGw2LXhTUk4ybWdfZ242a1pTUk1jX1VMQzVNSldnY0c3ZV9IeExzbnB0cmVCRFRfTGJjQnl2VGMxOFpzUDFMbzVQTUJ0WmFMb25CSWFvRnhQNU1HYWc?oc=5"
+  },
+  {
+   "title": "코스피, AI 속도조절론·美 금리 인상 우려에 3%대 하락 마감",
+   "source": "전자신문",
+   "pub_kst": "2026-09-14 16:10",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE15cjg0czRhUlg1VFBDc3YxQTNRQVlFNlNnTS1TbFUwc2wzQUNjN2FPLXBzX3NwaUkzd05HdG5qTWtDZVpodm4yWS02RDBFdw?oc=5"
   },
   {
    "title": "반도체 투심 위축에…코스피 6700선 붕괴, 코스닥도 '미끌'[마감시황]",
@@ -5657,39 +5678,11 @@
    "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBSVzJRYkttX1AzNVJhZFhlZ015Vk1FcHRmak1FT29ydlRjYy1xYVBuQTVUVFRvZ3JodzRIai1KT2R0aExDWi1nbmpWdkpKa2lnaEdYM0xtSVBnaV9aZkNKQXJ3dnRhWmIzRlJuY04zRWo?oc=5"
   },
   {
-   "title": "국내증시 시총, 한 달사이 270조원 넘게 사라져...코스피지수, 6월 22일이후 25% 하락",
-   "source": "beyondpost.co.kr",
-   "pub_kst": "2026-09-14 16:04",
-   "query": "코스피 외국인 순매수",
-   "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE1jQjlncVFsemw1UjYwaUcwZjhiZWVKNkhuQVB5MmI4N1BkT2hFbnhUTkRyeE9HYXIzVUVUdHJNaTQ0eFhpQUl0VGRweXlUZ3BiVXlrZlgxWnVvSnZiT1oxYUZTZldSaTAyX1cxV2x0UlJfN1gwQjZBZThmODk?oc=5"
-  },
-  {
-   "title": "[마감시황] 코스피, 반도체주 급락에 6700선 하회…외인 3조원 순매도",
-   "source": "블록미디어",
-   "pub_kst": "2026-09-14 16:03",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1TMEowV09wNWlYU2JONXRXd3ZmeUhyTVVlV2pISUpmSk1HWFFHY3F3UGI2ZVZRdThhNkE4VjQ4ejg4OV9iR1QyTExXVXRtNW9hRWtDdy0yTnc?oc=5"
-  },
-  {
-   "title": "[마감시황]중동·금리·AI 악재 겹쳤다…코스피 3.26% 급락, 6천600선 털썩",
-   "source": "남도일보",
-   "pub_kst": "2026-09-14 16:03",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9aQnp6Mm1CMngwX0FRS3RONHVFaW95T0FJNFRkVU94N3hFanVnOHhGbkRBZEZ0RXpXdmpjY1cweEtIa25qOVdrZF9PNWdITG1uUy0tbUl1RFlBSmU5UHdzamJMaG5ER2p4SlRDY9IBcEFVX3lxTFBlRHdUNHF6SjVWdVZMVGtaY0pITi1Ialpia1VUYkljZzA4d1QzclJVYmxxT0dPbzJYZmZHSndZWThUZU55NGdBVkJjeEhreFFOdzlkUWtHQ00wVTh1RVdYbmNuWGsyazlldzF3QnJOZ1o?oc=5"
-  },
-  {
    "title": "[속보] 코스피 6,600대로 하락 마감···\"국제유가 불안·AI 속도조절론\"",
    "source": "대구MBC",
    "pub_kst": "2026-09-14 16:02",
    "query": "코스피 마감",
    "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBxQzZOendSOF9yTU52dG9TTnBrVVFlWFYxNFhXTk92cVVuVm1mYnd2bGhJWk9rTjNCemtGNGNhekN5cGs1Q1ByN1NKQTY?oc=5"
-  },
-  {
-   "title": "[마감] 코스피, 6700선 이탈… AI 속도 조절론에 삼전닉스 급락",
-   "source": "IT조선",
-   "pub_kst": "2026-09-14 15:59",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1aUnd3YkRfel9GNldtWW5tamdMdXBRNVljWmtXb0hFUXloSThPQW52VDU0dlViLWVBd0RmSmJrcElGQTFDMFI0cVpSRldyOTNJZVF6VlFSbW50YzhkTm1ELVFtRGt1VHlXeGNrbXZzQXrSAXRBVV95cUxOcWxhRlJlTHBwajFUTTVIcXAwVGVKRGY0Y21DNTNaLUtxaHdYdW53UVNEV1BiNDVvcGJPVHRCYlRsZHVGU2NHR2wtdktvVTdHNV9TclFOc2NhY3NOT0VKbWhMb2tNTFhkY3VBRzNPNmx0YW9RTw?oc=5"
   },
   {
    "title": "[속보] 코스피, 3.26% 내린 6,684.37 마감",
@@ -5699,25 +5692,18 @@
    "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFA2bVIxSlBaVmV6cEw4c04zQVZrQ29JRkpiYXZ4SHpwNlZkNWxtWS1oeUE4RTVHNUZoX3lGUkdlOXJRWFRYaEJkRDl4WDdBODhEVlI0cENsRzhfdDRfeExLYjRfb0psT2c?oc=5"
   },
   {
-   "title": "코스피, 3.2% 내린 6684 마감...'AI 속도조절론'에 삼전닉스 급락",
-   "source": "오피니언뉴스",
-   "pub_kst": "2026-09-14 15:55",
+   "title": "코스피, 3%대 급락 6,600대 마감",
+   "source": "뉴스1",
+   "pub_kst": "2026-09-14 15:57",
    "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5aUFNRN3JHeVJuaWxJcWdOS1ZXRHRBTnduczRMZWVIeVc0QVAyWVdVTmpncTZBV2JpQmhkYlM0Z0VUV3dKNUoySFZzbFlUbzFWUk41QlA2N2kyY2lTVkVrSnV4UllOaHlMdXc4bURkZUs?oc=5"
+   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBqV1didTFrVUNjZk1MREgxT3FXQVFha01DWnVKR2o1RE53WmZrSGpsUmZpMUR2U1JreGxTekgzVjlMODZtcUYtYmIxVQ?oc=5"
   },
   {
-   "title": "[장마감] 코스피 3.26%↓(6684.37), 코스닥 1.69%↓(806.79)",
-   "source": "버핏연구소",
-   "pub_kst": "2026-09-14 15:55",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5RNFdMQ0FNTTJUMmszcTJrbGRObDNwdFZ6ejlYdTkzUDdkX3B6M0tlaHlnOHg0N2tNb2t5aDFndUlCTUlzQnJwOTlONkFCaWlhRnBEUXUwcW1VQ1Vwc2RJOXZ3?oc=5"
-  },
-  {
-   "title": "코스피 3.26% 내린 6684.37 마감…3거래일 연속 하락",
-   "source": "강원도민일보",
+   "title": "코스피, 3% 급락해 6,600선 마감…3거래일 연속 하락",
+   "source": "KBS 뉴스",
    "pub_kst": "2026-09-14 15:54",
    "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9JVzgwdzF0TWVlcWRGM1VpTzRUeUlJU1VoRkl4NkIzZl9JMHY2SHJ4VHB3Q3d4TEFfQWNubE9fTHRQSWZXZHJZTy1STzJFVG9jaTNkSlduS0NMZFJrbS1sMU0xcXVHRms?oc=5"
+   "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBUcnpjcGtpLV92dzk3NDU1Tk9GWHNnTGcwNXJHZDdEcXd2WWpMWjRSVnFKYWxjeTNMVmdXOVFvM3hjdXdvZDVuM0ZHOUhvTzloUzBmTktnR1VDMHM?oc=5"
   },
   {
    "title": "코스피, 3.26% 내린 6,684.37 마감…코스닥도 1% 넘게 하락",
@@ -5725,20 +5711,6 @@
    "pub_kst": "2026-09-14 15:53",
    "query": "코스피 마감",
    "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9ua3hkUkdTaXluR2Q0bnZZaTJnTDhLdUdjRnBTMm1fTXE4VWtwajFGU0R6c3dkZzRDYlpuTmlBR016YzFZaEhhVnBoMWdiSGJKbHJ3ZWxFTEVNVnRZajFPejY1dWlMUDA?oc=5"
-  },
-  {
-   "title": "[포토] 코스피, 3%대 급락 6,600대 마감",
-   "source": "브릿지경제",
-   "pub_kst": "2026-09-14 15:50",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBHTzB4M2l0OHp0Q2VIUHR2N1JqVkJPckpBaFBLR05ZUUpNaHA5RFU3WS1SWTRVbTZJaW5PR1pYZ01NaTgzWkxCU2FLR0k2U1JJVkY2SDhVYTJkUQ?oc=5"
-  },
-  {
-   "title": "코스피 3%대 급락해 6,684선 마감…3거래일 연속 하락",
-   "source": "미디어파인",
-   "pub_kst": "2026-09-14 15:49",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTFB1Z2dNMFZnYTdMUXJmOXY0OTRBb2pLMTJ2enJ1Q1VUWHhhSmVhbHFwYVM4SXZhUWJ1U2pnOGNFRGlydGIzZzRpY3J0TlVtVDAtclR6YUc5bVJCcUFQZURjWXhncUVCNjlabGx2UWxn?oc=5"
   },
   {
    "title": "코스피 하락 마감, 6,684.37P (-3.26%↓) KRX SK하이닉스 TR 지수, 코스피 전기·전자 등 하락 주도",
@@ -5767,6 +5739,20 @@
    "pub_kst": "2026-09-14 15:36",
    "query": "코스피 마감",
    "link": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9PMm5TNHBhR0ZhZXVPdVZ0QlN5UXNhTXRyZVZ5Z0sxcVBfVGI3LXp6OFlNQWRoSURTTU9vaGcyT3ZoZWxnTzFaRm0zU3JSNnZZMlQzajRxTG9KVjdmQ1pr0gFkQVVfeXFMT2FTM19uZ0ZLcHVHQ29HYlBoQ2ZvOVZqVW9ZeXJJQzZ6UjdHcTg4U0dFanJKa2dYYzg1cTJ0U3NnUG1JaGJCY1VYMGNBMDk3M1EwdV9hQlgwSTBmOUw3RHZzbGV5cQ?oc=5"
+  },
+  {
+   "title": "코스닥 마감, 806.79P (-1.69%↓) 에코프로비엠, 심텍등 하락세",
+   "source": "매일경제 마켓",
+   "pub_kst": "2026-09-14 15:36",
+   "query": "코스닥 마감",
+   "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1UWFJkMlQ3ZFFzMUZrekJ4ZFh3SjExZmhOVDhjeXM1bWt5SElPOUYwVXU0Y1JHTjRXUFJlT19USV9pb2RwOTUzY0U5Qk1ncVpLRnc?oc=5"
+  },
+  {
+   "title": "[스팟] 코스피, 225.53포인트(3.26%) 내린 6684.38 마감",
+   "source": "머니투데이",
+   "pub_kst": "2026-09-14 15:36",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBkdHV0NVU5Zng2cUQtODBBRVFTWWEycEFlaGVpUUt2cURQVlJOUUxXTzVBd3BHaFVwSURadWM1TkJWVHl5Z2ZhOWV5bTRtdVVjNW1UTFlzTEtCNk5JRGhuRExsa3gzM1Q10gFuQVVfeXFMTlotZnFYeExJVFMtOGtvcC1raTlhRFEyQkUwYk9HLVkzMmF6WGZJem5YVDhicy1vbzQtM0hCZ0JXVGFpbTQ2VmxxWEtXWko2ZVNEV1Nfenk2OE9rdG1yN2ZlWU9aWTlCdk5EYmloZWc?oc=5"
   }
  ],
  "glossary": null,
@@ -5850,7 +5836,7 @@
   }
  },
  "edition": "kr",
- "threads_text_legacy": "9월 14일 국장. 코스피가 3.26% 내려 6,684에 마감했습니다. 개인 약 3조 순매수였습니다.\n\n눈에 띈 건 시간대였습니다. 외국인 순매도가 오후 2시 약 5,100억에서 마감 약 3.3조로 늘었습니다.\n\n돈은 금융으로 갔습니다. 사흘째 쌓이는 중이고, 오늘 하루만 약 640억이 들어왔습니다. 외국인과 기관이 둘 다 샀습니다. 반대로 반도체에서는 약 3.8조가 빠졌습니다.\n\n간밤 애플 사이버보안과 광통신 소식 발표. 광통신·보안 관련주는 한국첨단소재 +29.9%, 샌즈랩 +22.1%로 올랐습니다.\n\n개인은 약 3조를 담았습니다. 지수가 내린 날 개인이 받는 그림입니다.\n\n내일은 외국인 순매도가 닷새째 이어지는지가 관건입니다.\n\n돈이 어디에 머무는지만 매일 확인합니다. 맞는지는 기록으로 남깁니다.",
+ "threads_text_legacy": "9월 14일 국장. 코스피가 3.26% 내려 6,684에 마감했습니다. 개인 약 3조 순매수였습니다.\n\n눈에 띈 건 시간대였습니다. 외국인 순매도가 오후 2시 약 5,100억에서 마감 약 3.3조로 늘었습니다.\n\n돈은 금융으로 갔습니다. 사흘째 쌓이는 중이고, 오늘 하루만 약 640억이 들어왔습니다. 외국인과 기관이 둘 다 샀습니다. 반대로 반도체에서는 약 3.8조가 빠졌습니다.\n\n간밤 애플 사이버보안과 광통신 소식 발표. 광통신·보안 관련주는 한국첨단소재 +29.9%, 샌즈랩 +25.2%로 올랐습니다.\n\n개인은 약 3조를 담았습니다. 지수가 내린 날 개인이 받는 그림입니다.\n\n내일은 외국인 순매도가 닷새째 이어지는지가 관건입니다.\n\n돈이 어디에 머무는지만 매일 확인합니다. 맞는지는 기록으로 남깁니다.",
  "threads_facts": {
   "date": "20260914",
   "hero": "level",
@@ -5931,8 +5917,8 @@
  },
  "threads_issues": [],
  "threads_reply": "돈이 어디에 머무는지만 매일 확인해. 맞는지는 기록으로 남겨.\n영상 전체는 여기 → {YT}\n내일은 외국인이 닷새째 파는지 확인해 볼게.",
- "total_sec": 123.66,
- "total_frames": 3710,
+ "total_sec": 120.79,
+ "total_frames": 3624,
  "fps": 30,
  "voice": "무열(tc_648aaee9248bcd37dad435e6)",
  "bgm": {
