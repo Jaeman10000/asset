@@ -81,25 +81,33 @@ def make_cues(bounds: list[dict], max_len: int = 55) -> list[dict]:
     return cues
 
 
-async def main(d: str, ed: str = "kr") -> None:
-    comp = load_json(computed_path(d, ed))
-    if not comp:
-        raise SystemExit(f"computed_{ed}.json 없음 — compute 먼저")
-    engine = (get_api_key("tts", "engine") or "edge").lower()
-    tc = None
-    if engine == "typecast":
-        import tts_typecast as tc
-        voice = get_api_key("tts", "typecast_voice") or tc.DEFAULT_VOICE
-    else:
-        voice = get_api_key("tts", "voice") or "ko-KR-InJoonNeural"
-    od = out_dir(d, ed)
-    # 대본: JJ가 직접 녹음할 때 읽을 파일. 녹음본은 out/D/voice/manual/s0.mp3 … s5.mp3(또는 .wav)로 두면 합성 대신 그것을 쓴다.
-    (od / "script.txt").write_text("\n\n".join(f"[{sc['id']}] {sc['tts']}" for sc in comp["scenes"]), encoding="utf-8")
+EDGE_DEFAULT = "ko-KR-InJoonNeural"
+
+
+def _engine(d: str, ed: str):
+    """(타입캐스트 모듈|None, 보이스 이름). 엔진은 키체인 tts:engine 으로 고른다.
+
+    미장 평일편(us)은 data/publish_config.json 의 editions.us=false 라 아무 데도 안 올라간다.
+    거기에 크레딧을 쓰면 국장편이 월 중순에 말라붙는다 — 그래서 기본은 edge로 만든다."""
+    if (get_api_key("tts", "engine") or "edge").lower() != "typecast":
+        return None, get_api_key("tts", "voice") or EDGE_DEFAULT
+    if ed == "us" and (get_api_key("tts", "typecast_us") or "0") != "1":
+        log(d, "tts", "미장편은 게시 대상이 아니라 크레딧을 아껴 edge로 만든다(바꾸려면 키체인 tts:typecast_us=1)")
+        return None, get_api_key("tts", "voice") or EDGE_DEFAULT
+    import tts_typecast as tc
+    return tc, get_api_key("tts", "typecast_voice") or tc.DEFAULT_VOICE
+
+
+async def _build(d: str, ed: str, od, scenes: list[dict], tc, voice: str) -> tuple[float, list[str], int, str]:
+    """장면을 순서대로 음성으로 만든다. 같은 대본·같은 보이스면 이미 만든 mp3를 다시 쓴다(재실행해도 크레딧을 또 안 쓴다)."""
+    (od / "voice").mkdir(parents=True, exist_ok=True)
     manual_dir = od / "voice" / "manual"
-    t = 0.0
-    srt = []
-    n = 1
-    scenes = comp["scenes"]
+    cache_p = od / ".tts_cache.json"
+    cache = (load_json(cache_p) or {}) if tc else {}
+    tempo = str(get_api_key("tts", "typecast_tempo") or 1.0)
+    t, srt, n = 0.0, [], 1
+    manual_ids: list[str] = []
+    billed = reused = 0
     for i, sc in enumerate(scenes):
         p = od / "voice" / f"{sc['id']}.mp3"
         cues = None
@@ -111,17 +119,26 @@ async def main(d: str, ed: str = "kr") -> None:
             shutil.copy(rec, p)
             dur = round(float(MFile(str(rec)).info.length), 3)
             bounds = [{"start": 0.0, "end": dur, "text": sc["tts"]}]
-            voice = "manual"
+            manual_ids.append(sc["id"])          # voice 를 덮지 않는다 — 덮으면 다음 장면이 voice_id="manual" 로 API를 친다
         elif tc:
             txt = speakable(sc["tts"])
             prev = speakable(scenes[i - 1]["tts"]) if i else ""
             nxt = speakable(scenes[i + 1]["tts"]) if i + 1 < len(scenes) else ""
-            dur, bounds, words = tc.synth(txt, p, voice, prev=prev, nxt=nxt)
-            cues = tc.cues_from_words(txt, words, bounds)
+            key = f"{voice}|{tempo}|{txt}"
+            hit = cache.get(sc["id"])
+            if hit and hit.get("k") == key and p.exists() and p.stat().st_size > 1024:
+                dur, bounds, words = hit["dur"], hit["bounds"], hit["words"]
+                reused += 1
+            else:
+                dur, bounds, words = tc.synth(txt, p, voice, prev=prev, nxt=nxt)
+                billed += tc.billed_chars(txt)
+                cache[sc["id"]] = {"k": key, "dur": dur, "bounds": bounds, "words": words}
+                save_json(cache_p, cache)
+            cues = tc.cues_from_words(txt, words, bounds) or None
         else:
             dur, bounds = await synth(speakable(sc["tts"]), p, voice)
-        length = max(sc["min"], dur + GAP)
-        if sc["id"] in ("s0", "u0") and dur > 10.5:
+        length = max(sc.get("min") or 4.0, dur + GAP)
+        if sc["id"] in ("s0", "u0", "w0", "uw0", "n0") and dur > 10.5:
             log(d, "tts", f"⚠ 인트로 {dur}s > 10s — 대본을 줄여야 함")
         sc.update({"audio": f"voice/{p.name}", "audio_sec": dur, "sec": round(length, 2), "start": round(t, 2),
                    "frames": int(round(length * FPS)), "bounds": bounds})
@@ -131,15 +148,45 @@ async def main(d: str, ed: str = "kr") -> None:
         sc["cues"] = cues or make_cues(bounds)
         t += length
         log(d, "tts", f"{sc['id']}: 음성 {dur}s → 장면 {length:.1f}s ({sc['tts'][:40]}…)")
+    label = voice + (f" (수동 {','.join(manual_ids)})" if manual_ids else "")
+    if tc:
+        left = tc.remaining_credits()
+        log(d, "tts", f"타입캐스트 {billed}자 청구" + (f", {reused}장면 재사용" if reused else "")
+            + (f" — 남은 크레딧 {left[0]:,}/{left[1]:,}" if left else ""))
+        if left and left[0] < 3000:
+            log(d, "tts", f"⚠ 남은 크레딧 {left[0]:,} — 곧 바닥난다. 플랜을 올리거나 edge로 되돌려야 한다")
+    return t, srt, n, label
+
+
+async def main(d: str, ed: str = "kr") -> None:
+    comp = load_json(computed_path(d, ed))
+    if not comp:
+        raise SystemExit(f"computed_{ed}.json 없음 — compute 먼저")
+    od = out_dir(d, ed)
+    # 대본: JJ가 직접 녹음할 때 읽을 파일. 녹음본은 out/D/voice/manual/s0.mp3 … s5.mp3(또는 .wav)로 두면 합성 대신 그것을 쓴다.
+    (od / "script.txt").write_text("\n\n".join(f"[{sc['id']}] {sc['tts']}" for sc in comp["scenes"]), encoding="utf-8")
+    scenes = comp["scenes"]
+    tc, voice = _engine(d, ed)
+    try:
+        t, srt, n, label = await _build(d, ed, od, scenes, tc, voice)
+    except Exception as e:
+        # 무인으로 도는 15:55 작업이다. 타입캐스트가 어떤 이유로든 안 되면 그날을 통째로 버리지 않고
+        # 처음부터 edge-tts로 다시 만든다(중간부터 바꾸면 한 영상에 목소리가 둘 섞인다).
+        if tc is None:
+            raise
+        log(d, "tts", f"⚠ 타입캐스트 실패 — 전부 edge-tts로 다시 만든다: {e}")
+        edge_voice = get_api_key("tts", "voice") or EDGE_DEFAULT
+        t, srt, n, label = await _build(d, ed, od, scenes, None, edge_voice)
+        label += " ← 타입캐스트 실패 대체"
     comp["total_sec"] = round(t, 2)
     comp["total_frames"] = int(round(t * FPS))
     comp["fps"] = FPS
-    comp["voice"] = voice
+    comp["voice"] = label
     (od / "subs.srt").write_text("\n".join(srt), encoding="utf-8")
     (od / "caption.txt").write_text(comp["caption"], encoding="utf-8")
     save_json(computed_path(d, ed), comp)
     save_json(od / "props.json", comp)
-    log(d, "tts", f"총 {t:.1f}s, {voice}, subs.srt {n - 1}줄")
+    log(d, "tts", f"총 {t:.1f}s, {label}, subs.srt {n - 1}줄")
 
 
 if __name__ == "__main__":

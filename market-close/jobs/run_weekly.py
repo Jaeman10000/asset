@@ -121,19 +121,21 @@ def stage_script(kind: str, date: str, fetch: bool = True) -> dict:
     return script
 
 
-async def _tts(scenes: list[dict], od) -> float:
+async def _tts(scenes: list[dict], od, date: str) -> float:
+    """평일편과 같은 엔진(키체인 tts:engine)을 쓴다 — 요일마다 채널 목소리가 달라지면 안 된다.
+    타입캐스트가 안 되면 처음부터 edge-tts로 다시 만든다(그날을 통째로 버리지 않는다)."""
     import tts
     from app.keychain import get_api_key
-    voice = get_api_key("tts", "voice") or "ko-KR-InJoonNeural"
-    (od / "voice").mkdir(exist_ok=True)
-    t = 0.0
-    for sc in scenes:
-        p = od / "voice" / f"{sc['id']}.mp3"
-        dur, bounds = await tts.synth(tts.speakable(sc["tts"]), p, voice)
-        length = max(sc.get("min") or 4.0, dur + tts.GAP)
-        sc.update({"audio": f"voice/{p.name}", "audio_sec": dur, "sec": round(length, 2), "start": round(t, 2),
-                   "frames": int(round(length * tts.FPS)), "bounds": bounds, "cues": tts.make_cues(bounds)})
-        t += length
+    tc, voice = tts._engine(date, "weekly")
+    try:
+        t, _srt, _n, label = await tts._build(date, "weekly", od, scenes, tc, voice)
+    except Exception as e:
+        if tc is None:
+            raise
+        _log(f"⚠ 타입캐스트 실패 — 전부 edge-tts로 다시 만든다: {e}")
+        t, _srt, _n, label = await tts._build(date, "weekly", od, scenes, None,
+                                              get_api_key("tts", "voice") or tts.EDGE_DEFAULT)
+    _log(f"음성 {t:.1f}s, {label}")
     return t
 
 
@@ -148,7 +150,7 @@ def stage_video(kind: str, date: str) -> None:
     od = ROOT / "out" / k["dir"] / date
     od.mkdir(parents=True, exist_ok=True)
     scenes = json.loads(json.dumps(script["scenes"]))
-    total = asyncio.run(_tts(scenes, od))
+    total = asyncio.run(_tts(scenes, od, date))
     ds, de = w.get("week_start") or "", w.get("week_end") or ""
     rng = f"{int(ds[4:6])}/{int(ds[6:8])}–{int(de[4:6])}/{int(de[6:8])}" if len(ds) == 8 and len(de) == 8 else \
         f"{int(ds[5:7])}/{int(ds[8:10])}–{int(de[5:7])}/{int(de[8:10])}" if len(ds) == 10 and len(de) == 10 else ""

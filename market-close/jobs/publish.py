@@ -530,6 +530,16 @@ def publish(d: str, ed: str, go: bool = False, targets: list[str] | None = None,
     video, card = od / "video.mp4", od / "card.png"
     state_p = od / "publish.json"
     state = load_json(state_p) or {"date": d, "edition": ed, "results": {}}
+    # 영상이 없거나 대본보다 낡았으면 글만 올라가는 사고가 난다(음성 단계가 죽은 날).
+    if go:
+        cp = computed_path(d, ed)
+        if not video.exists() or video.stat().st_size < 100_000:
+            log(d, "publish", "⚠ video.mp4 없음 — 게시 중단(영상 없이 글만 올라가지 않도록)")
+            return {"date": d, "edition": ed, "results": state["results"], "skipped": "video missing"}
+        if cp.exists() and video.stat().st_mtime < cp.stat().st_mtime - 1:
+            log(d, "publish", "⚠ video.mp4 가 대본보다 낡음 — 게시 중단(렌더가 다시 돌아야 한다)")
+            return {"date": d, "edition": ed, "results": state["results"], "skipped": "video stale"}
+
     t = texts(comp, ed)
     targets = targets or cfg.get("targets") or ["youtube", "tiktok", "threads"]
     yt_priv = "public" if public else cfg["youtube"]["privacy"]
