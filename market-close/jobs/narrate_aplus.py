@@ -289,29 +289,57 @@ def _q_noun(cb: dict | None) -> str:
     return ""
 
 
-# ⓘ 훅 — 사실 두 개를 한 호흡으로 꿴다. 홑문장을 나란히 세우면 사람 말이 아니라 목록이 된다
-#    (JJ 2026-09-14: "이딴식으로 뚝뚝 끊기게 대본짜지 말라고 했을텐데? 무조건 ai라고 생각한다니까").
-#    월요일 신호도 별개 문장으로 붙이지 않는다 — 첫 문장 앞머리에 녹인다.
-def _hook_body(d: str, P: str, amt: str, sold: bool, ct: dict, when: str = "", q: str = "") -> str:
-    """when·q 가 있으면 지난 약속을 '이름 그대로' 불러 준다.
+# ⓘ 훅 — 플레이북 §4-2 의 첫 문장 유형 H01~H06 을 그대로 쓴다.
+#    §4-1 절대 수치: 첫 물음표 ≤36자, 훅 질문 정확히 1개, 훅 숫자 2개(첫 문장 1개).
+#    최근 3편에서 쓴 유형은 뺀다(§4-2). 고른 유형은 hook_id 로 남긴다.
+def _recent_hooks(d: str, n: int = 3) -> list[str]:
+    from _common import DATA, load_json
+    out = []
+    cur = datetime.strptime(d, "%Y%m%d")
+    for i in range(1, 15):
+        pd = (cur - timedelta(days=i)).strftime("%Y%m%d")
+        c = load_json(DATA / pd / "computed_kr.json")
+        if c and c.get("hook_id"):
+            out.append(c["hook_id"])
+            if len(out) >= n:
+                break
+    return out
 
-    "주말에 보라고 한 것" 같은 대명사로 부르면 처음 본 사람은 뭘 보라고 했는지 알 수 없고
-    (JJ 2026-09-14: "이 영상을 처음본 사람들은 이게 뭐야? 하지 않을까?"), 답하는 척만 하고
-    아무것도 주지 않는 문장이 된다. 약속 내용을 그대로 말하면 같은 문장이 두 사람에게 다르게 읽힌다 —
-    돌아온 사람에겐 회수고, 처음 온 사람에겐 그냥 오늘의 사실이다.
-    훅은 사실(며칠째·금액·지수)까지만 준다. '나흘이면 하루 사정으로 보기 어렵다'는 뜻은 s5 몫이다."""
+
+def _hook_candidates(P: str, amt_bare: str, sold: bool, ct: dict, cb: dict | None,
+                     opp_name: str, opp_amt: str, others_big: bool, ask: str) -> list[tuple[str, str]]:
+    """[(hook_id, 훅 문장)] — 그날 조건에 맞는 것만."""
+    got, gave = ("받았을까요", "내놓은") if sold else ("팔았을까요", "사들인")
     ctp = (ct.get("text") or "").replace("그런데 ", "", 1)
-    verb_past = "팔았" if sold else "샀"
-    verb_ing = "파는" if sold else "사는"
-    if when and q:
-        forms = [f"{when}에 {q} 보기로 했는데, {amt} {verb_past}고 {ctp}",
-                 f"{subj(P)} {amt} {verb_ing} 사이 {ctp} {when}에 {q} 보자고 한 그날입니다."]
-        return forms[int(d[-2:]) % len(forms)]
-    forms = [f"{subj(P)} {amt} {verb_ing} 사이, {ctp}",
-             f"{subj(P)} {amt} {verb_past}고, {ctp}"]
-    if ct.get("opposite"):        # 주체와 지수가 반대로 간 날은 역접을 어미로 처리한다(문장을 쪼개지 않는다)
-        forms.insert(0, f"{subj(P)} {amt} {verb_past}는데, {ctp}")
-    return forms[int(d[-2:]) % len(forms)]
+    out: list[tuple[str, str]] = []
+    # H01 빈칸 질문 — 기본형. 첫 물음표가 가장 빨리 온다
+    out.append(("H01", f"오늘 {subj(P)} {gave} {amt_bare}, 누가 {got}?"))
+    # H04 반전 — 지수와 수급 방향이 어긋난 날
+    if ct.get("opposite"):
+        out.append(("H04", f"{ctp} 그런데 {josa(P)} {obj(amt_bare)} {'팔았습니다' if sold else '샀습니다'}. {ask}"))
+    # H02 비대칭 — 두 주체가 정반대로 갔을 때
+    if opp_name and opp_amt:
+        out.append(("H02", f"{subj(opp_name)} {opp_amt} {'사는' if sold else '파는'} 동안 "
+                           f"{josa(P)} {obj(amt_bare)} {'팔았습니다' if sold else '샀습니다'}. {ask}"))
+    # H03 어제 예고 연속 — 주 1~2회. 결과가 선명한 날만
+    if cb and cb.get("check") and cb.get("ok") is not None:
+        q = _q_spoken(cb)
+        if q:
+            out.append(("H03", f"지난 편에서 {q} 보겠다고 했습니다. 오늘 답이 나왔습니다. {ask}"))
+    # H06 완충 단정 — 기타법인이 그날 크게 받아 낸 날(자사주 연결)
+    if others_big:
+        out.append(("H06", f"오늘 {subj(P)} {gave} {amt_bare}, 받아 낸 쪽에 기타법인이 있었습니다. {ask}"))
+    return out
+
+
+def _pick_hook(d: str, cands: list[tuple[str, str]]) -> tuple[str, str]:
+    recent = set(_recent_hooks(d))
+    fresh = [x for x in cands if x[0] not in recent] or cands
+    # H03·H06 은 주 1~2회 상한 — 다른 후보가 있으면 뒤로 민다
+    rare = [x for x in fresh if x[0] in ("H03", "H06")]
+    plain = [x for x in fresh if x[0] not in ("H03", "H06")]
+    pool = plain or rare
+    return pool[int(d[-2:]) % len(pool)]
 
 
 # ⓘ 다리 — 장면이 끝날 때 다음을 궁금하게 만드는 한 줄. 지금까지 s3 는 답만 하고 닫혀 있어
@@ -394,17 +422,17 @@ def build_aplus(c: dict) -> dict:
     # s0: 주인공 숫자 → 지수 대비 → 질문(첫 화면 둘째 줄과 같은 질문을 소리로)
     ask = "그럼 오늘 누가 샀을까요?" if sold else "그럼 오늘 누가 팔았을까요?"   # '오늘'을 넣어 그날의 이야기임을 못 박는다(JJ 2026-09-13)
     # 첫 물음표는 5초 안쪽(SCRIPT_PLAYBOOK 4-1). '약'과 '순매도했습니다'를 빼 앞 두 문장을 40자 밑으로 줄인다.
-    try:
-        _wk_n = len(weekend_watch.collect(d))
-    except Exception:
-        _wk_n = 0
     _cb = c.get("callback")
-    # 지난 약속을 훅에서 부르는 건 주말을 건너온 날(월요일)만. 매일 부르면 그게 또 고정 틀이 된다.
-    _hk_when = _day_word(d, datetime.strptime(_cb["prev_date"], "%Y%m%d"), past=True) if (_wk_n and _cb and _cb.get("prev_date")) else ""
-    _hk_q = _q_spoken(_cb) if _hk_when else ""
-    _took = bool(_hk_when and _hk_q)
-    _amt_o = obj(won(abs(amount)).replace("약 ", ""))
-    s0 = f"{_hook_body(d, P, _amt_o, sold, ct, _hk_when, _hk_q)} {ask}"
+    _amt_bare = won(abs(amount)).replace("약 ", "")
+    # 반대 방향으로 간 가장 큰 주체(H02 조건)
+    _others = [(n, inv.get(k)) for n, k in NAME_KEY.items() if n != P and n != "기타법인" and inv.get(k) is not None]
+    # 주인공과 반대로 간 주체: 주인공이 팔았으면 산 쪽(v>0), 샀으면 판 쪽(v<0)
+    _opp = max([(n, v) for n, v in _others if (v > 0) == sold and abs(v) >= 3000], key=lambda x: abs(x[1]), default=(None, None))
+    _opp_amt = obj(won(abs(_opp[1])).replace("약 ", "")) if _opp[0] else ""
+    _others_big = (inv.get("others") or 0) >= 8000
+    hook_id, s0 = _pick_hook(d, _hook_candidates(P, _amt_bare, sold, ct, _cb,
+                                                 _opp[0] or "", _opp_amt, _others_big, ask))
+    _took = hook_id == "H03"
 
     # s2: 답 — 가장 많이 산(판) 쪽 → 나머지 → 같은 편 → 오후 2시→마감
     parties = [(n, inv.get(key)) for n, key in NAME_KEY.items() if n != P and inv.get(key) is not None]
@@ -633,5 +661,5 @@ def build_aplus(c: dict) -> dict:
         "protagonist": {"name": P, "amount": amount, "sold": sold}, "contrast": ct,
         "check": {"verdict": cbv, "record": c.get("ledger_stats"), "next_q": next_q, "next_day": f"{nd.month}/{nd.day}"},
         "next_q": next_q, "s2_marks": s2_marks, "event_used": bool(s4), "others_top": _others_top(c),
-        "weekend_watch": wk_rows,
+        "weekend_watch": wk_rows, "hook_id": hook_id,
     }
