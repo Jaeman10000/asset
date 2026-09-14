@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta
 
 from narrate import _and, _bat, _won_screen, days_ko, josa, obj, pct, ro, subj, won
@@ -65,7 +66,9 @@ def contrast(k: dict, recent: list[dict], p_sold: bool) -> dict:
     opposite = (p_sold and not idx_down) or ((not p_sold) and idx_down)
     if opposite or abs(chg) < 0.5:
         text = "그런데 " + text
-    return {"kind": kind, "text": text, "short": short, "line": line, "n_days": n_days}
+    # 훅에서 앞 문장과 이어 붙일 때 쓰는 이음 형태 — "코스피는 7,000선을 내줬고"
+    clause = re.sub(r"습니다\.$", "고", text.replace("그런데 ", "", 1))
+    return {"kind": kind, "text": text, "clause": clause, "short": short, "line": line, "n_days": n_days, "opposite": opposite}
 
 
 def _count_ko(n: int) -> str:
@@ -96,7 +99,7 @@ def next_trading_day(d: str) -> datetime:
     return t
 
 
-def callback_v3(cb: dict | None, d: str = "") -> str:
+def callback_v3(cb: dict | None, d: str = "", also: list[str] | None = None) -> str:
     """'어제 {예고 문장} 보자고 했죠. 결과는 끊겼습니다. 오히려 …' — 전날 영상이 한 약속을 그 문장 그대로 불러온다."""
     if not cb:
         return ""
@@ -106,7 +109,13 @@ def callback_v3(cb: dict | None, d: str = "") -> str:
     when = "어제"
     if d and cb.get("prev_date"):
         when = _day_word(d, datetime.strptime(cb["prev_date"], "%Y%m%d"), past=True)
-    head = f"{when} {q} 보자고 했죠." if q.endswith("는지") else f"{when} 확인하기로 한 것이 있었죠."
+    if also and q.endswith("는지"):
+        # 금요일 편과 주말편이 같은 걸 짚었으면 한 문장으로 합친다 — 따로 말하면 목록이 된다
+        head = f"{when}에도, {_and(list(also))}에서도 같은 걸 보자고 했죠. {q}."
+    elif q.endswith("는지"):
+        head = f"{when} {q} 보자고 했죠."
+    else:
+        head = f"{when} 확인하기로 한 것이 있었죠."
     if kind == "theme_continue":
         if ok:
             return f"{head} 오늘도 {subj(won(t))} 들어오며 이어졌습니다."
@@ -231,12 +240,30 @@ def _why_check(cb: dict | None) -> list[str]:
         who = chk.get("name") or "그 주체"
         way = "파는" if (chk.get("sign") or -1) < 0 else "사는"
         why = f"이어지는지 보는 건 {who}이 {way} 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다."
-    out = [f"하루 수급은 그날 사정일 수 있습니다. {why}"]
+    out = [f"하루 수급은 그날 사정일 수 있어서, {why[0].lower() + why[1:] if why[:1].isascii() else why}"]
     if n <= 2:
         out.append("이틀은 아직 이릅니다. 사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다.")
     else:
         out.append(f"{days_ko(n)} 이어졌다면 하루 사정으로 보기는 어렵습니다.")
     return out
+
+
+# ⓘ 훅 — 사실 두 개를 한 호흡으로 꿴다. 홑문장을 나란히 세우면 사람 말이 아니라 목록이 된다
+#    (JJ 2026-09-14: "이딴식으로 뚝뚝 끊기게 대본짜지 말라고 했을텐데? 무조건 ai라고 생각한다니까").
+#    월요일 신호도 별개 문장으로 붙이지 않는다 — 첫 문장 앞머리에 녹인다.
+def _hook_body(d: str, P: str, amt: str, sold: bool, ct: dict, monday: bool) -> str:
+    ctp = (ct.get("text") or "").replace("그런데 ", "", 1)
+    verb_past = "팔았" if sold else "샀"
+    verb_ing = "파는" if sold else "사는"
+    forms = [f"{subj(P)} {amt} {verb_ing} 사이, {ctp}",
+             f"{subj(P)} {amt} {verb_past}고, {ctp}"]
+    if ct.get("opposite"):        # 주체와 지수가 반대로 움직인 날에만 '그런데도'가 성립한다
+        forms.insert(0, f"{josa(P)} {amt} {verb_past}습니다. 그런데도 {ctp}")
+    body = forms[int(d[-2:]) % len(forms)]
+    if monday:
+        # 앞머리를 붙이면 안쪽 쉼표가 겹친다 — '사이,' 형태 대신 '…했고' 형태를 쓴다
+        body = f"주말에 보라고 한 것부터 답하면, {subj(P)} {amt} {verb_past}고 {ctp}"
+    return body
 
 
 # ⓘ 다리 — 장면이 끝날 때 다음을 궁금하게 만드는 한 줄. 지금까지 s3 는 답만 하고 닫혀 있어
@@ -307,13 +334,12 @@ def build_aplus(c: dict) -> dict:
     # s0: 주인공 숫자 → 지수 대비 → 질문(첫 화면 둘째 줄과 같은 질문을 소리로)
     ask = "그럼 오늘 누가 샀을까요?" if sold else "그럼 오늘 누가 팔았을까요?"   # '오늘'을 넣어 그날의 이야기임을 못 박는다(JJ 2026-09-13)
     # 첫 물음표는 5초 안쪽(SCRIPT_PLAYBOOK 4-1). '약'과 '순매도했습니다'를 빼 앞 두 문장을 40자 밑으로 줄인다.
-    # 훅 끝에 '뒤에 답이 있다'를 심는다 — 돌아온 시청자에겐 약속을 지킨다는 신호, 처음 온 사람에겐 볼 이유가 된다.
     try:
         _wk_n = len(weekend_watch.collect(d))
     except Exception:
         _wk_n = 0
-    teaser = "주말에 보라고 한 것들, 오늘 답이 나왔습니다. " if _wk_n else ""
-    s0 = f"{subj(P)} {obj(won(abs(amount)).replace('약 ', ''))} {'팔았습니다' if sold else '샀습니다'}. {ct['text']} {teaser}{ask}"
+    _amt_o = obj(won(abs(amount)).replace("약 ", ""))
+    s0 = f"{_hook_body(d, P, _amt_o, sold, ct, bool(_wk_n))} {ask}"
 
     # s2: 답 — 가장 많이 산(판) 쪽 → 나머지 → 같은 편 → 오후 2시→마감
     parties = [(n, inv.get(key)) for n, key in NAME_KEY.items() if n != P and inv.get(key) is not None]
@@ -476,16 +502,14 @@ def build_aplus(c: dict) -> dict:
 
     # s5: 어제 약속 확인 → 누적 → 다음 확인
     cb = c.get("callback")
+    try:
+        wk_also, wk_said, wk_rows = weekend_watch.block(d, c, done_q=(cb or {}).get("q") or "")
+    except Exception:                              # 주말 파일이 없거나 모양이 달라도 그날 대본은 나가야 한다
+        wk_also, wk_said, wk_rows = [], "", []
     parts5 = []
-    cbs = callback_v3(cb, d)
+    cbs = callback_v3(cb, d, wk_also)          # 같은 걸 짚은 주말편은 머리에 합쳐 한 문장으로 말한다
     if cbs:
         parts5.append(cbs)
-    # 월요일이면 주말 두 편이 '월요일 국장'을 두고 한 말도 회수한다(JJ 2026-09-14).
-    # 금요일 편의 약속은 바로 위 callback_v3 가 이미 답했으니, 주말편이 같은 말을 했으면 합친다.
-    try:
-        wk_said, wk_rows = weekend_watch.block(d, c, done_q=(cb or {}).get("q") or "")
-    except Exception:                              # 주말 파일이 없거나 모양이 달라도 그날 대본은 나가야 한다
-        wk_said, wk_rows = "", []
     if wk_said:
         parts5.append(wk_said)
     parts5 += _why_check(cb)                       # 왜 이걸 확인하는지 + 며칠째부터 흐름으로 보는지(판단 기준)

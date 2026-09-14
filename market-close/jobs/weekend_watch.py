@@ -140,25 +140,28 @@ def _same(a: str, b: str) -> bool:
     return bool(a and b) and norm(a) == norm(b)
 
 
-def block(d: str, comp: dict, done_q: str = "") -> tuple[str, list[dict]]:
-    """월요일 회수 블록 한 덩어리와 화면용 목록.
+def block(d: str, comp: dict, done_q: str = "") -> tuple[list[str], str, list[dict]]:
+    """(같은 약속을 한 주말편 이름들, 나머지를 이은 문장, 화면용 목록).
 
-    done_q 는 평일 ledger 가 이미 회수한 약속(금요일 편). 주말편이 같은 말을 했으면
-    답을 두 번 읽지 않고 '금요일·토요일 둘 다 짚었다'로 합친다."""
+    문장을 나란히 늘어놓지 않는다(JJ 2026-09-14: "이딴식으로 뚝뚝 끊기게 대본짜지 말라고").
+    금요일 편과 같은 약속을 한 주말편은 이름만 돌려주고, 부르는 쪽이 한 문장으로 합쳐 말한다.
+    다른 약속만 '…보라고 했는데, {답}' 으로 이어 붙인다."""
     items = collect(d)
     if not items:
-        return "", []
-    said, rows = [], []
+        return [], "", []
+    also, said, rows = [], [], []
     for it in items:
         if done_q and _same(it["q"], done_q):
             rows.append({**it, "a": "", "merged": True})
-            said.append(f"{it['src']}에서도 같은 걸 짚었습니다.")
+            also.append(it["src"])
             continue
         a = answer(it["q"], comp)
         rows.append({**it, "a": a, "merged": False})
-        said.append(f"{it['src']}에선 {obj_q(it['q'])} 보라고 했죠. {a}".strip()
-                    if a else f"{it['src']}에선 {obj_q(it['q'])} 보라고 했습니다.")
-    return " ".join(said), rows
+        if a:
+            said.append(f"{it['src']}에선 {obj_q(it['q'])} 보라고 했는데, {a[0].lower() + a[1:] if a[:1].isascii() else a}")
+        else:
+            said.append(f"{it['src']}에선 {obj_q(it['q'])} 보라고 했습니다.")
+    return also, " ".join(said), rows
 
 
 def obj_q(q: str) -> str:
