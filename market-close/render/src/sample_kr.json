@@ -1,7 +1,7 @@
 {
- "date": "20260911",
+ "date": "20260914",
  "date_label": "9/11 금",
- "generated_at": "2026-09-14T10:23:29",
+ "generated_at": "2026-09-11T15:55:05",
  "sources": {
   "index": "키움",
   "investors": "키움 전 종목 합산 · 정규장 체결 기준(대량매매 제외)",
@@ -4854,47 +4854,8 @@
   {
    "id": "s0",
    "min": 4.0,
-   "tts": "외국인이 2.3조를 팔았습니다. 코스피는 7,000선을 내줬습니다. 그럼 오늘 누가 샀을까요?",
+   "tts": "외국인이 2.3조를 팔았습니다. 코스피는 7,000선을 내줬습니다. 주말에 보라고 한 것들, 오늘 답이 나왔습니다. 그럼 오늘 누가 샀을까요?",
    "sub": "",
-   "audio": null,
-   "audio_sec": 8.196,
-   "sec": 9.0,
-   "start": 0.0,
-   "frames": 270,
-   "bounds": [
-    {
-     "start": 0.0,
-     "end": 3.314,
-     "text": "외국인이 2조 3천억을 팔았습니다."
-    },
-    {
-     "start": 3.314,
-     "end": 6.367,
-     "text": "코스피는 7,000선을 내줬습니다."
-    },
-    {
-     "start": 6.367,
-     "end": 8.946,
-     "text": "그럼 오늘 누가 샀을까요?"
-    }
-   ],
-   "cues": [
-    {
-     "start": 0.0,
-     "end": 3.314,
-     "text": "외국인이 2조 3천억을 팔았습니다."
-    },
-    {
-     "start": 3.314,
-     "end": 6.367,
-     "text": "코스피는 7,000선을 내줬습니다."
-    },
-    {
-     "start": 6.367,
-     "end": 8.946,
-     "text": "그럼 오늘 누가 샀을까요?"
-    }
-   ],
    "audio_parts": [
     {
      "file": "voice/s0_00.mp3",
@@ -4902,148 +4863,72 @@
     },
     {
      "file": "voice/s0_01.mp3",
-     "at": 3.314
+     "at": 2.723
     },
     {
      "file": "voice/s0_02.mp3",
-     "at": 6.367
+     "at": 5.158
+    },
+    {
+     "file": "voice/s0_03.mp3",
+     "at": 8.429
+    }
+   ],
+   "audio": null,
+   "audio_sec": 9.97,
+   "sec": 10.57,
+   "start": 0.0,
+   "frames": 317,
+   "bounds": [
+    {
+     "start": 0.0,
+     "end": 2.723,
+     "text": "외국인이 2조 3천억을 팔았습니다."
+    },
+    {
+     "start": 2.723,
+     "end": 5.158,
+     "text": "코스피는 7,000선을 내줬습니다."
+    },
+    {
+     "start": 5.158,
+     "end": 8.429,
+     "text": "주말에 보라고 한 것들, 오늘 답이 나왔습니다."
+    },
+    {
+     "start": 8.429,
+     "end": 10.52,
+     "text": "그럼 오늘 누가 샀을까요?"
+    }
+   ],
+   "cues": [
+    {
+     "start": 0.0,
+     "end": 2.723,
+     "text": "외국인이 2조 3천억을 팔았습니다."
+    },
+    {
+     "start": 2.723,
+     "end": 5.158,
+     "text": "코스피는 7,000선을 내줬습니다."
+    },
+    {
+     "start": 5.158,
+     "end": 8.429,
+     "text": "주말에 보라고 한 것들, 오늘 답이 나왔습니다."
+    },
+    {
+     "start": 8.429,
+     "end": 10.52,
+     "text": "그럼 오늘 누가 샀을까요?"
     }
    ]
   },
   {
    "id": "s2",
    "min": 8.0,
-   "tts": "가장 많이 산 쪽은 개인입니다. 약 1.9조를 샀습니다. 그런데 외국인은 하루 내내 팔았을까요? 오후 2시까진 5천억이 안 됐습니다. 마지막 한 시간 반에 네 배가 더 나왔습니다. 하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다. 개인 다음은 기타법인입니다. 약 1.6조를 샀습니다. 그 돈의 98%는 SK하이닉스와 삼성전자였습니다. 회사가 자기 주식을 사면 기타법인으로 잡힙니다. 바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
-   "sub": "가장 많이 산 쪽은 개인입니다. 약 1.9조를 샀습니다. 그런데 외국인은 하루 내내 팔았을까요? 오후 2시까진 5천억이 안 됐습니다. 마지막 한 시간 반에 네 배가 더 나왔습니다. 하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다. 개인 다음은 기타법인입니다. 약 1.6조를 샀습니다. 그 돈의 98%는 SK하이닉스와 삼성전자였습니다. 회사가 자기 주식을 사면 기타법인으로 잡힙니다. 바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
-   "audio": null,
-   "audio_sec": 46.763,
-   "sec": 47.56,
-   "start": 9.0,
-   "frames": 1427,
-   "bounds": [
-    {
-     "start": 0.0,
-     "end": 2.87,
-     "text": "가장 많이 산 쪽은 개인입니다."
-    },
-    {
-     "start": 2.87,
-     "end": 5.871,
-     "text": "약 1조 9천억을 샀습니다."
-    },
-    {
-     "start": 5.871,
-     "end": 9.668,
-     "text": "그런데 외국인은 하루 내내 팔았을까요?"
-    },
-    {
-     "start": 9.668,
-     "end": 12.93,
-     "text": "오후 2시까진 5천억이 안 됐습니다."
-    },
-    {
-     "start": 12.93,
-     "end": 16.898,
-     "text": "마지막 한 시간 반에 네 배가 더 나왔습니다."
-    },
-    {
-     "start": 16.898,
-     "end": 21.44,
-     "text": "하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다."
-    },
-    {
-     "start": 21.44,
-     "end": 24.31,
-     "text": "개인 다음은 기타법인입니다."
-    },
-    {
-     "start": 24.31,
-     "end": 27.755,
-     "text": "약 1조 6천억을 샀습니다."
-    },
-    {
-     "start": 27.755,
-     "end": 33.316,
-     "text": "그 돈의 98%는 SK하이닉스와 삼성전자였습니다."
-    },
-    {
-     "start": 33.316,
-     "end": 37.466,
-     "text": "회사가 자기 주식을 사면 기타법인으로 잡힙니다."
-    },
-    {
-     "start": 37.466,
-     "end": 43.21,
-     "text": "바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다."
-    },
-    {
-     "start": 43.21,
-     "end": 47.513,
-     "text": "기관도 외국인처럼 약 1조 2천억을 팔았습니다."
-    }
-   ],
-   "cues": [
-    {
-     "start": 0.0,
-     "end": 2.87,
-     "text": "가장 많이 산 쪽은 개인입니다."
-    },
-    {
-     "start": 2.87,
-     "end": 5.871,
-     "text": "약 1조 9천억을 샀습니다."
-    },
-    {
-     "start": 5.871,
-     "end": 9.668,
-     "text": "그런데 외국인은 하루 내내 팔았을까요?"
-    },
-    {
-     "start": 9.668,
-     "end": 12.93,
-     "text": "오후 2시까진 5천억이 안 됐습니다."
-    },
-    {
-     "start": 12.93,
-     "end": 16.898,
-     "text": "마지막 한 시간 반에 네 배가 더 나왔습니다."
-    },
-    {
-     "start": 16.898,
-     "end": 21.44,
-     "text": "하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다."
-    },
-    {
-     "start": 21.44,
-     "end": 24.31,
-     "text": "개인 다음은 기타법인입니다."
-    },
-    {
-     "start": 24.31,
-     "end": 27.755,
-     "text": "약 1조 6천억을 샀습니다."
-    },
-    {
-     "start": 27.755,
-     "end": 33.316,
-     "text": "그 돈의 98%는 SK하이닉스와 삼성전자였습니다."
-    },
-    {
-     "start": 33.316,
-     "end": 37.466,
-     "text": "회사가 자기 주식을 사면 기타법인으로 잡힙니다."
-    },
-    {
-     "start": 37.466,
-     "end": 43.21,
-     "text": "바깥에서 새 돈이 들어온 게 아니라, 두 회사 모두 자사주를 사들인 겁니다."
-    },
-    {
-     "start": 43.21,
-     "end": 47.513,
-     "text": "기관도 외국인처럼 약 1조 2천억을 팔았습니다."
-    }
-   ],
+   "tts": "가장 많이 산 쪽은 개인입니다. 약 1.9조를 샀습니다. 그런데 외국인은 하루 내내 팔았을까요? 오후 2시까진 5천억이 안 됐습니다. 마지막 한 시간 반에 네 배가 더 나왔습니다. 하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다. 개인 다음은 기타법인입니다. 약 1.6조를 샀습니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
+   "sub": "가장 많이 산 쪽은 개인입니다. 약 1.9조를 샀습니다. 그런데 외국인은 하루 내내 팔았을까요? 오후 2시까진 5천억이 안 됐습니다. 마지막 한 시간 반에 네 배가 더 나왔습니다. 하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다. 개인 다음은 기타법인입니다. 약 1.6조를 샀습니다. 기관도 외국인처럼 약 1.2조를 팔았습니다.",
    "audio_parts": [
     {
      "file": "voice/s2_00.mp3",
@@ -5051,104 +4936,142 @@
     },
     {
      "file": "voice/s2_01.mp3",
-     "at": 2.87
+     "at": 2.409
     },
     {
      "file": "voice/s2_02.mp3",
-     "at": 5.871
+     "at": 4.714
     },
     {
      "file": "voice/s2_03.mp3",
-     "at": 9.668
+     "at": 7.687
     },
     {
      "file": "voice/s2_04.mp3",
-     "at": 12.93
+     "at": 10.357
     },
     {
      "file": "voice/s2_05.mp3",
-     "at": 16.898
+     "at": 13.21
     },
     {
      "file": "voice/s2_06.mp3",
-     "at": 21.44
+     "at": 16.847
     },
     {
      "file": "voice/s2_07.mp3",
-     "at": 24.31
+     "at": 19.152
     },
     {
      "file": "voice/s2_08.mp3",
-     "at": 27.755
+     "at": 21.457
+    }
+   ],
+   "audio": null,
+   "audio_sec": 24.461,
+   "sec": 25.06,
+   "start": 10.57,
+   "frames": 752,
+   "bounds": [
+    {
+     "start": 0.0,
+     "end": 2.409,
+     "text": "가장 많이 산 쪽은 개인입니다."
     },
     {
-     "file": "voice/s2_09.mp3",
-     "at": 33.316
+     "start": 2.409,
+     "end": 4.714,
+     "text": "약 1조 9천억을 샀습니다."
     },
     {
-     "file": "voice/s2_10.mp3",
-     "at": 37.466
+     "start": 4.714,
+     "end": 7.687,
+     "text": "그런데 외국인은 하루 내내 팔았을까요?"
     },
     {
-     "file": "voice/s2_11.mp3",
-     "at": 43.21
+     "start": 7.687,
+     "end": 10.357,
+     "text": "오후 2시까진 5천억이 안 됐습니다."
+    },
+    {
+     "start": 10.357,
+     "end": 13.21,
+     "text": "마지막 한 시간 반에 네 배가 더 나왔습니다."
+    },
+    {
+     "start": 13.21,
+     "end": 16.847,
+     "text": "하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다."
+    },
+    {
+     "start": 16.847,
+     "end": 19.152,
+     "text": "개인 다음은 기타법인입니다."
+    },
+    {
+     "start": 19.152,
+     "end": 21.457,
+     "text": "약 1조 6천억을 샀습니다."
+    },
+    {
+     "start": 21.457,
+     "end": 25.011,
+     "text": "기관도 외국인처럼 약 1조 2천억을 팔았습니다."
+    }
+   ],
+   "cues": [
+    {
+     "start": 0.0,
+     "end": 2.409,
+     "text": "가장 많이 산 쪽은 개인입니다."
+    },
+    {
+     "start": 2.409,
+     "end": 4.714,
+     "text": "약 1조 9천억을 샀습니다."
+    },
+    {
+     "start": 4.714,
+     "end": 7.687,
+     "text": "그런데 외국인은 하루 내내 팔았을까요?"
+    },
+    {
+     "start": 7.687,
+     "end": 10.357,
+     "text": "오후 2시까진 5천억이 안 됐습니다."
+    },
+    {
+     "start": 10.357,
+     "end": 13.21,
+     "text": "마지막 한 시간 반에 네 배가 더 나왔습니다."
+    },
+    {
+     "start": 13.21,
+     "end": 16.847,
+     "text": "하루 종일 흘러나온 게 아니라, 장 막판에 몰린 겁니다."
+    },
+    {
+     "start": 16.847,
+     "end": 19.152,
+     "text": "개인 다음은 기타법인입니다."
+    },
+    {
+     "start": 19.152,
+     "end": 21.457,
+     "text": "약 1조 6천억을 샀습니다."
+    },
+    {
+     "start": 21.457,
+     "end": 25.011,
+     "text": "기관도 외국인처럼 약 1조 2천억을 팔았습니다."
     }
    ]
   },
   {
    "id": "s3",
    "min": 6.0,
-   "tts": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요? 반도체입니다. 외국인과 기관이 합쳐 판 돈이 전날 약 1.5조에서 약 3.3조로 커졌습니다. 넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다.",
-   "sub": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요? 반도체입니다. 외국인과 기관이 합쳐 판 돈이 전날 약 1.5조에서 약 3.3조로 커졌습니다. 넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다.",
-   "audio": null,
-   "audio_sec": 18.55,
-   "sec": 19.35,
-   "start": 56.56,
-   "frames": 580,
-   "bounds": [
-    {
-     "start": 0.0,
-     "end": 4.45,
-     "text": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요?"
-    },
-    {
-     "start": 4.45,
-     "end": 6.354,
-     "text": "반도체입니다."
-    },
-    {
-     "start": 6.354,
-     "end": 14.214,
-     "text": "외국인과 기관이 합쳐 판 돈이 전날 약 1조 5천억에서 약 3조 3천억으로 커졌습니다."
-    },
-    {
-     "start": 14.214,
-     "end": 19.3,
-     "text": "넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다."
-    }
-   ],
-   "cues": [
-    {
-     "start": 0.0,
-     "end": 4.45,
-     "text": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요?"
-    },
-    {
-     "start": 4.45,
-     "end": 6.354,
-     "text": "반도체입니다."
-    },
-    {
-     "start": 6.354,
-     "end": 14.214,
-     "text": "외국인과 기관이 합쳐 판 돈이 전날 약 1조 5천억에서 약 3조 3천억으로 커졌습니다."
-    },
-    {
-     "start": 14.214,
-     "end": 19.3,
-     "text": "넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다."
-    }
-   ],
+   "tts": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요? 반도체입니다. 외국인과 기관이 합쳐 판 돈이 전날 약 1.5조에서 약 3.3조로 커졌습니다. 넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다. 그럼 우리가 짚어 둔 건 오늘 어떻게 됐을까요?",
+   "sub": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요? 반도체입니다. 외국인과 기관이 합쳐 판 돈이 전날 약 1.5조에서 약 3.3조로 커졌습니다. 넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다. 그럼 우리가 짚어 둔 건 오늘 어떻게 됐을까요?",
    "audio_parts": [
     {
      "file": "voice/s3_00.mp3",
@@ -5156,142 +5079,86 @@
     },
     {
      "file": "voice/s3_01.mp3",
-     "at": 4.45
+     "at": 3.234
     },
     {
      "file": "voice/s3_02.mp3",
-     "at": 6.354
+     "at": 4.86
     },
     {
      "file": "voice/s3_03.mp3",
-     "at": 14.214
+     "at": 10.587
+    },
+    {
+     "file": "voice/s3_04.mp3",
+     "at": 14.433
+    }
+   ],
+   "audio": null,
+   "audio_sec": 17.019,
+   "sec": 17.62,
+   "start": 35.63,
+   "frames": 529,
+   "bounds": [
+    {
+     "start": 0.0,
+     "end": 3.234,
+     "text": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요?"
+    },
+    {
+     "start": 3.234,
+     "end": 4.86,
+     "text": "반도체입니다."
+    },
+    {
+     "start": 4.86,
+     "end": 10.587,
+     "text": "외국인과 기관이 합쳐 판 돈이 전날 약 1조 5천억에서 약 3조 3천억으로 커졌습니다."
+    },
+    {
+     "start": 10.587,
+     "end": 14.433,
+     "text": "넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다."
+    },
+    {
+     "start": 14.433,
+     "end": 17.569,
+     "text": "그럼 우리가 짚어 둔 건 오늘 어떻게 됐을까요?"
+    }
+   ],
+   "cues": [
+    {
+     "start": 0.0,
+     "end": 3.234,
+     "text": "그럼 가장 큰 돈이 빠진 곳은 어디였을까요?"
+    },
+    {
+     "start": 3.234,
+     "end": 4.86,
+     "text": "반도체입니다."
+    },
+    {
+     "start": 4.86,
+     "end": 10.587,
+     "text": "외국인과 기관이 합쳐 판 돈이 전날 약 1조 5천억에서 약 3조 3천억으로 커졌습니다."
+    },
+    {
+     "start": 10.587,
+     "end": 14.433,
+     "text": "넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다."
+    },
+    {
+     "start": 14.433,
+     "end": 17.569,
+     "text": "그럼 우리가 짚어 둔 건 오늘 어떻게 됐을까요?"
     }
    ]
   },
   {
    "id": "s5",
    "min": 6.0,
-   "tts": "어제 금융 순매수가 이틀째 이어지는지 보자고 했죠. 오늘도 약 700억이 들어오며 이어졌습니다. 하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다. 이틀은 아직 이릅니다. 사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다. 월요일엔 하나만 봅니다. 외국인 순매도가 나흘째 이어지는지. 여러분이라면 월요일엔 무엇을 먼저 보시겠습니까? 댓글로 남겨 주세요. 답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요.",
-   "sub": "어제 금융 순매수가 이틀째 이어지는지 보자고 했죠. 오늘도 약 700억이 들어오며 이어졌습니다. 하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다. 이틀은 아직 이릅니다. 사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다. 월요일엔 하나만 봅니다. 외국인 순매도가 나흘째 이어지는지. 여러분이라면 월요일엔 무엇을 먼저 보시겠습니까? 댓글로 남겨 주세요. 답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요.",
-   "audio": null,
-   "audio_sec": 42.403,
-   "sec": 43.2,
-   "start": 75.91,
-   "frames": 1296,
-   "bounds": [
-    {
-     "start": 0.0,
-     "end": 4.281,
-     "text": "어제 금융 순매수가 이틀째 이어지는지 보자고 했죠."
-    },
-    {
-     "start": 4.281,
-     "end": 7.987,
-     "text": "오늘도 약 700억이 들어오며 이어졌습니다."
-    },
-    {
-     "start": 7.987,
-     "end": 11.484,
-     "text": "하루 수급은 그날 사정일 수 있습니다."
-    },
-    {
-     "start": 11.484,
-     "end": 17.097,
-     "text": "이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다."
-    },
-    {
-     "start": 17.097,
-     "end": 19.393,
-     "text": "이틀은 아직 이릅니다."
-    },
-    {
-     "start": 19.393,
-     "end": 24.562,
-     "text": "사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다."
-    },
-    {
-     "start": 24.562,
-     "end": 27.171,
-     "text": "월요일엔 하나만 봅니다."
-    },
-    {
-     "start": 27.171,
-     "end": 30.564,
-     "text": "외국인 순매도가 나흘째 이어지는지."
-    },
-    {
-     "start": 30.564,
-     "end": 35.406,
-     "text": "여러분이라면 월요일엔 무엇을 먼저 보시겠습니까?"
-    },
-    {
-     "start": 35.406,
-     "end": 37.623,
-     "text": "댓글로 남겨 주세요."
-    },
-    {
-     "start": 37.623,
-     "end": 43.153,
-     "text": "답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요."
-    }
-   ],
-   "cues": [
-    {
-     "start": 0.0,
-     "end": 4.281,
-     "text": "어제 금융 순매수가 이틀째 이어지는지 보자고 했죠."
-    },
-    {
-     "start": 4.281,
-     "end": 7.987,
-     "text": "오늘도 약 700억이 들어오며 이어졌습니다."
-    },
-    {
-     "start": 7.987,
-     "end": 11.484,
-     "text": "하루 수급은 그날 사정일 수 있습니다."
-    },
-    {
-     "start": 11.484,
-     "end": 17.097,
-     "text": "이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다."
-    },
-    {
-     "start": 17.097,
-     "end": 19.393,
-     "text": "이틀은 아직 이릅니다."
-    },
-    {
-     "start": 19.393,
-     "end": 24.562,
-     "text": "사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다."
-    },
-    {
-     "start": 24.562,
-     "end": 27.171,
-     "text": "월요일엔 하나만 봅니다."
-    },
-    {
-     "start": 27.171,
-     "end": 30.564,
-     "text": "외국인 순매도가 나흘째 이어지는지."
-    },
-    {
-     "start": 30.564,
-     "end": 35.406,
-     "text": "여러분이라면 월요일엔 무엇을 먼저 보시겠습니까?"
-    },
-    {
-     "start": 35.406,
-     "end": 37.623,
-     "text": "댓글로 남겨 주세요."
-    },
-    {
-     "start": 37.623,
-     "end": 43.153,
-     "text": "답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요."
-    }
-   ],
+   "tts": "지난 금요일 외국인 순매도가 나흘째 이어지는지 보자고 했죠. 오늘도 약 2.3조를 순매도하며 이어졌습니다. 토요일 주간 결산에서도 같은 걸 짚었습니다. 일요일 미국 주간 결산에선 반도체 외국인 수급을 보라고 했죠. 반도체에선 외국인이 약 2.2조를 팔았습니다. 하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 외국인이 파는 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다. 나흘째 이어졌다면 하루 사정으로 보기는 어렵습니다. 내일은 하나만 봅니다. 외국인 순매도가 나흘째 이어지는지. 금융에서 빠진 이 돈, 여러분은 어떻게 읽으셨습니까? 댓글에 적어 주세요. 답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요.",
+   "sub": "지난 금요일 외국인 순매도가 나흘째 이어지는지 보자고 했죠. 오늘도 약 2.3조를 순매도하며 이어졌습니다. 토요일 주간 결산에서도 같은 걸 짚었습니다. 일요일 미국 주간 결산에선 반도체 외국인 수급을 보라고 했죠. 반도체에선 외국인이 약 2.2조를 팔았습니다. 하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 외국인이 파는 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다. 나흘째 이어졌다면 하루 사정으로 보기는 어렵습니다. 내일은 하나만 봅니다. 외국인 순매도가 나흘째 이어지는지. 금융에서 빠진 이 돈, 여러분은 어떻게 읽으셨습니까? 댓글에 적어 주세요. 답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요.",
    "audio_parts": [
     {
      "file": "voice/s5_00.mp3",
@@ -5299,43 +5166,190 @@
     },
     {
      "file": "voice/s5_01.mp3",
-     "at": 4.281
+     "at": 3.898
     },
     {
      "file": "voice/s5_02.mp3",
-     "at": 7.987
+     "at": 7.248
     },
     {
      "file": "voice/s5_03.mp3",
-     "at": 11.484
+     "at": 10.284
     },
     {
      "file": "voice/s5_04.mp3",
-     "at": 17.097
+     "at": 14.496
     },
     {
      "file": "voice/s5_05.mp3",
-     "at": 19.393
+     "at": 17.95
     },
     {
      "file": "voice/s5_06.mp3",
-     "at": 24.562
+     "at": 20.62
     },
     {
      "file": "voice/s5_07.mp3",
-     "at": 27.171
+     "at": 25.981
     },
     {
      "file": "voice/s5_08.mp3",
-     "at": 30.564
+     "at": 29.644
     },
     {
      "file": "voice/s5_09.mp3",
-     "at": 35.406
+     "at": 31.531
     },
     {
      "file": "voice/s5_10.mp3",
-     "at": 37.623
+     "at": 34.384
+    },
+    {
+     "file": "voice/s5_11.mp3",
+     "at": 38.297
+    },
+    {
+     "file": "voice/s5_12.mp3",
+     "at": 40.105
+    }
+   ],
+   "audio": null,
+   "audio_sec": 43.605,
+   "sec": 44.2,
+   "start": 53.25,
+   "frames": 1326,
+   "bounds": [
+    {
+     "start": 0.0,
+     "end": 3.898,
+     "text": "지난 금요일 외국인 순매도가 나흘째 이어지는지 보자고 했죠."
+    },
+    {
+     "start": 3.898,
+     "end": 7.248,
+     "text": "오늘도 약 2조 3천억을 순매도하며 이어졌습니다."
+    },
+    {
+     "start": 7.248,
+     "end": 10.284,
+     "text": "토요일 주간 결산에서도 같은 걸 짚었습니다."
+    },
+    {
+     "start": 10.284,
+     "end": 14.496,
+     "text": "일요일 미국 주간 결산에선 반도체 외국인 수급을 보라고 했죠."
+    },
+    {
+     "start": 14.496,
+     "end": 17.95,
+     "text": "반도체에선 외국인이 약 2조 2천억을 팔았습니다."
+    },
+    {
+     "start": 17.95,
+     "end": 20.62,
+     "text": "하루 수급은 그날 사정일 수 있습니다."
+    },
+    {
+     "start": 20.62,
+     "end": 25.981,
+     "text": "이어지는지 보는 건 외국인이 파는 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다."
+    },
+    {
+     "start": 25.981,
+     "end": 29.644,
+     "text": "나흘째 이어졌다면 하루 사정으로 보기는 어렵습니다."
+    },
+    {
+     "start": 29.644,
+     "end": 31.531,
+     "text": "내일은 하나만 봅니다."
+    },
+    {
+     "start": 31.531,
+     "end": 34.384,
+     "text": "외국인 순매도가 나흘째 이어지는지."
+    },
+    {
+     "start": 34.384,
+     "end": 38.297,
+     "text": "금융에서 빠진 이 돈, 여러분은 어떻게 읽으셨습니까?"
+    },
+    {
+     "start": 38.297,
+     "end": 40.105,
+     "text": "댓글에 적어 주세요."
+    },
+    {
+     "start": 40.105,
+     "end": 44.155,
+     "text": "답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요."
+    }
+   ],
+   "cues": [
+    {
+     "start": 0.0,
+     "end": 3.898,
+     "text": "지난 금요일 외국인 순매도가 나흘째 이어지는지 보자고 했죠."
+    },
+    {
+     "start": 3.898,
+     "end": 7.248,
+     "text": "오늘도 약 2조 3천억을 순매도하며 이어졌습니다."
+    },
+    {
+     "start": 7.248,
+     "end": 10.284,
+     "text": "토요일 주간 결산에서도 같은 걸 짚었습니다."
+    },
+    {
+     "start": 10.284,
+     "end": 14.496,
+     "text": "일요일 미국 주간 결산에선 반도체 외국인 수급을 보라고 했죠."
+    },
+    {
+     "start": 14.496,
+     "end": 17.95,
+     "text": "반도체에선 외국인이 약 2조 2천억을 팔았습니다."
+    },
+    {
+     "start": 17.95,
+     "end": 20.62,
+     "text": "하루 수급은 그날 사정일 수 있습니다."
+    },
+    {
+     "start": 20.62,
+     "end": 25.981,
+     "text": "이어지는지 보는 건 외국인이 파는 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다."
+    },
+    {
+     "start": 25.981,
+     "end": 29.644,
+     "text": "나흘째 이어졌다면 하루 사정으로 보기는 어렵습니다."
+    },
+    {
+     "start": 29.644,
+     "end": 31.531,
+     "text": "내일은 하나만 봅니다."
+    },
+    {
+     "start": 31.531,
+     "end": 34.384,
+     "text": "외국인 순매도가 나흘째 이어지는지."
+    },
+    {
+     "start": 34.384,
+     "end": 38.297,
+     "text": "금융에서 빠진 이 돈, 여러분은 어떻게 읽으셨습니까?"
+    },
+    {
+     "start": 38.297,
+     "end": 40.105,
+     "text": "댓글에 적어 주세요."
+    },
+    {
+     "start": 40.105,
+     "end": 44.155,
+     "text": "답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요."
     }
    ]
   },
@@ -5344,35 +5358,6 @@
    "min": 4.0,
    "tts": "누가샀나였습니다. 국장 마감은 매일 오후 4시 30분에 올라옵니다.",
    "sub": "",
-   "audio": null,
-   "audio_sec": 6.319,
-   "sec": 7.12,
-   "start": 119.11,
-   "frames": 214,
-   "bounds": [
-    {
-     "start": 0.0,
-     "end": 2.296,
-     "text": "누가샀나였습니다."
-    },
-    {
-     "start": 2.296,
-     "end": 7.069,
-     "text": "국장 마감은 매일 오후 4시 30분에 올라옵니다."
-    }
-   ],
-   "cues": [
-    {
-     "start": 0.0,
-     "end": 2.296,
-     "text": "누가샀나였습니다."
-    },
-    {
-     "start": 2.296,
-     "end": 7.069,
-     "text": "국장 마감은 매일 오후 4시 30분에 올라옵니다."
-    }
-   ],
    "audio_parts": [
     {
      "file": "voice/s6_00.mp3",
@@ -5380,7 +5365,36 @@
     },
     {
      "file": "voice/s6_01.mp3",
-     "at": 2.296
+     "at": 1.808
+    }
+   ],
+   "audio": null,
+   "audio_sec": 4.472,
+   "sec": 5.07,
+   "start": 97.45,
+   "frames": 152,
+   "bounds": [
+    {
+     "start": 0.0,
+     "end": 1.808,
+     "text": "누가샀나였습니다."
+    },
+    {
+     "start": 1.808,
+     "end": 5.022,
+     "text": "국장 마감은 매일 오후 4시 30분에 올라옵니다."
+    }
+   ],
+   "cues": [
+    {
+     "start": 0.0,
+     "end": 1.808,
+     "text": "누가샀나였습니다."
+    },
+    {
+     "start": 1.808,
+     "end": 5.022,
+     "text": "국장 마감은 매일 오후 4시 30분에 올라옵니다."
     }
    ]
   }
@@ -5453,22 +5467,19 @@
  "upload_times": {
   "kr": "오후 4시 30분"
  },
- "threads_text": "코스피가 1.76% 빠진 것까지는 알 거야.\n오늘 외국인이 내놓은 돈이 2조 3천억이야.\n오후 2시에 적힌 숫자는 4,700억이야.\n차이는 전부 그 뒤 한 시간 반에서 생겼어.\n\n그 주식은 누가 받아 갔을까?\n\n개인과 회사들이 그만큼을 나눠서 받았어.\n개인이 받아 간 만큼이 1조 9천억이야.\n그 주식을 판 쪽은 외국인과 기관이야.\n기관은 같은 날 1조 2천억을 내놨어.\n개인은 증권 앱으로 직접 사고파는 사람들이야.\n\n코스닥에서 개인은 받는 쪽이었어.\n금융에 들어오는 돈이 이틀째 이어지고 있어.\n\n어제 보자고 한 금융 쪽 돈은 오늘도 들어왔어.\n이 두 곳이 같은 쪽에 서는 날은 자주 안 나와.\n둘이 같은 쪽에 서면 값은 한쪽으로 크게 기울어.\n받아 간 쪽, 너넨 어디라고 봐?",
+ "threads_text": "와 외국인 2.3조 던짐..\n오후 2시만 해도 4,700억 정도였음..\n받은 건 개인이랑 기타법인\n어제 보자던 금융 이틀째는 이어짐",
  "callback": {
-  "prev_date": "20260910",
-  "q": "금융 순매수가 이틀째 이어지는지",
+  "prev_date": "20260911",
+  "q": "외국인 순매도가 나흘째 이어지는지",
   "check": {
-   "kind": "theme_continue",
-   "theme": "금융",
-   "n": 2
+   "kind": "inv_continue",
+   "key": "foreign",
+   "name": "외국인",
+   "sign": -1,
+   "n": 4
   },
   "ok": true,
-  "t": 702,
-  "streak": 2,
-  "stats": {
-   "n": 3,
-   "k": 1
-  }
+  "t": -23041
  },
  "bonding": "",
  "hook_parts": [
@@ -5493,95 +5504,18 @@
  "event": null,
  "news_items": [
   {
-   "title": "11일, 외국인 코스닥에서 파마리서치(-2.15%), 알테오젠(-3.25%) 등 순매수",
-   "source": "한국경제",
-   "pub_kst": "2026-09-11 18:35",
-   "query": "코스피 외국인 순매수",
-   "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE8wb0E1ZUlSOXFxc1Y3QTl3OGRrdXdXd0xEVWlMbGZlQ1RrSUZkZnpJM3pFbkZIcmdvVnhCUWhEelBrU2htVnJ1eXg4QXpUNEt0U0lURDBESjdwUQ?oc=5"
-  },
-  {
-   "title": "코스피, 美 CPI 발표 앞두고 1%대 하락…6900선은 지켜",
-   "source": "뉴시스",
-   "pub_kst": "2026-09-11 16:21",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5vU3EyTDEtZFlwcXNkUzlIcmt0d3U1U3VTZlRaYlM3d1Joa0I5MHAycXVHcGNNVy00QWtpOUdjNjRnWXFNenlnUXJfNk1EVC1reDB2bXRvWUJKMnhPRjlvRNIBeEFVX3lxTE8yNXdYREFIZWZjWG5qTk5iVW9sNVRNNHFIem03Z0VINU1sbE5ua3VJM3dqSWpmR2V4ZDJMNlhqWVo5VVNtbXMyWUhfYl9rVTdQTmstVG85VDRzS1JVaHJQeGNNNHJFUEI3dF9sa2JxMV9JVkVoWm4zZQ?oc=5"
-  },
-  {
-   "title": "유가·금리 급등에 얼어붙은 투심…사흘만에 '7천피' 아래로(종합)",
-   "source": "연합뉴스",
-   "pub_kst": "2026-09-11 16:09",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE93S0hwZk52R1YzNmYwZEY1WUlzVEJHWENxd2NnUHVZRTFxUDJnZWdqSlRTNkdPWU1KcVFTRmlTMlZIY2draXVwcW9fQU1PaDcwWDhYUjJMNFlscjTSAWBBVV95cUxQYTNGLVlPTVVfdHFiVG9TTGNua3N6dHFScFl6MF9IYmRWTmZ0NmkxX2RVRVQ3MWxpNGFPUHA1Q0xUcDVlV0QyTENlTUV1d0xfd0VaMTJtdE8xMS1JUC1vcnA?oc=5"
-  },
-  {
-   "title": "코스피, 1.76% 하락한 6,909.91 마감",
-   "source": "뉴스1",
-   "pub_kst": "2026-09-11 16:05",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE5VUXEwanRGX2tKNmlXTk9PV2R3dmVyWUxEMUMwM0s5YkZsSWxCWG9DYTA5SHhjc29seXc3MGRTSTdfa0NDR0V0by1qMA?oc=5"
-  },
-  {
-   "title": "코스피 124p 급락…6,909.91 마감",
-   "source": "뉴스1",
-   "pub_kst": "2026-09-11 15:54",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9hSF9HUE9tS3RfNXFHcmhkcS1zM3NmVHJQVXUxNzJ4N0xLb3lEWVpPaHpPQ2FYWWk2cnZacjJaZmVhRFZGWEdGb2RKQQ?oc=5"
-  },
-  {
-   "title": "코스피, 6,909.91로 하락 마감",
-   "source": "뉴스1",
-   "pub_kst": "2026-09-11 15:53",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE1tdmNtRHZPelMxVktIRnYxU25IV0U3RmJCUFBJd2otU1c1eTQxZjhOaGJwSVNHSHozQWtrdXlObmszd2lURWREMS12bw?oc=5"
-  },
-  {
-   "title": "코스피, 6,900선으로 밀려…1.76% 하락 마감",
-   "source": "뉴스1",
-   "pub_kst": "2026-09-11 15:53",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE5pUUtXN2daeXpiYTVFbFBac2JLZzJ0MHQzdXBPTlN6TzJyOWQwOFRqVkFwSFZrVEtmbDM4OG85blNzeElsMm53MkNhMA?oc=5"
-  },
-  {
-   "title": "코스피 6,900선 하락 마감…코스닥도 1.95% 하락",
-   "source": "뉴스1",
-   "pub_kst": "2026-09-11 15:53",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE5yUEE2TWR4QUVkVTdIUk91TzhCSlFzNm1Ta2h5cnc5OXowdzFZaTJtekNsRFgyVkNpVEsxTElwQ3NCcm5zUTdtRC1DRQ?oc=5"
-  },
-  {
-   "title": "하락 마감한 코스피-코스닥",
-   "source": "연합뉴스",
-   "pub_kst": "2026-09-11 15:52",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFA1cWwyTTk0c2pMSlUxS2IySTNOQ0g3N2hOSGRxQXBnOF8yaTVyeVhnWlFoc2IwRUFJTU50VTU1d090TDRCamNpWlkybW9HbkVSQV82czVzcFhicGs2b2x2M9IBYEFVX3lxTFA1cWwyTTk0c2pMSlUxS2IySTNOQ0g3N2hOSGRxQXBnOF8yaTVyeVhnWlFoc2IwRUFJTU50VTU1d090TDRCamNpWlkybW9HbkVSQV82czVzcFhicGs2b2x2Mw?oc=5"
-  },
-  {
-   "title": "하락 마감한 코스피",
-   "source": "뉴시스",
-   "pub_kst": "2026-09-11 15:51",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9VQTNKRzRKYm5LNjBTbk5RbUZ2Yy1TNjBOc2tJRFRhVXlZSzFHNUI5akdfTTh3LVZFR1JPMEVyVUVsNmNQMmo3LVhNdnlBdkRhU3FKaXRucUZZT0JRYjFlLVlUTTZna25XYjNUOE9LcDhqekxQVmhpadIBeEFVX3lxTE9VQTNKRzRKYm5LNjBTbk5RbUZ2Yy1TNjBOc2tJRFRhVXlZSzFHNUI5akdfTTh3LVZFR1JPMEVyVUVsNmNQMmo3LVhNdnlBdkRhU3FKaXRucUZZT0JRYjFlLVlUTTZna25XYjNUOE9LcDhqekxQVmhpaQ?oc=5"
-  },
-  {
-   "title": "동반 하락 마감한 코스피-코스닥",
-   "source": "뉴시스",
-   "pub_kst": "2026-09-11 15:51",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE0xR2JFaEMyT0tGQmtUUDdRektHYVM3QXk3ZS0zUnlwS3ROajVHdlJJZldXcURYUktFbGotWXJOWEszSU5xOTdzaWVnbDlyeXdySEVESlg4R2FBV3FHS04yWA?oc=5"
-  },
-  {
-   "title": "코스피-코스닥, 동반 하락 마감",
-   "source": "뉴시스",
-   "pub_kst": "2026-09-11 15:51",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1UOVV6a2E4U095NmFJWmpVSmhKdXVCc2VkZ0duVklaQS1kRlR4RVNRMlFYZlA1WlVBdUZ3R2JWTk5iTDR3UngyQ2gzMG1LTk5TaTJlRTVSTGNxV0ZyekJLcA?oc=5"
-  },
-  {
    "title": "[증시-마감] 코스피, 1.76% 하락 마감…'국제유가·금리 급등' 부담",
-   "source": "연합인포맥스",
+   "source": "KB Think",
    "pub_kst": "2026-09-11 15:49",
    "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1vUXdTUnBQR2JYS0VFZEZpUGNHaEMwVW1xaGtNazRxRVZhbk5CSVBNYjlRLTI4R0kzTFJRVWppNTNOXzVRc05GM0tmTnp2ODRQRWhGdTNXUXAza3RETWV6cWt4VXg3RXh5ZmJvdUJHVGM?oc=5"
+   "link": "https://news.google.com/rss/articles/CBMickFVX3lxTE1IVWtnbUhzSTByQzVIVkw0ZENwWlJuOFJwSFRnMlBDVFB4NmJWb2RvTHBKaVhNa3IzOHlWbnJlU2NvLUFwX3JXN25jSUc4cmNnTU1sV1ZTU2FsdnFCTm9MZWlzX0dlMWVyeWZrWXdOVmFpUQ?oc=5"
+  },
+  {
+   "title": "코스피, 고유가·고금리 여파 6900선으로 하락 마감",
+   "source": "아시아경제",
+   "pub_kst": "2026-09-11 15:49",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE9FSFBJSkxaN2Iyc3dvUjBVdW44QU9tTkM3ZmVTSEc2bWN1aEwwQmRpNUllSlZRb3RUUFFVXzJsLW16ZGczaTJ6TWI0eUc0enEwdU9iMjVhOF9ndEtkSzBMdHB3?oc=5"
   },
   {
    "title": "코스피, 유가·금리 공포 속 낙폭 줄여 6900선 마감…코스닥도 하락",
@@ -5591,11 +5525,46 @@
    "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1MRWY2aWtzVzB5cTdOWjlfczNIZGZYR0EzcWxKZnpzbDRkYmRqZnB6ajZ4MmxveHFNcHZabmxSYlpRcmlZMVlJYndLTHE0MWM1RzR2cHZaTVU1dw?oc=5"
   },
   {
-   "title": "코스피 마감, 6,909.91P (-1.76%↓) SK스퀘어, 삼성전자등 하락세",
-   "source": "매일경제 마켓",
-   "pub_kst": "2026-09-11 15:37",
+   "title": "\"다시 7000피 밑으로\"…코스피 1.7% 하락 마감, 코스닥도 내려",
+   "source": "Nate News",
+   "pub_kst": "2026-09-11 15:46",
    "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE11WXRMc2pZUjdUaDc5SXYwa0hjeVRYbzlEYzBQS2gzUVladzQ4T1VIY3JDamJla0ZTQTl3NlFsYWN6ai1Db25UVUJ0MUdfUzZRMUE?oc=5"
+   "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFB2RFRMZkg5ZVdWdWM4Ym04SEpHdGpvNHdMRENnZ0VFcEdDQ3A2Ukdsb1dVVTRYRFhQaU9PVFNDNmJxbkNGTDYzMXdjVXhKS0VGLTd3?oc=5"
+  },
+  {
+   "title": "[EBN 데이터센터] 유가·금리 '이중고'에 코스피 휘청…6900선 마감",
+   "source": "Nate News",
+   "pub_kst": "2026-09-11 15:45",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE45clBvdDB3MTdtR0ZLQ0FBVDFWMG1DTThJVnlQWUdkbVVBay1mQW9hYkk2NDk4clZfLURNVzNtcF9XUUppRGJsQ3BsZHRMM2dnYUVhR05iODNhREs2LUtFSw?oc=5"
+  },
+  {
+   "title": "[마감시황] 코스피, 유가·금리 부담에 1.76% 하락…6900선",
+   "source": "viva100.com",
+   "pub_kst": "2026-09-11 15:44",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE50c3I1akxlVk1fWFJNMklOQkVPbWJuN2U5MHVzb0VlVDRuSU5NZWdkcHJ2RzV5YjNQWndEN2NFbUtwOE5IdjA5dFE2aUwzXzRsN0tDNUlaVlBMUQ?oc=5"
+  },
+  {
+   "title": "[속보] 장중 6,800까지 밀렸던 코스피, 123포인트 빠지며 6,910으로 마감",
+   "source": "대구MBC",
+   "pub_kst": "2026-09-11 15:40",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE5FLW5KX1JqWWgwcXJXbkxaMHgwdnQ5bHB1Z3dKek1jaHNwdGY4RnRHdFk0MWtCMEo4NDVTYm91bldMNFhxdzVvcURPQlY?oc=5"
+  },
+  {
+   "title": "[속보] 코스피 6,909.91(▼124.01p, 1.76%) 마감, 원·달러 환율 1,345.4원",
+   "source": "Nate News",
+   "pub_kst": "2026-09-11 15:39",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1XZDJwdzBwWnRJVUlXdE5oV2NkeTN5Y3JRdWx3bDVHdjI2TEFocTFHU0oyVm9tSGVydjVidlBPUjM2RjhpNmV1UnV1SjZEaXByMkh0MXNCNURXV0lXVzlpcg?oc=5"
+  },
+  {
+   "title": "코스피, '유가 쇼크'에 1.76% 하락 마감",
+   "source": "블루밍비트",
+   "pub_kst": "2026-09-11 15:38",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9BRDZVbTh1cm91dmNMMGlwQXRmLU40NzQzN1h6UUxDYi0wV0EwSmJLOVg1LWlTWkRrUkRzTjVybGhoazBCaUFoalVOVkV4NV9T?oc=5"
   },
   {
    "title": "코스피, 1.76% 하락한 6909.91 마감…코스닥 1.95%↓(2보)",
@@ -5605,11 +5574,25 @@
    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFA3aWVGRGNyMjM5WDFlMXdON1RaREYtMjFqbzI3cDcyWDdoeVlZd3RwWUFKdnc2aTU1dDkwcGEyU1NJd1JQaTFuaGJHMTUtSS1FV1U0N1F5aWplb1nSAWBBVV95cUxOVkdERjRFNTBhQ0U4cmV2WlFOUkYzaHo0NC1waGNnVy1KaXhJeEdxbUxCY1pld08zcERyTkN5WnhfUXBpUUZycGF5OUIzQWZyb1FvWkJfcUZ0NElCNzZlaE0?oc=5"
   },
   {
-   "title": "코스닥 마감, 820.64P (-1.95%↓) 원익IPS, 에코프로비엠등 하락세",
-   "source": "매일경제 마켓",
+   "title": "코스피·코스닥, 내림세로 장 마감",
+   "source": "한강타임즈",
    "pub_kst": "2026-09-11 15:36",
-   "query": "코스닥 마감",
-   "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1BXzdlcElMVjFrNGlNaVZHS2JiLWxrdi1fNTl3cUw2UmprNzE1bWd2VHRCTXVwcXZrNkoteFpNQjRHNWZfeFMyaWdfUlJLd0taQkE?oc=5"
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5PRjlCZGVUU2JVX2hDc0lidHRfSW82UzI2R0lnVjZ6MzJRTVRqSWFiYmhjZnZsc1loQ1hLR0QxN1JSMEZ4RXpNNTlYR3RxQnpkajNZWVNUSU1zTzZDRWF4NVhlQWhPNE9tOHhV?oc=5"
+  },
+  {
+   "title": "코스피 1.76% 내린 6909.91 마감…코스닥 820.64",
+   "source": "마켓인",
+   "pub_kst": "2026-09-11 15:35",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFBZUUt2Zm9PUWU2cThyX2VSd2ZfWVVOay0tcnZINk9YeVhWcDlqQWRTUGlmWjhWZ0lKOFNWX2taTUxZV0VQZUMydmg3T1RrTGloNVZyY1J6aXFua2IycnFObV9XWklTYzF1WUE0Vk5TYU00NG8?oc=5"
+  },
+  {
+   "title": "[속보]코스피 1.76% 내린 6909.91 마감…코스닥 820.64",
+   "source": "edaily.co.kr",
+   "pub_kst": "2026-09-11 15:35",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNdTg2MEdPUGMwRzBRcHctenZLRFlQYmtUSExjQVRkMlJITUdxdnV2bHhpbDlVTnoyYkNTTjhBd2ZoUHhEdmdpbU1JdVZidkQ4TVVQbU1uZllnVEI5ejVDNWVTcTJuR01OdmlVVlNrT1VHWTlwM19nRThiUGltNVhxNg?oc=5"
   },
   {
    "title": "코스피, 1.76% 하락 마감…'국제 유가·금리 상승' 겹악재",
@@ -5619,11 +5602,11 @@
    "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBlVm1wbmhpcDcyMzV1YWpZRk9ublI5bjZHM0Jwci1hZFIyQklwTC1Na1c2ZFJQZWxJN0h3Y0t2MUFnU0FwUWlUcHc5ckFidTZMN0h1OXJidFdFbHJQcWpZaUJDWmVDaVFMTDJxQzQxZWXSAXRBVV95cUxPYVQ1XzlpSmYyWUNFNmJZTjlCOFVHZ0poRm9xZnRFLVYwek11NVVENERwZGl4MXZmOTU1TGVTSk9rczJycVB2S3JsNkUzZkd4YVEwUUhLZ291YmphRFpDQlFQV1ZfSU45eUh6eFB5NzNFYXdrZA?oc=5"
   },
   {
-   "title": "[마감 시황] 외국인과 기관의 동반 매도세.. 코스피 6,909.91(▼124.01, -1.76%) 하락 마감",
-   "source": "서울경제",
-   "pub_kst": "2026-09-11 15:34",
-   "query": "코스피 마감",
-   "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFA3ZFZsZGY0VUtTNC1UY1lidFVEY1FDYkpJdlhMbldrb3pkeVZhOGw3eWFBMnMwaTJFMGRxZnc4UTZVcDdncFlhNlhLb09nMzFyaDlN0gFTQVVfeXFMUDdkVmxkZjRVS1M0LVRjWWJ0VURjUUNiSkl2WExuV2tvemR5VmE4bDd5YUEyczBpMkUwZHFmdzhRNlVwN2dwWWE2WEtvT2czMXJoOU0?oc=5"
+   "title": "[코스닥] 16.28p(1.95%) 내린 820.64 마감",
+   "source": "Nate News",
+   "pub_kst": "2026-09-11 15:35",
+   "query": "코스닥 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5FUlRZOUJ4MkRhUk5YRUFkQnN6eFBKQWRTamVBeVJaZXlPS0VEWTE1aHpFT2MtaFJ6SGJ1eFdfSTJLcWdrQ1FhUlhNUXZ4Nm90VGVaTDBwMkhvSzFHalBUcA?oc=5"
   },
   {
    "title": "[스팟]코스닥 16.28포인트(1.95%) 내린 820.64 마감",
@@ -5631,6 +5614,34 @@
    "pub_kst": "2026-09-11 15:34",
    "query": "코스닥 마감",
    "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE5UZEtPNWtLMDdGeWI5bVdta0pQZjFoaWp1NUZWaUk1YUM5d2xNTzY0NVotWmZodl85eTRlVmVkdmRDSUVONXFRbFRzUklQdkZkWi04QmpPSkU3aEF3YzZMbmlNM0hubTVJZHVKQlg4emo2aEY2eGfSAXtBVV95cUxQSGx0QnBfYXFTMUdxRE9DM0ZKRUM3c1diTDVQeUdGNGpHdFlMUkRITmsyd0VnVmY0TDY5Ui1TbE5Tdm04Z3R0ZzJKVTUxTjhHOVVPYmdnUUtwbm10UGdWbHhwSndxVGpKeC1nQWdWVmc0dU9MME1HWHBveEE?oc=5"
+  },
+  {
+   "title": "[코스피] 124.01p(1.76%) 내린 6909.91 마감",
+   "source": "Nate News",
+   "pub_kst": "2026-09-11 15:34",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE45VDdkM1ZPWGs5VUtORG5JNnoxcTdZWk9EMFpLT3EyYmFWaDN1bVcydHVKWW9PNmFhX3pXc3hicVR0Ump0bnVFS2RCR0U3V0hWM201WnBrTDVuREJZazFCTQ?oc=5"
+  },
+  {
+   "title": "[속보]코스닥, 16.28포인트(1.95%) 내린 820.64 마감",
+   "source": "뉴시스",
+   "pub_kst": "2026-09-11 15:33",
+   "query": "코스닥 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE04VnVHQzg3TGVsazI1RmZLY0ItZ2M2dGMtQzZMaWpmZ1dvZ1N2R2drUmtSYUVod1RCNlJ6eHhHOUZWbnlxbTM2aU9jZnU0Si1iV2ctUk11LUFJalpjV0o5ZNIBeEFVX3lxTE9kYkczb0cteTQ1WHZQaW5ZdkRsUTVPcS1jS2Zodmk5UmQ3QmNGM2hWQ3BBQmhiQzdkQzVmb2ppQm0tUDdfZ3ZlZGIyZllKSzRMbzJUU1lTRXR1bktGNWNZa3NWYUF5RWVST0I5R0JxVmdIUmFpejZBUQ?oc=5"
+  },
+  {
+   "title": "[속보]코스피, 124.01포인트(1.76%) 내린 6909.91 마감",
+   "source": "뉴시스",
+   "pub_kst": "2026-09-11 15:33",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5KV09xUG5TeFlyVTlCcldTYlM0el9QYjhpX0x2RDcySndvVURXSFpMMzdSS3N1SlNyOXU0YnZId09CT1dqajN4MEhJT1RPUzJ6TUhMZC1KalAzQVJWOWtieNIBeEFVX3lxTE1fRWRtcUNNY2hWOGtMSEZUY0o4VHk4dzR0b3VoWUxYWkg5VDAweTJiN1VPY0hCNVRINVJ4ZldPR0M0M2pfdFI2dDlVVE1pVmZWNlRpU3ZyNDViZVlGZ1BWRGpnTmxtMWZuVmgxek1oNWRDclBQQ1NQZA?oc=5"
+  },
+  {
+   "title": "[스팟]코스피 124.01포인트(1.76%) 내린 6909.91 마감",
+   "source": "머니투데이",
+   "pub_kst": "2026-09-11 15:33",
+   "query": "코스피 마감",
+   "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE12R01BeGJOZjI3NWNJZ3ZZT1RNSEVHaXc4VFEtMFBHaFN1U1k3VnctUW9wdmVtY1VFaThwMjZRWS1PZTRYLS1jcUJrbVZwU2FMc3lXUERMbzVob2prVHI3Y3B5Rk5IenhM0gFuQVVfeXFMT0JjRlVpNVVWMTF1TlB3YUFwMWR2clFWeXpCNDQwNXh4UG41OHh6TjNfckR6Wm81QkludlZNVXpmRXh3R3Y5bVBySlN4ZVhiT0ZMa08tQkFqaW1ZaHZPemVwOVRNdkpWWTQ5dzljYmc?oc=5"
   }
  ],
  "glossary": null,
@@ -5649,26 +5660,18 @@
  },
  "check": {
   "verdict": {
-   "q": "금융 순매수가 이틀째 이어지는지",
-   "kind": "theme_continue",
-   "theme": "금융",
-   "n": 2,
-   "sign": null,
-   "when": "어제",
+   "q": "외국인 순매도가 나흘째 이어지는지",
+   "kind": "inv_continue",
+   "theme": "외국인",
+   "n": 4,
+   "sign": -1,
+   "when": "지난 금요일",
    "ok": true,
-   "amount": 702
+   "amount": -23041
   },
-  "record": {
-   "n": 3,
-   "k": 1,
-   "kinds": [
-    "theme_continue",
-    "theme_continue",
-    "theme_continue"
-   ]
-  },
+  "record": null,
   "next_q": "외국인 순매도가 나흘째 이어지는지",
-  "next_day": "9/14"
+  "next_day": "9/15"
  },
  "ep": 5,
  "s2_marks": {
@@ -5679,18 +5682,7 @@
   "prev": null
  },
  "event_used": false,
- "others_top": [
-  {
-   "name": "SK하이닉스",
-   "v": 10792,
-   "buyback": true
-  },
-  {
-   "name": "삼성전자",
-   "v": 5418,
-   "buyback": true
-  }
- ],
+ "others_top": [],
  "visual": "v4",
  "unusual": {
   "indiv": {
@@ -5719,37 +5711,19 @@
    "외국인"
   ],
   "hero_figs": [
-   "2조 3천억",
+   "2.3조",
    "4,700억"
   ],
-  "seen_fig": "1.76%",
   "allowed_figures": [
-   "1.76%",
-   "1조 2천억",
-   "1조 9천억",
-   "2조 3천억",
-   "3조 3천억",
+   "2.3조",
    "4,700억"
   ],
   "edges": {
-   "1.76%": [],
-   "2조 3천억": [
+   "2.3조": [
     "넘게",
     "정도"
    ],
    "4,700억": [
-    "가까이",
-    "정도"
-   ],
-   "1조 9천억": [
-    "가까이",
-    "정도"
-   ],
-   "1조 2천억": [
-    "넘게",
-    "정도"
-   ],
-   "3조 3천억": [
     "가까이",
     "정도"
    ]
@@ -5758,10 +5732,9 @@
   "intraday_ok": true,
   "must_keep": [
    "개인",
-   "회사들",
-   "외국인",
-   "기관",
-   "금융"
+   "기타법인",
+   "금융",
+   "이어짐"
   ],
   "context_lines": [],
   "callback": {
@@ -5769,10 +5742,7 @@
    "ok": true,
    "miss_run": 0
   },
-  "watch": {
-   "theme": "외국인",
-   "nd": "나흘째"
-  },
+  "watch": null,
   "watch_in_body": false,
   "ask_ok": true,
   "themes": [
@@ -5796,11 +5766,60 @@
   "top_buyer_run": 1
  },
  "threads_issues": [],
- "threads_reply": "돈이 어디에 머무는지만 매일 확인해. 맞는지는 기록으로 남겨.\n영상 전체는 여기 → {YT}\n월요일은 외국인이 나흘째 파는지 확인해 볼게.",
- "total_sec": 126.23,
- "total_frames": 3787,
+ "threads_reply": "영상 전체는 여기서 → {YT}\n월요일에 볼 거: 외국인 순매도 나흘째 이어지는지",
+ "script_edit": {
+  "by": "JJ 확인 + GPT 제안 일부 채택",
+  "at": "2026-09-11 15:58"
+ },
+ "total_sec": 102.53,
+ "total_frames": 3076,
  "fps": 30,
- "voice": "tc_61c2f7741330d213c238cba6",
+ "voice": "무열(tc_648aaee9248bcd37dad435e6)",
+ "inv": {
+  "indiv": 18658,
+  "foreign": -23041,
+  "inst": -12236,
+  "others": 16492,
+  "etc_foreign": 126
+ },
+ "s2_title": "외국인 −2조 3,041억,<br>개인·기타법인이 받았다",
+ "bars": [
+  {
+   "name": "외국인",
+   "v": -23041
+  },
+  {
+   "name": "개인",
+   "v": 18658
+  },
+  {
+   "name": "기타법인",
+   "v": 16492
+  },
+  {
+   "name": "기관",
+   "v": -12236
+  }
+ ],
+ "next_q": "외국인 순매도가 나흘째 이어지는지",
+ "weekend_watch": [
+  {
+   "src": "토요일 주간 결산",
+   "sid": "w6",
+   "date": "20260912",
+   "q": "외국인 순매도가 4일째 이어지는지",
+   "a": "",
+   "merged": true
+  },
+  {
+   "src": "일요일 미국 주간 결산",
+   "sid": "uw6",
+   "date": "20260913",
+   "q": "반도체 외국인 수급",
+   "a": "반도체에선 외국인이 약 2.2조를 팔았습니다.",
+   "merged": false
+  }
+ ],
  "bgm": {
   "file": "bgm/bgm_B_dark_arp.wav",
   "volume": 0.07

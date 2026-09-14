@@ -149,14 +149,19 @@ export const S0V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   else if (ct && ct.line && ct.kind === "regained") { big = `${ct.line.toLocaleString("ko-KR")}선`; rest = "을 되찾았다"; }
   else if (ct && ct.line && ct.kind === "lost") { big = `${ct.line.toLocaleString("ko-KR")}선`; rest = "을 내줬다"; }
   else { big = `${Math.abs(chg).toFixed(2)}%`; rest = chg > 0 ? " 올랐다" : chg < 0 ? " 내렸다" : " 제자리"; }
+  // 첫 화면을 말에 맞춰 하나씩 연다. 0프레임에 전부 찍어 두면 이탈이 가장 큰 첫 5초가
+  // 완전한 정지 화면이 된다(2026-09-14 점검). 이름 → 금액 → 대비 줄 순서로 켠다.
+  const cl0 = cues ?? [];
+  const a0 = cl0[0]?.start ?? 0;
+  const a1 = cl0.find((c) => /코스피|코스닥|선을|지켰|되찾|내줬/.test(c.text))?.start ?? (cl0[1]?.start ?? a0 + 2.2);
   return (
     <Shell p={p} cues={cues} hideSub bg={<BgCity tone={tone} dim={0.15} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 250 }}>
-        <div style={{ fontSize: 196, fontWeight: 900, lineHeight: 1.0, letterSpacing: "-0.05em", textShadow: "0 8px 34px rgba(0,0,0,0.75)" }}>{nm}</div>
-        <div style={{ fontSize: 196, fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.05em", whiteSpace: "nowrap" }}>
+        <div style={{ fontSize: 196, fontWeight: 900, lineHeight: 1.0, letterSpacing: "-0.05em", textShadow: "0 8px 34px rgba(0,0,0,0.75)", ...pop(a0) }}>{nm}</div>
+        <div style={{ fontSize: 196, fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.05em", whiteSpace: "nowrap", ...pop(a0 + 0.35) }}>
           <Grad tone={tone}>{amt}</Grad><span style={{ textShadow: "0 8px 34px rgba(0,0,0,0.75)" }}> {word.replace("순", "")}</span>
         </div>
-        <div style={{ marginTop: 56 }}>
+        <div style={{ marginTop: 56, ...pop(a1) }}>
           <div style={{ fontSize: 66, fontWeight: 800, lineHeight: 1.2, textShadow: "0 4px 18px rgba(0,0,0,0.8)" }}>{opp ? "그런데 코스피는" : "코스피는"}</div>
           <div style={{ fontSize: 88, fontWeight: 900, lineHeight: 1.15, letterSpacing: "-0.03em", textShadow: "0 4px 18px rgba(0,0,0,0.8)" }}>
             <span style={{ color: YEL }}>{big}</span>{rest}{opp ? "?" : ""}

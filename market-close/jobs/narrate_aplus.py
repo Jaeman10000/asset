@@ -239,6 +239,25 @@ def _why_check(cb: dict | None) -> list[str]:
     return out
 
 
+# ⓘ 다리 — 장면이 끝날 때 다음을 궁금하게 만드는 한 줄. 지금까지 s3 는 답만 하고 닫혀 있어
+#    거기서 사슬이 끊겼다(2026-09-14 점검). 예측을 시키지 않는다 — 우리가 한 약속으로 넘긴다.
+BRIDGE_CB = [
+    "그럼 우리가 보자고 한 건 어떻게 됐을까요?",
+    "그럼 지난번에 확인하기로 한 건 어떻게 됐을까요?",
+    "그럼 우리가 짚어 둔 건 오늘 어떻게 됐을까요?",
+]
+BRIDGE_NO = [
+    "그럼 이 돈은 오늘 하루짜리였을까요?",
+    "그럼 이건 오늘만의 일이었을까요?",
+    "그럼 이 흐름, 오늘로 끝일까요?",
+]
+
+
+def _bridge(d: str, has_cb: bool) -> str:
+    bank = BRIDGE_CB if has_cb else BRIDGE_NO
+    return bank[int(d[-2:]) % len(bank)]
+
+
 # ② 시청자에게 던지는 질문 — 끝 멘트는 고정이라 그 앞에 둔다. 날짜를 씨앗으로 돌려 매일 같은 문장이 되지 않게.
 #    예측을 시키지 않는다("어디로 갈까요" 금지). 오늘 숫자를 어떻게 읽었는지만 묻는다.
 ASK_VIEWER = [
@@ -496,6 +515,8 @@ def build_aplus(c: dict) -> dict:
            [{"name": n, "v": v} for n, v in parties if n not in {x for x, _ in opp} | {x for x, _ in same}]
     s2_title = f"{P} {_won_screen(amount, True)},<br>{'·'.join(n for n, _ in opp) or '—'}{'이' if opp else ''} {'받았다' if sold else '팔았다'}"
 
+    if s3:                                   # s3 는 답까지 하고 닫혀 있었다 — 다음 장면으로 넘기는 한 줄을 붙인다
+        s3 = s3.rstrip() + " " + _bridge(d, bool(cb))
     scenes = [{"id": "s0", "min": 4.0, "tts": s0, "sub": ""},
               {"id": "s2", "min": 8.0, "tts": s2, "sub": s2}]
     if s3:
