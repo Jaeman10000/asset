@@ -85,7 +85,13 @@ async def main(d: str, ed: str = "kr") -> None:
     comp = load_json(computed_path(d, ed))
     if not comp:
         raise SystemExit(f"computed_{ed}.json 없음 — compute 먼저")
-    voice = get_api_key("tts", "voice") or "ko-KR-InJoonNeural"
+    engine = (get_api_key("tts", "engine") or "edge").lower()
+    tc = None
+    if engine == "typecast":
+        import tts_typecast as tc
+        voice = get_api_key("tts", "typecast_voice") or tc.DEFAULT_VOICE
+    else:
+        voice = get_api_key("tts", "voice") or "ko-KR-InJoonNeural"
     od = out_dir(d, ed)
     # 대본: JJ가 직접 녹음할 때 읽을 파일. 녹음본은 out/D/voice/manual/s0.mp3 … s5.mp3(또는 .wav)로 두면 합성 대신 그것을 쓴다.
     (od / "script.txt").write_text("\n\n".join(f"[{sc['id']}] {sc['tts']}" for sc in comp["scenes"]), encoding="utf-8")
@@ -93,8 +99,10 @@ async def main(d: str, ed: str = "kr") -> None:
     t = 0.0
     srt = []
     n = 1
-    for sc in comp["scenes"]:
+    scenes = comp["scenes"]
+    for i, sc in enumerate(scenes):
         p = od / "voice" / f"{sc['id']}.mp3"
+        cues = None
         rec = next((f for ext in ("mp3", "wav", "m4a") for f in [manual_dir / f"{sc['id']}.{ext}"] if f.exists()), None)
         if rec:
             import shutil
@@ -104,6 +112,12 @@ async def main(d: str, ed: str = "kr") -> None:
             dur = round(float(MFile(str(rec)).info.length), 3)
             bounds = [{"start": 0.0, "end": dur, "text": sc["tts"]}]
             voice = "manual"
+        elif tc:
+            txt = speakable(sc["tts"])
+            prev = speakable(scenes[i - 1]["tts"]) if i else ""
+            nxt = speakable(scenes[i + 1]["tts"]) if i + 1 < len(scenes) else ""
+            dur, bounds, words = tc.synth(txt, p, voice, prev=prev, nxt=nxt)
+            cues = tc.cues_from_words(txt, words, bounds)
         else:
             dur, bounds = await synth(speakable(sc["tts"]), p, voice)
         length = max(sc["min"], dur + GAP)
@@ -114,7 +128,7 @@ async def main(d: str, ed: str = "kr") -> None:
         for b in bounds:
             srt.append(f"{n}\n{_srt_time(t + b['start'])} --> {_srt_time(t + b['end'])}\n{b['text']}\n")
             n += 1
-        sc["cues"] = make_cues(bounds)
+        sc["cues"] = cues or make_cues(bounds)
         t += length
         log(d, "tts", f"{sc['id']}: 음성 {dur}s → 장면 {length:.1f}s ({sc['tts'][:40]}…)")
     comp["total_sec"] = round(t, 2)
