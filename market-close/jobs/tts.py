@@ -158,7 +158,8 @@ async def _build(d: str, ed: str, od, scenes: list[dict], tc, voice: str) -> tup
         sc["cues"] = cues
         t += length
         log(d, "tts", f"{sc['id']}: 음성 {dur}s → 장면 {length:.1f}s ({sc['tts'][:40]}…)")
-    label = voice + (f" (수동 {','.join(manual_ids)})" if manual_ids else "")
+    name = tc.voice_name(voice) if tc else voice
+    label = (f"{name}({voice})" if tc and name != voice else voice) + (f" (수동 {','.join(manual_ids)})" if manual_ids else "")
     if tc:
         spoken = sum((s.get("audio_sec") or 0) for s in scenes)
         chars = sum(len(speakable(s["tts"])) for s in scenes)

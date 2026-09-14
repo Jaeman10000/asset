@@ -106,6 +106,21 @@ def remaining_credits() -> tuple[int, int] | None:
         return None
 
 
+_NAMES: dict[str, str] = {}
+
+
+def voice_name(vid: str) -> str:
+    """보이스 이름. 리뷰 페이지에 tc_648aae… 대신 '무열'이 찍히게 한다(크레딧은 안 든다)."""
+    if vid not in _NAMES:
+        try:
+            r = requests.get(f"https://api.typecast.ai/v3/voices/{vid}",
+                             headers={"X-API-KEY": _key(), "User-Agent": UA}, timeout=10)
+            _NAMES[vid] = r.json()["voice_name"].get("kor") or r.json()["voice_name"].get("eng") or vid
+        except Exception:
+            _NAMES[vid] = vid
+    return _NAMES[vid]
+
+
 def _even(sents: list[str], t0: float, t1: float) -> list[dict]:
     """글자 수 비례로 문장 시간을 나눈다 — 단어 정렬을 믿을 수 없을 때 쓰는 안전판."""
     tot = sum(len(_strip(s)) for s in sents) or 1
