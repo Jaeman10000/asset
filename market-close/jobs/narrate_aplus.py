@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from narrate import _and, _bat, _won_screen, days_ko, josa, obj, pct, ro, subj, won
+import weekend_watch
 
 
 def _ieot(w: str) -> str:
@@ -280,7 +281,13 @@ def build_aplus(c: dict) -> dict:
     # s0: 주인공 숫자 → 지수 대비 → 질문(첫 화면 둘째 줄과 같은 질문을 소리로)
     ask = "그럼 오늘 누가 샀을까요?" if sold else "그럼 오늘 누가 팔았을까요?"   # '오늘'을 넣어 그날의 이야기임을 못 박는다(JJ 2026-09-13)
     # 첫 물음표는 5초 안쪽(SCRIPT_PLAYBOOK 4-1). '약'과 '순매도했습니다'를 빼 앞 두 문장을 40자 밑으로 줄인다.
-    s0 = f"{subj(P)} {obj(won(abs(amount)).replace('약 ', ''))} {'팔았습니다' if sold else '샀습니다'}. {ct['text']} {ask}"
+    # 훅 끝에 '뒤에 답이 있다'를 심는다 — 돌아온 시청자에겐 약속을 지킨다는 신호, 처음 온 사람에겐 볼 이유가 된다.
+    try:
+        _wk_n = len(weekend_watch.collect(d))
+    except Exception:
+        _wk_n = 0
+    teaser = "주말에 보라고 한 것들, 오늘 답이 나왔습니다. " if _wk_n else ""
+    s0 = f"{subj(P)} {obj(won(abs(amount)).replace('약 ', ''))} {'팔았습니다' if sold else '샀습니다'}. {ct['text']} {teaser}{ask}"
 
     # s2: 답 — 가장 많이 산(판) 쪽 → 나머지 → 같은 편 → 오후 2시→마감
     parties = [(n, inv.get(key)) for n, key in NAME_KEY.items() if n != P and inv.get(key) is not None]
@@ -444,6 +451,14 @@ def build_aplus(c: dict) -> dict:
     cbs = callback_v3(cb, d)
     if cbs:
         parts5.append(cbs)
+    # 월요일이면 주말 두 편이 '월요일 국장'을 두고 한 말도 회수한다(JJ 2026-09-14).
+    # 금요일 편의 약속은 바로 위 callback_v3 가 이미 답했으니, 주말편이 같은 말을 했으면 합친다.
+    try:
+        wk_said, wk_rows = weekend_watch.block(d, c, done_q=(cb or {}).get("q") or "")
+    except Exception:                              # 주말 파일이 없거나 모양이 달라도 그날 대본은 나가야 한다
+        wk_said, wk_rows = "", []
+    if wk_said:
+        parts5.append(wk_said)
     parts5 += _why_check(cb)                       # 왜 이걸 확인하는지 + 며칠째부터 흐름으로 보는지(판단 기준)
     # 전적은 화면(S5V4)이 '확인 N번 · 이어짐 K · 끊김 M'으로 그린다. 말로 또 읽으면 3.3초를 같은 말에 쓴다.
     _ = record_line(c.get("ledger_stats"))
@@ -497,4 +512,5 @@ def build_aplus(c: dict) -> dict:
         "protagonist": {"name": P, "amount": amount, "sold": sold}, "contrast": ct,
         "check": {"verdict": cbv, "record": c.get("ledger_stats"), "next_q": next_q, "next_day": f"{nd.month}/{nd.day}"},
         "next_q": next_q, "s2_marks": s2_marks, "event_used": bool(s4), "others_top": _others_top(c),
+        "weekend_watch": wk_rows,
     }
