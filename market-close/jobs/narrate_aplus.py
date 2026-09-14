@@ -292,22 +292,36 @@ def _q_noun(cb: dict | None) -> str:
 # ⓘ 훅 — 플레이북 §4-2 의 첫 문장 유형 H01~H06 을 그대로 쓴다.
 #    §4-1 절대 수치: 첫 물음표 ≤36자, 훅 질문 정확히 1개, 훅 숫자 2개(첫 문장 1개).
 #    최근 3편에서 쓴 유형은 뺀다(§4-2). 고른 유형은 hook_id 로 남긴다.
-def _recent_hooks(d: str, n: int = 3) -> list[str]:
+def _skeleton(x: str) -> str:
+    """문장 뼈대. 숫자·주체·업종을 지우고 남는 모양으로 비교한다 —
+    id 가 같아서가 아니라 '같은 소리로 들리면' 쓰지 않는다(JJ 2026-09-14)."""
+    x = re.sub(r"약\s?", "", x or "")
+    x = re.sub(r"\d[\d,.]*\s?(조|천억|억|%|선|포인트|배|거래일)?", "N", x)
+    for g in ("기타법인", "외국인", "기관", "개인"):
+        x = x.replace(g, "G")
+    x = re.sub(r"(하루|이틀|사흘|나흘|닷새)(째)?", "D", x)
+    return re.sub(r"\s+", "", x)
+
+
+def _recent_s0(d: str, n: int = 3) -> list[str]:
+    """최근 편들의 첫 문장 원문. hook_id 가 없던 시절 편도 이걸로 걸러진다."""
     from _common import DATA, load_json
-    out = []
-    cur = datetime.strptime(d, "%Y%m%d")
+    cur, out = datetime.strptime(d, "%Y%m%d"), []
     for i in range(1, 15):
-        pd = (cur - timedelta(days=i)).strftime("%Y%m%d")
-        c = load_json(DATA / pd / "computed_kr.json")
-        if c and c.get("hook_id"):
-            out.append(c["hook_id"])
+        c = load_json(DATA / (cur - timedelta(days=i)).strftime("%Y%m%d") / "computed_kr.json")
+        if not c:
+            continue
+        t = next((x.get("tts") for x in (c.get("scenes") or []) if x.get("id") == "s0"), "")
+        if t:
+            out.append(t)
             if len(out) >= n:
                 break
     return out
 
 
 def _hook_candidates(P: str, amt_bare: str, sold: bool, ct: dict, cb: dict | None,
-                     opp_name: str, opp_amt: str, others_big: bool, ask: str) -> list[tuple[str, str]]:
+                     opp_name: str, opp_amt: str, others_big: bool, ask: str,
+                     intraday_gap: tuple[str, str] | None = None) -> list[tuple[str, str]]:
     """[(hook_id, 훅 문장)] — 그날 조건에 맞는 것만."""
     got, gave = ("받았을까요", "내놓은") if sold else ("팔았을까요", "사들인")
     ctp = (ct.get("text") or "").replace("그런데 ", "", 1)
@@ -326,6 +340,10 @@ def _hook_candidates(P: str, amt_bare: str, sold: bool, ct: dict, cb: dict | Non
         q = _q_spoken(cb)
         if q:
             out.append(("H03", f"지난 편에서 {q} 보겠다고 했습니다. 오늘 답이 나왔습니다. {ask}"))
+    # H07 시간 반전 — 오후 2시와 마감이 크게 갈린 날(플레이북 §5-3 T02)
+    if intraday_gap:
+        out.append(("H07", f"{josa(P)} 오후 2시까지 {intraday_gap[0]} {'팔지' if sold else '사지'} 않았습니다. "
+                           f"그런데 마지막 한 시간 반에 {intraday_gap[1]} 더 나왔습니다. {ask}"))
     # H06 완충 단정 — 기타법인이 그날 크게 받아 낸 날(자사주 연결)
     if others_big:
         out.append(("H06", f"오늘 {subj(P)} {gave} {amt_bare}, 받아 낸 쪽에 기타법인이 있었습니다. {ask}"))
@@ -333,13 +351,47 @@ def _hook_candidates(P: str, amt_bare: str, sold: bool, ct: dict, cb: dict | Non
 
 
 def _pick_hook(d: str, cands: list[tuple[str, str]]) -> tuple[str, str]:
-    recent = set(_recent_hooks(d))
-    fresh = [x for x in cands if x[0] not in recent] or cands
-    # H03·H06 은 주 1~2회 상한 — 다른 후보가 있으면 뒤로 민다
-    rare = [x for x in fresh if x[0] in ("H03", "H06")]
-    plain = [x for x in fresh if x[0] not in ("H03", "H06")]
+    # 최근 편의 첫 문장과 '뼈대가 같은' 후보는 뺀다. 숫자만 바꾼 같은 문장이 제일 큰 AI 티다.
+    recent = _recent_s0(d)
+    seen = {_skeleton(x) for t in recent for x in re.split(r"(?<=[.?!])\s+", t) if x.strip()}
+    tails = {re.sub(r"\s+", "", t)[-7:] for t in recent if t}          # 끝맺음이 같으면 같은 소리로 들린다
+    heads = {_skeleton(re.split(r"(?<=[.?!])\s+", t)[0])[:14] for t in recent if t}
+    def clash(x: str) -> bool:
+        parts = [y for y in re.split(r"(?<=[.?!])\s+", x) if y.strip()]
+        if any(_skeleton(y) in seen for y in parts):
+            return True
+        if re.sub(r"\s+", "", x)[-7:] in tails:
+            return True
+        return _skeleton(parts[0])[:14] in heads if parts else False
+    fresh = [x for x in cands if not clash(x[1])]
+    pool = fresh or cands
+    rare = [x for x in pool if x[0] in ("H03", "H06")]
+    plain = [x for x in pool if x[0] not in ("H03", "H06")]
     pool = plain or rare
     return pool[int(d[-2:]) % len(pool)]
+
+
+# ⓘ 전환 장치 — 플레이북 §5-3. 같은 자리를 매일 같은 문장으로 열면 그게 AI 티다.
+#    JJ 2026-09-14: "그냥 금요일에 썼던 형식을 쓰지 말라고."
+#    최근 3편에 쓴 id 는 빼고 고른다. 쓴 id 는 devices 로 남긴다.
+def _recent_devices(d: str, n: int = 3) -> set[str]:
+    from _common import DATA, load_json
+    cur, out, seen = datetime.strptime(d, "%Y%m%d"), set(), 0
+    for i in range(1, 15):
+        c = load_json(DATA / (cur - timedelta(days=i)).strftime("%Y%m%d") / "computed_kr.json")
+        if c and c.get("devices"):
+            out |= set(c["devices"])
+            seen += 1
+            if seen >= n:
+                break
+    return out
+
+
+def _pick_device(d: str, used: set[str], recent: set[str], cands: list[tuple[str, str]]) -> tuple[str, str]:
+    fresh = [x for x in cands if x[0] not in recent and x[0] not in used] or             [x for x in cands if x[0] not in used] or cands
+    pick = fresh[int(d[-2:]) % len(fresh)]
+    used.add(pick[0])
+    return pick
 
 
 # ⓘ 조심할 것 — JJ 2026-09-14: "그러면 투자자들은 어떤걸 조심해야할까? 어떻게 행동을 해야할까?"
@@ -457,6 +509,8 @@ def build_aplus(c: dict) -> dict:
     # s0: 주인공 숫자 → 지수 대비 → 질문(첫 화면 둘째 줄과 같은 질문을 소리로)
     ask = "그럼 오늘 누가 샀을까요?" if sold else "그럼 오늘 누가 팔았을까요?"   # '오늘'을 넣어 그날의 이야기임을 못 박는다(JJ 2026-09-13)
     # 첫 물음표는 5초 안쪽(SCRIPT_PLAYBOOK 4-1). '약'과 '순매도했습니다'를 빼 앞 두 문장을 40자 밑으로 줄인다.
+    _dev_used: set[str] = set()
+    _dev_recent = _recent_devices(d)
     _cb = c.get("callback")
     _amt_bare = won(abs(amount)).replace("약 ", "")
     # 반대 방향으로 간 가장 큰 주체(H02 조건)
@@ -465,8 +519,13 @@ def build_aplus(c: dict) -> dict:
     _opp = max([(n, v) for n, v in _others if (v > 0) == sold and abs(v) >= 3000], key=lambda x: abs(x[1]), default=(None, None))
     _opp_amt = obj(won(abs(_opp[1])).replace("약 ", "")) if _opp[0] else ""
     _others_big = (inv.get("others") or 0) >= 8000
+    # H07 재료: 오후 2시 잠정치와 마감이 크게 갈린 날(같은 방향으로 3배 이상 불었을 때)
+    _snap = ((c.get("intraday") or {}).get("snap") or {}).get(NAME_KEY[P])
+    _gap = None
+    if _snap is not None and (_snap < 0) == sold and abs(_snap) >= 100 and abs(amount) >= 3 * abs(_snap):
+        _gap = (won(abs(_snap)).replace("약 ", "") + "도", _mult_ko(abs(amount - _snap) / abs(_snap)))
     hook_id, s0 = _pick_hook(d, _hook_candidates(P, _amt_bare, sold, ct, _cb,
-                                                 _opp[0] or "", _opp_amt, _others_big, ask))
+                                                 _opp[0] or "", _opp_amt, _others_big, ask, _gap))
     _took = hook_id == "H03"
 
     # s2: 답 — 가장 많이 산(판) 쪽 → 나머지 → 같은 편 → 오후 2시→마감
@@ -496,7 +555,13 @@ def build_aplus(c: dict) -> dict:
                 parts2.append(f"{obj(won(abs(v0)))} {'샀' if v0 > 0 else '팔았'}습니다.")
             parts2 += _others_link(c, v0)
         else:
-            parts2.append(f"가장 많이 {verb_opp} 쪽은 {n0}입니다.")
+            _rest = [x for x, _ in opp[1:2]] + [x for x, _ in same[:1]]
+            _cands = [("D01", f"가장 많이 {verb_opp} 쪽은 {n0}입니다."),
+                      ("T08", f"그럼 이 물량을 받아 간 곳은 어디였을까요? {n0}입니다." if sold
+                              else f"그럼 이 물량을 내놓은 곳은 어디였을까요? {n0}입니다."),
+                      ("T09", f"{josa(_rest[0])} 아니었습니다. {n0}입니다." if _rest else f"{n0}입니다.")]
+            _id, _line = _pick_device(d, _dev_used, _dev_recent, _cands)
+            parts2.append(_line)
             st0 = _st(n0, v0)
             parts2.append(f"{obj(won(abs(v0)))} {word_opp}해, {days_ko(st0)} {'사들였' if v0 > 0 else '팔았'}습니다." if st0
                           else f"{obj(won(abs(v0)))} {'샀' if v0 > 0 else '팔았'}습니다.")
@@ -507,7 +572,7 @@ def build_aplus(c: dict) -> dict:
     P_eun = P + ("은" if _bat(P) else "는")
     word_P = "순매도" if sold else "순매수"
     verb_P = "팔았" if sold else "샀"
-    if a is not None and abs(a) >= 100 and abs(amount - a) >= 1000 and ((a < 0) == (amount < 0) or abs(a) >= 300):
+    if hook_id != "H07" and a is not None and abs(a) >= 100 and abs(amount - a) >= 1000 and ((a < 0) == (amount < 0) or abs(a) >= 300):
         if (a < 0) == (amount < 0):
             grew = abs(amount) > abs(a)
             if grew and abs(a) <= 0.6 * abs(amount):
@@ -588,7 +653,11 @@ def build_aplus(c: dict) -> dict:
         m = top_mv or max(moves, key=lambda x: abs(x.get("t") or 0))
         t, y, th = m.get("t") or 0, m.get("y"), m["theme"]
         if t < 0:
-            s3 = f"그럼 가장 큰 돈이 빠진 곳은 어디였을까요? {th}입니다."
+            _id, s3 = _pick_device(d, _dev_used, _dev_recent, [
+                ("D02", f"그럼 가장 큰 돈이 빠진 곳은 어디였을까요? {th}입니다."),
+                ("T03", f"지수만 보면 하루치 조정입니다. 그런데 {ro(th)} 한 업종에서만 이만큼이 빠졌습니다."),
+                ("T05", f"오늘 빠진 돈은 여러 업종에 고르게 흩어진 게 아닙니다. {th} 한 곳입니다."),
+            ])
             if y is not None and y < 0 and abs(t) > abs(y):
                 s3 += f" 외국인과 기관이 합쳐 판 돈이 전날 {won(abs(y))}에서 {ro(won(abs(t)))} 커졌습니다."
             elif y is not None and y > 0:
@@ -598,11 +667,15 @@ def build_aplus(c: dict) -> dict:
             # 재정의 한 줄 — 이 테마가 외국인+기관 순매도의 대부분이면 '넓게 팔린 게 아니라'로 뜻을 준다.
             _fi, _in = inv.get("foreign") or 0, inv.get("inst") or 0
             _tot = abs(min(_fi, 0) + min(_in, 0))
-            if _tot and abs(t) / _tot >= 0.7:
+            if _tot and abs(t) / _tot >= 0.7 and _id != "T05":   # 여는 문장이 이미 재정의면 같은 말을 두 번 하지 않는다
                 s3 += " 넓게 팔린 게 아니라, 한 업종에 몰린 하루였다는 뜻입니다."
             names = []
         else:
-            s3 = f"그럼 가장 큰 돈이 들어간 곳은 어디였을까요? {th}입니다."
+            _id, s3 = _pick_device(d, _dev_used, _dev_recent, [
+                ("D03", f"그럼 가장 큰 돈이 들어간 곳은 어디였을까요? {th}입니다."),
+                ("T08", f"그럼 이 돈은 어디로 갔을까요? {th}입니다."),
+                ("T05", f"오늘 들어온 돈은 넓게 퍼지지 않았습니다. {th} 한 곳입니다."),
+            ])
             s3 += f" 외국인과 기관을 합쳐 {subj(won(t))} 들어왔습니다."
             if (m.get("state") or "").startswith("쌓임") and (m.get("streak") or 0) >= 2:
                 s3 += f" {days_ko(m['streak'])} 쌓이고 있습니다."
@@ -699,5 +772,5 @@ def build_aplus(c: dict) -> dict:
         "protagonist": {"name": P, "amount": amount, "sold": sold}, "contrast": ct,
         "check": {"verdict": cbv, "record": c.get("ledger_stats"), "next_q": next_q, "next_day": f"{nd.month}/{nd.day}"},
         "next_q": next_q, "s2_marks": s2_marks, "event_used": bool(s4), "others_top": _others_top(c),
-        "weekend_watch": wk_rows, "hook_id": hook_id, "caution_id": "C1" if _cau else None,
+        "weekend_watch": wk_rows, "hook_id": hook_id, "caution_id": "C1" if _cau else None, "devices": sorted(_dev_used),
     }

@@ -301,7 +301,7 @@ export const S2V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
           const sTxt = s && Math.abs(s.streak) >= 2 && (s.streak > 0) === ((b.v ?? 0) > 0) ? `${Math.abs(s.streak)}일째 ${s.streak > 0 ? "순매수" : "순매도"}` : "";
           const s14 = snapAll[KEY[b.name] ?? ""];
           return (
-            <Card key={b.name} color={k % 2 ? GREEN : colOf(b.v)} style={pop(b0 + k * 0.3)}>
+            <Card key={b.name} color={k % 2 ? GREEN : colOf(b.v)} style={pop((() => { const i = idxOf((x) => x.includes(b.name)); return i >= 0 ? list[i].start : b0 + k * 0.3; })())}>
               <div style={{ fontSize: 60, fontWeight: 900 }}>{b.name}</div>
               <div style={{ fontSize: 124, fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1.05, marginTop: 4 }}><Grad tone={toneOf(b.v)}>{sgn(b.v!)}{short(b.v!)}</Grad></div>
               <div style={{ fontSize: 40, fontWeight: 700, color: "#E6E6E3", marginTop: 8 }}>
@@ -319,7 +319,7 @@ export const S2V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
 /* ───────── s3: 질문 → 테마 공개 + 전날→오늘 카드 ───────── */
 export const S3V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
   const a = ap(p);
-  const { t } = useT();
+  const { f, fps, t } = useT();          // 훅은 조기 return 앞에서 한 번만(React #310 방지)
   const pop = usePop();
   const lead = a.s3_story?.lead;
   const { list, i: ci, cur } = curCue(cues, t);
@@ -327,8 +327,21 @@ export const S3V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   const mv = p.moves.find((m) => m.theme === lead.theme);
   const tone = toneOf(lead.t);
   const Bg = lead.theme === "반도체" ? BgChip : BgMarket;
-  const rIdx = list.findIndex((c) => c.text.trim().replace(/\s/g, "") === `${lead.theme}입니다.`);
-  const isQ = cur && /어디였을까요|어디로 갔을까요/.test(cur.text) && (rIdx < 0 || ci < rIdx);
+  // 공개 큐: "반도체입니다." / "반도체 한 곳입니다." 둘 다(여는 문장이 T05·T08·D02 로 돌아가므로)
+  const rIdx = list.findIndex((c) => c.text.includes(lead.theme) && /입니다\.?$/.test(c.text.trim()));
+  // 여는 문장(공개 전) — 질문이든 재정의든 크게 띄운다. 그 전엔 화면이 비어 있었다
+  const isQ = cur && (rIdx < 0 || ci < rIdx);
+  // 끝의 다리 질문 — 카드를 내리고 질문만 남긴다(S5V4 마무리와 같은 리셋)
+  const bridge = rIdx >= 0 && ci > rIdx && cur && /\?$/.test(cur.text.trim()) ? cur : undefined;
+  if (bridge) {
+    const q = bridge.text.replace(/^그럼\s*/, "").replace(/요\?$/, "?");
+    return (
+      <Shell p={p} cues={cues} hideSub bg={<Bg tone={tone} dim={0.5} />}>
+        <div style={{ position: "absolute", left: 64, right: 64, top: 360, ...pop(bridge.start, 30), fontSize: 108, fontWeight: 900, lineHeight: 1.18, letterSpacing: "-0.04em",
+          color: YEL, wordBreak: "keep-all", textShadow: "0 0 30px rgba(255,216,77,0.35), 0 6px 26px rgba(0,0,0,0.8)" }}>{q}</div>
+      </Shell>
+    );
+  }
   if (isQ && cur) {
     const q = cur.text.replace(/^그럼\s*/, "").replace(/요\?$/, "?");
     return (
@@ -339,6 +352,13 @@ export const S3V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
     );
   }
   const r0 = rIdx >= 0 ? list[rIdx].start : 0;
+  const cmpIdx = list.findIndex((c, k) => k > rIdx && /전날|합쳐|합친|빠졌|들어왔|커졌/.test(c.text));
+  const c0 = cmpIdx >= 0 ? list[cmpIdx].start : r0 + 0.4;
+  const c1 = cmpIdx >= 0 ? list[cmpIdx].end : c0 + 3;
+  const nmIdx = lead.names && lead.names.length ? list.findIndex((c, k) => k > rIdx && c.text.includes(lead.names[0])) : -1;
+  const n0 = nmIdx >= 0 ? list[nmIdx].start : c0 + 0.6;
+  const kk = interpolate(f, [(c0 + 0.3) * fps, Math.max((c0 + 0.31) * fps, (c1 - 0.2) * fps)], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const nowV = mv && mv.y != null ? mv.y + (lead.t - mv.y) * kk : lead.t;
   return (
     <Shell p={p} cues={cues} bg={<Bg tone={tone} dim={0.25} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 240 }}>
@@ -346,16 +366,16 @@ export const S3V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
         <div style={{ ...pop(r0, 34), fontSize: 210, fontWeight: 900, lineHeight: 1.02, letterSpacing: "-0.05em", marginTop: 8 }}><Grad tone={tone}>{lead.theme}</Grad></div>
       </div>
       <div style={{ position: "absolute", left: 64, right: 64, top: 1010 }}>
-        <Card color={tone === "down" ? BLUE : RED} style={pop(r0 + 0.4)}>
+        <Card color={tone === "down" ? BLUE : RED} style={pop(c0)}>
           <div style={{ fontSize: 44, fontWeight: 800 }}>{lead.theme} {lead.t < 0 ? "순매도" : "순매수"} <span style={{ fontSize: 32, color: "#B8C2D6" }}>(외국인+기관 합산)</span></div>
           {mv && mv.y != null ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 20 }}>
               <div><div style={{ fontSize: 36, color: "#B8C2D6", fontWeight: 700 }}>전날</div><div style={{ fontSize: 76, fontWeight: 900, color: colOf(mv.y) }}>{sgn(mv.y)}{short(mv.y)}</div></div>
               <div style={{ fontSize: 70, color: "#E6E6E3" }}>→</div>
-              <div style={{ textAlign: "right" }}><div style={{ fontSize: 36, color: "#B8C2D6", fontWeight: 700 }}>오늘</div><div style={{ fontSize: 96, fontWeight: 900 }}><Grad tone={tone}>{sgn(lead.t)}{short(lead.t)}</Grad></div></div>
+              <div style={{ textAlign: "right" }}><div style={{ fontSize: 36, color: "#B8C2D6", fontWeight: 700 }}>오늘</div><div style={{ fontSize: 96, fontWeight: 900 }}><Grad tone={tone}>{sgn(lead.t)}{short(nowV)}</Grad></div></div>
             </div>
           ) : <div style={{ fontSize: 96, fontWeight: 900, marginTop: 12 }}><Grad tone={tone}>{sgn(lead.t)}{short(lead.t)}</Grad></div>}
-          {lead.names && lead.names.length ? <div style={{ fontSize: 40, fontWeight: 700, marginTop: 16, color: "#E6E6E3" }}>{lead.names.join(" · ")}</div> : null}
+          {lead.names && lead.names.length ? <div style={{ fontSize: 40, fontWeight: 700, marginTop: 16, color: "#E6E6E3", ...pop(n0) }}>{lead.names.join(" · ")}</div> : null}
         </Card>
       </div>
     </Shell>
