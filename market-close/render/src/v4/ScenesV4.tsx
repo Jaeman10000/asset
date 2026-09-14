@@ -370,7 +370,7 @@ type Ev = { label: string; group?: string; stocks?: EvStock[] } | null | undefin
 export const S4V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
   const pop = usePop();
   const ev = (p as unknown as { event?: Ev }).event;
-  const st = (ev?.stocks ?? []).slice(0, 6);
+  const st = (ev?.stocks ?? []).slice(0, 6);   // 6장까지 — 그 아래는 화면을 넘긴다
   const avg = st.length ? st.reduce((a, x) => a + x.pct, 0) / st.length : 0;
   const cl = cues ?? [];
   // 말에 맞춰 연다: 첫 큐에 무슨 일인지, '평균'이 나오는 큐에 숫자와 종목 줄.
@@ -395,9 +395,9 @@ export const S4V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
           <div style={{ position: "absolute", left: 64, right: 64, top: 1010 }}>
             {st.map((x, i) => (
               <div key={x.name} style={{ ...pop(t1 + 0.35 + i * 0.28) }}>
-                <Card color={colOf(x.pct)} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18 }}>
-                  <span style={{ fontSize: 62, fontWeight: 800, letterSpacing: "-0.02em" }}>{x.name}</span>
-                  <span style={{ fontSize: 72, fontWeight: 900, color: colOf(x.pct), letterSpacing: "-0.03em" }}>{sgn(x.pct)}{Math.abs(x.pct).toFixed(1)}%</span>
+                <Card color={colOf(x.pct)} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: st.length > 4 ? 10 : 18, padding: st.length > 4 ? "14px 26px" : undefined }}>
+                  <span style={{ fontSize: st.length > 4 ? 50 : 62, fontWeight: 800, letterSpacing: "-0.02em" }}>{x.name}</span>
+                  <span style={{ fontSize: st.length > 4 ? 58 : 72, fontWeight: 900, color: colOf(x.pct), letterSpacing: "-0.03em" }}>{sgn(x.pct)}{Math.abs(x.pct).toFixed(1)}%</span>
                 </Card>
               </div>
             ))}

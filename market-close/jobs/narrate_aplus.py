@@ -99,7 +99,7 @@ def next_trading_day(d: str) -> datetime:
     return t
 
 
-def callback_v3(cb: dict | None, d: str = "", also: list[str] | None = None) -> str:
+def callback_v3(cb: dict | None, d: str = "", also: list[str] | None = None, took: bool = False) -> str:
     """'어제 {예고 문장} 보자고 했죠. 결과는 끊겼습니다. 오히려 …' — 전날 영상이 한 약속을 그 문장 그대로 불러온다."""
     if not cb:
         return ""
@@ -109,6 +109,11 @@ def callback_v3(cb: dict | None, d: str = "", also: list[str] | None = None) -> 
     when = "어제"
     if d and cb.get("prev_date"):
         when = _day_word(d, datetime.strptime(cb["prev_date"], "%Y%m%d"), past=True)
+    if took:
+        # 훅이 이미 약속을 부르고 사실까지 줬다 — 여기서 또 부르면 메아리가 된다. 확인만 짧게 하고 뜻으로 넘어간다.
+        n = chk.get("n")
+        hit = f"오늘 그 {days_ko(n)}가 채워졌습니다." if (ok and n) else ("오늘도 이어졌습니다." if ok else "오늘은 끊겼습니다.")
+        return (f"{_and(list(also))}도 같은 걸 짚었는데, {hit}" if also else hit)
     if also and q.endswith("는지"):
         # 금요일 편과 주말편이 같은 걸 짚었으면 한 문장으로 합친다 — 따로 말하면 목록이 된다
         head = f"{when}에도, {_and(list(also))}에서도 {q} 보자고 했죠."
@@ -271,27 +276,56 @@ def _q_spoken(cb: dict | None) -> str:
     return ""
 
 
+def _q_noun(cb: dict | None) -> str:
+    """다리 문장에서 쓰는 명사구. "외국인 순매도" / "금융 순매수" / "반도체 순매도"."""
+    chk = (cb or {}).get("check") or {}
+    kind = chk.get("kind")
+    if kind == "inv_continue":
+        return f"{chk.get('name') or ''} {'순매도' if (chk.get('sign') or -1) < 0 else '순매수'}".strip()
+    if kind in ("theme_continue",):
+        return f"{chk.get('theme') or ''} 순매수".strip()
+    if kind in ("theme_sell_stop", "theme_sell_cont"):
+        return f"{chk.get('theme') or ''} 순매도".strip()
+    return ""
+
+
 # ⓘ 훅 — 사실 두 개를 한 호흡으로 꿴다. 홑문장을 나란히 세우면 사람 말이 아니라 목록이 된다
 #    (JJ 2026-09-14: "이딴식으로 뚝뚝 끊기게 대본짜지 말라고 했을텐데? 무조건 ai라고 생각한다니까").
 #    월요일 신호도 별개 문장으로 붙이지 않는다 — 첫 문장 앞머리에 녹인다.
-def _hook_body(d: str, P: str, amt: str, sold: bool, ct: dict, monday: bool) -> str:
+def _hook_body(d: str, P: str, amt: str, sold: bool, ct: dict, when: str = "", q: str = "") -> str:
+    """when·q 가 있으면 지난 약속을 '이름 그대로' 불러 준다.
+
+    "주말에 보라고 한 것" 같은 대명사로 부르면 처음 본 사람은 뭘 보라고 했는지 알 수 없고
+    (JJ 2026-09-14: "이 영상을 처음본 사람들은 이게 뭐야? 하지 않을까?"), 답하는 척만 하고
+    아무것도 주지 않는 문장이 된다. 약속 내용을 그대로 말하면 같은 문장이 두 사람에게 다르게 읽힌다 —
+    돌아온 사람에겐 회수고, 처음 온 사람에겐 그냥 오늘의 사실이다.
+    훅은 사실(며칠째·금액·지수)까지만 준다. '나흘이면 하루 사정으로 보기 어렵다'는 뜻은 s5 몫이다."""
     ctp = (ct.get("text") or "").replace("그런데 ", "", 1)
     verb_past = "팔았" if sold else "샀"
     verb_ing = "파는" if sold else "사는"
+    if when and q:
+        forms = [f"{when}에 {q} 보기로 했는데, {amt} {verb_past}고 {ctp}",
+                 f"{subj(P)} {amt} {verb_ing} 사이 {ctp} {when}에 {q} 보자고 한 그날입니다."]
+        return forms[int(d[-2:]) % len(forms)]
     forms = [f"{subj(P)} {amt} {verb_ing} 사이, {ctp}",
              f"{subj(P)} {amt} {verb_past}고, {ctp}"]
     if ct.get("opposite"):        # 주체와 지수가 반대로 간 날은 역접을 어미로 처리한다(문장을 쪼개지 않는다)
         forms.insert(0, f"{subj(P)} {amt} {verb_past}는데, {ctp}")
-    body = forms[int(d[-2:]) % len(forms)]
-    return body
+    return forms[int(d[-2:]) % len(forms)]
 
 
 # ⓘ 다리 — 장면이 끝날 때 다음을 궁금하게 만드는 한 줄. 지금까지 s3 는 답만 하고 닫혀 있어
 #    거기서 사슬이 끊겼다(2026-09-14 점검). 예측을 시키지 않는다 — 우리가 한 약속으로 넘긴다.
-BRIDGE_CB = [
-    "그럼 우리가 보자고 한 건 어떻게 됐을까요?",
-    "그럼 지난번에 확인하기로 한 건 어떻게 됐을까요?",
-    "그럼 우리가 짚어 둔 건 오늘 어떻게 됐을까요?",
+# 대명사로 부르지 않는다 — "우리가 보자고 한 건"은 처음 본 사람에게 빈칸이다.
+def _bridge_cb(when: str, noun: str) -> list[str]:
+    return [f"그럼 {when}에 보자고 한 {noun}는 어떻게 됐을까요?",
+            f"그럼 {when}에 확인하기로 한 {noun}는 오늘 어떻게 됐을까요?"]
+
+
+# 훅이 이미 사실을 회수한 날은 같은 질문을 두 번 울리지 않는다 — 판단 기준 쪽으로 넘긴다
+BRIDGE_TOOK = [
+    "그럼 이 흐름, 어디까지 봐야 방향을 잡았다고 할 수 있을까요?",
+    "그럼 며칠째까지 이어져야 하루 사정이 아니라고 볼 수 있을까요?",
 ]
 BRIDGE_NO = [
     "그럼 이 돈은 오늘 하루짜리였을까요?",
@@ -300,8 +334,14 @@ BRIDGE_NO = [
 ]
 
 
-def _bridge(d: str, has_cb: bool) -> str:
-    bank = BRIDGE_CB if has_cb else BRIDGE_NO
+def _bridge(d: str, cb: dict | None, when: str = "", took: bool = False) -> str:
+    noun = _q_noun(cb)
+    if cb and noun and when:
+        bank = BRIDGE_TOOK if took else _bridge_cb(when, noun)
+    elif cb:
+        bank = BRIDGE_TOOK
+    else:
+        bank = BRIDGE_NO
     return bank[int(d[-2:]) % len(bank)]
 
 
@@ -358,8 +398,13 @@ def build_aplus(c: dict) -> dict:
         _wk_n = len(weekend_watch.collect(d))
     except Exception:
         _wk_n = 0
+    _cb = c.get("callback")
+    # 지난 약속을 훅에서 부르는 건 주말을 건너온 날(월요일)만. 매일 부르면 그게 또 고정 틀이 된다.
+    _hk_when = _day_word(d, datetime.strptime(_cb["prev_date"], "%Y%m%d"), past=True) if (_wk_n and _cb and _cb.get("prev_date")) else ""
+    _hk_q = _q_spoken(_cb) if _hk_when else ""
+    _took = bool(_hk_when and _hk_q)
     _amt_o = obj(won(abs(amount)).replace("약 ", ""))
-    s0 = f"{_hook_body(d, P, _amt_o, sold, ct, bool(_wk_n))} {ask}"
+    s0 = f"{_hook_body(d, P, _amt_o, sold, ct, _hk_when, _hk_q)} {ask}"
 
     # s2: 답 — 가장 많이 산(판) 쪽 → 나머지 → 같은 편 → 오후 2시→마감
     parties = [(n, inv.get(key)) for n, key in NAME_KEY.items() if n != P and inv.get(key) is not None]
@@ -527,7 +572,7 @@ def build_aplus(c: dict) -> dict:
     except Exception:                              # 주말 파일이 없거나 모양이 달라도 그날 대본은 나가야 한다
         wk_also, wk_said, wk_rows = [], "", []
     parts5 = []
-    cbs = callback_v3(cb, d, wk_also)          # 같은 걸 짚은 주말편은 머리에 합쳐 한 문장으로 말한다
+    cbs = callback_v3(cb, d, wk_also, _took)   # 훅이 이미 불렀으면 짧게, 아니면 머리에 합쳐 한 문장으로
     if cbs:
         parts5.append(cbs)
     if wk_said:
@@ -563,7 +608,8 @@ def build_aplus(c: dict) -> dict:
     s2_title = f"{P} {_won_screen(amount, True)},<br>{'·'.join(n for n, _ in opp) or '—'}{'이' if opp else ''} {'받았다' if sold else '팔았다'}"
 
     if s3:                                   # s3 는 답까지 하고 닫혀 있었다 — 다음 장면으로 넘기는 한 줄을 붙인다
-        s3 = s3.rstrip() + " " + _bridge(d, bool(cb))
+        _bw = _day_word(d, datetime.strptime(cb["prev_date"], "%Y%m%d"), past=True) if (cb and cb.get("prev_date")) else ""
+        s3 = s3.rstrip() + " " + _bridge(d, cb, _bw, _took)
     scenes = [{"id": "s0", "min": 4.0, "tts": s0, "sub": ""},
               {"id": "s2", "min": 8.0, "tts": s2, "sub": s2}]
     if s3:
