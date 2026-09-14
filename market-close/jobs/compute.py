@@ -588,6 +588,7 @@ def compute(d: str) -> dict:
         "us_link": us_link, "inv_streak": inv_streak, "next_label": next_label, "hook": N.get("hook"), "fx_said": bool(N.get("fx_said")) and not fx_dropped, "intraday": intraday,
         "upload_times": _upload_times(), "threads_text": threads_text,
         "callback": callback, "bonding": N.get("bonding"), "hook_parts": N.get("hook_parts"), "inv_krx": inv_krx, "s3_story": N.get("s3_story"), "event": event,
+        "hook_id": N.get("hook_id"), "weekend_watch": N.get("weekend_watch"),
         "news_items": (news_kr.get("items") or [])[:20], "glossary": gloss,
         "format": "aplus" if aplus else "legacy",
         "protagonist": (aplus or {}).get("protagonist"), "contrast": (aplus or {}).get("contrast"),
