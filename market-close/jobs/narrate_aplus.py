@@ -342,6 +342,41 @@ def _pick_hook(d: str, cands: list[tuple[str, str]]) -> tuple[str, str]:
     return pool[int(d[-2:]) % len(pool)]
 
 
+# ⓘ 조심할 것 — JJ 2026-09-14: "그러면 투자자들은 어떤걸 조심해야할까? 어떻게 행동을 해야할까?"
+#    '어떻게 행동하라'는 우리가 못 한다(가진 건 수급 며칠치뿐이다). 대신 '무엇을 잘못 읽기 쉬운가'까지 간다.
+#    후보 12개를 금지선 기준으로 적대 검증해 8개가 통과했고, 그중 JJ가 고른 한 줄이다.
+#    끝을 '다른 숫자입니다'로 둔 이유: 바로 뒤 ⑤가 "…이어지는지입니다"라 어미가 겹치면 기계 티가 난다.
+def _caution(d: str, P: str, sold: bool, inv: dict, streak: dict) -> str:
+    if not sold:
+        return ""                                   # 주인공이 산 날엔 이 문장이 성립하지 않는다
+    st = (streak.get(NAME_KEY[P]) or {}).get("streak") or 0
+    if st >= 0 or abs(st) < 2:
+        return ""                                   # 판 쪽이 이틀 이상 이어진 날에만
+    buyers = [(n, inv.get(k)) for n, k in NAME_KEY.items() if (inv.get(k) or 0) > 0]
+    if not buyers:
+        return ""
+    top = max(buyers, key=lambda x: x[1])
+    if top[0] == P:
+        return ""
+    if _used_recently(d, "caution_id", "C1", 3):     # 조건이 며칠 연달아 참일 수 있다 — 주 1~2회로 묶는다
+        return ""
+    return f"오늘 {top[0]} 순매수가 가장 컸어도 {P} 순매도가 멈춘 건 아니었고, 하루 크기와 며칠째는 다른 숫자입니다."
+
+
+def _used_recently(d: str, key: str, val: str, n: int) -> bool:
+    from _common import DATA, load_json
+    cur = datetime.strptime(d, "%Y%m%d")
+    for i in range(1, n * 3):
+        c = load_json(DATA / (cur - timedelta(days=i)).strftime("%Y%m%d") / "computed_kr.json")
+        if c and c.get(key):
+            if c[key] == val:
+                return True
+            n -= 1
+            if n <= 0:
+                return False
+    return False
+
+
 # ⓘ 다리 — 장면이 끝날 때 다음을 궁금하게 만드는 한 줄. 지금까지 s3 는 답만 하고 닫혀 있어
 #    거기서 사슬이 끊겼다(2026-09-14 점검). 예측을 시키지 않는다 — 우리가 한 약속으로 넘긴다.
 # 대명사로 부르지 않는다 — "우리가 보자고 한 건"은 처음 본 사람에게 빈칸이다.
@@ -606,6 +641,9 @@ def build_aplus(c: dict) -> dict:
     if wk_said:
         parts5.append(wk_said)
     parts5 += _why_check(cb)                       # 왜 이걸 확인하는지 + 며칠째부터 흐름으로 보는지(판단 기준)
+    _cau = _caution(d, P, sold, inv, streak)       # 무엇을 잘못 읽기 쉬운가
+    if _cau:
+        parts5.append(_cau)
     # 전적은 화면(S5V4)이 '확인 N번 · 이어짐 K · 끊김 M'으로 그린다. 말로 또 읽으면 3.3초를 같은 말에 쓴다.
     _ = record_line(c.get("ledger_stats"))
     key = NAME_KEY[P]
@@ -661,5 +699,5 @@ def build_aplus(c: dict) -> dict:
         "protagonist": {"name": P, "amount": amount, "sold": sold}, "contrast": ct,
         "check": {"verdict": cbv, "record": c.get("ledger_stats"), "next_q": next_q, "next_day": f"{nd.month}/{nd.day}"},
         "next_q": next_q, "s2_marks": s2_marks, "event_used": bool(s4), "others_top": _others_top(c),
-        "weekend_watch": wk_rows, "hook_id": hook_id,
+        "weekend_watch": wk_rows, "hook_id": hook_id, "caution_id": "C1" if _cau else None,
     }
