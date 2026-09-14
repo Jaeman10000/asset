@@ -248,6 +248,29 @@ def _why_check(cb: dict | None) -> list[str]:
     return out
 
 
+# 지난 편 약속을 훅에서 쓸 수 있게 사람 말로 푼다.
+# 저장된 형태("외국인 순매도가 나흘째 이어지는지")는 장부용이라 그대로 읽으면 딱딱하다.
+# check 에 구조가 남아 있으므로 문자열을 정규식으로 뜯지 않고 거기서 만든다.
+def _q_spoken(cb: dict | None) -> str:
+    chk = (cb or {}).get("check") or {}
+    kind, n = chk.get("kind"), chk.get("n")
+    dk = days_ko(n) if n else ""
+    if kind == "inv_continue":
+        who = chk.get("name") or ""
+        act = "파는지" if (chk.get("sign") or -1) < 0 else "사는지"
+        return " ".join(x for x in (subj(who), dk, act) if x)
+    if kind == "theme_continue":
+        th = chk.get("theme") or ""
+        return " ".join(x for x in (f"{th}에", dk, "돈이 들어오는지") if x)
+    if kind == "theme_sell_stop":
+        return f"{chk.get('theme') or ''}에서 돈 빠지는 게 멈추는지".strip()
+    if kind == "theme_sell_cont":
+        return f"{chk.get('theme') or ''}에서 돈이 계속 빠지는지".strip()
+    if kind == "kosdaq_break":
+        return f"코스닥 {chk.get('n') or ''}일 연속 하락이 끊기는지".strip()
+    return ""
+
+
 # ⓘ 훅 — 사실 두 개를 한 호흡으로 꿴다. 홑문장을 나란히 세우면 사람 말이 아니라 목록이 된다
 #    (JJ 2026-09-14: "이딴식으로 뚝뚝 끊기게 대본짜지 말라고 했을텐데? 무조건 ai라고 생각한다니까").
 #    월요일 신호도 별개 문장으로 붙이지 않는다 — 첫 문장 앞머리에 녹인다.
@@ -260,9 +283,6 @@ def _hook_body(d: str, P: str, amt: str, sold: bool, ct: dict, monday: bool) -> 
     if ct.get("opposite"):        # 주체와 지수가 반대로 간 날은 역접을 어미로 처리한다(문장을 쪼개지 않는다)
         forms.insert(0, f"{subj(P)} {amt} {verb_past}는데, {ctp}")
     body = forms[int(d[-2:]) % len(forms)]
-    if monday:
-        # 앞머리를 붙이면 안쪽 쉼표가 겹친다 — '사이,' 형태 대신 '…했고' 형태를 쓴다
-        body = f"주말에 보라고 한 것부터 답하면, {subj(P)} {amt} {verb_past}고 {ctp}"
     return body
 
 
