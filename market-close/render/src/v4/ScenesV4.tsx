@@ -373,6 +373,14 @@ export const S5V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   const whyAt = find(/^하루 수급|^하루치 수급/, resAt + 4);
   const critAt = find(/^이틀은|^사흘째까지|이어졌다면/, whyAt + 3);
   const STEPS: [string, string][] = [["1일", "그날 사정"], ["2일", "아직 이르다"], ["3일~", "자리 잡는 흐름"]];
+  // 마무리 — 시청자에게 묻는 화면(2026-09-14). 댓글이 0인 이유는 우리가 한 번도 말을 걸지 않아서다.
+  const cl = cues ?? [];
+  const dIdx = cl.findIndex((x) => x.text.includes("댓글"));
+  // TTS가 '…보시겠습니까?' / '댓글로 남겨 주세요.' 로 끊으면 댓글 큐에는 질문이 없다 — 앞 큐에서 가져온다.
+  const stripD = (t: string) => t.replace(/\s*댓글(로|에)[^.?]*[.?]?\s*$/, "").trim();
+  const askCue = dIdx < 0 ? undefined : (stripD(cl[dIdx].text) ? cl[dIdx] : cl[dIdx - 1] ?? cl[dIdx]);
+  const askText = stripD(askCue?.text ?? "");
+  const ctaCue = cl.find((x) => x.text.includes("좋아요"));
   const wd = v?.when ?? "어제";
   const ask = v ? (v.kind === "theme_continue" ? [`${wd} ${v.theme} 순매수`, `${daysKo(v.n)} 이어질까?`]
     : v.kind === "inv_continue" ? [`${wd} ${v.theme} ${(v.sign ?? -1) > 0 ? "순매수" : "순매도"}`, `${daysKo(v.n)} 이어질까?`.trim()]
@@ -380,6 +388,31 @@ export const S5V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
   const rec = ck.record;
   const nq = ck.next_q.replace(/가 (\S+째 )?이어지는지$/, (_m, d1) => `가 ${d1 ?? ""}이어지는지`).replace(/\s+/g, " ");
   const okCol = v && v.ok ? GREEN : RED;
+  if (askCue && f >= askCue.start * fps) {
+    // 쌓인 카드를 다 내리고 질문만 남긴다. 사람들이 가장 많이 빠져나가는 자리라 화면을 한 번 리셋한다.
+    return (
+      <Shell p={p} cues={cues} hideSub bg={<BgMarket tone="neutral" dim={0.62} />}>
+        <div style={{ position: "absolute", left: 64, right: 64, top: 560, ...pop(askCue.start, 30) }}>
+          <div style={{ fontSize: 44, fontWeight: 800, color: "#CFD6E4", marginBottom: 22 }}>여러분 생각은</div>
+          <div style={{ fontSize: 92, fontWeight: 900, lineHeight: 1.18, letterSpacing: "-0.04em", color: YEL, wordBreak: "keep-all",
+            textShadow: "0 0 40px rgba(255,216,77,0.42), 0 6px 30px rgba(0,0,0,0.8)" }}>{askText}</div>
+          <div style={{ fontSize: 46, fontWeight: 800, color: "#FFFFFF", marginTop: 34 }}>댓글로 남겨 주세요</div>
+        </div>
+        {ctaCue && f >= ctaCue.start * fps ? (
+          <div style={{ position: "absolute", left: 64, right: 64, bottom: 300, ...pop(ctaCue.start, 22), display: "flex", gap: 18 }}>
+            <div style={{ flex: 1, textAlign: "center", border: `2.5px solid ${RED}`, borderRadius: 20, padding: "20px 10px", background: "rgba(255,77,77,0.14)" }}>
+              <div style={{ fontSize: 52, fontWeight: 900, color: RED }}>좋아요</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#CFD6E4", marginTop: 4 }}>도움이 됐다면</div>
+            </div>
+            <div style={{ flex: 1, textAlign: "center", border: `2.5px solid ${YEL}`, borderRadius: 20, padding: "20px 10px", background: "rgba(255,216,77,0.14)" }}>
+              <div style={{ fontSize: 52, fontWeight: 900, color: YEL }}>구독</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#CFD6E4", marginTop: 4 }}>내일 답이 궁금하면</div>
+            </div>
+          </div>
+        ) : null}
+      </Shell>
+    );
+  }
   return (
     <Shell p={p} cues={cues} bg={<BgMarket tone="neutral" dim={0.45} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 220 }}>

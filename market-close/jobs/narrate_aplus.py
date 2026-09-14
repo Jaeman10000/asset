@@ -223,12 +223,41 @@ def _why_check(cb: dict | None) -> list[str]:
     if kind not in ("theme_continue", "inv_continue"):
         return []
     where = "한 업종" if kind == "theme_continue" else "한 주체"
-    out = [f"하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 {where}에 돈이 자리를 잡는지 가리려는 겁니다."]
+    out = [f"하루 수급은 그날 사정일 수 있습니다. 이어지는지 보는 건 그 업종에 돈이 자리를 잡는지 보려는 겁니다."]
     if n <= 2:
         out.append("이틀은 아직 이릅니다. 사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다.")
     else:
         out.append(f"{days_ko(n)} 이어졌다면 하루 사정으로 보기는 어렵습니다.")
     return out
+
+
+# ② 시청자에게 던지는 질문 — 끝 멘트는 고정이라 그 앞에 둔다. 날짜를 씨앗으로 돌려 매일 같은 문장이 되지 않게.
+#    예측을 시키지 않는다("어디로 갈까요" 금지). 오늘 숫자를 어떻게 읽었는지만 묻는다.
+ASK_VIEWER = [
+    "오늘 이 돈의 움직임, 여러분은 어떻게 보셨습니까? 댓글로 남겨 주세요.",
+    "{th}에서 빠진 이 돈, 여러분은 어떻게 읽으셨습니까? 댓글에 적어 주세요.",
+    "오늘 숫자에서 가장 이상했던 건 무엇이었습니까? 댓글로 알려 주세요.",
+    "{P}의 오늘 움직임, 여러분은 어떻게 보셨습니까? 댓글로 남겨 주세요.",
+    "여러분이라면 {when} 무엇을 먼저 보시겠습니까? 댓글로 남겨 주세요.",
+    "오늘 여러분 눈에 걸린 숫자는 무엇이었습니까? 댓글로 알려 주세요.",
+]
+# ③ 좋아요 — 지금까지 아예 요청하지 않았다. 구독 동기(내일 답)는 그대로 두고 좋아요를 붙인다.
+LIKE_SUB = [
+    "그 답이 궁금하면 구독, 오늘 도움이 되셨다면 좋아요 눌러 주세요.",
+    "답이 궁금하면 구독, 도움이 되셨다면 좋아요 눌러 주세요.",
+    "내일 답을 같이 보시려면 구독, 오늘 도움이 되셨다면 좋아요 부탁드립니다.",
+]
+
+
+def _ask_viewer(d: str, P: str, th: str | None, when: str) -> str:
+    """그날 이야기에 붙은 질문 하나. th가 없으면 테마를 쓰는 변형은 건너뛴다."""
+    n = datetime.strptime(d, "%Y%m%d").toordinal()
+    cand = [x for x in ASK_VIEWER if "{th}" not in x or th]
+    return cand[n % len(cand)].format(P=P, th=th or "", when=when)
+
+
+def _like_sub(d: str) -> str:
+    return LIKE_SUB[datetime.strptime(d, "%Y%m%d").toordinal() % len(LIKE_SUB)]
 
 
 def build_aplus(c: dict) -> dict:
@@ -416,9 +445,8 @@ def build_aplus(c: dict) -> dict:
     if cbs:
         parts5.append(cbs)
     parts5 += _why_check(cb)                       # 왜 이걸 확인하는지 + 며칠째부터 흐름으로 보는지(판단 기준)
-    rec = record_line(c.get("ledger_stats"))
-    if rec:
-        parts5.append(rec)
+    # 전적은 화면(S5V4)이 '확인 N번 · 이어짐 K · 끊김 M'으로 그린다. 말로 또 읽으면 3.3초를 같은 말에 쓴다.
+    _ = record_line(c.get("ledger_stats"))
     key = NAME_KEY[P]
     st = (streak.get(key) or {}).get("streak") or 0
     if P in ("외국인", "기관") and st and (st < 0) == sold:
@@ -434,7 +462,9 @@ def build_aplus(c: dict) -> dict:
     when_x = f"{when_n}{'은' if when_n == '내일' else '엔'}"
     # 다음 확인은 '하나만'. 조건 분기('이어지면…끊기면…')는 뺀다 — 시청자가 들고 가는 게 판단이 아니라 숙제가 된다.
     parts5.append(f"{when_x} 하나만 봅니다. {P} {word}가 {days_ko(nxt_n) + ' ' if nxt_n else ''}이어지는지.")
-    parts5.append("그 답이 궁금하면 구독해 두세요.")      # 평일 구독 한 줄(26자 이내)
+    _th = (c.get("top_move") or {}).get("theme") or ((c.get("moves") or [{}])[0].get("theme"))
+    parts5.append(_ask_viewer(d, P, _th, when_x))          # ② 시청자에게 묻는다 — 댓글이 0인 이유
+    parts5.append(_like_sub(d))                            # ③ 좋아요 + 구독 한 줄
     s5 = " ".join(parts5)
 
     s6 = f"{_ieot(brand)} 국장 마감은 매일 오후 4시 30분에 올라옵니다."   # JJ 원래 멘트(2026-09-11 복원)

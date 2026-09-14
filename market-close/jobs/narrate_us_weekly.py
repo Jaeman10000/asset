@@ -1296,6 +1296,13 @@ def build_uw6(C: dict, N: dict, P: Pick) -> tuple[list, dict]:
             t2, n2, k2, e2 = cal[1]
             w2, day2 = _when_cal(e2)
             parts.append((3, P("uw6.cal2", CAL_2, when2="같은 날" if day2 and day2 == day1 else w2, ev2=n2)))
+    # ② 시청자에게 묻는다 ③ 좋아요 (2026-09-14 채널 분석)
+    parts.append((0, P("uw6.ask", ["이번 주 미국 숫자, 여러분은 어떻게 보셨습니까? 댓글로 남겨 주세요.",
+                                   "월요일에 여러분은 무엇을 먼저 보시겠습니까? 댓글로 남겨 주세요.",
+                                   "이번 주에서 가장 이상했던 숫자는 무엇이었습니까? 댓글로 알려 주세요."])))
+    parts.append((0, P("uw6.cta", ["도움이 되셨다면 좋아요, 다음 주가 궁금하면 구독 눌러 주세요.",
+                                   "이 정리가 도움이 됐다면 좋아요와 구독 부탁드립니다.",
+                                   "매주 이 자리에서 미국 숫자를 국장으로 옮겨 드립니다. 좋아요와 구독 눌러 주세요."])))
     parts.append((0, SIGN_OFF))
     return parts, {"type": typ, "sox": sd}
 

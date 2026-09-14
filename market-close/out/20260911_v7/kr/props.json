@@ -5662,9 +5662,5 @@
  "total_sec": 115.47,
  "total_frames": 3464,
  "fps": 30,
- "voice": "ko-KR-InJoonNeural",
- "bgm": {
-  "file": "bgm/bgm_B_dark_arp.wav",
-  "volume": 0.07
- }
+ "voice": "ko-KR-InJoonNeural"
 }
