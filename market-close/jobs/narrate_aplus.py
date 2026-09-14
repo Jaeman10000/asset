@@ -111,7 +111,7 @@ def callback_v3(cb: dict | None, d: str = "", also: list[str] | None = None) -> 
         when = _day_word(d, datetime.strptime(cb["prev_date"], "%Y%m%d"), past=True)
     if also and q.endswith("는지"):
         # 금요일 편과 주말편이 같은 걸 짚었으면 한 문장으로 합친다 — 따로 말하면 목록이 된다
-        head = f"{when}에도, {_and(list(also))}에서도 같은 걸 보자고 했죠. {q}."
+        head = f"{when}에도, {_and(list(also))}에서도 {q} 보자고 했죠."
     elif q.endswith("는지"):
         head = f"{when} {q} 보자고 했죠."
     else:
@@ -119,13 +119,13 @@ def callback_v3(cb: dict | None, d: str = "", also: list[str] | None = None) -> 
     if kind == "theme_continue":
         if ok:
             return f"{head} 오늘도 {subj(won(t))} 들어오며 이어졌습니다."
-        return f"{head} 결과는 끊겼습니다." + (f" 오히려 {subj(won(abs(t)))} 빠졌습니다." if t is not None and t < 0 else "")
+        return f"{head} 오늘은 끊겼습니다." if not (t is not None and t < 0) else f"{head} 오늘은 끊기고, 오히려 {subj(won(abs(t)))} 빠졌습니다."
     if kind == "inv_continue":
         word = "순매수" if chk["sign"] > 0 else "순매도"
         opp = "순매도" if chk["sign"] > 0 else "순매수"
         if ok:
             return f"{head} 오늘도 {obj(won(abs(t)))} {word}하며 이어졌습니다."
-        return f"{head} 결과는 끊겼습니다." + (f" 오히려 {obj(won(abs(t)))} {opp}했습니다." if t else "")
+        return f"{head} 오늘은 끊겼습니다." if not t else f"{head} 오늘은 끊기고, 오히려 {obj(won(abs(t)))} {opp}했습니다."
     if kind == "theme_sell_stop":
         return f"{head} " + (f"순매도는 멈췄습니다." + (f" 오히려 {subj(won(t))} 들어왔습니다." if t and t > 0 else "") if ok else "순매도는 오늘도 이어졌습니다.")
     if kind == "theme_sell_cont":
@@ -257,8 +257,8 @@ def _hook_body(d: str, P: str, amt: str, sold: bool, ct: dict, monday: bool) -> 
     verb_ing = "파는" if sold else "사는"
     forms = [f"{subj(P)} {amt} {verb_ing} 사이, {ctp}",
              f"{subj(P)} {amt} {verb_past}고, {ctp}"]
-    if ct.get("opposite"):        # 주체와 지수가 반대로 움직인 날에만 '그런데도'가 성립한다
-        forms.insert(0, f"{josa(P)} {amt} {verb_past}습니다. 그런데도 {ctp}")
+    if ct.get("opposite"):        # 주체와 지수가 반대로 간 날은 역접을 어미로 처리한다(문장을 쪼개지 않는다)
+        forms.insert(0, f"{subj(P)} {amt} {verb_past}는데, {ctp}")
     body = forms[int(d[-2:]) % len(forms)]
     if monday:
         # 앞머리를 붙이면 안쪽 쉼표가 겹친다 — '사이,' 형태 대신 '…했고' 형태를 쓴다
