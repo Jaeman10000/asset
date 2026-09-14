@@ -468,7 +468,10 @@ def build_aplus(c: dict) -> dict:
         spoken = ev.get("spoken") or label
         avg = ev.get("avg_pct") or 0.0
         grp = ev.get("group") or "관련주"
-        head = f"간밤엔 {org} 발표도 있었습니다. {obj(spoken)} 공개했고," if org else f"간밤엔 {label} 소식도 있었습니다."
+        # events.json 에 head 를 적어 두면 그 문장을 쓴다 — '간밤엔'이 늘 맞는 건 아니다(주말에 나온 일도 있다).
+        head = (ev.get("head") or "").strip()
+        if not head:
+            head = f"간밤엔 {org} 발표도 있었습니다. {obj(spoken)} 공개했고," if org else f"간밤엔 {label} 소식도 있었습니다."
         s4 = f"{head} {ro(grp)} 꼽힌 {len(st4)}종목은 평균 {pct(avg)} {'올랐' if avg > 0 else '내렸'}습니다."
 
     # s5: 어제 약속 확인 → 누적 → 다음 확인

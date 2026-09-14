@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { AbsoluteFill, Audio, Sequence, continueRender, delayRender, staticFile, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
 import { S0, S1, S2, S3, S4, S5, S6 } from "./Scenes";
 import { U0, U1, U2, U3, U4, U5 } from "./ScenesUS";
-import { S0V4, S2V4, S3V4, S5V4, S6V4 } from "./v4/ScenesV4";
+import { S0V4, S2V4, S3V4, S4V4, S5V4, S6V4 } from "./v4/ScenesV4";
 import { WEEKLY_COMP } from "./v4/WeeklyV4";
 import { USW_COMP } from "./v4/WeeklyUSV4";
 import { NOTICE_COMP } from "./v4/NoticeV4";
@@ -25,7 +25,7 @@ const comp: Record<string, React.FC<{ p: Props; sub: string; cues?: { start: num
   u0: U0 as never, u1: U1 as never, u2: U2 as never, u3: U3 as never, u4: U4 as never, u5: U5 as never };
 
 // v4 화면(2026-09-11 JJ 시안): A+ 형식이고 visual이 legacy가 아니면 s0·s2·s3·s5·s6을 v4로(s4 이슈는 기존 화면)
-const compV4: Record<string, React.FC<{ p: Props; sub: string; cues?: { start: number; end: number; text: string }[] }>> = { s0: S0V4, s2: S2V4, s3: S3V4, s5: S5V4, s6: S6V4 };
+const compV4: Record<string, React.FC<{ p: Props; sub: string; cues?: { start: number; end: number; text: string }[] }>> = { s0: S0V4, s2: S2V4, s3: S3V4, s4: S4V4, s5: S5V4, s6: S6V4 };
 
 /** 초보자용 용어 풀이 — 풀이 문장이 읽히는 동안만 자막 위에 표시 */
 const Glossary: React.FC<{ g: { term: string; text: string }; cues?: { start: number; end: number; text: string }[] }> = ({ g, cues }) => {

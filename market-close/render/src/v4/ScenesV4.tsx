@@ -363,6 +363,51 @@ export const S3V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
 };
 
 /* ───────── s5: 어제 확인 → 결과 카드 → 기록 → 내일 볼 것 카드 ───────── */
+/* ───────── s4: 이슈(있는 날만) — 무슨 일이 있었나 → 그 묶음이 오늘 어떻게 움직였나 ───────── */
+type EvStock = { name: string; pct: number; foreign?: number; inst?: number };
+type Ev = { label: string; group?: string; stocks?: EvStock[] } | null | undefined;
+
+export const S4V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
+  const pop = usePop();
+  const ev = (p as unknown as { event?: Ev }).event;
+  const st = (ev?.stocks ?? []).slice(0, 6);
+  const avg = st.length ? st.reduce((a, x) => a + x.pct, 0) / st.length : 0;
+  const cl = cues ?? [];
+  // 말에 맞춰 연다: 첫 큐에 무슨 일인지, '평균'이 나오는 큐에 숫자와 종목 줄.
+  const t0 = cl[0]?.start ?? 0;
+  const t1 = cl.find((c) => /평균|올랐|내렸|종목/.test(c.text))?.start ?? (cl[1]?.start ?? t0 + 3);
+  const tone = toneOf(avg);
+  return (
+    <Shell p={p} cues={cues} badge="오늘의 이슈" bg={<BgChip tone={tone} dim={0.55} />}>
+      <div style={{ position: "absolute", left: 64, right: 64, top: 300, ...pop(t0) }}>
+        <div style={{ fontSize: 44, fontWeight: 800, color: "#CFD6E4", letterSpacing: "0.02em", marginBottom: 14 }}>주말 사이</div>
+        <div style={{ fontSize: 88, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.04em", wordBreak: "keep-all",
+          textShadow: "0 6px 30px rgba(0,0,0,0.85)" }}>{ev?.label ?? ""}</div>
+      </div>
+      {st.length ? (
+        <>
+          <div style={{ position: "absolute", left: 64, right: 64, top: 700, ...pop(t1) }}>
+            <div style={{ fontSize: 42, fontWeight: 800, color: "#CFD6E4" }}>{ev?.group ?? "관련주"} {st.length}종목 평균</div>
+            <div style={{ fontSize: 148, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.04em", marginTop: 4 }}>
+              <Grad tone={tone}>{sgn(avg)}{Math.abs(avg).toFixed(1)}%</Grad>
+            </div>
+          </div>
+          <div style={{ position: "absolute", left: 64, right: 64, top: 1010 }}>
+            {st.map((x, i) => (
+              <div key={x.name} style={{ ...pop(t1 + 0.35 + i * 0.28) }}>
+                <Card color={colOf(x.pct)} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18 }}>
+                  <span style={{ fontSize: 62, fontWeight: 800, letterSpacing: "-0.02em" }}>{x.name}</span>
+                  <span style={{ fontSize: 72, fontWeight: 900, color: colOf(x.pct), letterSpacing: "-0.03em" }}>{sgn(x.pct)}{Math.abs(x.pct).toFixed(1)}%</span>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </Shell>
+  );
+};
+
 export const S5V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
   const a = ap(p);
   const pop = usePop();
