@@ -37,6 +37,9 @@ import ledger
 import weekend_watch
 
 SIGNATURE = ("누가샀나였습니다", "국장 마감은 매일", "주간 결산이었습니다", "평일엔 매일", "정규장이 끝나도 저녁 8시까지")
+# 장부 문장(S6 관측값·S3a 회수) — 어제 던진 질문을 오늘 글자 그대로 되읽는 게 맞는 문장이라 겹침 검사에서 뺀다(HUNTER_FIXLIST B2).
+LEDGER_FORM = (re.compile(r"순매[수도]가 .*이어지는지\.?$"), re.compile(r"을 지키는지\.?$"))
+OVERLAP_WINDOW = 5          # check_hunter 가 보는 창: 올라간 편 가운데 최근 5편
 _SPLIT = re.compile(r"(?<=[.?!])\s+")
 _WS = re.compile(r"\s+")
 _NUM = re.compile(r"[0-9][0-9,.]*")
@@ -341,36 +344,71 @@ def skeletons(before: str | None = None, recs: list[dict] | None = None) -> dict
     return _index(recs if recs is not None else editions(before), skeleton)
 
 
+def _units(c: str) -> list[str]:
+    """후보를 비교 단위로 쪼갠다 — 문장 하나하나(길이 8 미만 문장·시그니처 제외). 전부 짧으면 후보 통째로 한 단위.
+    후보가 두세 문장이면 그중 한 문장만 전 편에 있어도 겹친 후보다(리뷰 C1a·b: 통째 비교는 다문장 후보를 늘 '새 문장'으로 봤다)."""
+    ss = [s for s in sentences(c) if not is_signature(s) and len(norm(s)) >= 8]
+    return ss or [c]
+
+
+def _hits(c: str, idx: dict, key_fn) -> int:
+    return sum(len(idx.get(key_fn(s), [])) for s in _units(c))
+
+
 def pick(cands: list[str], d: str, exact: dict | None = None, masked: dict | None = None,
-         avoid: set[str] | None = None) -> str:
+         avoid: set[str] | None = None, offset: int = 0) -> str:
     """후보 문장 중 전 편에 없던 것을 고른다. 글자 그대로 겹치는 건 빼고, 숫자·단위만 다른 것도 되도록 피한다.
+    비교는 **후보 안의 문장 단위** — 어느 한 문장이라도 exact/masked/avoid 에 있으면 그 후보는 겹친 것(길이 8 미만 문장은 안 본다).
     전부 겹치면 가장 덜 쓴 것. avoid(검사에서 걸린 원문 집합, norm 으로 비교)에 든 후보는 아예 빼며,
-    그래서 후보가 다 빠지면 빈 문자열 — 부르는 쪽이 다른 슬롯 후보로 바꾼다. 후보가 비어도 빈 문자열."""
+    그래서 후보가 다 빠지면 빈 문자열 — 부르는 쪽이 다른 슬롯 후보로 바꾼다. 후보가 비어도 빈 문자열.
+    offset 은 회전 색인에 더하는 값 — 재시도(attempt)마다 다른 새 후보가 나오게 한다."""
     if avoid:
-        av = {norm(a) for a in avoid}
-        cands = [c for c in cands if norm(c) not in av]
+        av = {norm(a) for a in avoid} | {norm(s) for a in avoid for s in sentences(a) if len(norm(s)) >= 8}
+        cands = [c for c in cands if norm(c) not in av and not any(norm(s) in av for s in _units(c))]
     if not cands:
         return ""
     if exact is None or masked is None:
         exact, masked = seen(d)
-    fresh = [c for c in cands if norm(c) not in exact and mask(c) not in masked]
+    fresh = [c for c in cands if not any(norm(s) in exact or mask(s) in masked for s in _units(c))]
     if fresh:
-        return fresh[int(d[-2:]) % len(fresh)]
-    semi = [c for c in cands if norm(c) not in exact]
+        return fresh[(int(d[-2:]) + int(offset or 0)) % len(fresh)]
+    semi = [c for c in cands if not any(norm(s) in exact for s in _units(c))]
     if semi:
-        return min(semi, key=lambda c: len(masked.get(mask(c), [])))
-    return min(cands, key=lambda c: len(exact.get(norm(c), [])))
+        return min(semi, key=lambda c: _hits(c, masked, mask))
+    return min(cands, key=lambda c: _hits(c, exact, norm))
 
 
-def overlaps(d: str, scenes: list[dict], recs: list[dict] | None = None, with_skeleton: bool = False) -> list[dict]:
-    """오늘 대본이 이전 편들과 겹치는 문장. kind: exact(글자 그대로) / numbers(숫자·단위만 다름) / skeleton(with_skeleton 일 때, 뼈대만 같음)."""
-    recs = recs if recs is not None else editions(d)
+def _window(recs: list[dict], window: int | None, aired_only: bool) -> list[dict]:
+    """겹침 검사 창. aired_only: 올라간 편(aired 가 있거나 접미사 없는 본판) — 안 올라간 초안(_v5·_v7 …)은 시청자가 못 봤다.
+    window: 최근 N편(날짜 기준, 오늘 이전)만. 둘 다 없으면 전 편(리포트용 CLI 기본)."""
+    if aired_only:
+        recs = [r for r in recs if r.get("aired") or not r.get("draft")]
+    if window:
+        keep = set(sorted({r["date"] for r in recs}, reverse=True)[:window])
+        recs = [r for r in recs if r["date"] in keep]
+    return recs
+
+
+def _exempt(s: str, pats) -> bool:
+    t = (s or "").strip()
+    for p in pats or ():
+        if (p.search(t) if hasattr(p, "search") else re.search(p, t)):
+            return True
+    return False
+
+
+def overlaps(d: str, scenes: list[dict], recs: list[dict] | None = None, with_skeleton: bool = False,
+             window: int | None = None, aired_only: bool = False, exempt=()) -> list[dict]:
+    """오늘 대본이 이전 편들과 겹치는 문장. kind: exact(글자 그대로) / numbers(숫자·단위만 다름) / skeleton(with_skeleton 일 때, 뼈대만 같음).
+    window=N 이면 최근 N편만, aired_only 면 올라간 편(초안 제외)만 본다 — check_hunter 는 window=5·aired_only=True·exempt=LEDGER_FORM 으로 부른다(B2).
+    CLI 리포트는 기본값(전 편)으로 본다. exempt 는 정규식(문자열/컴파일) 목록 — 맞는 오늘 문장은 검사하지 않는다."""
+    recs = _window(recs if recs is not None else editions(d), window, aired_only)
     exact, masked = seen(d, recs)
     sk = skeletons(d, recs) if with_skeleton else {}
     out = []
     for sc in _scene_list(scenes):
         for s in sentences(sc.get("tts") or ""):
-            if is_signature(s) or len(norm(s)) < 8:
+            if is_signature(s) or len(norm(s)) < 8 or _exempt(s, exempt):
                 continue
             if norm(s) in exact:
                 out.append({"scene": sc.get("id"), "kind": "exact", "sentence": s, "seen": exact[norm(s)]})
@@ -409,7 +447,10 @@ def continuity(d: str, today: dict) -> dict:
 
     반환:
       top_buyer_days        오늘 가장 많이 산 쪽이 며칠째 같은지(오늘 포함, 1이면 오늘이 처음)
-      others_buy_days       기타법인이 며칠째 순매수인지(오늘 포함, 오늘 순매수가 아니면 0)
+      others_buy_days       기타법인이 며칠째 순매수인지(오늘 포함, 오늘 순매수가 아니면 0). 이력 전체를 거슬러 센다(10편 제한 없음)
+      others_buy_days_capped 그 연속이 이력 첫 편(또는 수급 자료가 없는 편)까지 닿아 실제론 더 길 수 있으면 True — 대본은 "N일째" 대신
+                            "9월 들어 매일"/"N일째 이상"으로 말한다(M-3: 9/15 의 '여드레째'는 자료 창 길이였다)
+      history_first_date    이력의 첫 편 날짜(평일편, 없으면 None) · others_first_date: 기타법인 연속이 닿은 가장 이른 편 날짜
       others_top_same_days  기타법인이 산 상위 두 종목(과 자사주 여부)이 며칠째 같은지(오늘 포함, 자료 없으면 0)
       protagonist_days      주인공이 며칠째 같은지(오늘 포함)
       protagonist_sign_days 주인공이 같은 방향(팔았다/샀다)으로 며칠째인지(주인공 없으면 0)
@@ -422,6 +463,7 @@ def continuity(d: str, today: dict) -> dict:
     """
     prev = _prev(d)
     y = prev[0]["facts"] if prev else None
+    prev_all = _prev(d, n=10 ** 6)          # 연속일은 이력 전체로 센다(10편 창이면 열흘 넘는 연속이 잘린다)
 
     def run(key_fn) -> int:
         n = 1
@@ -439,9 +481,24 @@ def continuity(d: str, today: dict) -> dict:
     tm_theme, tm_sign = tm.get("theme"), _sign(tm.get("t"))
     fam = next((f for f in (today.get("watch_family") or []) if f), None)
     cb_ok, cb_kind = today.get("callback_ok") is True, today.get("callback_kind")
+    ob_days, ob_capped, ob_first = 0, False, None
+    if (today.get("others") or 0) > 0:
+        ob_days, ob_first, ob_capped = 1, d, True          # 이력이 없으면 오늘이 곧 첫 편 — 닿았다
+        for r in prev_all:
+            v = r["facts"].get("others")
+            if not isinstance(v, (int, float)):         # 수급 자료가 없는 편(9/3) — 여기서 자료가 끊긴다
+                break
+            if v <= 0:
+                ob_capped = False
+                break
+            ob_days += 1
+            ob_first = r["date"]
     out = {
         "top_buyer_days": run(lambda f: tb is not None and f.get("top_buyer") == tb),
-        "others_buy_days": run(lambda f: (today.get("others") or 0) > 0 and (f.get("others") or 0) > 0) if (today.get("others") or 0) > 0 else 0,
+        "others_buy_days": ob_days,
+        "others_buy_days_capped": ob_capped,
+        "others_first_date": ob_first,
+        "history_first_date": prev_all[-1]["date"] if prev_all else None,
         "others_top_same_days": run(lambda f: _others_key(f) == ot_key) if ot_key else 0,
         "protagonist_days": run(lambda f: today.get("protagonist") and f.get("protagonist") == today.get("protagonist")),
         "protagonist_sign_days": run(lambda f: f.get("protagonist") == pn and _sign(f.get("protagonist_amount")) == _sign(pa)) if pn else 0,
@@ -578,6 +635,25 @@ def selftest() -> None:
     assert pick(["A 문장입니다 하나", "B 문장입니다 둘"], "20260916", ex, mk) == "B 문장입니다 둘", "exact 회피"
     assert pick(["A 문장입니다 하나", "B 문장입니다 둘"], "20260916", ex, mk, avoid={"B 문장입니다 둘."}) == "A 문장입니다 하나", "avoid 는 norm 으로 비교"
     assert pick(["B 문장입니다 둘"], "20260916", {}, {}, avoid={"B 문장입니다 둘"}) == "", "avoid 로 다 빠지면 빈 문자열"
+    # B1: 후보 안의 한 문장만 겹쳐도 그 후보는 겹친 것
+    two = "그런데 막대 밑을 보세요. 이름이 둘 붙습니다."
+    assert pick([two, "C 문장입니다 셋"], "20260916", {}, {}, avoid={"이름이 둘 붙습니다."}) == "C 문장입니다 셋", "avoid 는 문장 단위"
+    assert pick([two, "C 문장입니다 셋"], "20260916", {norm("이름이 둘 붙습니다"): ["x"]}, {}) == "C 문장입니다 셋", "exact 는 문장 단위"
+    two_n = "그런데 막대 밑을 보세요. 기타법인 1조 6천억을 샀습니다."
+    assert pick([two_n, "C 문장입니다 셋"], "20260916", {}, {mask("기타법인 9천억을 샀습니다"): ["x"]}) == "C 문장입니다 셋", "masked 는 문장 단위"
+    assert pick([two], "20260916", {norm("이름이 둘 붙습니다"): ["x"]}, {}) == two, "다 겹치면 가장 덜 쓴 것"
+    assert pick(["A 문장입니다 하나", "B 문장입니다 둘"], "20260916", {}, {}, offset=1) != pick(["A 문장입니다 하나", "B 문장입니다 둘"], "20260916", {}, {}), "offset 회전"
+    # B2: 창·올라간 편·장부 문장 예외
+    mk = lambda dt, folder, tts, aired=None: {"kind": "kr", "date": dt, "folder": folder, "draft": "_" in folder, "aired": aired,
+                                              "scenes": [{"id": "s6", "tts": tts}], "facts": {}}
+    recs = [mk("20260901", "20260901", "아주 오래된 문장입니다 하나."), mk("20260911", "20260911_v8", "초안에만 있던 문장입니다."),
+            mk("20260915", "20260915", "외국인 순매도가 엿새째 이어지는지. 기타법인 순매수가 1조 4천억을 지키는지. 어제 문장입니다 그대로.", {"youtube_id": "x"})]
+    today = [{"id": "s3a", "tts": "외국인 순매도가 엿새째 이어지는지. 어제 문장입니다 그대로. 초안에만 있던 문장입니다. 아주 오래된 문장입니다 하나."}]
+    hit = lambda **kw: sorted(o["sentence"] for o in overlaps("20260916", today, recs, **kw) if o["kind"] == "exact")
+    assert hit() == sorted(["외국인 순매도가 엿새째 이어지는지.", "어제 문장입니다 그대로.", "초안에만 있던 문장입니다.", "아주 오래된 문장입니다 하나."]), "기본은 전 편·전 문장"
+    assert hit(aired_only=True) == sorted(["외국인 순매도가 엿새째 이어지는지.", "어제 문장입니다 그대로.", "아주 오래된 문장입니다 하나."]), "초안 제외"
+    assert hit(window=1, aired_only=True) == sorted(["외국인 순매도가 엿새째 이어지는지.", "어제 문장입니다 그대로."]), "최근 1편 창"
+    assert hit(window=1, aired_only=True, exempt=LEDGER_FORM) == ["어제 문장입니다 그대로."], "장부 문장 예외"
     assert q_family("외국인 순매도가 닷새째 이어지는지") == q_family("외국인 순매도가 4일째 이어지는지") == "inv_continue:foreign:-1"
     assert q_family("반도체 순매수가 이틀째 이어지는지") == "theme_continue:반도체"
     print("selftest ok")

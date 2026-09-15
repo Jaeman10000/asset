@@ -12,6 +12,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import qa_script as qa  # noqa: E402
+import ledger  # noqa: E402
+import script_memory as sm  # noqa: E402
 
 D = "20260916"
 SIG = "정규장이 끝나도 저녁 8시까지 애프터마켓에서 거래됩니다. 누가샀나였습니다. 국장 마감은 매일 저녁 5시에 올라옵니다."
@@ -73,6 +75,11 @@ class Tokens(unittest.TestCase):
         self.assertEqual(n("이 판정이 뒤집히는 조건은 하나"), 0)
         self.assertEqual(n("정규장 체결 기준 15시 30분입니다"), 1)     # 시각은 숫자 하나
         self.assertEqual(n("키움 943종목 합산표, 정규장 체결 기준 15:30"), 2)
+        # B8: hwon 100억 정밀도 — '조+억' 한 덩어리는 숫자 1개
+        for s in ("1조 5,700억", "기타법인 1조 6,400억을 샀습니다", "2조 400억", "3조 3,000억이었습니다", "8,300억", "1.6조"):
+            self.assertEqual(n(s), 1, s)
+        self.assertEqual(n("외국인 몫 1조 5,700억, 기타법인 1조 6,400억"), 2)
+        self.assertEqual(n("2조 400억 ÷ 937억 = 22배"), 3)
 
     def test_block_end_ignores_trailing_screen_pointer(self):
         ok = edit("s3a", "어제 보자고 한 외국인 순매도, 닷새째 이어졌습니다. 그런데 받은 쪽이 바뀌었습니다. "
@@ -200,6 +207,99 @@ class Failing(unittest.TestCase):
         self.assertTrue(hit[0].startswith("[s2]"), hit)
         self.assertTrue(hit[0].endswith(" :: 이 돈은 밖에서 새로 들어온 돈이 아닙니다."), hit)
         self.assertFalse(any("누가샀나였습니다" in b for b in bad), bad)      # 시그니처는 겹쳐도 된다
+
+    def test_overlap_window_aired_and_ledger_exempt(self):
+        """B2: 올라간 편 가운데 최근 5편만 보고, 초안(_v8)은 안 보며, 장부 문장(…이어지는지/…을 지키는지)은 예외."""
+        mk = lambda dt, folder, sid, tts, aired=None: {"kind": "kr", "date": dt, "folder": folder, "draft": "_" in folder, "aired": aired,
+                                                       "scenes": [{"id": sid, "tts": tts}], "facts": {}}
+        recs = [mk("20260901", "20260901", "s2", "개인이 받았다고 생각하기 쉽습니다."),                       # 6편 전 — 창 밖
+                mk("20260911", "20260911_v8", "s2", "개인 2조 9,700억."),                                    # 안 올라간 초안
+                mk("20260909", "20260909", "s6", "외국인 순매도가 5거래일째 이어지는지. 기타법인 순매수가 1조 5천억을 지키는지.", {"youtube_id": "a"}),
+                mk("20260910", "20260910", "s2", "x"), mk("20260911", "20260911", "s2", "x"), mk("20260914", "20260914", "s2", "x"),
+                mk("20260915", "20260915", "s5", "예산이 먼저 바닥나면, 오늘 같은 방어는 없습니다.", {"youtube_id": "b"})]
+        bad = run(recs=recs)
+        hit = [b for b in bad if "글자 그대로 겹침" in b]
+        self.assertEqual(len(hit), 1, bad)
+        self.assertTrue(hit[0].startswith("[s5]") and hit[0].endswith(" :: 예산이 먼저 바닥나면, 오늘 같은 방어는 없습니다."), hit)
+        # 같은 recs 를 창 없이 보면(CLI 기본) 6편 전 문장도 잡힌다 — 창이 실제로 좁힌 것
+        ov = sm.overlaps(D, GOOD, recs)
+        self.assertIn("개인이 받았다고 생각하기 쉽습니다.", [o["sentence"] for o in ov if o["kind"] == "exact"], ov)
+        self.assertIn("외국인 순매도가 5거래일째 이어지는지.", [o["sentence"] for o in ov if o["kind"] == "exact"], ov)
+
+    def test_screen_direction_fail_carries_s4_sentence(self):
+        """B3: 화면 지시어 부족 실패는 지시어 없는 S4 문장(숫자 있는 칸 문장)을 ' :: ' 뒤에 싣는다 — compute 가 avoid 에 넣을 수 있게."""
+        scenes = edit("s2", "개인이 받았다고 생각하기 쉽습니다. 개인 2조 9,700억. 그런데 기타법인 1조 4,800억이 더 있습니다.")
+        for s in scenes:
+            if s["id"] == "s3b":
+                s["tts"] = "그럼 파는 쪽은 어떨까요. 외국인은 9일부터 4거래일 연속 팔았습니다. 그런데 여기엔 기한이 없습니다."
+            if s["id"] == "s4":
+                s["tts"] = "공시 원문을 직접 열어봤습니다. 취득 예정 5,328만 주입니다. 그중 2,980만 주가 11일까지 나갔습니다. 하루 평균 199만 주씩 사고 있으니, 12거래일치입니다."
+        bad = run(scenes)
+        hit = [b for b in bad if b.startswith("[s2-s4]")]
+        self.assertEqual(len(hit), 1, bad)
+        self.assertTrue(hit[0].endswith(" :: 취득 예정 5,328만 주입니다."), hit)
+
+
+class Ledger(unittest.TestCase):
+    def test_parse_q_days_eight_plus(self):
+        """B4: 헌터 next_q(여드레째·아흐레째·열흘째·11일째)가 장부에서 n 을 잃지 않는다."""
+        for q, n in (("외국인 순매도가 여드레째 이어지는지", 8), ("외국인 순매도가 아흐레째 이어지는지", 9), ("기타법인 순매수가 열흘째 이어지는지", 10),
+                     ("외국인 순매도가 11일째 이어지는지", 11), ("외국인 순매도가 12거래일째 이어지는지", 12), ("외국인 순매도가 닷새째 이어지는지", 5)):
+            chk = ledger.parse_q(q)
+            self.assertIsNotNone(chk, q)
+            self.assertEqual(chk["kind"], "inv_continue", q)
+            self.assertEqual(chk["n"], n, q)
+        self.assertEqual(ledger.parse_q("외국인 순매도가 이어지는지")["n"], None)
+        self.assertEqual(ledger.parse_q("이차전지 순매수가 여드레째 이어지는지"), {"kind": "theme_continue", "theme": "이차전지", "n": 8})
+        self.assertEqual(ledger.days_n("11일째"), 11)
+        self.assertEqual(ledger.days_n("여드레째"), 8)
+        self.assertIsNone(ledger.days_n("같은 부호"))
+        try:
+            import narrate_hunter as nh
+        except Exception as e:                                # 환경 의존(키움 모듈 등) — 없으면 dko 왕복은 건너뛴다
+            self.skipTest(f"narrate_hunter 못 불러옴: {e}")
+        for n in range(2, 16):
+            q = f"외국인 순매도가 {nh.dko(n)} 이어지는지"
+            self.assertEqual(ledger.parse_q(q)["n"], n, q)
+            self.assertEqual(sm.q_family(q), "inv_continue:foreign:-1", q)
+
+
+class Memory(unittest.TestCase):
+    def test_pick_sentence_level(self):
+        """B1: 후보의 한 문장만 exact/masked/avoid 에 있어도 그 후보는 겹친 것."""
+        two = "그런데 막대 밑을 보세요. 이름이 둘 붙습니다."
+        self.assertEqual(sm.pick([two, "C 문장입니다 셋"], D, {}, {}, avoid={"이름이 둘 붙습니다."}), "C 문장입니다 셋")
+        self.assertEqual(sm.pick([two, "C 문장입니다 셋"], D, {sm.norm("이름이 둘 붙습니다"): ["x"]}, {}), "C 문장입니다 셋")
+        two_n = "그런데 막대 밑을 보세요. 기타법인 1조 6천억을 샀습니다."
+        self.assertEqual(sm.pick([two_n, "C 문장입니다 셋"], D, {}, {sm.mask("기타법인 9천억을 샀습니다"): ["x"]}), "C 문장입니다 셋")
+        self.assertEqual(sm.pick([two], D, {sm.norm("이름이 둘 붙습니다"): ["x"]}, {}), two)          # 다 겹치면 그래도 하나
+        self.assertEqual(sm.pick([two], D, {}, {}, avoid={"이름이 둘 붙습니다."}), "")                # avoid 로 다 빠지면 빈 문자열
+        a, b = "A 문장입니다 하나", "B 문장입니다 둘"
+        self.assertNotEqual(sm.pick([a, b], D, {}, {}, offset=0), sm.pick([a, b], D, {}, {}, offset=1))
+
+    def test_continuity_capped(self):
+        """B6: 기타법인 연속이 이력 첫 편(또는 수급 없는 편)까지 닿으면 capped, 부호가 끊기면 아니다."""
+        def fake(dates_others):
+            return [{"kind": "kr", "date": dt, "folder": dt, "draft": False, "aired": None, "scenes": [{"id": "s0", "tts": ""}],
+                     "facts": {"others": v, "watch_family": []}} for dt, v in dates_others]
+        orig = sm.editions
+        try:
+            sm.editions = lambda before=None, kinds=("kr",): [r for r in fake([("20260903", None), ("20260904", 100), ("20260905", 200)])
+                                                              if not before or r["date"] < before]
+            c = sm.continuity("20260908", {"others": 300})
+            self.assertEqual((c["others_buy_days"], c["others_buy_days_capped"], c["history_first_date"], c["others_first_date"]),
+                             (3, True, "20260903", "20260904"))
+            sm.editions = lambda before=None, kinds=("kr",): [r for r in fake([("20260903", -50), ("20260904", 100), ("20260905", 200)])
+                                                              if not before or r["date"] < before]
+            c = sm.continuity("20260908", {"others": 300})
+            self.assertEqual((c["others_buy_days"], c["others_buy_days_capped"]), (3, False))
+            sm.editions = lambda before=None, kinds=("kr",): []
+            c = sm.continuity("20260908", {"others": 300})
+            self.assertEqual((c["others_buy_days"], c["others_buy_days_capped"], c["history_first_date"]), (1, True, None))
+            c = sm.continuity("20260908", {"others": -300})
+            self.assertEqual((c["others_buy_days"], c["others_buy_days_capped"]), (0, False))
+        finally:
+            sm.editions = orig
 
 
 class CheckScript(unittest.TestCase):

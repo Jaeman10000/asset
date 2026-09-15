@@ -11,6 +11,9 @@
   · 슬롯 9장면(s0 s1 s2 s3a s3b s3c s4 s5 s6)을 체크리스트 11항 + 문장 규칙 10 으로 검사한다 — check_hunter().
   · 하나라도 실패면 compute 가 실패 문장을 avoid 에 넣고 다시 만든다(최대 3회), 그래도 실패면 옛 포맷으로 폴백.
   · 실패 문자열은 "[장면] 규칙 :: 걸린 문장" 꼴 — compute 는 ' :: ' 뒤를 잘라 avoid 에 넣는다.
+  · 글자 그대로 겹침(부록 A-1)은 올라간 편 가운데 최근 5편 창(script_memory.OVERLAP_WINDOW)으로 본다. 시그니처와
+    장부 문장(script_memory.LEDGER_FORM: '…순매도가 N일째 이어지는지' / '…을 지키는지')은 예외 — 어제 질문을 되읽는 문장이다(B2).
+  · 화면 지시어 부족(규칙 6)은 지시어 없는 S4 문장을 ' :: ' 뒤에 붙여 재시도가 그 후보를 바꾸게 한다(B3).
 
 실행:
   python qa_script.py script --kind us --date 20260913     대본만 점검(렌더 전)
@@ -356,15 +359,19 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None)
     # 규칙 6: 화면 지시어 4회 이상(S2~S4, 문장 단위)
     n_dir = sum(1 for sid in SCREEN_IDS for x in (sents.get(sid) or []) if SCREEN_DIR.search(x))
     if n_dir < 4:
-        fail("s2-s4", f"화면 지시어 {n_dir}회 < 4(보세요|여기 이 칸|왼쪽|오른쪽|위 칸|아래 칸|막대|여기 진행률)")
+        # 문장 없는 실패는 compute 가 avoid 를 못 늘려 첫 회에 폴백했다(리뷰 2). 지시어 없는 S4 문장(숫자가 있는 칸 문장 우선)을 붙인다.
+        no_dir = [x for x in (sents.get("s4") or []) if not SCREEN_DIR.search(x) and not _is_sig(x)]
+        hit = next((x for x in no_dir if num_tokens(x)), no_dir[0] if no_dir else "")
+        fail("s2-s4", f"화면 지시어 {n_dir}회 < 4(보세요|여기 이 칸|왼쪽|오른쪽|위 칸|아래 칸|막대|여기 진행률)", hit)
 
-    # 부록 A-1: 전 편과 글자 그대로 겹친 문장 0개(시그니처 제외)
+    # 부록 A-1: 전 편과 글자 그대로 겹친 문장 0개 — 올라간 편 가운데 최근 5편 창, 시그니처·장부 문장 예외(B2)
     d = str((comp or {}).get("date") or "")
     if d:
         try:
             sys.path.insert(0, str(ROOT / "jobs"))
             import script_memory
-            ov = script_memory.overlaps(d, scenes, recs)
+            ov = script_memory.overlaps(d, scenes, recs, window=script_memory.OVERLAP_WINDOW, aired_only=True,
+                                        exempt=script_memory.LEDGER_FORM)
         except Exception as e:
             print(f"[qa] 전 편 겹침 검사 건너뜀: {e}", file=sys.stderr)
             ov = []

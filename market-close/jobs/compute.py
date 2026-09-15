@@ -242,13 +242,30 @@ def narration_inputs(d: str, N: dict, inv: dict, *, raw, fl: dict, kospi: dict, 
             "n_codes": (_ks.get("kospi") or {}).get("n_codes")}
 
 
+def _hunter_build_call(narrate_hunter, c: dict, avoid: set[str], k: int) -> dict:
+    """narrate_hunter.build(c, avoid, attempt=k). attempt 를 아직 안 받는 판이면(TypeError) 예전 서명으로 부른다(B3)."""
+    try:
+        return narrate_hunter.build(c, avoid or None, attempt=k)
+    except TypeError as e:
+        if "attempt" not in str(e):
+            raise
+        return narrate_hunter.build(c, avoid or None)
+
+
 def _build_hunter(d: str, c: dict, N: dict) -> dict | None:
-    """헌터 포맷 제작: 만들고 → qa_script.check_hunter 로 검사 → 실패 문장을 avoid 에 넣고 다시(최대 3회) → 그래도 실패면 None(A+ 폴백)."""
+    """헌터 포맷 제작: 만들고 → qa_script.check_hunter 로 검사 → 실패 문장을 avoid 에 넣고 attempt 를 올려 다시(최대 3회)
+    → 그래도 실패면 None(A+ 폴백). 실패 문장이 비어도 attempt 회전으로 다른 후보가 나오므로 3회 다 쓴다(B3).
+    검사 자체가 예외(AttributeError 포함)면 삼키지 않고 로그를 남기고 out["qa_skipped"] 로 '검사 생략'을 표시한 채 통과시킨다."""
+    import inspect
     import narrate_hunter
+    try:
+        rotates = "attempt" in inspect.signature(narrate_hunter.build).parameters
+    except (TypeError, ValueError):
+        rotates = True
     avoid: set[str] = set()
     for attempt in range(1, 4):
         try:
-            out = narrate_hunter.build(c, avoid or None)
+            out = _hunter_build_call(narrate_hunter, c, avoid, attempt - 1) if rotates else narrate_hunter.build(c, avoid or None)
         except Exception as e:
             import traceback
             log(d, "compute", f"헌터 포맷 생성 실패({attempt}회차) → A+ 형식: {e}\n{traceback.format_exc()[-600:]}")
@@ -256,19 +273,22 @@ def _build_hunter(d: str, c: dict, N: dict) -> dict | None:
         try:
             import qa_script
             fails = qa_script.check_hunter(out["scenes"], {**N, **out, "date": d})
-        except AttributeError:
-            fails = []
-        except Exception as e:
-            log(d, "compute", f"헌터 검사 자체가 실패({e}) → 검사 없이 통과시킴")
+        except Exception as e:                       # AttributeError 도 여기 — 검사기 버그가 무검사 통과로 숨지 않게 로그 + 표시
+            import traceback
+            log(d, "compute", f"⚠ 헌터 검사 자체가 실패({e!r}) → 검사 생략 표시하고 통과시킴\n{traceback.format_exc()[-600:]}")
+            out["qa_skipped"] = f"{type(e).__name__}: {e}"
             fails = []
         if not fails:
-            log(d, "compute", f"헌터 포맷 통과({attempt}회차): 훅 {out.get('hook_id')} · 장치 {out.get('devices')} · 다음 {out.get('next_q')}")
+            log(d, "compute", f"헌터 포맷 통과({attempt}회차{', 검사 생략' if out.get('qa_skipped') else ''}): "
+                              f"훅 {out.get('hook_id')} · 장치 {out.get('devices')} · 다음 {out.get('next_q')}")
             return out
         log(d, "compute", f"헌터 검사 실패 {attempt}/3 ({len(fails)}건): " + " | ".join(fails))
         new = {m.group(1).strip() for f in fails for m in [re.search(r"::\s*(.+)$", f)] if m and m.group(1).strip()}
         if new <= avoid:
-            log(d, "compute", "헌터 검사: 새로 피할 문장이 없다(문장과 무관한 실패) → 폴백")
-            break
+            if not rotates:
+                log(d, "compute", "헌터 검사: 새로 피할 문장이 없고 attempt 회전도 없다(같은 대본이 나온다) → 폴백")
+                break
+            log(d, "compute", f"헌터 검사: 새로 피할 문장이 없다 → attempt={attempt} 회전으로 다른 후보를 고른다")
         avoid |= new
     log(d, "compute", "⚠ 헌터 포맷 3회 실패 → A+ 형식으로 폴백")
     return None
@@ -572,7 +592,7 @@ def compute(d: str) -> dict:
             out_root = DATA.parent / "out"
             ep = 1 + sum(1 for x in out_root.iterdir() if x.is_dir() and x.name.isdigit() and "20260907" <= x.name < d and (x / "kr" / "video.mp4").exists())
             aplus["ep"] = ep
-            log(d, "compute", f"형식 A+: 주인공 {aplus['protagonist']['name']} {aplus['protagonist']['amount']:+,}억 · 대비 {aplus['contrast']['kind']} · #{ep:03d}")
+            log(d, "compute", f"형식 {'헌터' if aplus.get('format') == 'hunter' else 'A+'}: 주인공 {aplus['protagonist']['name']} {aplus['protagonist']['amount']:+,}억 · 대비 {aplus['contrast']['kind']} · #{ep:03d}")
         except Exception as e:
             import traceback
             log(d, "compute", f"형식 A+ 실패 → 기존 형식: {e}\n{traceback.format_exc()[-600:]}")

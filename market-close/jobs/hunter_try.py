@@ -5,8 +5,9 @@ data/ 와 out/ 은 건드리지 않는다(ledger 도 안 쓴다). 결과는 스�
   python hunter_try.py 20260915                  대본([id] tts) + hunter JSON + overlaps + 자수/초 출력, 파일 저장
   python hunter_try.py 20260915 --out D:/tmp     저장 폴더 바꾸기(기본: 세션 스크래치 hunter/DATE/)
   python hunter_try.py 20260915 --avoid "문장"   검사에 걸린 문장을 피해 다시 만들기(compute 의 재시도와 같은 길)
-  python hunter_try.py 20260911 20260914 20260915 --cross   여러 날을 만들고 서로 글자 그대로 겹친 문장까지 본다
+  python hunter_try.py 20260911 20260914 20260915 --cross   여러 날을 제작 순서대로 잇고(앞 날 결과를 뒷날의 전 편 이력으로) 서로 겹친 문장까지 본다
   python hunter_try.py 20260915 --props            tts 없이 시간표를 붙인 렌더용 props.json 도 저장(문장 = 자/8.0 초, 장면 +0.6초 여유, 30fps)
+  python hunter_try.py 20260915 --attempt 1        회전 오프셋(compute 의 재시도 k회차와 같은 길) — avoid 없이도 다른 후보·종류가 나온다
 
 입력 c 는 compute.narration_inputs() 로 그날 computed_kr.json + raw/*.json + data/ledger.json 에서 compute 와 똑같이 만든다.
 """
@@ -43,11 +44,11 @@ def inputs_for(d: str) -> tuple[dict, dict]:
     return c, c0
 
 
-def run(d: str, avoid: set[str] | None = None, out_dir: Path | None = None, quiet: bool = False, props: bool = False) -> dict:
+def run(d: str, avoid: set[str] | None = None, out_dir: Path | None = None, quiet: bool = False, props: bool = False, attempt: int = 0) -> dict:
     import narrate_hunter
     import script_memory as sm
     c, c0 = inputs_for(d)
-    out = narrate_hunter.build(c, avoid or None)
+    out = narrate_hunter.build(c, avoid or None, attempt=attempt)
     scenes = out["scenes"]
     lines = [f"[{sc['id']}] {sc['tts']}" for sc in scenes]
     script = "\n".join(lines)
@@ -60,9 +61,10 @@ def run(d: str, avoid: set[str] | None = None, out_dir: Path | None = None, quie
     except AttributeError:
         qa = ["(qa_script.check_hunter 없음)"]
     if not quiet:
-        print(f"===== {d}  훅 {out['hook_id']} · 장치 {out['devices']} · 다음 {out['next_q']}")
+        print(f"===== {d}  훅 {out['hook_id']} · 장치 {out['devices']} · 다음 {out['next_q']} · attempt {attempt}")
         print(script)
-        print(f"-- {chars}자 ≈ {chars / CPS:.0f}초 (자/8.0)")
+        per = " · ".join(f"{sc['id']} {len(sc['tts'])}" for sc in scenes)
+        print(f"-- {chars}자(공백 포함, 장면 사이 제외) ≈ {chars / CPS:.0f}초 (자/8.0) · 슬롯별 {per}")
         print("-- overlaps(전 편과 겹침):", "없음" if not ov else "")
         for o in ov:
             print(f"   [{o['kind']}] ({o['scene']}) {o['sentence']}  ← {', '.join(o['seen'][:3])}")
@@ -141,7 +143,30 @@ def main() -> None:
     dates = [a for a in args if a.isdigit() and len(a) == 8]
     avoid = {args[i + 1] for i, a in enumerate(args) if a == "--avoid" and i + 1 < len(args)}
     out_dir = next((Path(args[i + 1]) for i, a in enumerate(args) if a == "--out" and i + 1 < len(args)), None)
-    results = [run(d, avoid, out_dir, props="--props" in args) for d in dates]
+    attempt = next((int(args[i + 1]) for i, a in enumerate(args) if a == "--attempt" and i + 1 < len(args) and args[i + 1].isdigit()), 0)
+    dates = [a for a in dates if not any(args[i - 1] == "--attempt" for i, b in enumerate(args) if b == a and i > 0)]
+    results = []
+    if "--cross" in args and len(dates) > 1:
+        # 여러 날을 실제 제작 순서처럼 잇는다: 앞 날의 결과를 전 편 이력(script_memory.editions)에 끼워 넣어 뒷날이 그 문장을 피하게 한다
+        import script_memory as sm
+        orig = sm.editions
+        fakes: list[dict] = []
+
+        def patched(before=None, kinds=("kr", "weekly", "weekly_us", "notice")):
+            base = orig(before, kinds)
+            extra = [f for f in fakes if (not before or f["date"] < before) and f["kind"] in kinds]
+            return sorted(base + extra, key=lambda r: (r["date"], r["folder"]))
+        sm.editions = patched
+        try:
+            for d in sorted(dates):
+                r = run(d, avoid, out_dir, props="--props" in args, attempt=attempt)
+                results.append(r)
+                like = json.loads((Path(out_dir or SCRATCH) / d / "computed_like.json").read_text(encoding="utf-8"))
+                fakes.append(sm._record("kr", d, d + "_try", like, like["scenes"]))
+        finally:
+            sm.editions = orig
+    else:
+        results = [run(d, avoid, out_dir, props="--props" in args, attempt=attempt) for d in dates]
     if "--cross" in args and len(results) > 1:
         dup = cross(results)
         print("===== 여러 날 사이 글자 그대로 겹친 문장:", "없음" if not dup else f"{len(dup)}건")

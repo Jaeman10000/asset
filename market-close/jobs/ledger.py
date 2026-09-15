@@ -15,7 +15,20 @@ from datetime import datetime, timedelta
 from _common import DATA, load_json, log, save_json
 
 LEDGER = DATA / "ledger.json"
-DAYS = {"이틀째": 2, "사흘째": 3, "나흘째": 4, "닷새째": 5, "엿새째": 6, "이레째": 7}
+DAYS = {"이틀째": 2, "사흘째": 3, "나흘째": 4, "닷새째": 5, "엿새째": 6, "이레째": 7, "여드레째": 8, "아흐레째": 9, "열흘째": 10}
+_NDAYS = re.compile(r"^(\d+)\s?(?:거래|영업)?일째$")
+
+
+def days_n(word: str | None) -> int | None:
+    """'닷새째'·'여드레째'·'11일째'·'12거래일째' → 5·8·11·12. 모르는 말이면 None.
+    헌터 next_q 는 열흘까지 우리말 수사, 그 뒤는 'N일째'(narrate_hunter.dko) — 둘 다 읽어야 다음 날 S3a 가 N 을 잃지 않는다(B4)."""
+    w = (word or "").strip()
+    if not w:
+        return None
+    if w in DAYS:
+        return DAYS[w]
+    m = _NDAYS.match(w)
+    return int(m.group(1)) if m else None
 INV_KEY = {"외국인": "foreign", "기관": "inst", "개인": "indiv", "기타법인": "others"}
 
 
@@ -28,7 +41,7 @@ def parse_q(q: str) -> dict | None:
     m = re.match(r"^(기타법인|외국인|기관|개인) (순매수|순매도)가 (?:(\S+째) )?이어지는지$", q)
     if m:
         return {"kind": "inv_continue", "key": INV_KEY[m.group(1)], "name": m.group(1), "sign": 1 if m.group(2) == "순매수" else -1,
-                "n": DAYS.get(m.group(3) or "")}
+                "n": days_n(m.group(3))}
     m = re.match(r"^코스닥 (\d+)일 연속 (하락|상승)이 끊기는지$", q)
     if m:
         return {"kind": "kosdaq_break", "sign": -1 if m.group(2) == "하락" else 1, "n": int(m.group(1))}
@@ -38,7 +51,7 @@ def parse_q(q: str) -> dict | None:
     m = re.match(r"^(.+?) 순매수가 (.+?) 이어지는지$", q)
     if m:
         word = m.group(2)
-        n = DAYS.get(word) or (int(re.sub(r"\D", "", word)) if re.search(r"\d", word) else None)
+        n = days_n(word) or (int(re.sub(r"\D", "", word)) if re.search(r"\d", word) else None)
         return {"kind": "theme_continue", "theme": m.group(1), "n": n}
     m = re.match(r"^(.+?) 순매도가 이어지는지$", q)
     if m:
