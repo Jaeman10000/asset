@@ -123,7 +123,11 @@ def _fetch(client: httpx.Client, q: str) -> list[dict]:
     return _parse_items(r.text)
 
 
-def main(d: str, ed: str = "kr") -> dict:
+EXTRA_KEEP = 4      # 이슈·업종·종목 쿼리는 주요 매체 우선 정렬에서 밀려도 쿼리마다 이만큼은 남긴다(9/15 실측: 이슈 쿼리 기사가 25건 컷에 전부 밀렸다)
+
+
+def main(d: str, ed: str = "kr", extra: list[str] | None = None) -> dict:
+    """extra: 기본 쿼리 뒤에 더 붙일 검색어(브리핑 형식의 유입 업종·종목 이름 — run_day 가 collect_brief 뒤에 부른다). 같은 창·같은 파일에 합쳐 저장한다."""
     ed = (ed or "kr").lower()
     if ed not in QUERIES:
         ed = "kr"
@@ -131,11 +135,13 @@ def main(d: str, ed: str = "kr") -> dict:
     path = raw / f"news_{ed}.json"
     tag = f"news_{ed}"
     w_from, w_to, session = _window(d, ed)
+    extra_q = [q.strip() for q in (extra or []) if isinstance(q, str) and q.strip()]
     out: dict = {
         "edition": ed, "date": d, "session": session,
         "fetched_at": datetime.now().isoformat(timespec="seconds"),
         "window": {"from": w_from.strftime("%Y-%m-%d %H:%M"), "to": w_to.strftime("%Y-%m-%d %H:%M")},
-        "queries": list(QUERIES[ed]) + ([ev_q] if (ev_q := ((load_json(DATA / "events.json") or {}).get(d) or {}).get("news_query")) and ed == "kr" else []), "items": [], "error": None,
+        "queries": list(QUERIES[ed]) + ([ev_q] if (ev_q := ((load_json(DATA / "events.json") or {}).get(d) or {}).get("news_query")) and ed == "kr" else [])
+                   + [q for q in extra_q if q not in QUERIES[ed]], "items": [], "error": None,
     }
     try:
         seen: dict[str, dict] = {}
@@ -166,8 +172,15 @@ def main(d: str, ed: str = "kr") -> dict:
                     kept += 1
                 log(d, tag, f"'{q}': 수신 {len(items)} → 창 안 신규 {kept}")
         rows = list(seen.values())
-        # 잘라낼 때 주요 매체 우선, 그 다음 최신순
+        # 잘라낼 때 주요 매체 우선, 그 다음 최신순 — 다만 이슈·업종·종목 쿼리(기본 쿼리 밖)는 쿼리마다 EXTRA_KEEP 건을 먼저 남긴다
         rows.sort(key=lambda r: (_pref_rank(r["source"]), -r["_t"].timestamp()))
+        base_q = set(QUERIES[ed])
+        keep: list[dict] = []
+        for q in out["queries"]:
+            if q in base_q:
+                continue
+            keep += [r for r in rows if r["query"] == q and r not in keep][:EXTRA_KEEP]
+        rows = keep + [r for r in rows if r not in keep]
         rows = rows[:MAX_ITEMS]
         rows.sort(key=lambda r: r["_t"], reverse=True)
         for r in rows:

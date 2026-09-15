@@ -15,11 +15,16 @@
     장부 문장(script_memory.LEDGER_FORM: '…순매도가 N일째 이어지는지' / '…을 지키는지')은 예외 — 어제 질문을 되읽는 문장이다(B2).
   · 화면 지시어 부족(규칙 6)은 지시어 없는 S4 문장을 ' :: ' 뒤에 붙여 재시도가 그 후보를 바꾸게 한다(B3).
 
+브리핑 포맷(2026-09-15 밤, docs/BRIEF_FORMAT_DESIGN.md §3):
+  · 장면 id 는 헌터와 같고 체인 순서가 매일 고정(코스피 수급 → 코스닥+지수 → 빠진 곳 → 들어온 곳 → 종목 둘 → 뉴스 판정 → 내일 포인트).
+  · check_brief() = check_hunter() 의 11항·문장 규칙 전부 + 장면마다 '반드시 말해야 하는 내용' 검사 + 시그니처·애프터마켓 고정문 + 총 글자 수.
+  · 실패 문자열 꼴은 헌터와 같다("[s3b] 규칙 :: 문장"). 총 900자 미만은 실패가 아니라 경고(warn 목록 또는 stderr).
+
 실행:
   python qa_script.py script --kind us --date 20260913     대본만 점검(렌더 전)
   python qa_script.py frames --kind us --date 20260913     렌더된 영상에서 장면별 프레임 추출
   python qa_script.py all    --kind kr --date 20260912
-  python qa_script.py hunter --kind day --date 20260916    헌터 11항만 (--file 로 다른 json 지정 가능)
+  python qa_script.py hunter --kind day --date 20260916    헌터 11항만 (--file 로 다른 json 지정 가능; 파일 format 이 brief 면 check_brief)
 kind: day(평일) | kr(토 국장 주간) | us(일 미국 주간) | hunter(=day, format 은 파일의 "format" 으로 판단)
 """
 from __future__ import annotations
@@ -98,9 +103,41 @@ BANNED_ALL = re.compile(r"여러분|지난 영상|영상에서|우리 채널|구
 RECO = re.compile(r"사세요|파세요|사라(?![지져졌질짐])|팔아라|비중|관망|전망은|목표가")
 _SIG_KEYS = ("누가샀나였습니다", "국장 마감은 매일", "국장 마감은 내일부터", "정규장이 끝나도 저녁 8시까지", "궁금하면 구독", "국장마감, 매일")
 
+# ── 브리핑 포맷 고정 내용(설계 §1 표 · §3 check_brief) ──
+BRIEF_TOTAL_MAX = 1250            # 총 글자 수 상한(넘으면 실패)
+BRIEF_TOTAL_MIN = 900             # 이 밑이면 경고(실패 아님) — 설계 §0 "길이 950~1,250자"
+BRIEF_PARTIES = ("외국인", "기관", "개인")
+BRIEF_OTHERS_MIN = 3000           # 기타법인 |순매수| 가 이 밑이면 s2 에서 이름을 빼도 된다(설계 §2 "기타법인 <3,000억")
+S3B_OUT = re.compile(r"빠졌|나갔|순매도")
+S3C_IN = re.compile(r"들어왔|순매수|들어온 곳이 없었")
+# 시그니처 고정문 — 9/15 편만 '내일부터', 그 뒤로는 '매일 저녁 5시'(CLAUDE.md). 애프터마켓 문장은 9/14~9/18(narrate_aplus.AFTER_MARKET_NOTICE_UNTIL).
+SIG_BRAND = "누가샀나였습니다."
+SIG_DAILY = "국장 마감은 매일 저녁 5시에 올라옵니다."
+SIG_FIRST = "국장 마감은 내일부터 매일 저녁 5시에 올라옵니다."
+SIG_FIRST_DATE = "20260915"
+AFTER_MARKET = "정규장이 끝나도 저녁 8시까지 애프터마켓에서 거래됩니다."
+AFTER_MARKET_FROM, AFTER_MARKET_UNTIL = "20260914", "20260918"
+
 
 def _sents(text: str) -> list[str]:
     return [s.strip() for s in _SPLIT.split((text or "").strip()) if s.strip()]
+
+
+def _scene_text(scenes: list[dict]) -> tuple[dict[str, str], dict[str, list[str]]]:
+    """장면 id → tts 전문 / 문장 목록. 같은 id 가 두 번 오면 첫 것만(check_hunter·check_brief 공용)."""
+    by: dict[str, dict] = {}
+    for s in scenes or []:
+        sid = str(s.get("id") or "")
+        if sid and sid not in by:
+            by[sid] = s
+    txt = {sid: (by[sid].get("tts") or "") for sid in by}
+    return txt, {sid: _sents(txt[sid]) for sid in by}
+
+
+def _hunter_comp(comp: dict | None) -> dict:
+    """comp["hunter"](장면별 계약 사전) — 없거나 사전이 아니면 빈 사전."""
+    h = (comp or {}).get("hunter")
+    return h if isinstance(h, dict) else {}
 
 
 def _is_sig(s: str) -> bool:
@@ -225,19 +262,13 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None)
     def fail(scene: str, rule: str, sent: str = "") -> None:
         bad.append(f"[{scene}] {rule} :: {sent}")
 
-    by: dict[str, dict] = {}
-    for s in scenes or []:
-        sid = str(s.get("id") or "")
-        if sid and sid not in by:
-            by[sid] = s
-    txt = {sid: (by[sid].get("tts") or "") for sid in by}
-    sents = {sid: _sents(txt[sid]) for sid in by}
+    txt, sents = _scene_text(scenes)
 
     # ④ 9장면 다 있어야 한다 — S3 블록은 정확히 3개
     for sid in HUNTER_IDS:
         if not sents.get(sid):
             fail(sid, "장면 없음")
-    for sid in by:
+    for sid in txt:
         if re.fullmatch(r"s3[d-z]", sid):
             fail(sid, "S3 블록 4개 이상 — 하나를 내일로 넘길 것", (sents[sid] or [""])[0])
 
@@ -294,7 +325,7 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None)
             fail("s4", "1차 자료 열람 문장 없음(직접 열어봤습니다|열어보면|여기 이 칸)", sents["s4"][0])
         if not S4_CALC.search(txt["s4"]):
             fail("s4", "계산식 없음(배|분의|며칠치|일치|%)", sents["s4"][-1])
-        calc = ((comp or {}).get("hunter") or {}).get("s4", {}).get("calc") if isinstance((comp or {}).get("hunter"), dict) else None
+        calc = _hunter_comp(comp).get("s4", {}).get("calc")
         for msg in verify_calc(calc, txt["s4"]):
             hit = next((x for x in sents["s4"] if S4_CALC.search(x)), "")
             fail("s4", msg, hit)
@@ -381,6 +412,106 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None)
     return bad
 
 
+def _first_with(sents: list[str], pred, default: str = "") -> str:
+    """조건에 맞는 첫 문장(실패 문자열의 ' :: ' 뒤에 실을 문장) — 없으면 default."""
+    return next((x for x in sents if pred(x)), default)
+
+
+def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, warn: list[str] | None = None) -> list[str]:
+    """브리핑 포맷 대본 검사(설계 docs/BRIEF_FORMAT_DESIGN.md §3). 빈 목록이면 통과.
+
+    = check_hunter 의 11항·문장 규칙 10·겹침 검사 전부 + 체인이 고정이라 장면마다 '반드시 말해야 하는 내용':
+      s2  외국인·기관·개인 세 이름 + 숫자 3개 이상(문장별 ≤2 는 헌터 규칙) + 기타법인(|순매수| 3,000억 미만이면 생략 가능)
+      s3a 코스닥·코스피 둘 다 · s3b 빠졌|나갔|순매도 · s3c 들어왔|순매수|들어온 곳이 없었
+      s4  comp["hunter"]["s4"]["stocks"] 두 종목 이름 + 외국인·기관·개인(brief_stocks 실패 no_indiv 면 개인 제외)
+      s5  뉴스(쪽입니다·뒤집히는 조건은 헌터 ⑧⑨) · s6 임계값(헌터 ⑩) + 시그니처 고정문(9/15 는 '내일부터') + 애프터마켓 문장(9/14~9/18)
+      총 글자 수 > 1,250 실패, < 900 경고 — 경고는 warn 목록에 담고(없으면 stderr) 실패로 치지 않는다.
+    실패 문자열은 헌터와 같다: "[장면] 규칙 :: 걸린 문장" — compute 는 ' :: ' 뒤 문장을 avoid 에 넣고 다시 만든다.
+    """
+    bad = check_hunter(scenes, comp, recs)
+
+    def fail(scene: str, rule: str, sent: str = "") -> None:
+        bad.append(f"[{scene}] {rule} :: {sent}")
+
+    txt, sents = _scene_text(scenes)
+    H = _hunter_comp(comp)
+    d = str((comp or {}).get("date") or "")
+
+    # s2 코스피 수급 나열 — 외국인 → 기관 → 개인 넷 다 숫자로, 네 번째 막대 기타법인
+    if sents.get("s2"):
+        missing = [p for p in BRIEF_PARTIES if p not in txt["s2"]]
+        if missing:
+            fail("s2", f"코스피 수급 주체 빠짐({'·'.join(missing)}) — 외국인·기관·개인을 다 말해야 한다", sents["s2"][0])
+        n = sum(len(num_tokens(x)) for x in sents["s2"] if not _is_sig(x))
+        if n < 3:
+            fail("s2", f"수급 숫자 {n}개 < 3 — 주체마다 숫자를 말해야 한다",
+                 _first_with(sents["s2"], lambda x: not num_tokens(x) and any(p in x for p in BRIEF_PARTIES), sents["s2"][0]))
+        v = ((H.get("s2") or {}).get("reveal") or {}).get("v")
+        small = isinstance(v, (int, float)) and abs(v) < BRIEF_OTHERS_MIN
+        if "기타법인" not in txt["s2"] and not small:
+            fail("s2", f"기타법인 없음 — 네 번째 막대를 말해야 한다(|순매수| {BRIEF_OTHERS_MIN:,}억 미만이면 생략 가능)", sents["s2"][-1])
+
+    # s3a 코스닥 수급 + 지수 둘
+    if sents.get("s3a"):
+        for w in ("코스닥", "코스피"):
+            if w not in txt["s3a"]:
+                fail("s3a", f"{w} 없음 — 코스닥 수급과 지수 둘(코스피·코스닥)을 말해야 한다", sents["s3a"][0])
+
+    # s3b 돈이 빠진 곳 · s3c 돈이 들어온 곳
+    if sents.get("s3b") and not S3B_OUT.search(txt["s3b"]):
+        fail("s3b", "빠진 돈 표현 없음(빠졌|나갔|순매도)", sents["s3b"][0])
+    if sents.get("s3c") and not S3C_IN.search(txt["s3c"]):
+        fail("s3c", "들어온 돈 표현 없음(들어왔|순매수|들어온 곳이 없었)", sents["s3c"][0])
+
+    # s4 종목 둘 — comp 의 두 이름 + 주체별 매매
+    if sents.get("s4"):
+        s4h = H.get("s4") if isinstance(H.get("s4"), dict) else {}
+        names = [str(s.get("name")) for s in (s4h.get("stocks") or []) if isinstance(s, dict) and s.get("name")]
+        flat4 = re.sub(r"\s", "", txt["s4"])
+        for nm in names[:2]:
+            if re.sub(r"\s", "", nm) not in flat4:
+                fail("s4", f"종목 이름 없음({nm}) — 대장주와 최대 상승 종목 둘을 말해야 한다", sents["s4"][0])
+        need = BRIEF_PARTIES[:2] if s4h.get("no_indiv") else BRIEF_PARTIES
+        for p in need:
+            if p not in txt["s4"]:
+                fail("s4", f"주체 없음({p}) — 종목별 {'외국인·기관' if s4h.get('no_indiv') else '외국인·기관·개인'} 매매를 말해야 한다",
+                     _first_with(sents["s4"], lambda x: bool(num_tokens(x)) and not S4_OPEN.search(x), sents["s4"][-1]))
+
+    # s5 뉴스와 맞물렸나 — '뉴스' 한 마디는 뉴스가 없는 날("뉴스 없이 수급만 움직인 날")에도 있다
+    if sents.get("s5") and "뉴스" not in txt["s5"]:
+        fail("s5", "뉴스 없음 — 뉴스와 맞물렸는지 말해야 한다(없으면 '뉴스 없이 수급만 움직인 날')", sents["s5"][0])
+
+    # s6 시그니처 고정문 + 애프터마켓 문장(임계값 숫자는 헌터 ⑩)
+    if sents.get("s6"):
+        t6, last = txt["s6"], sents["s6"][-1]
+        if SIG_BRAND not in t6:
+            fail("s6", f"시그니처 없음('{SIG_BRAND}')", last)
+        want = SIG_FIRST if d == SIG_FIRST_DATE else SIG_DAILY
+        if d and want not in t6:
+            fail("s6", f"끝 멘트 고정문 없음('{want}'){' — 9/15 편만 내일부터' if d == SIG_FIRST_DATE else ''}", last)
+        elif not d and SIG_DAILY not in t6 and SIG_FIRST not in t6:
+            fail("s6", f"끝 멘트 고정문 없음('{SIG_DAILY}')", last)
+        elif last not in (SIG_DAILY, SIG_FIRST):
+            fail("s6", "끝 멘트 고정문이 마지막 문장이 아님", last)
+        if d and AFTER_MARKET_FROM <= d <= AFTER_MARKET_UNTIL and AFTER_MARKET not in t6:
+            fail("s6", f"애프터마켓 문장 없음(9/18까지 시그니처 앞에 넣는다: '{AFTER_MARKET}')", last)
+        elif d > AFTER_MARKET_UNTIL and "애프터마켓" in t6:
+            fail("s6", "애프터마켓 문장은 9/18까지만", _first_with(sents["s6"], lambda x: "애프터마켓" in x, last))
+
+    # 총 글자 수 — 넘으면 실패(가장 긴 비시그니처 문장을 실어 재시도가 그 후보를 바꾸게), 모자라면 경고
+    total = sum(len(txt[sid]) for sid in HUNTER_IDS if sid in txt)
+    if total > BRIEF_TOTAL_MAX:
+        longest = max((x for sid in HUNTER_IDS for x in sents.get(sid) or [] if not _is_sig(x)), key=len, default="")
+        fail("all", f"총 {total:,}자 > {BRIEF_TOTAL_MAX:,}자 — {total - BRIEF_TOTAL_MAX}자 줄여야 한다", longest)
+    elif total < BRIEF_TOTAL_MIN:
+        msg = f"[all] 경고: 총 {total:,}자 < {BRIEF_TOTAL_MIN}자 — 짧다(950~1,250자 권장), 실패는 아님"
+        if warn is not None:
+            warn.append(msg)
+        else:
+            print(f"[qa] {msg}", file=sys.stderr)
+    return bad
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # 공통 검사(평일·주간)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -434,7 +565,8 @@ def check_script(kind: str, date: str, doc: dict | None = None, file: str | None
     kind = _kind(kind)
     doc = doc if doc is not None else load_doc(kind, date, file)
     scenes = doc["scenes"] if kind in ("kr", "us") else doc.get("scenes") or []
-    hunter = doc.get("format") == "hunter"          # 장면 id 가 s0..s6 를 넘어도(s3a·s3b·s3c) 길이 한도는 평일과 같다
+    fmt = doc.get("format")
+    hunter = fmt in ("hunter", "brief")             # 장면 id 가 s0..s6 를 넘어도(s3a·s3b·s3c) 길이 한도는 평일과 같다(브리핑도 같은 9장면)
     bad: list[str] = []
     if not scenes:
         return ["장면 없음"]
@@ -480,7 +612,9 @@ def check_script(kind: str, date: str, doc: dict | None = None, file: str | None
         dup = mine & _skel(prev)
         if len(dup) >= 2:
             bad.append(f"직전 {k}번째 편과 문장 뼈대 {len(dup)}개 겹침 — 표현을 바꿀 것")
-    if hunter:
+    if fmt == "brief":
+        bad += check_brief(scenes, doc)
+    elif hunter:
         bad += check_hunter(scenes, doc)
     return bad
 
@@ -527,10 +661,17 @@ def main() -> None:
             print("  ✗", x)
         rc = 1 if bad else 0
     if a.cmd == "hunter":
-        bad = check_hunter(doc.get("scenes") or [], doc)
-        print("헌터 11항:", "통과" if not bad else f"{len(bad)}건")
+        warn: list[str] = []
+        if doc.get("format") == "brief":
+            bad = check_brief(doc.get("scenes") or [], doc, warn=warn)
+            print("브리핑 검사(헌터 11항 + 고정 내용):", "통과" if not bad else f"{len(bad)}건")
+        else:
+            bad = check_hunter(doc.get("scenes") or [], doc)
+            print("헌터 11항:", "통과" if not bad else f"{len(bad)}건")
         for x in bad:
             print("  ✗", x)
+        for x in warn:
+            print("  ⚠", x)
         rc = 1 if bad else 0
     if a.cmd in ("frames", "all"):
         frames(a.kind, date)

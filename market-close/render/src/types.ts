@@ -33,7 +33,7 @@ export type Props = {
   schedule: { d: string; t: string }[];
   caption: string; scenes: Scene[]; total_frames?: number; fps?: number; warnings: string[];
   /** 대본 형식: legacy(옛 s0~s6) · aplus(A+, v4 화면) · hunter(경제사냥꾼 슬롯 s0 s1 s2 s3a s3b s3c s4 s5 s6 — docs/HUNTER_FORMAT_DESIGN.md §6) */
-  format?: "legacy" | "aplus" | "hunter";
+  format?: "legacy" | "aplus" | "hunter" | "brief";
   /** 헌터 포맷 화면 데이터(설계 §6.1 `hunter` 사전) — 모양은 v4/HunterV4.tsx 의 Hunter 타입 */
   hunter?: any;
 };

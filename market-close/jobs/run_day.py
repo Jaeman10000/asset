@@ -93,6 +93,21 @@ def main() -> None:
                 asyncio.run(collect_event.main(d))   # data/events.json에 오늘 이슈가 있으면 종목 묶음 수집
             except Exception as e:
                 log(d, "run", f"이슈 종목 수집 실패(무시): {e}")
+            # 수급 브리핑(BRIEF_FORMAT_DESIGN §3): 유입 1위 업종의 대장주 + 최대 상승 종목(ka10059) → 그 업종·종목 이름으로 뉴스 한 번 더
+            bs = {}
+            try:
+                import collect_brief
+                bs = asyncio.run(collect_brief.main(d)) or {}   # 실패해도 {} — 예외를 내지 않는다
+            except Exception as e:
+                log(d, "run", f"브리핑 종목 수집 실패(무시): {e}")
+            if bs.get("theme") and d.isdigit() and len(d) == 8:
+                try:
+                    names = [s.get("name") for s in (bs.get("stocks") or []) if s.get("name")][:2]
+                    collect_news.main(d, "kr", extra=[f"{bs['theme']} 강세"] + names)
+                except Exception as e:
+                    log(d, "run", f"업종·종목 뉴스 추가 수집 실패(무시): {e}")
+            elif bs.get("theme"):
+                log(d, "run", "접미사 날짜(샘플 판) — 업종·종목 뉴스 추가 수집 생략")
             if stage == "krx":
                 import collect_krx
                 collect_krx.main(d)

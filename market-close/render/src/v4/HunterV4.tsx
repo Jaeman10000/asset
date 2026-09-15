@@ -2,7 +2,7 @@
  * 화면은 p.hunter[id] 만 읽는다(대사 정규식에 기대지 않는다). 단계는 큐 순서로 넘긴다:
  *   scenes[].steps 에 단계 이름이 있으면 그 이름의 i번째 큐 start 에 켜고, 없으면 인덱스(또는 문장 안의 이름·고정 문구)로 잡는다.
  *   기대하는 단계 이름 —
- *     s0: a b (card) · s1: q · s2: naive admit turn reveal top · s3a: promise (stamp) meaning turn after q
+ *     s0: a b (card) · s1: q · s2: naive admit turn reveal top (브리핑: naive bar:0 bar:1 bar:2 turn reveal top q — v4/BriefV4.tsx) · s3a: promise (stamp) meaning turn after q
  *     s3b: move row:0 row:1 … turn table q · s3c: stock:0 stock:1 … turn bar:0 bar:1 … q · s4: doc row:0 row:1 … calc
  *     s5: a b verdict support callback condition limit · s6: intro watch:0 watch:1 … event after sig
  *   선택 필드(없으면 그 화면만 생략): s1.tail · s2.said_share · s5.support{label,value} · s5.callback{a,b,text} (반영 목록 HUNTER_FIXLIST.md §C)
@@ -25,22 +25,22 @@ const GREY = "#8C99AD";
 const LINE = "rgba(255,255,255,0.16)";
 const SH = "0 3px 14px rgba(0,0,0,0.85)";
 const SH_Q = "0 0 30px rgba(255,216,77,0.35), 0 6px 26px rgba(0,0,0,0.8)";
-const toneOf = (v?: number | null): Tone => (v == null || v === 0 ? "neutral" : v > 0 ? "up" : "down");
-const colOf = (v?: number | null) => (v == null || v === 0 ? "#E6E6E3" : v > 0 ? RED : BLUE);
+export const toneOf = (v?: number | null): Tone => (v == null || v === 0 ? "neutral" : v > 0 ? "up" : "down");
+export const colOf = (v?: number | null) => (v == null || v === 0 ? "#E6E6E3" : v > 0 ? RED : BLUE);
 /** '1.57조' / '2.04조' / '4,600억' — 화면 압축 숫자. 반올림은 말(narrate_hunter.hwon/hshort, 반영 목록 A1)과 같은 100억 단위:
  *  15,736→1.57조(말 '1조 5,700억') · 16,431→1.64조 · 20,000→2조 · 8,324→8,300억 · 937→940억. 1조 이상을 소수 1자리로 줄이면 외국인 1.6조 ↔ 기타법인 1.6조처럼 다른 숫자가 같아 보인다 */
-const short = (v: number) => {
+export const short = (v: number) => {
   const a = Math.abs(v);
   if (a >= 10000) return `${(Math.floor(a / 100 + 0.5) * 100 / 10000).toFixed(2).replace(/\.?0+$/, "")}조`;
   return `${(a >= 1000 ? Math.floor(a / 100 + 0.5) * 100 : Math.floor(a / 10 + 0.5) * 10).toLocaleString("ko-KR")}억`;
 };
-const sgn = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "");
+export const sgn = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "");
 /** 막대 옆 숫자 = 말과 같은 반올림(narrate_hunter.hwon): 937→940억 · 8,324→8,300억 · 15,736→1.6조(말은 '1조 6천억'). 100억 미만은 그대로 */
-const amt = (v: number) => (Math.abs(v) < 100 ? fmtEok(v) : short(v));
+export const amt = (v: number) => (Math.abs(v) < 100 ? fmtEok(v) : short(v));
 /** 표 원본 칸의 숫자: −38,339 (단위는 표 머리에) */
-const fmtRaw = (v: number) => `${v < 0 ? "−" : ""}${Math.abs(Math.round(v)).toLocaleString("ko-KR")}`;
+export const fmtRaw = (v: number) => `${v < 0 ? "−" : ""}${Math.abs(Math.round(v)).toLocaleString("ko-KR")}`;
 /** 말과 같은 숫자(narrate_hunter.hwon, 반영 목록 A1): 1조 이상은 100억 단위 '2조 400억', 1조 미만은 '8,300억', 1,000억 미만은 10억 단위 '940억'. S4 '= 말한 숫자' 줄에 쓴다 */
-const spoken = (v: number) => {
+export const spoken = (v: number) => {
   const a = Math.abs(v);
   if (a >= 10000) {
     const r = Math.floor(a / 100 + 0.5) * 100;
@@ -52,17 +52,20 @@ const spoken = (v: number) => {
   return fmtEok(a);
 };
 /** 등락은 소수 1자리 + 부호(말 '0.2% 하락' ↔ 화면 '−0.2%', 반영 목록 C4·A12) */
-const fmtPctS = (v: number) => `${sgn(v)}${Math.abs(v).toFixed(1)}%`;
+export const fmtPctS = (v: number) => `${sgn(v)}${Math.abs(v).toFixed(1)}%`;
 const batchim = (w: string) => { const c = w.charCodeAt(w.length - 1); return c >= 0xac00 && c <= 0xd7a3 ? (c - 0xac00) % 28 !== 0 : false; };
 const iga = (w: string) => (batchim(w) ? "이" : "가");
 
 /* ───────── p.hunter 의 모양(설계 §6.1). 숫자는 억 단위 정수(음수=순매도), pct 는 % ───────── */
-type NV = { name: string; v: number };
+/** 막대 하나. days 는 브리핑(BRIEF_FORMAT_DESIGN §3 s2.bars)의 연속일 — 있으면 막대 위 '닷새째' 태그 */
+export type NV = { name: string; v: number; days?: number | null };
 type HNum = { label: string; value: string; num: number; unit?: string };
 export type Hunter = {
   s0?: { kind?: string; a: HNum; b: HNum };
   s1?: { q: string; tail?: string | null };
-  s2?: { naive: string; naive_name?: string | null; naive_v?: number | null; bars: NV[]; reveal?: { name: string; v: number; days?: number | null; top?: NV[] | null } | null;
+  s2?: { naive: string; naive_name?: string | null; naive_v?: number | null; bars: NV[];
+         /** 네 번째 막대. days_word = '9월 들어 매일'(연속일 대신 말한 날) · share = 상위 2종목 자사주 비중(99 또는 0.99, 브리핑) — 있으면 막대 밑 '자사주 99%' 칩 */
+         reveal?: { name: string; v: number; days?: number | null; days_word?: string | null; top?: NV[] | null; share?: number | null } | null;
          /** 대사가 '둘이 99%' 를 말하는 날 — '%' 가 나오는 문장에 비중 칩을 띄운다 */
          said_share?: boolean | null };
   s3a?: { promise: string; result: string; ok: boolean; num?: number | null; head?: string | null;
@@ -80,7 +83,7 @@ export type Hunter = {
 const hunterOf = (p: Props): Hunter => ((p as unknown as { hunter?: Hunter }).hunter ?? {});
 
 /* ───────── 단계 = 큐 순서 ───────── */
-const useSteps = (p: Props, id: string, cues?: Cue[]) => {
+export const useSteps = (p: Props, id: string, cues?: Cue[]) => {
   const { t } = useT();
   const sc = p.scenes.find((s) => s.id === id);
   const steps = sc?.steps;
@@ -112,15 +115,15 @@ const useSteps = (p: Props, id: string, cues?: Cue[]) => {
   return { t, list, steps, at, say, find, ci, cur, q, inQ };
 };
 /** 말에서 쓰는 날 수(narrate_hunter.dko 와 같다): 2→이틀, 8→여드레 … 태그 '8일째' 를 그 말이 나오는 문장에 맞춰 띄울 때 쓴다 */
-const DKO = ["", "하루", "이틀", "사흘", "나흘", "닷새", "엿새", "이레", "여드레", "아흐레", "열흘"];
+export const DKO = ["", "하루", "이틀", "사흘", "나흘", "닷새", "엿새", "이레", "여드레", "아흐레", "열흘"];
 
-const Grad: React.FC<{ tone: Tone; children: React.ReactNode; style?: React.CSSProperties }> = ({ tone, children, style }) => {
+export const Grad: React.FC<{ tone: Tone; children: React.ReactNode; style?: React.CSSProperties }> = ({ tone, children, style }) => {
   const g = tone === "down" ? "linear-gradient(180deg,#A8DCFF 0%,#4A8BFF 48%,#2554E6 100%)"
     : tone === "up" ? "linear-gradient(180deg,#FFC2B8 0%,#FF5A4E 46%,#E2242B 100%)" : "linear-gradient(180deg,#FFFFFF 0%,#CFD6E4 100%)";
   return <span style={{ backgroundImage: g, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", ...style }}>{children}</span>;
 };
 
-const Logo: React.FC<{ scale?: number }> = ({ scale = 1 }) => (
+export const Logo: React.FC<{ scale?: number }> = ({ scale = 1 }) => (
   <div style={{ transform: `scale(${scale})`, transformOrigin: "left top" }}>
     <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: 60, color: "#FFFFFF", transform: "skewX(-10deg)", letterSpacing: "-0.05em", lineHeight: 1, textShadow: "0 3px 16px rgba(0,0,0,0.7)" }}>누가샀나</div>
     <svg width="220" height="24" viewBox="0 0 220 24" style={{ display: "block", marginTop: 2 }}>
@@ -131,10 +134,10 @@ const Logo: React.FC<{ scale?: number }> = ({ scale = 1 }) => (
 );
 
 /** 데이터가 없을 때(hunter[id] 누락) — 빈 껍데기. 소리·자막은 그대로 간다 */
-const Empty: React.FC<SC> = ({ p, cues }) => <Shell p={p} cues={cues} bg={<BgMarket tone="neutral" dim={0.4} />}>{null}</Shell>;
+export const Empty: React.FC<SC> = ({ p, cues }) => <Shell p={p} cues={cues} bg={<BgMarket tone="neutral" dim={0.4} />}>{null}</Shell>;
 
 /** 체인 질문 화면 — 카드를 다 내리고 질문만(S3V4 다리 질문과 같은 리셋) */
-const QOnly: React.FC<{ p: Props; cues?: Cue[]; q: Cue; bg: React.ReactNode }> = ({ p, cues, q, bg }) => {
+export const QOnly: React.FC<{ p: Props; cues?: Cue[]; q: Cue; bg: React.ReactNode }> = ({ p, cues, q, bg }) => {
   const pop = usePop();
   const text = q.text.trim().replace(/^그럼\s*/, "").replace(/요\?$/, "?");
   return (
@@ -145,12 +148,12 @@ const QOnly: React.FC<{ p: Props; cues?: Cue[]; q: Cue; bg: React.ReactNode }> =
   );
 };
 
-/** 세로 막대(기준선 위 순매수·아래 순매도). k번째 막대는 at[k]초에 자라고, slide[k] 면 오른쪽에서 밀려 들어온다. hi 는 노란 테두리 */
-const VBars: React.FC<{ bars: NV[]; at: number[]; slide?: boolean[]; hi?: number; tags?: (string | null)[]; tagAt?: number[]; height?: number; cols?: number }> =
-  ({ bars, at, slide, hi = -1, tags, tagAt, height = 660, cols }) => {
+/** 세로 막대(기준선 위 순매수·아래 순매도). k번째 막대는 at[k]초에 자라고, slide[k] 면 오른쪽에서 밀려 들어온다. hi 는 노란 테두리. width 는 전체 폭(기본 952, 브리핑 s3a 는 620) */
+export const VBars: React.FC<{ bars: NV[]; at: number[]; slide?: boolean[]; hi?: number; tags?: (string | null)[]; tagAt?: number[]; height?: number; cols?: number; width?: number }> =
+  ({ bars, at, slide, hi = -1, tags, tagAt, height = 660, cols, width }) => {
     const { t } = useT();
     const n = Math.max(1, cols ?? bars.length);
-    const W = 952; const cw = W / n; const bw = Math.min(170, Math.round(cw * 0.62));
+    const W = width ?? 952; const cw = W / n; const bw = Math.min(170, Math.round(cw * 0.62));
     const posMax = Math.max(0, ...bars.map((b) => b.v));
     const negMax = Math.max(0, ...bars.map((b) => -b.v));
     const TOP = 136, BOT = 130;   // 위: 태그+값 라벨 · 아래: 값 라벨+이름
@@ -178,8 +181,9 @@ const VBars: React.FC<{ bars: NV[]; at: number[]; slide?: boolean[]; hi?: number
                 background: up ? `linear-gradient(180deg, ${col}, ${col}99)` : `linear-gradient(180deg, ${col}99, ${col})`,
                 boxShadow: lit ? `0 0 34px ${col}, 0 0 0 4px ${YEL}` : `0 0 18px ${col}55` }} />
               <div style={{ position: "absolute", left: -70, width: bw + 140, textAlign: "center", top: valTop, fontSize: 48, fontWeight: 900, lineHeight: 1.15, color: col, textShadow: SH, whiteSpace: "nowrap" }}>{sgn(b.v)}{amt(b.v)}</div>
+              {/* 태그 자리: 순매수 막대는 값 라벨 위, 순매도 막대는 기준선 바로 위(값 라벨 밑에 두면 이름 줄과 겹친다 — 브리핑 s2 외국인 '닷새째') */}
               {showTag ? (
-                <div style={{ position: "absolute", left: -70, width: bw + 140, textAlign: "center", top: up ? valTop - 54 : valTop + 62 }}>
+                <div style={{ position: "absolute", left: -70, width: bw + 140, textAlign: "center", top: up ? valTop - 54 : base - 58 }}>
                   <span style={{ display: "inline-block", background: YEL, color: "#0B0E16", fontSize: 30, fontWeight: 900, padding: "3px 16px", borderRadius: 10, boxShadow: "0 0 20px rgba(255,216,77,0.5)" }}>{tag}</span>
                 </div>
               ) : null}
@@ -193,7 +197,9 @@ const VBars: React.FC<{ bars: NV[]; at: number[]; slide?: boolean[]; hi?: number
 
 /** 가로 막대(테마별). 길이는 |v| 비례(최소 10px), 색은 부호. hiName 줄은 노란 테두리.
  *  subs[name] = 강조 행 아래 종목 이름 줄(32px) — 행 높이는 100 그대로 두고 본문을 위로 올려 넣는다(뜨는 순간 아래 행이 밀리지 않게) */
-const HBars: React.FC<{ rows: NV[]; at: number[]; hiName?: string; subs?: Record<string, { text: string; at: number }> }> = ({ rows, at, hiName, subs }) => {
+export const HBars: React.FC<{ rows: NV[]; at: number[]; hiName?: string; subs?: Record<string, { text: string; at: number }>;
+  /** dimUntil[k] 초 전까지는 k행을 흐리게(0.35) 미리 보여 준다 — 브리핑 s3b 의 나머지 유출 행(말하기 전엔 자리만) */
+  dimUntil?: (number | null | undefined)[] }> = ({ rows, at, hiName, subs, dimUntil }) => {
   const { t } = useT();
   const maxAbs = Math.max(1, ...rows.map((r) => Math.abs(r.v)));
   const BW = 450;
@@ -202,7 +208,8 @@ const HBars: React.FC<{ rows: NV[]; at: number[]; hiName?: string; subs?: Record
       {rows.map((r, k) => {
         const a = at[k] ?? 0;
         const grow = interpolate(t, [a, a + 0.6], [0, 1], { ...CLAMP, easing: ease });
-        const op = interpolate(t, [a, a + 0.3], [0, 1], CLAMP);
+        const du = dimUntil?.[k];
+        const op = interpolate(t, [a, a + 0.3], [0, 1], CLAMP) * (du != null && t < du ? 0.35 : 1);
         const w = Math.max(22, (Math.abs(r.v) / maxAbs) * BW) * grow;
         const col = colOf(r.v);
         const lit = !!hiName && r.name === hiName;
@@ -317,10 +324,16 @@ export const S1H: React.FC<SC> = ({ p, cues }) => {
 /* ───────── s2: 대변 → 차단 — 막대 3개, '그런데'에 네 번째 막대가 오른쪽에서 들어온다 → 종목 카드 ───────── */
 export const S2H: React.FC<SC> = ({ p, cues }) => {
   const h = hunterOf(p).s2;
-  const { t, at, say, find } = useSteps(p, "s2", cues);
+  const { t, list, steps, at, say, find, q, inQ } = useSteps(p, "s2", cues);
   const pop = usePop();
   if (!h) return <Empty p={p} sub="" cues={cues} />;
   const rv = h.reveal ?? null;
+  // 브리핑(docs/BRIEF_FORMAT_DESIGN.md §1 s2): 막대 넷은 외국인·기관·개인·기타법인 고정 순서(bars 3 + reveal), 주체를 말하는 문장(bar:k)에 하나씩 선다.
+  // 끝이 체인 질문('그럼 코스닥은 어땠을까요?')이면 막대를 내리고 질문만(질문은 질문만). 헌터 편은 옛 동작 그대로
+  const brief = (p as unknown as { format?: string }).format === "brief";
+  if (brief && inQ && q) return <QOnly p={p} cues={cues} q={q} bg={<BgCity tone="neutral" dim={0.55} />} />;
+  const stepAt = (nm: string) => { const k = steps ? steps.indexOf(nm) : -1; return k >= 0 && list[k] ? list[k].start : undefined; };
+  const hasBarSteps = !!steps && steps.some((s) => /^bar:\d/.test(s));
   const n0 = at("naive", 0, 0);
   const n1 = at("admit", 1, n0 + 1.5);
   const n2 = at("turn", 2, find(/^그런데/) ?? n1 + 3);
@@ -328,20 +341,42 @@ export const S2H: React.FC<SC> = ({ p, cues }) => {
   const nb = rv ? Math.min(n2, say(rv.name) ?? n2) : n2;
   const dk = rv && (rv.days ?? 0) >= 2 ? (find(new RegExp(`(?:${DKO[rv.days ?? 0] || "\\u0000"}|${rv.days}일)째`)) ?? undefined) : undefined;
   const n3 = dk ?? at("reveal", 3, nb + 0.5);
-  // 종목 카드: 뻔한 답의 주체가 곧 공개 주체인 날(N6, 네 번째 막대가 처음부터 서 있음)은 '그런데 막대 밑을 보세요' 순간에 바로(C3); 아니면 첫 종목 이름을 말할 때
-  const n4 = rv && h.naive_name && h.naive_name === rv.name ? n2 : at("top", -1, say(rv?.top?.[0]?.name ?? "") ?? n3 + 2.5);
+  // 종목 카드: 뻔한 답의 주체가 곧 공개 주체인 날(N6, 네 번째 막대가 처음부터 서 있음)은 '그런데 막대 밑을 보세요' 순간에 바로(C3); 아니면 top 단계(브리핑은 자사주 문장) → 첫 종목 이름을 말할 때
+  const n4 = rv && h.naive_name && h.naive_name === rv.name ? n2 : at("top", -1, say(rv?.top?.[0]?.name ?? "") ?? say("자사주") ?? n3 + 2.5);
   const top = rv?.top ?? [];
-  const sharePct = rv && rv.v && top.length ? Math.round((top.slice(0, 2).reduce((s, x) => s + x.v, 0) / rv.v) * 100) : null;
-  const share0 = h.said_share && sharePct != null ? (say("%") ?? n4 + 0.5) : 1e9;   // '둘이 99%' 칩은 % 를 말하는 문장에
+  // 자사주 비중: 브리핑은 reveal.share(99 또는 0.99)를 주고, 없으면 상위 2종목 합 ÷ 기타법인으로 센다
+  const shareRaw = rv?.share ?? null;
+  const sharePct = shareRaw != null ? Math.round(shareRaw <= 1 ? shareRaw * 100 : shareRaw)
+    : rv && rv.v && top.length ? Math.round((top.slice(0, 2).reduce((s, x) => s + x.v, 0) / rv.v) * 100) : null;
+  const share0 = h.said_share && sharePct != null && shareRaw == null ? (say("%") ?? n4 + 0.5) : 1e9;   // 헌터: '둘이 99%' 칩은 % 를 말하는 문장에
+  const bb0 = rv && shareRaw != null && sharePct != null ? (stepAt("top") ?? say("자사주") ?? say("%") ?? n4) : 1e9;   // 브리핑: 기타법인 막대 밑 '자사주 99%' 칩
   const naiveIdx = h.bars.findIndex((b) => b.name === (h.naive_name ?? ""));
   const bars: NV[] = rv ? [...h.bars, { name: rv.name, v: rv.v }] : h.bars;
   const rk = h.bars.length;   // 네 번째(공개) 막대의 자리
-  const barAt = bars.map((_, k) => (rv && k === rk ? nb : n0 + 0.35 + k * 0.2));
+  // 막대가 서는 시각: bar:k 단계가 있으면(브리핑) 그 주체를 말하는 문장에, 없으면(헌터) 첫 문장에 셋이 같이
+  // 브리핑에서 bar:k 단계가 없는 주체(기관·개인을 한 문장에 말한 날의 개인)는 바로 앞 막대와 같이 선다 — 안 말한 막대가 먼저 뜨지 않게
+  const barAt: number[] = [];
+  bars.forEach((_, k) => {
+    const own = rv && k === rk ? nb : hasBarSteps ? stepAt(`bar:${k}`) : undefined;
+    barAt.push(own ?? (hasBarSteps && k > 0 && !(rv && k === rk) ? barAt[k - 1] : n0 + 0.35 + k * 0.2));
+  });
   const slide = bars.map((_, k) => !!rv && k === rk && nb > n0 + 0.3);
-  const hi = rv && t >= nb ? rk : t >= n1 ? naiveIdx : -1;
-  const tags = bars.map((_, k) => (rv && k === rk && (rv.days ?? 0) >= 2 ? `${rv.days}일째` : null));
-  const tagAt = bars.map(() => Math.max(n3, nb + 0.3));
+  // 강조: 공개 막대가 선 뒤엔 공개 막대. 그 전엔 브리핑은 마지막으로 말한 주체, 헌터는 뻔한 답의 주체
+  let hi = -1;
+  if (rv && t >= nb) hi = rk;
+  else if (hasBarSteps) bars.forEach((_, k) => { if (k !== rk && t >= barAt[k] && (hi < 0 || barAt[k] >= barAt[hi])) hi = k; });
+  else if (t >= n1) hi = naiveIdx;
+  // 연속일 태그: 말과 같은 수사(dko: 5→닷새째, 11→11일째). 공개 막대는 days_word('9월 들어 매일')가 있으면 그것
+  const dTag = (n?: number | null, w?: string | null) => w || ((n ?? 0) >= 2 ? (DKO[n ?? 0] ? `${DKO[n ?? 0]}째` : `${n}일째`) : null);
+  const tags = bars.map((b, k) => (rv && k === rk ? dTag(rv.days, rv.days_word) : dTag(b.days)));
+  const tagAt = bars.map((b, k) => {
+    if (rv && k === rk) return Math.max(n3, nb + 0.3);
+    const n = b.days ?? 0;
+    return (n >= 2 ? find(new RegExp(`(?:${DKO[n] || "\\u0000"}|${n}일)째`)) : undefined) ?? barAt[k] + 0.3;
+  });
   const turned = t >= n2;
+  const cw = 952 / Math.max(1, bars.length);
+  const cardTop = shareRaw != null ? 1064 : 1030;   // 자사주 칩(1002~1050)이 있는 날은 카드를 그만큼 내린다
   return (
     <Shell p={p} cues={cues} bg={<BgCity tone="neutral" dim={0.38} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 214, display: "flex", alignItems: "center", gap: 22, ...pop(n0) }}>
@@ -353,8 +388,13 @@ export const S2H: React.FC<SC> = ({ p, cues }) => {
       <div style={{ position: "absolute", left: 64, top: 340 }}>
         <VBars bars={bars} at={barAt} slide={slide} hi={hi} tags={tags} tagAt={tagAt} height={660} cols={bars.length} />
       </div>
+      {rv && t >= bb0 ? (
+        <div style={{ position: "absolute", left: 64 + cw * rk, width: cw, top: 1002, textAlign: "center", ...pop(bb0, 12) }}>
+          <span style={{ display: "inline-block", fontSize: 30, fontWeight: 900, color: "#0B0E16", background: YEL, padding: "4px 16px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,216,77,0.5)" }}>자사주 {sharePct}%</span>
+        </div>
+      ) : null}
       {rv && top.length && t >= n4 ? (
-        <div style={{ position: "absolute", left: 64, right: 64, top: 1030 }}>
+        <div style={{ position: "absolute", left: 64, right: 64, top: cardTop }}>
           <Card color={colOf(rv.v)} style={pop(n4)}>
             <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
               <div style={{ fontSize: 36, fontWeight: 700, color: SUBC }}>{rv.name}{iga(rv.name)} 가장 많이 {rv.v >= 0 ? "산" : "판"} 종목</div>

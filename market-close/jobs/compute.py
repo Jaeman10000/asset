@@ -232,66 +232,102 @@ def narration_inputs(d: str, N: dict, inv: dict, *, raw, fl: dict, kospi: dict, 
         upload_times = _upload_times()
     except Exception:
         upload_times = {"kr": "저녁 5시"}
+    # 브리핑 형식이 더 쓰는 것(BRIEF_FORMAT_DESIGN §3): 종목 둘(raw/brief_stocks.json) · 뉴스 제목 · 업종 표 전체(외/기 분리) · 종목행 아카이브(flow_store)
+    brief_stocks = load_json(raw / "brief_stocks.json") or {}
+    if brief_stocks.get("date") not in (None, d):
+        brief_stocks = {}
+    theme_rows = fl.get("table_t") or {} if fl.get("ready") else {}
+    theme_rows_y = fl.get("table_y") or {} if fl.get("ready") else {}
+    try:
+        from app.services import flow_store
+        flow_day = flow_store.load_day(d) or None
+    except Exception:
+        flow_day = None
+    _us = load_json(raw / "us.json") or {}
+    _evd = (load_json(DATA / "events.json") or {}).get(d) or {}
+    fomc_prob = _evd.get("fomc_prob") if isinstance(_evd.get("fomc_prob"), (int, float)) else _us.get("fomc_prob")
     return {"date": d, "brand": N["brand"], "kospi": kospi, "inv": inv, "inv_streak": inv_streak, "intraday": intraday, "moves": moves,
             "event": event, "prev_inv": prev_inv, "prev_date": prev_date, "recent_closes": recent, "callback": callback,
             "ledger_stats": ledger_stats, "top_others": top_others, "buybacks": buybacks, "top_move": top_move,
             "upload_times": upload_times,
             "stocks": stocks, "kosdaq": inv_q or {}, "kosdaq_index": kosdaq, "schedule": schedule, "inv_src": inv_src,
             "stock_flows": stock_flows, "theme_table": theme_table, "theme_table_y": theme_table_y,
-            "fomc_dates": (load_json(raw / "us.json") or {}).get("fomc_2026") or [],
-            "n_codes": (_ks.get("kospi") or {}).get("n_codes")}
+            "fomc_dates": _us.get("fomc_2026") or [],
+            "n_codes": (_ks.get("kospi") or {}).get("n_codes"),
+            "brief_stocks": brief_stocks, "news_items": (load_json(raw / "news_kr.json") or {}).get("items") or [], "flow_day": flow_day,
+            "theme_rows": theme_rows, "theme_rows_y": theme_rows_y, "fomc_prob": fomc_prob if isinstance(fomc_prob, (int, float)) else None}
 
 
-def _hunter_build_call(narrate_hunter, c: dict, avoid: set[str], k: int) -> dict:
-    """narrate_hunter.build(c, avoid, attempt=k). attempt 를 아직 안 받는 판이면(TypeError) 예전 서명으로 부른다(B3)."""
+def _fmt_build_call(module, c: dict, avoid: set[str], k: int) -> dict:
+    """module.build(c, avoid, attempt=k). attempt 를 아직 안 받는 판이면(TypeError) 예전 서명으로 부른다(B3)."""
     try:
-        return narrate_hunter.build(c, avoid or None, attempt=k)
+        return module.build(c, avoid or None, attempt=k)
     except TypeError as e:
         if "attempt" not in str(e):
             raise
-        return narrate_hunter.build(c, avoid or None)
+        return module.build(c, avoid or None)
 
 
-def _build_hunter(d: str, c: dict, N: dict) -> dict | None:
-    """헌터 포맷 제작: 만들고 → qa_script.check_hunter 로 검사 → 실패 문장을 avoid 에 넣고 attempt 를 올려 다시(최대 3회)
-    → 그래도 실패면 None(A+ 폴백). 실패 문장이 비어도 attempt 회전으로 다른 후보가 나오므로 3회 다 쓴다(B3).
+def _fmt_check(module, label: str, scenes: list, comp: dict) -> list[str]:
+    """형식별 검사기: 브리핑은 qa_script.check_brief(있으면) → 없으면 narrate_brief.check_brief(11항 + 고정 내용) · 헌터는 qa_script.check_hunter."""
+    import qa_script
+    if label == "브리핑":
+        if hasattr(qa_script, "check_brief"):
+            return qa_script.check_brief(scenes, comp)
+        return module.check_brief(scenes, comp)
+    return qa_script.check_hunter(scenes, comp)
+
+
+def _build_fmt(d: str, c: dict, N: dict, module, label: str) -> dict | None:
+    """슬롯 형식(헌터·브리핑) 제작: 만들고 → 검사 → 실패 문장을 avoid 에 넣고 attempt 를 올려 다시(최대 3회) → 그래도 실패면 None(A+ 폴백).
+    실패 문장이 비어도 attempt 회전으로 다른 후보가 나오므로 3회 다 쓴다(B3).
     검사 자체가 예외(AttributeError 포함)면 삼키지 않고 로그를 남기고 out["qa_skipped"] 로 '검사 생략'을 표시한 채 통과시킨다."""
     import inspect
-    import narrate_hunter
     try:
-        rotates = "attempt" in inspect.signature(narrate_hunter.build).parameters
+        rotates = "attempt" in inspect.signature(module.build).parameters
     except (TypeError, ValueError):
         rotates = True
     avoid: set[str] = set()
     for attempt in range(1, 4):
         try:
-            out = _hunter_build_call(narrate_hunter, c, avoid, attempt - 1) if rotates else narrate_hunter.build(c, avoid or None)
+            out = _fmt_build_call(module, c, avoid, attempt - 1) if rotates else module.build(c, avoid or None)
         except Exception as e:
             import traceback
-            log(d, "compute", f"헌터 포맷 생성 실패({attempt}회차) → A+ 형식: {e}\n{traceback.format_exc()[-600:]}")
+            log(d, "compute", f"{label} 포맷 생성 실패({attempt}회차) → A+ 형식: {e}\n{traceback.format_exc()[-600:]}")
             return None
         try:
-            import qa_script
-            fails = qa_script.check_hunter(out["scenes"], {**N, **out, "date": d})
+            fails = _fmt_check(module, label, out["scenes"], {**N, **out, "date": d})
         except Exception as e:                       # AttributeError 도 여기 — 검사기 버그가 무검사 통과로 숨지 않게 로그 + 표시
             import traceback
-            log(d, "compute", f"⚠ 헌터 검사 자체가 실패({e!r}) → 검사 생략 표시하고 통과시킴\n{traceback.format_exc()[-600:]}")
+            log(d, "compute", f"⚠ {label} 검사 자체가 실패({e!r}) → 검사 생략 표시하고 통과시킴\n{traceback.format_exc()[-600:]}")
             out["qa_skipped"] = f"{type(e).__name__}: {e}"
             fails = []
         if not fails:
-            log(d, "compute", f"헌터 포맷 통과({attempt}회차{', 검사 생략' if out.get('qa_skipped') else ''}): "
+            log(d, "compute", f"{label} 포맷 통과({attempt}회차{', 검사 생략' if out.get('qa_skipped') else ''}): "
                               f"훅 {out.get('hook_id')} · 장치 {out.get('devices')} · 다음 {out.get('next_q')}")
             return out
-        log(d, "compute", f"헌터 검사 실패 {attempt}/3 ({len(fails)}건): " + " | ".join(fails))
+        log(d, "compute", f"{label} 검사 실패 {attempt}/3 ({len(fails)}건): " + " | ".join(fails))
         new = {m.group(1).strip() for f in fails for m in [re.search(r"::\s*(.+)$", f)] if m and m.group(1).strip()}
         if new <= avoid:
             if not rotates:
-                log(d, "compute", "헌터 검사: 새로 피할 문장이 없고 attempt 회전도 없다(같은 대본이 나온다) → 폴백")
+                log(d, "compute", f"{label} 검사: 새로 피할 문장이 없고 attempt 회전도 없다(같은 대본이 나온다) → 폴백")
                 break
-            log(d, "compute", f"헌터 검사: 새로 피할 문장이 없다 → attempt={attempt} 회전으로 다른 후보를 고른다")
+            log(d, "compute", f"{label} 검사: 새로 피할 문장이 없다 → attempt={attempt} 회전으로 다른 후보를 고른다")
         avoid |= new
-    log(d, "compute", "⚠ 헌터 포맷 3회 실패 → A+ 형식으로 폴백")
+    log(d, "compute", f"⚠ {label} 포맷 3회 실패 → A+ 형식으로 폴백")
     return None
+
+
+def _build_hunter(d: str, c: dict, N: dict) -> dict | None:
+    """헌터 포맷(경제사냥꾼 7슬롯) — _build_fmt 의 헌터 판."""
+    import narrate_hunter
+    return _build_fmt(d, c, N, narrate_hunter, "헌터")
+
+
+def _build_brief(d: str, c: dict, N: dict) -> dict | None:
+    """수급 브리핑 포맷(헌터 장치 + 고정 수급 순서, BRIEF_FORMAT_DESIGN) — _build_fmt 의 브리핑 판."""
+    import narrate_brief
+    return _build_fmt(d, c, N, narrate_brief, "브리핑")
 
 
 def _inv_streak(d: str, inv: dict) -> dict:
@@ -544,7 +580,7 @@ def compute(d: str) -> dict:
             watch[0]["assist"] = st
         # A+ 형식이면 484행에서 '영상이 실제로 말한 약속'으로 기록한다. 여기서 구형식을 먼저 적어 두면
         # 그쪽 기록이 남아, 다음 날 회수하는 약속이 영상에서 한 말과 어긋날 수 있다(2026-09-14).
-        if _script_format() not in ("aplus", "hunter") or not inv:
+        if _script_format() not in ("aplus", "hunter", "brief") or not inv:
             ledger.record(d, watch[0]["q"])
     callback = ledger.verify(d, moves, (load_json(raw / "flows.json") or {}).get("moves") or [], inv, kosdaq)
 
@@ -569,10 +605,10 @@ def compute(d: str) -> dict:
                        "upload_times": _upload_times(),
                        "moves": moves, "us_link": us_link, "tre": tre, "fx": fx, "stocks": stocks, "schedule": schedule, "watch": watch,
                        "next_label": next_label, "next_morning": next_morning, "reason_fallback": reason_fallback, "callback": callback, "event": event})
-    # ── 형식 스위치(2026-09-15): hunter(경제사냥꾼 7슬롯) / aplus '오늘 누가 샀나'(2026-09-11~) / legacy. KR_FORMAT 이 publish_config 보다 우선 ──
+    # ── 형식 스위치(2026-09-15): brief(수급 브리핑, 2026-09-16~) / hunter(경제사냥꾼 7슬롯) / aplus '오늘 누가 샀나'(2026-09-11~) / legacy. KR_FORMAT 이 publish_config 보다 우선 ──
     fmt = _script_format()
     aplus = None
-    if fmt in ("aplus", "hunter") and inv:
+    if fmt in ("aplus", "hunter", "brief") and inv:
         try:
             import narrate_aplus
             c_in = narration_inputs(d, N, inv, raw=raw, fl=fl, kospi=kospi, kosdaq=kosdaq, inv_q=inv_q, inv_src=inv_src,
@@ -580,19 +616,23 @@ def compute(d: str) -> dict:
                                     stocks=stocks, schedule=schedule)
             if fmt == "hunter":
                 aplus = _build_hunter(d, c_in, N)        # 검사 3회 실패·예외면 None → 아래에서 A+ 로
+            elif fmt == "brief":
+                aplus = _build_brief(d, c_in, N)         # 같은 재시도·폴백(BRIEF_FORMAT_DESIGN §3)
             if aplus is None:
                 aplus = narrate_aplus.build_aplus(c_in)  # upload_times 도 넘어간다(설계 보고: 전엔 빠져 '저녁 5시' 기본값만 썼다)
             N = {**N, **aplus}
             watch = [{"q": aplus["next_q"], "how": f"{nxt} 15:40 수급에서 확인", "assist": ""}]
-            if aplus.get("format") == "hunter" and (aplus.get("watch") or [{}])[0].get("q") == aplus["next_q"]:
-                # 헌터 편 S6 는 관측값이 둘(외국인 N일째 + 기타법인 선/유입 이틀째) — 영상이 말한 그대로 남긴다. 장부·스레드·설명문은 watch[0] 만 쓴다
-                watch = [{"q": w["q"], "how": w.get("how") or f"{nxt} 15:40 수급에서 확인", "assist": w.get("assist") or ""} for w in aplus["watch"][:2]]
+            if aplus.get("format") in ("hunter", "brief") and (aplus.get("watch") or [{}])[0].get("q") == aplus["next_q"]:
+                # 헌터·브리핑 편 S6 는 관측값이 둘(외국인 N일째 + 기타법인 선/유입 이틀째) — 영상이 말한 그대로 남긴다. 장부·스레드·설명문은 watch[0] 만 쓴다
+                watch = [{"q": w["q"], "how": w.get("how") or f"{nxt} 15:40 수급에서 확인", "assist": w.get("assist") or "", **({"spoken": w["spoken"]} if w.get("spoken") else {})}
+                         for w in aplus["watch"][:2]]
             if not ledger.record(d, aplus["next_q"]):
                 log(d, "compute", f"⚠ 오늘 약속이 장부에 안 들어갔다 — 내일 회수가 빈다: {aplus['next_q']}")
             out_root = DATA.parent / "out"
             ep = 1 + sum(1 for x in out_root.iterdir() if x.is_dir() and x.name.isdigit() and "20260907" <= x.name < d and (x / "kr" / "video.mp4").exists())
             aplus["ep"] = ep
-            log(d, "compute", f"형식 {'헌터' if aplus.get('format') == 'hunter' else 'A+'}: 주인공 {aplus['protagonist']['name']} {aplus['protagonist']['amount']:+,}억 · 대비 {aplus['contrast']['kind']} · #{ep:03d}")
+            fmt_label = {"hunter": "헌터", "brief": "브리핑"}.get(aplus.get("format"), "A+")
+            log(d, "compute", f"형식 {fmt_label}: 주인공 {aplus['protagonist']['name']} {aplus['protagonist']['amount']:+,}억 · 대비 {aplus['contrast']['kind']} · #{ep:03d}")
         except Exception as e:
             import traceback
             log(d, "compute", f"형식 A+ 실패 → 기존 형식: {e}\n{traceback.format_exc()[-600:]}")

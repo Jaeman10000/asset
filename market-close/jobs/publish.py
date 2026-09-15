@@ -122,7 +122,7 @@ def texts(comp: dict, ed: str) -> dict:
         parts = H["kr"].split()
         H["kr"] = " ".join(parts[:2] + [h for h in tr["hashtags"] if h not in parts][:1] + parts[2:])
     ev_pub = comp.get("event") or {}
-    if comp.get("format") in ("aplus", "hunter") and not comp.get("event_used"):     # 헌터 편도 A+ 와 같은 규칙(B5)
+    if comp.get("format") in ("aplus", "hunter", "brief") and not comp.get("event_used"):     # 헌터 편도 A+ 와 같은 규칙(B5)
         ev_pub = {}
     if ed == "kr" and ev_pub.get("stocks") and ev_pub.get("hashtags"):
         parts = H["kr"].split()
@@ -225,7 +225,7 @@ def kr_title_v3(comp: dict, tr: dict) -> str:
 
 def kr_title(comp: dict, tr: dict) -> str:
     import narrate
-    if comp.get("format") in ("aplus", "hunter") and comp.get("protagonist"):        # 헌터 편도 v3 제목(B5)
+    if comp.get("format") in ("aplus", "hunter", "brief") and comp.get("protagonist"):        # 헌터 편도 v3 제목(B5)
         return kr_title_v3(comp, tr)
     d = comp["date"]
     mdk = f"{int(d[4:6])}월 {int(d[6:8])}일"
