@@ -266,9 +266,20 @@ def _why_check(cb: dict | None) -> list[str]:
         who = chk.get("name") or "그 주체"
         way = "파는" if (chk.get("sign") or -1) < 0 else "사는"
         why = f"이어지는지 보는 건 {who}이 {way} 게 하루 사정인지, 방향을 잡은 건지 가리려는 겁니다."
-    out = [f"하루 수급은 그날 사정일 수 있어서, {why[0].lower() + why[1:] if why[:1].isascii() else why}"]
+    # 같은 두 문장을 매일 읽으면 AI 티가 난다(9/14·9/15 가 토씨 하나 빼고 같았다). n 으로 세 벌을 돌린다.
+    v = n % 3
+    if v == 1:
+        out = [f"{who if kind != 'theme_continue' else '한 업종'}{'이' if kind != 'theme_continue' else '에'} {('파는' if (chk.get('sign') or -1) < 0 else '사는') if kind != 'theme_continue' else '돈이 오는'} 게 어느 하루의 사정이면 다음 날 끊깁니다. 그래서 며칠째인지를 셉니다."]
+    elif v == 2:
+        out = ["하루치 숫자는 이유가 백 가지라 방향을 말해 주지 않습니다. 며칠째인지가 방향을 말해 줍니다."]   # why 문장은 어제와 글자까지 같아서 뺀다
+    else:
+        out = [f"하루 수급은 그날 사정일 수 있어서, {why[0].lower() + why[1:] if why[:1].isascii() else why}"]
     if n <= 2:
         out.append("이틀은 아직 이릅니다. 사흘째까지 이어지면 그때 자리를 잡는 쪽으로 볼 수 있습니다.")
+    elif v == 1:
+        out.append(f"{days_ko(n)}면 어느 하루의 사정이 아니라 방향입니다.")
+    elif v == 2:
+        out.append(f"{days_ko(n)}까지 왔으면 우연이라고 부르기는 어렵습니다.")
     else:
         out.append(f"{days_ko(n)} 이어졌다면 하루 사정으로 보기는 어렵습니다.")
     return out
@@ -329,14 +340,20 @@ def _recent_s0(d: str, n: int = 3) -> list[str]:
     from _common import DATA, load_json
     cur, out = datetime.strptime(d, "%Y%m%d"), []
     for i in range(1, 15):
-        c = load_json(DATA / (cur - timedelta(days=i)).strftime("%Y%m%d") / "computed_kr.json")
-        if not c:
-            continue
-        t = next((x.get("tts") for x in (c.get("scenes") or []) if x.get("id") == "s0"), "")
-        if t:
-            out.append(t)
-            if len(out) >= n:
-                break
+        day = (cur - timedelta(days=i)).strftime("%Y%m%d")
+        # 같은 날 여러 판(20260911_v8 처럼 접미사가 붙은 폴더)도 본다 — 9/11 은 그런 폴더에만 남아 있어서
+        # 금요일 훅("…누가 받았을까요?")을 못 거르고 9/15 에 그대로 다시 골랐다.
+        found = False
+        for folder in sorted(DATA.glob(day + "*"), reverse=True):
+            c = load_json(folder / "computed_kr.json")
+            if not c:
+                continue
+            t = next((x.get("tts") for x in (c.get("scenes") or []) if x.get("id") == "s0"), "")
+            if t and t not in out:
+                out.append(t)
+                found = True
+        if found and len(out) >= n:
+            break
     return out
 
 
@@ -455,8 +472,9 @@ def _used_recently(d: str, key: str, val: str, n: int) -> bool:
 #    거기서 사슬이 끊겼다(2026-09-14 점검). 예측을 시키지 않는다 — 우리가 한 약속으로 넘긴다.
 # 대명사로 부르지 않는다 — "우리가 보자고 한 건"은 처음 본 사람에게 빈칸이다.
 def _bridge_cb(when: str, noun: str) -> list[str]:
-    return [f"그럼 {when}에 보자고 한 {noun}는 어떻게 됐을까요?",
-            f"그럼 {when}에 확인하기로 한 {noun}는 오늘 어떻게 됐을까요?"]
+    at = when if when in ("어제", "오늘", "그제", "내일") else f"{when}에"   # '어제에'는 틀린 말(2026-09-15)
+    return [f"그럼 {at} 보자고 한 {noun}는 어떻게 됐을까요?",
+            f"그럼 {at} 확인하기로 한 {noun}는 오늘 어떻게 됐을까요?"]
 
 
 # 훅이 이미 사실을 회수한 날은 같은 질문을 두 번 울리지 않는다 — 판단 기준 쪽으로 넘긴다
@@ -548,6 +566,12 @@ def build_aplus(c: dict) -> dict:
         _gap = (won(abs(_snap)).replace("약 ", "") + "도", _mult_ko(abs(amount - _snap) / abs(_snap)))
     hook_id, s0 = _pick_hook(d, _hook_candidates(P, _amt_bare, sold, ct, _cb,
                                                  _opp[0] or "", _opp_amt, _others_big, ask, _gap))
+    # 손으로 쓴 훅(data/D/hook.txt)이 있으면 그걸 쓴다 — 자동 후보가 전부 최근 편과 같은 소리일 때(2026-09-15).
+    # S0V4 는 큐 순서(주체·금액 → 지수 등락 → '?' 문장)로 화면을 넘기니, 그 순서로 쓴다.
+    from _common import DATA as _DATA
+    _ov = _DATA / d / "hook.txt"
+    if _ov.exists() and _ov.read_text(encoding="utf-8").strip():
+        hook_id, s0 = "H99", " ".join(_ov.read_text(encoding="utf-8").split())
     _took = hook_id == "H03"
 
     # s2: 답 — 가장 많이 산(판) 쪽 → 나머지 → 같은 편 → 오후 2시→마감

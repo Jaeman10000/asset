@@ -24,7 +24,9 @@ def _num(v) -> float:
         return 0.0
 
 
-async def _one(hc, tok, d: str, code: str, name: str) -> dict | None:
+async def _one(hc, tok, d: str, code: str, name: str, fix: dict | None = None) -> dict | None:
+    """fix: events.json 의 pct_fix — 정규장 종가 등락률을 손으로 준 날(16:00 이후 수집이면 키움 현재가에
+    애프터마켓 체결이 섞여 등락률이 0.1~1%p 어긋난다, 2026-09-15 실측)."""
     data, _, _ = await kiwoom_call(hc, tok, "stkinfo", "ka10059", {"dt": d, "stk_cd": code, "amt_qty_tp": "1", "trde_tp": "0", "unit_tp": "1000"})
     rows = data.get("stk_invsr_orgn") or []
     row = next((r for r in rows if r.get("dt") == d), None)
@@ -35,7 +37,8 @@ async def _one(hc, tok, d: str, code: str, name: str) -> dict | None:
         name = info.get("stk_nm") or name
     except Exception:
         pass
-    return {"code": code, "name": name, "pct": round(_num(row.get("flu_rt")) / 100, 2),
+    pct = float((fix or {})[code]) if code in (fix or {}) else round(_num(row.get("flu_rt")) / 100, 2)
+    return {"code": code, "name": name, "pct": pct,
             "foreign": round(_num(row.get("frgnr_invsr")) / 100), "inst": round(_num(row.get("orgn")) / 100),
             "indiv": round(_num(row.get("ind_invsr")) / 100), "value": round(_num(row.get("acc_trde_prica")) / 100)}
 
@@ -50,7 +53,7 @@ async def main(d: str) -> dict:
         tok = await c._ensure_token(hc)
         for code, name in (ev.get("codes") or {}).items():
             try:
-                r = await _one(hc, tok, d, code, name)
+                r = await _one(hc, tok, d, code, name, ev.get("pct_fix"))
                 if r:
                     stocks.append(r)
             except Exception as e:

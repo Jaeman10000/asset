@@ -56,6 +56,40 @@
     "sign": -1,
     "n": 4
    },
+   "result": {
+    "date": "20260914",
+    "ok": true,
+    "t": -32996,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260914",
+   "q": "외국인 순매도가 닷새째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": -1,
+    "n": 5
+   },
+   "result": {
+    "date": "20260915",
+    "ok": true,
+    "t": -15736,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260915",
+   "q": "외국인 순매도가 엿새째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": -1,
+    "n": 6
+   },
    "result": null
   }
  ]
