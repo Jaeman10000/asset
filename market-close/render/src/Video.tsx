@@ -6,6 +6,7 @@ import { S0V4, S2V4, S3V4, S4V4, S5V4, S6V4 } from "./v4/ScenesV4";
 import { WEEKLY_COMP } from "./v4/WeeklyV4";
 import { USW_COMP } from "./v4/WeeklyUSV4";
 import { NOTICE_COMP } from "./v4/NoticeV4";
+import { HUNTER_COMP } from "./v4/HunterV4";
 import { C, fontCss } from "./tokens";
 import type { Props } from "./types";
 
@@ -60,8 +61,9 @@ export const Video: React.FC<Props> = (p) => {
         const from = Math.round((sc.start ?? 0) * fps);
         const dur = sc.frames ?? Math.round((sc.sec ?? sc.min) * fps);
         const v4 = (p as unknown as { format?: string; visual?: string }).format === "aplus" && (p as unknown as { visual?: string }).visual !== "legacy";
+        const hunter = (p as unknown as { format?: string }).format === "hunter";   // 헌터 포맷(docs/HUNTER_FORMAT_DESIGN.md §6.2): s0 s1 s2 s3a s3b s3c s4 s5 s6 → HunterV4
         const NOTICE: Record<string, typeof comp[string]> = { ...(NOTICE_COMP as Record<string, typeof comp[string]>), n6: S6V4 };   // n0~n6 = 제도 안내편(끝 멘트 화면은 평일과 같은 것)
-        const Sc = WEEKLY_COMP[sc.id] || (USW_COMP as Record<string, typeof comp[string]>)[sc.id] || NOTICE[sc.id] || (v4 && compV4[sc.id]) || comp[sc.id];   // w0~w6 = 주간 결산(토)
+        const Sc = WEEKLY_COMP[sc.id] || (USW_COMP as Record<string, typeof comp[string]>)[sc.id] || NOTICE[sc.id] || (hunter && HUNTER_COMP[sc.id]) || (v4 && compV4[sc.id]) || comp[sc.id];   // w0~w6 = 주간 결산(토)
         return (
           <Sequence key={sc.id} from={from} durationInFrames={dur} name={sc.id}>
             {Sc ? <Sc p={p} sub={sc.sub} cues={(sc as unknown as { cues?: { start: number; end: number; text: string }[] }).cues} /> : null}

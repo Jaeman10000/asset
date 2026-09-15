@@ -1,5 +1,6 @@
 {
  "mode": "auto",
+ "script_format": "hunter",
  "youtube": {
   "privacy": "private",
   "category": "25"

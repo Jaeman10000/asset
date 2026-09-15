@@ -12,7 +12,11 @@ export type Move = {
   theme: string; y: number; t: number; delta: number; state: string; streak: number; avg5_strength: number;
   foreign: number; inst: number; ret: number; spread_names: string[]; moved_to?: string;
 };
-export type Scene = { id: string; min: number; tts: string; sub: string; audio?: string; audio_sec?: number; sec?: number; start?: number; frames?: number };
+export type Scene = { id: string; min: number; tts: string; sub: string; audio?: string; audio_sec?: number; sec?: number; start?: number; frames?: number;
+  /** 헌터 포맷: 문장별 단계 이름(문장 i번째 = steps[i]). 화면(v4/HunterV4.tsx)이 문장 경계(bounds)를 단계로 옮길 때 쓴다 */
+  steps?: string[];
+  /** tts.py 가 저장하는 문장 경계(문장당 1개, 장면 기준 초). cues 는 긴 문장을 쪼갠 자막 큐라 steps 와 개수가 다를 수 있다 */
+  bounds?: { start: number; end: number; text: string }[] };
 export type Props = {
   date: string; date_label: string; brand?: string; tagline?: string; edition?: string; qqq_points?: Pt[];
   kospi: Index; kosdaq: Index;
@@ -28,4 +32,8 @@ export type Props = {
   next_label?: string; fx_said?: boolean; hook?: string;
   schedule: { d: string; t: string }[];
   caption: string; scenes: Scene[]; total_frames?: number; fps?: number; warnings: string[];
+  /** 대본 형식: legacy(옛 s0~s6) · aplus(A+, v4 화면) · hunter(경제사냥꾼 슬롯 s0 s1 s2 s3a s3b s3c s4 s5 s6 — docs/HUNTER_FORMAT_DESIGN.md §6) */
+  format?: "legacy" | "aplus" | "hunter";
+  /** 헌터 포맷 화면 데이터(설계 §6.1 `hunter` 사전) — 모양은 v4/HunterV4.tsx 의 Hunter 타입 */
+  hunter?: any;
 };

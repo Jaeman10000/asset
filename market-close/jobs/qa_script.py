@@ -7,11 +7,17 @@
   · 마지막 사실 뒤에는 '그래서 무슨 뜻'이 있어야 한다.
   · 최근 편과 문장 뼈대가 겹치면 AI 티가 난다.
 
+헌터 포맷(2026-09-15, docs/SCRIPT_SYSTEM_HUNTER_v1.0.md · docs/HUNTER_FORMAT_DESIGN.md §3·§6.3):
+  · 슬롯 9장면(s0 s1 s2 s3a s3b s3c s4 s5 s6)을 체크리스트 11항 + 문장 규칙 10 으로 검사한다 — check_hunter().
+  · 하나라도 실패면 compute 가 실패 문장을 avoid 에 넣고 다시 만든다(최대 3회), 그래도 실패면 옛 포맷으로 폴백.
+  · 실패 문자열은 "[장면] 규칙 :: 걸린 문장" 꼴 — compute 는 ' :: ' 뒤를 잘라 avoid 에 넣는다.
+
 실행:
   python qa_script.py script --kind us --date 20260913     대본만 점검(렌더 전)
   python qa_script.py frames --kind us --date 20260913     렌더된 영상에서 장면별 프레임 추출
   python qa_script.py all    --kind kr --date 20260912
-kind: day(평일) | kr(토 국장 주간) | us(일 미국 주간)
+  python qa_script.py hunter --kind day --date 20260916    헌터 11항만 (--file 로 다른 json 지정 가능)
+kind: day(평일) | kr(토 국장 주간) | us(일 미국 주간) | hunter(=day, format 은 파일의 "format" 으로 판단)
 """
 from __future__ import annotations
 
@@ -43,9 +49,334 @@ CHAT = re.compile(r"[ㅋㅎㅠㅜ]")
 TIGHT_NUM = re.compile(r"\d+\.\d+조")
 # '그래서 무슨 뜻'으로 인정하는 표현. 해석(앞)이거나 다음 확인점(뒤)이면 통과.
 MEANING = re.compile(r"뜻|셈|모습|보입니다|볼 수 있|가까워|남아 있|의미|같은 배|한 주입니다|한 주였|"
-                    r"볼 건|볼 것|확인하|확인됩니다|봅니다|보겠습니다|이어지는지|사느냐|사는지")
+                    r"볼 건|볼 것|확인하|확인됩니다|봅니다|보겠습니다|이어지는지|사느냐|사는지|쪽입니다|뒤집히는")
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# 헌터 포맷 검사 — 정본 §4 문장 규칙 10 · §5 체크리스트 11항 · 설계 §3 을 휴리스틱으로 옮긴 것
+# ══════════════════════════════════════════════════════════════════════════════
+HUNTER_IDS = ("s0", "s1", "s2", "s3a", "s3b", "s3c", "s4", "s5", "s6")
+S3_IDS = ("s3a", "s3b", "s3c")
+SCREEN_IDS = ("s2", "s3a", "s3b", "s3c", "s4")       # 화면 지시어를 세는 구간(규칙 6: S2 1 + S3 3 ≥ 4)
+
+_SPLIT = re.compile(r"(?<=[.?!])\s+")
+_DAYWORD = r"(?:이틀|사흘|나흘|닷새|엿새|이레|여드레|아흐레|열흘)"
+_HNUM = r"(?:한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|스무|서른|마흔|쉰|백|천)"
+_CLS = r"(?:배|개|번째|번|명|곳|종목|업종|건|칸|줄|가지|자리|시간|달|주|장|회|군데|분|초|편|차례)"
+_AFTER = r"(?=[\s.,!?]|$|[을를이가은는의도로만에과와씩째]|입니다|였|이었|넘|가까)"
+# 숫자 토큰 하나 = 사람이 '숫자 하나'로 듣는 단위. '2조 8천억'·'1조 4,800억'·'3분의 1'·'9월 17일' 은 각각 1개.
+# 한글 수사(다섯 배, 닷새째, 한 업종)도 숫자로 센다. 하루·하나·둘 처럼 단위 없이 흔한 말은 세지 않는다('하루째'는 센다).
+NUM_TOKEN = re.compile(
+    r"\d+분의\s?\d+"                                                                   # 분수
+    r"|\d{1,2}월\s?\d{1,2}일"                                                           # 날짜
+    r"|\d{1,2}시\s?\d{1,2}분|\d{1,2}:\d{2}"                                             # 시각(15시 30분, 15:30)
+    r"|\d[\d,]*(?:\.\d+)?\s?(?:조|억|만|천|백)+(?:\s?\d[\d,]*(?:\.\d+)?\s?(?:조|억|만|천|백)+)*"  # 금액 사슬
+    r"|\d[\d,]*(?:\.\d+)?\s?%"                                                           # 비율
+    r"|\d[\d,]*(?:\.\d+)?"                                                               # 그 밖의 숫자(12거래일, 3시 …)
+    r"|" + _DAYWORD + r"|하루(?=째|치|간|동안|연속|만에)"                                  # 날짜 수사
+    r"|절반"
+    r"|" + _HNUM + r"\s?" + _CLS + _AFTER)                                               # 수사 + 단위(다섯 배, 한 업종)
+# 직접 질문(문장 끝) — '마지막 문장은 질문 금지' 같은 데 쓴다
+Q_TAIL = re.compile(r"(?:느냐|냐|는가|은가|인가|일까요|을까요|일까|을까|까요|습니까|입니까|었나|았나|는지|은지|인지)\s*[.!…]*$")
+# 문장 안에 박힌 질문('누가 받았느냐가 오늘의 전부입니다', '누가 받았는지 하나만 봅니다')
+Q_MID = re.compile(r"(?:느냐|는가|은가|인가|일까|을까|었나|았나|는지|은지|인지)(?=[\s,가는이를도의])")
+S0_BANNED = re.compile(r"안녕하세요|안녕하십니까|반갑습니다|누가샀나|국장 ?마감|오늘 시장은|\d{1,2}월\s?\d{1,2}일|\d{4}년|"
+                       r"[월화수목금토일]요일입니다|오늘은 \d{1,2}일")
+S1_DECL = re.compile(r"하나만 봅니다|전부입니다|하나만 찾습니다|하나만 보겠습니다")
+S2_NAIVE = re.compile(r"생각하기 쉽습니다|보이기 쉽습니다|읽히기 쉽습니다")
+S4_OPEN = re.compile(r"직접 열어\s?봤습니다|열어\s?보면|여기 이 칸")
+S4_CALC = re.compile(r"(?:\d|" + _HNUM + r")\s?배(?!경|당|달|우|추|송|터|급|제|치|후)"       # 29배, 다섯 배
+                     r"|\d+분의\s?\d+|며칠치|\d+\s?(?:거래|영업)?일치|\d[\d,.]*\s?%")
+S6_THRESH = re.compile(r"(?:\d[\d,.]*|" + _HNUM + r")\s?(?:거래|영업)?(?:천|백)?(?:일째|억|조|%|선)" + r"|" + _DAYWORD + r"째")
+SCREEN_DIR = re.compile(r"보세요|여기 이 칸|왼쪽|오른쪽|위 칸|아래 칸|막대|여기 진행률")
+SCREEN_ONLY = re.compile(r"(?:보세요|보시죠)[.!]?$|^여기 (?:이 칸|진행률)입니다[.!]?$")    # 화면만 가리키는 문장(블록 끝 판정에서 뺀다)
+BANNED_ALL = re.compile(r"여러분|지난 영상|영상에서|우리 채널|구독하고 알림")
+# 종목 추천·매매 판단 표현 — '사라'는 '사라지다/사라졌다' 를 빼고 잡는다
+RECO = re.compile(r"사세요|파세요|사라(?![지져졌질짐])|팔아라|비중|관망|전망은|목표가")
+_SIG_KEYS = ("누가샀나였습니다", "국장 마감은 매일", "국장 마감은 내일부터", "정규장이 끝나도 저녁 8시까지", "궁금하면 구독", "국장마감, 매일")
+
+
+def _sents(text: str) -> list[str]:
+    return [s.strip() for s in _SPLIT.split((text or "").strip()) if s.strip()]
+
+
+def _is_sig(s: str) -> bool:
+    """시그니처·고정문(매일 같아도 되는 문장)."""
+    t = (s or "").strip()
+    return t in FIXED or any(k in t for k in _SIG_KEYS)
+
+
+def num_tokens(s: str) -> list[str]:
+    return [m.group(0) for m in NUM_TOKEN.finditer(s or "")]
+
+
+def is_question(s: str) -> bool:
+    """문장 끝이 질문인가(물음표 없이 '…일까요.' 로 끝나도 질문)."""
+    t = (s or "").strip()
+    return t.endswith("?") or bool(Q_TAIL.search(t))
+
+
+def has_question(s: str) -> bool:
+    """문장 어딘가에 질문이 있는가(끝 질문 + 안에 박힌 '…느냐가/…는지 하나만')."""
+    return is_question(s) or bool(Q_MID.search(s or ""))
+
+
+def _eok_values(s: str) -> list[float]:
+    """'2조 8천억' → [28000(억), 2.8(조)], '5,328만' → [5328(만), 0.5328(억)] — 단위 해석을 여러 개 돌려준다."""
+    mult = {"조": 10000.0, "억": 1.0, "천억": 1000.0, "백억": 100.0, "만": 1e-4, "천만": 1e-3, "백만": 1e-2, "천": 1e-8, "백": 1e-9}
+    total = 0.0
+    found = False
+    for m in re.finditer(r"(\d[\d,]*(?:\.\d+)?)\s?((?:조|억|만|천|백)+)", s):
+        n = float(m.group(1).replace(",", ""))
+        u = m.group(2)
+        total += n * mult.get(u, 1.0)
+        found = True
+    if not found:
+        return []
+    return [total, total / 10000.0, total * 10000.0]     # 억·조·만 세 가지로 읽은 값
+
+
+def _stated_candidates(result: str) -> list[float]:
+    """calc.result('29배' '33.3%' '3분의 1' '12거래일치' '2조 8천억') 에서 비교할 숫자 후보들."""
+    r = (result or "").strip()
+    if not r:
+        return []
+    if m := re.search(r"(\d+)\s?분의\s?(\d+)", r):
+        a, b = float(m.group(1)), float(m.group(2))
+        return [b / a, b / a * 100.0] if a else []
+    if re.search(r"\d\s?(?:조|억|만|천|백)", r):
+        return _eok_values(r)
+    if m := re.search(r"(\d[\d,]*(?:\.\d+)?)\s?%", r):
+        v = float(m.group(1).replace(",", ""))
+        return [v, v / 100.0]
+    if m := re.search(r"\d[\d,]*(?:\.\d+)?", r):
+        return [float(m.group(0).replace(",", ""))]
+    return []
+
+
+def _computed_candidates(lhs: float, rhs: float, kind: str, result: str) -> list[float]:
+    k = (kind or "").lower()
+    r = result or ""
+    if not k:
+        k = "share" if ("%" in r or "분의" in r) else "ratio" if "배" in r else "days" if ("치" in r or "일" in r) \
+            else "diff" if re.search(r"\d\s?(?:조|억)", r) else "ratio"
+    a, b = abs(lhs), abs(rhs)
+    if k in ("ratio", "times", "배", "multiple"):
+        return [a / b] if b else []
+    if k in ("share", "pct", "percent", "%", "비율", "fraction"):
+        return [a / b * 100.0, a / b] if b else []
+    if k in ("days", "일치", "며칠치", "day"):
+        return [a / b] if b else []
+    if k in ("diff", "sub", "minus", "차", "차이", "remain", "잔여"):
+        return [abs(lhs - rhs), abs(a - b)]
+    if k in ("sum", "plus", "합", "add"):
+        return [lhs + rhs, a + b]
+    return [a / b] if b else []
+
+
+def _close(c: float, s: float) -> bool:
+    """반올림 허용: 29.2→'29'·'30', 5.49→'다섯', 11.8→'12', 27,895억→'2조 8천억'."""
+    return abs(c - s) <= max(0.6, 0.03 * abs(c))
+
+
+def verify_calc(calc: dict, s4_text: str) -> list[str]:
+    """S4 계산 검산(체크리스트 ⑦·⑪ '배수/차이 계산을 검산했는가'). 실패 문자열 목록(장면 접두 없이)."""
+    out: list[str] = []
+    if not isinstance(calc, dict):
+        return out
+    lhs, rhs = calc.get("lhs"), calc.get("rhs")
+    result = str(calc.get("result") or "")
+    kind = str(calc.get("kind") or "")
+    value = calc.get("value")
+    if not isinstance(lhs, (int, float)) or not isinstance(rhs, (int, float)):
+        return out
+    computed = _computed_candidates(float(lhs), float(rhs), kind, result)
+    if not computed:
+        out.append(f"계산식 무효 ({calc.get('expr') or f'{lhs}/{rhs}'}) — 0으로 나눔")
+        return out
+    stated = _stated_candidates(result)
+    if stated and not any(_close(c, s) for c in computed for s in stated):
+        out.append(f"계산 검산 실패 {calc.get('expr') or f'{lhs}/{rhs}'} = {computed[0]:.2f} ≠ 말한 값 '{result}'")
+    if isinstance(value, (int, float)) and not any(_close(c, float(value)) for c in computed):
+        out.append(f"calc.value {value} 이 계산값 {computed[0]:.2f} 과 다름")
+    # 계산 결과가 대사에 실제로 나오는가(화면·말 대조)
+    if result:
+        flat = re.sub(r"[,\s]", "", s4_text or "")
+        if m := re.search(r"(\d+)\s?분의\s?(\d+)", result):
+            if f"{m.group(1)}분의{m.group(2)}" not in flat:
+                out.append(f"계산 결과 '{result}' 가 S4 대사에 없음")
+        elif m := re.search(r"\d[\d,]*(?:\.\d+)?", result):
+            if m.group(0).replace(",", "") not in flat:
+                out.append(f"계산 결과 '{result}' 가 S4 대사에 없음")
+    return out
+
+
+def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None) -> list[str]:
+    """헌터 포맷 대본 검사. 빈 목록이면 통과.
+
+    실패 문자열: "[장면] 규칙 :: 걸린 문장" — compute 는 ' :: ' 뒤 문장을 avoid 에 넣고 다시 만든다.
+    recs 는 전 편 목록(script_memory.editions 형태) — 시험용. None 이면 data/ 의 전 편을 읽는다.
+    """
+    bad: list[str] = []
+
+    def fail(scene: str, rule: str, sent: str = "") -> None:
+        bad.append(f"[{scene}] {rule} :: {sent}")
+
+    by: dict[str, dict] = {}
+    for s in scenes or []:
+        sid = str(s.get("id") or "")
+        if sid and sid not in by:
+            by[sid] = s
+    txt = {sid: (by[sid].get("tts") or "") for sid in by}
+    sents = {sid: _sents(txt[sid]) for sid in by}
+
+    # ④ 9장면 다 있어야 한다 — S3 블록은 정확히 3개
+    for sid in HUNTER_IDS:
+        if not sents.get(sid):
+            fail(sid, "장면 없음")
+    for sid in by:
+        if re.fullmatch(r"s3[d-z]", sid):
+            fail(sid, "S3 블록 4개 이상 — 하나를 내일로 넘길 것", (sents[sid] or [""])[0])
+
+    # ① S0: 첫 두 문장에 숫자 2개 이상, 인사·날짜·채널명·'오늘 시장은' 없음
+    if sents.get("s0"):
+        head = sents["s0"][:2]
+        n = sum(len(num_tokens(x)) for x in head)
+        if n < 2:
+            fail("s0", f"첫 두 문장 숫자 {n}개 < 2 — 두 숫자가 충돌해야 한다", head[0])
+        for x in head:
+            if m := S0_BANNED.search(x):
+                fail("s0", f"도입부 금지어({m.group(0)})", x)
+
+    # ② S1: 질문 선언 틀 + 질문 정확히 1개
+    if sents.get("s1"):
+        if not S1_DECL.search(txt["s1"]):
+            fail("s1", "질문 선언 틀 없음(하나만 봅니다|전부입니다|하나만 찾습니다|하나만 보겠습니다)", sents["s1"][-1])
+        qs = [x for x in sents["s1"] if has_question(x)]
+        if len(qs) != 1:
+            fail("s1", f"질문 {len(qs)}개 — 정확히 1개여야 한다", qs[1] if len(qs) > 1 else sents["s1"][0])
+
+    # ③ S2: 뻔한 답 대변 + '그런데' 차단
+    if sents.get("s2"):
+        if not S2_NAIVE.search(txt["s2"]):
+            fail("s2", "대변 틀 없음(생각하기 쉽습니다|보이기 쉽습니다|읽히기 쉽습니다)", sents["s2"][0])
+        if "그런데" not in txt["s2"]:
+            fail("s2", "그런데 없음", sents["s2"][-1])
+
+    # ⑤ 각 S3 블록은 '그런데' 문장 또는 질문으로 끝난다(그런데 뒤 해석 1문장은 허용, 끝의 화면 지시 문장은 세지 않는다) · '그런데' 블록당 1회
+    for sid in S3_IDS:
+        ss = sents.get(sid)
+        if not ss:
+            continue
+        core = list(ss)
+        while len(core) > 1 and SCREEN_ONLY.search(core[-1]):
+            core.pop()
+        last = core[-1]
+        ok = last.startswith("그런데") or has_question(last) or (len(core) >= 2 and core[-2].startswith("그런데"))
+        if not ok:
+            fail(sid, "블록 끝이 '그런데' 도 질문도 아님", last)
+        if txt[sid].count("그런데") > 1:
+            second = [x for x in ss if "그런데" in x]
+            fail(sid, f"그런데 {txt[sid].count('그런데')}회 — 블록당 1회", second[1] if len(second) > 1 else second[0])
+    # 규칙 5: '그런데' 연속 2문장 금지(어느 장면이든)
+    for sid in HUNTER_IDS:
+        ss = sents.get(sid) or []
+        for i in range(len(ss) - 1):
+            if "그런데" in ss[i] and "그런데" in ss[i + 1]:
+                fail(sid, "그런데 연속 2문장", ss[i + 1])
+
+    # ⑥⑦ S4: 1차 자료 열람 연출 + 계산 1개(검산)
+    if sents.get("s4"):
+        if not S4_OPEN.search(txt["s4"]):
+            fail("s4", "1차 자료 열람 문장 없음(직접 열어봤습니다|열어보면|여기 이 칸)", sents["s4"][0])
+        if not S4_CALC.search(txt["s4"]):
+            fail("s4", "계산식 없음(배|분의|며칠치|일치|%)", sents["s4"][-1])
+        calc = ((comp or {}).get("hunter") or {}).get("s4", {}).get("calc") if isinstance((comp or {}).get("hunter"), dict) else None
+        for msg in verify_calc(calc, txt["s4"]):
+            hit = next((x for x in sents["s4"] if S4_CALC.search(x)), "")
+            fail("s4", msg, hit)
+
+    # ⑧⑨ S5: 판정 문장 + 뒤집히는 조건, 질문으로 끝내지 않는다
+    if sents.get("s5"):
+        if "쪽입니다" not in txt["s5"]:
+            fail("s5", "판정 문장 없음('오늘은 ___ 쪽입니다')", sents["s5"][-1])
+        if "뒤집히는 조건" not in txt["s5"]:
+            fail("s5", "뒤집히는 조건 없음", sents["s5"][-1])
+        if is_question(sents["s5"][-1]):
+            fail("s5", "판정 장면이 질문으로 끝남", sents["s5"][-1])
+
+    # ⑩ S6: 내일 관측값에 임계값 숫자(일째|억|조|%|선)
+    if sents.get("s6"):
+        body = [x for x in sents["s6"] if not _is_sig(x)]
+        if not any(S6_THRESH.search(x) for x in body):
+            fail("s6", "임계값 숫자 없음(N일째|N억|N조|N%|N선)", body[0] if body else sents["s6"][0])
+
+    # ⑪ 전체: 금지어 · 추천 표현 · 마지막 문장 질문 금지
+    reco_hits: dict[str, set[str]] = {}
+    for sid in HUNTER_IDS:
+        for x in sents.get(sid) or []:
+            if _is_sig(x):
+                continue
+            if ws := BANNED_ALL.findall(x):
+                fail(sid, f"금지어({', '.join(dict.fromkeys(ws))})", x)
+            if ws := RECO.findall(x):
+                reco_hits[x] = set(ws)
+                fail(sid, f"종목 추천 표현({', '.join(dict.fromkeys(ws))})", x)
+    body_last = ""
+    for sid in ("s6", "s5"):
+        rest = [x for x in (sents.get(sid) or []) if not _is_sig(x)]
+        if rest:
+            body_last = rest[-1]
+            break
+    if body_last and is_question(body_last):
+        fail("s6", "시그니처 앞 마지막 문장이 질문 — 판정 또는 관측값으로 끝낼 것", body_last)
+    # 집 규칙 금지어(checks/forbidden) — 하드 금지어만 실패, '단정:' 휴리스틱은 compute 경고에 맡긴다
+    try:
+        sys.path.insert(0, str(ROOT))
+        from checks import forbidden as _fb
+        for sid in HUNTER_IDS:
+            for x in sents.get(sid) or []:
+                if _is_sig(x):
+                    continue
+                hits = [h for h in _fb.find(x) if not h.startswith("단정:") and h not in reco_hits.get(x, set())]
+                if hits:
+                    fail(sid, f"금지어 {hits}", x)
+    except Exception as e:                                   # 검사 모듈이 없으면 건너뛴다(시험 환경)
+        print(f"[qa] forbidden 검사 건너뜀: {e}", file=sys.stderr)
+
+    # 규칙 2: 한 문장 한 숫자 — 2개까지 허용, 3개부터 실패
+    for sid in HUNTER_IDS:
+        for x in sents.get(sid) or []:
+            if _is_sig(x):
+                continue
+            toks = num_tokens(x)
+            if len(toks) > 2:
+                fail(sid, f"한 문장에 숫자 {len(toks)}개 {toks} — 최대 2개", x)
+
+    # 규칙 6: 화면 지시어 4회 이상(S2~S4, 문장 단위)
+    n_dir = sum(1 for sid in SCREEN_IDS for x in (sents.get(sid) or []) if SCREEN_DIR.search(x))
+    if n_dir < 4:
+        fail("s2-s4", f"화면 지시어 {n_dir}회 < 4(보세요|여기 이 칸|왼쪽|오른쪽|위 칸|아래 칸|막대|여기 진행률)")
+
+    # 부록 A-1: 전 편과 글자 그대로 겹친 문장 0개(시그니처 제외)
+    d = str((comp or {}).get("date") or "")
+    if d:
+        try:
+            sys.path.insert(0, str(ROOT / "jobs"))
+            import script_memory
+            ov = script_memory.overlaps(d, scenes, recs)
+        except Exception as e:
+            print(f"[qa] 전 편 겹침 검사 건너뜀: {e}", file=sys.stderr)
+            ov = []
+        for o in ov:
+            if o.get("kind") == "exact" and not _is_sig(o.get("sentence") or ""):
+                fail(str(o.get("scene") or "all"), f"전 편과 글자 그대로 겹침 ← {', '.join((o.get('seen') or [])[:3])}", o["sentence"])
+    return bad
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 공통 검사(평일·주간)
+# ══════════════════════════════════════════════════════════════════════════════
 def out_dir(kind: str, date: str) -> Path:
     a, b = DIRS[kind]
     return ROOT / "out" / a / date / b if a else ROOT / "out" / date / b
@@ -56,9 +387,18 @@ def data_script(kind: str, date: str) -> Path:
     return ROOT / "data" / a / date / "script.json" if a else ROOT / "data" / date / "computed_kr.json"
 
 
-def load_scenes(kind: str, date: str) -> list[dict]:
-    p = data_script(kind, date)
-    d = json.loads(p.read_text(encoding="utf-8"))
+def _kind(kind: str) -> str:
+    return "day" if kind == "hunter" else kind
+
+
+def load_doc(kind: str, date: str, file: str | None = None) -> dict:
+    p = Path(file) if file else data_script(_kind(kind), date)
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def load_scenes(kind: str, date: str, file: str | None = None) -> list[dict]:
+    kind = _kind(kind)
+    d = load_doc(kind, date, file)
     return d["scenes"] if kind in ("kr", "us") else d.get("scenes") or []
 
 
@@ -83,18 +423,24 @@ def mask(s: str) -> str:
     return re.sub(r"\s+", "", s)
 
 
-def check_script(kind: str, date: str) -> list[str]:
-    scenes = load_scenes(kind, date)
+def check_script(kind: str, date: str, doc: dict | None = None, file: str | None = None) -> list[str]:
+    kind = _kind(kind)
+    doc = doc if doc is not None else load_doc(kind, date, file)
+    scenes = doc["scenes"] if kind in ("kr", "us") else doc.get("scenes") or []
+    hunter = doc.get("format") == "hunter"          # 장면 id 가 s0..s6 를 넘어도(s3a·s3b·s3c) 길이 한도는 평일과 같다
     bad: list[str] = []
+    if not scenes:
+        return ["장면 없음"]
+    lim, floor, close_max = LIMIT.get(kind, LIMIT["day"]), FLOOR.get(kind, FLOOR["day"]), CLOSE_MAX.get(kind, CLOSE_MAX["day"])
     total = sum(len(s["tts"]) for s in scenes)
     sec = total / CPS + 0.4 * len(scenes)
-    if sec > LIMIT[kind]:
-        bad.append(f"길이 {sec:.0f}초 > 한도 {LIMIT[kind]}초 ({total}자, {int(sec - LIMIT[kind]) * CPS:.0f}자 줄여야 함)")
-    elif sec < FLOOR[kind]:
-        bad.append(f"길이 {sec:.0f}초 < 하한 {FLOOR[kind]}초 — 짧으면 성의 없어 보인다({total}자)")
+    if sec > lim:
+        bad.append(f"길이 {sec:.0f}초 > 한도 {lim}초 ({total}자, {int(sec - lim) * CPS:.0f}자 줄여야 함)")
+    elif sec < floor:
+        bad.append(f"길이 {sec:.0f}초 < 하한 {floor}초 — 짧으면 성의 없어 보인다({total}자)")
     close = sum(len(x["tts"]) for x in scenes[-2:])
-    if close > CLOSE_MAX[kind]:
-        bad.append(f"마무리 {close}자 > {CLOSE_MAX[kind]}자 — 끝이 길면 이탈한다")
+    if close > close_max:
+        bad.append(f"마무리 {close}자 > {close_max}자 — 끝이 길면 이탈한다")
     sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(ROOT / "jobs"))
     from checks import forbidden
@@ -113,7 +459,10 @@ def check_script(kind: str, date: str) -> list[str]:
     last = scenes[-2]["tts"] + scenes[-1]["tts"] if len(scenes) > 1 else scenes[-1]["tts"]
     if not MEANING.search(last):
         bad.append("마지막에 '그래서 무슨 뜻'이 없음 — 사실만 나열하고 끝남")
-    qs = sum(1 for s in scenes if "?" in s["tts"])
+    if hunter:                                 # 헌터 대본은 '…일까요.' 처럼 물음표 없이 묻는다
+        qs = sum(1 for s in scenes if any(has_question(x) for x in _sents(s["tts"])))
+    else:
+        qs = sum(1 for s in scenes if "?" in s["tts"])
     if qs < max(2, len(scenes) // 3):
         bad.append(f"질문이 {qs}개뿐 — 장면마다 다음 질문으로 이어지는지 볼 것")
     def _skel(txt: str) -> set[str]:
@@ -124,12 +473,14 @@ def check_script(kind: str, date: str) -> list[str]:
         dup = mine & _skel(prev)
         if len(dup) >= 2:
             bad.append(f"직전 {k}번째 편과 문장 뼈대 {len(dup)}개 겹침 — 표현을 바꿀 것")
+    if hunter:
+        bad += check_hunter(scenes, doc)
     return bad
 
 
 def frames(kind: str, date: str) -> Path:
     """장면·큐마다 프레임을 뽑아 out/.../frames/ 에 저장. 말과 화면을 눈으로 대조하는 용도."""
-    od = out_dir(kind, date)
+    od = out_dir(_kind(kind), date)
     props = json.loads((od / "props.json").read_text(encoding="utf-8"))
     fd = od / "frames"
     fd.mkdir(exist_ok=True)
@@ -152,19 +503,30 @@ def frames(kind: str, date: str) -> Path:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["script", "frames", "all"])
-    ap.add_argument("--kind", required=True, choices=["day", "kr", "us"])
-    ap.add_argument("--date", required=True)
+    ap.add_argument("cmd", choices=["script", "frames", "all", "hunter"])
+    ap.add_argument("--kind", required=True, choices=["day", "kr", "us", "hunter"])
+    ap.add_argument("--date", help="YYYYMMDD (--file 을 주면 파일의 date 로 대신할 수 있다)")
+    ap.add_argument("--file", help="data/<date>/computed_kr.json 대신 검사할 json (오프라인 시험용)")
     a = ap.parse_args()
+    if not a.date and not a.file:
+        ap.error("--date 또는 --file 이 필요하다")
+    doc = load_doc(a.kind, a.date, a.file) if a.cmd in ("script", "all", "hunter") else None
+    date = a.date or str(doc.get("date") or "")
     rc = 0
     if a.cmd in ("script", "all"):
-        bad = check_script(a.kind, a.date)
+        bad = check_script(a.kind, date, doc)
         print("대본 점검:", "통과" if not bad else f"{len(bad)}건")
         for x in bad:
             print("  ✗", x)
         rc = 1 if bad else 0
+    if a.cmd == "hunter":
+        bad = check_hunter(doc.get("scenes") or [], doc)
+        print("헌터 11항:", "통과" if not bad else f"{len(bad)}건")
+        for x in bad:
+            print("  ✗", x)
+        rc = 1 if bad else 0
     if a.cmd in ("frames", "all"):
-        frames(a.kind, a.date)
+        frames(a.kind, date)
     sys.exit(rc)
 
 

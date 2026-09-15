@@ -152,8 +152,8 @@ def polish(d: str, ed: str = "kr") -> dict:
     comp = load_json(computed_path(d, ed))
     if not comp:
         raise SystemExit("computed 없음")
-    if ed == "kr" and comp.get("format") == "aplus":
-        log(d, "polish", "A+ 형식: 대본 틀 그대로 읽음(다듬기 생략)")
+    if ed == "kr" and comp.get("format") in ("aplus", "hunter"):
+        log(d, "polish", f"{'헌터' if comp.get('format') == 'hunter' else 'A+'} 형식: 대본 틀 그대로 읽음(다듬기 생략)")
         return comp
     scenes = comp["scenes"]
     brand = comp.get("brand") or "밤낮장"

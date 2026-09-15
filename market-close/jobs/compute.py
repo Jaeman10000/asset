@@ -175,6 +175,105 @@ def _upload_times() -> dict:
     return publish.config()["upload_times"]
 
 
+def _script_format() -> str:
+    """대본 형식 스위치: 환경변수 KR_FORMAT 이 있으면 그것, 없으면 data/publish_config.json 의 script_format(기본 aplus).
+    값: hunter(경제사냥꾼 7슬롯, 2026-09-16~) · aplus(오늘 누가 샀나) · legacy(구 형식)."""
+    env = os.environ.get("KR_FORMAT")
+    if env:
+        return env
+    try:
+        import publish
+        return str(publish.config().get("script_format") or "aplus")
+    except Exception:
+        return "aplus"
+
+
+def narration_inputs(d: str, N: dict, inv: dict, *, raw, fl: dict, kospi: dict, kosdaq: dict, inv_q: dict | None, inv_src: str | None,
+                     inv_streak: dict, intraday: dict | None, moves: list, event: dict | None, callback: dict | None,
+                     stocks: list, schedule: list) -> dict:
+    """narrate_aplus.build_aplus / narrate_hunter.build 에 넘기는 입력 c. hunter_try.py 가 지난 날짜로 재구성할 때도 이 함수를 쓴다.
+    (ledger 는 d 이전 항목만 센다 — 제작 시점엔 그 뒤 항목이 없으므로 결과가 같다.)"""
+    led = load_json(DATA / "ledger.json") or {}
+    done = [x for x in led.get("entries", []) if x.get("result") and (x.get("date") or "") < d]
+    ledger_stats = {"n": len(done), "k": sum(1 for x in done if (x.get("result") or {}).get("ok")),
+                    "kinds": [(x.get("check") or {}).get("kind") for x in done]}
+    _ks = load_json(raw / "kiwoom_sum.json") or {}
+    top_others = ((_ks.get("kospi") or {}).get("top_others_buy")
+                  or (((load_json(raw / "kiwoom_top_others.json") or {}).get("kospi") or {}).get("top_others_buy")) or [])
+    buybacks = (load_json(DATA / "buybacks.json") or {}).get("programs") or []
+    top_move = fl.get("top") if fl.get("ready") else None
+    if not top_move and fl.get("ready") and fl.get("table_t"):
+        _tt, _ty = fl["table_t"], fl.get("table_y") or {}
+        _th = max(_tt, key=lambda x: abs(_tt[x].get("net") or 0))
+        top_move = next((m for m in moves if m["theme"] == _th), None) or {
+            "theme": _th, "t": _tt[_th].get("net"), "y": (_ty.get(_th) or {}).get("net"), "state": "", "streak": 0,
+            "spread_names": _tt[_th].get("pos_names") or []}
+    prev_inv, prev_date = {}, None
+    for i in range(1, 8):
+        pdd = (datetime.strptime(d, "%Y%m%d") - timedelta(days=i)).strftime("%Y%m%d")
+        pc = load_json(DATA / pdd / "computed_kr.json")
+        if pc:
+            prev_inv = (pc.get("investors") or {}).get("kospi") or {}
+            prev_date = pdd
+            break
+    kw = load_json(raw / "kiwoom.json") or {}
+    recent = (((kw.get("kospi") or {}).get("daily") or {}).get("recent")) or []
+    # 헌터 포맷이 더 쓰는 것: 종목별 수급(거래대금 상위 20), 전 업종 순매수표(오늘·전날), FOMC 일정, 합산 종목 수
+    sf = kw.get("stock_flows") or {}
+    stock_flows = {}
+    for s in (kw.get("value_top") or [])[:20]:
+        f = sf.get(s.get("code"))
+        if f:
+            stock_flows[s["code"]] = {"name": s.get("name"), "pct": f.get("pct"), "indiv": f.get("indiv"), "foreign": f.get("foreign"),
+                                      "inst": f.get("inst"), "value_mn": s.get("value_mn")}
+    theme_table = {th: (row or {}).get("net") for th, row in (fl.get("table_t") or {}).items()} if fl.get("ready") else {}
+    theme_table_y = {th: (row or {}).get("net") for th, row in (fl.get("table_y") or {}).items()} if fl.get("ready") else {}
+    try:
+        upload_times = _upload_times()
+    except Exception:
+        upload_times = {"kr": "저녁 5시"}
+    return {"date": d, "brand": N["brand"], "kospi": kospi, "inv": inv, "inv_streak": inv_streak, "intraday": intraday, "moves": moves,
+            "event": event, "prev_inv": prev_inv, "prev_date": prev_date, "recent_closes": recent, "callback": callback,
+            "ledger_stats": ledger_stats, "top_others": top_others, "buybacks": buybacks, "top_move": top_move,
+            "upload_times": upload_times,
+            "stocks": stocks, "kosdaq": inv_q or {}, "kosdaq_index": kosdaq, "schedule": schedule, "inv_src": inv_src,
+            "stock_flows": stock_flows, "theme_table": theme_table, "theme_table_y": theme_table_y,
+            "fomc_dates": (load_json(raw / "us.json") or {}).get("fomc_2026") or [],
+            "n_codes": (_ks.get("kospi") or {}).get("n_codes")}
+
+
+def _build_hunter(d: str, c: dict, N: dict) -> dict | None:
+    """헌터 포맷 제작: 만들고 → qa_script.check_hunter 로 검사 → 실패 문장을 avoid 에 넣고 다시(최대 3회) → 그래도 실패면 None(A+ 폴백)."""
+    import narrate_hunter
+    avoid: set[str] = set()
+    for attempt in range(1, 4):
+        try:
+            out = narrate_hunter.build(c, avoid or None)
+        except Exception as e:
+            import traceback
+            log(d, "compute", f"헌터 포맷 생성 실패({attempt}회차) → A+ 형식: {e}\n{traceback.format_exc()[-600:]}")
+            return None
+        try:
+            import qa_script
+            fails = qa_script.check_hunter(out["scenes"], {**N, **out, "date": d})
+        except AttributeError:
+            fails = []
+        except Exception as e:
+            log(d, "compute", f"헌터 검사 자체가 실패({e}) → 검사 없이 통과시킴")
+            fails = []
+        if not fails:
+            log(d, "compute", f"헌터 포맷 통과({attempt}회차): 훅 {out.get('hook_id')} · 장치 {out.get('devices')} · 다음 {out.get('next_q')}")
+            return out
+        log(d, "compute", f"헌터 검사 실패 {attempt}/3 ({len(fails)}건): " + " | ".join(fails))
+        new = {m.group(1).strip() for f in fails for m in [re.search(r"::\s*(.+)$", f)] if m and m.group(1).strip()}
+        if new <= avoid:
+            log(d, "compute", "헌터 검사: 새로 피할 문장이 없다(문장과 무관한 실패) → 폴백")
+            break
+        avoid |= new
+    log(d, "compute", "⚠ 헌터 포맷 3회 실패 → A+ 형식으로 폴백")
+    return None
+
+
 def _inv_streak(d: str, inv: dict) -> dict:
     """이전 거래일 computed_kr.json을 거슬러 외국인·기관 부호 연속일. streak: 오늘 포함 같은 부호 연속(음수=순매도), turned_after: 오늘 부호가 바뀌었으면 직전 반대 부호 연속일+1."""
     dt = datetime.strptime(d, "%Y%m%d")
@@ -425,7 +524,7 @@ def compute(d: str) -> dict:
             watch[0]["assist"] = st
         # A+ 형식이면 484행에서 '영상이 실제로 말한 약속'으로 기록한다. 여기서 구형식을 먼저 적어 두면
         # 그쪽 기록이 남아, 다음 날 회수하는 약속이 영상에서 한 말과 어긋날 수 있다(2026-09-14).
-        if os.environ.get("KR_FORMAT", "aplus") != "aplus" or not inv:
+        if _script_format() not in ("aplus", "hunter") or not inv:
             ledger.record(d, watch[0]["q"])
     callback = ledger.verify(d, moves, (load_json(raw / "flows.json") or {}).get("moves") or [], inv, kosdaq)
 
@@ -450,40 +549,24 @@ def compute(d: str) -> dict:
                        "upload_times": _upload_times(),
                        "moves": moves, "us_link": us_link, "tre": tre, "fx": fx, "stocks": stocks, "schedule": schedule, "watch": watch,
                        "next_label": next_label, "next_morning": next_morning, "reason_fallback": reason_fallback, "callback": callback, "event": event})
-    # ── 형식 A+ '오늘 누가 샀나'(2026-09-11~). KR_FORMAT=legacy 로 끄면 기존 형식 ──
+    # ── 형식 스위치(2026-09-15): hunter(경제사냥꾼 7슬롯) / aplus '오늘 누가 샀나'(2026-09-11~) / legacy. KR_FORMAT 이 publish_config 보다 우선 ──
+    fmt = _script_format()
     aplus = None
-    if os.environ.get("KR_FORMAT", "aplus") == "aplus" and inv:
+    if fmt in ("aplus", "hunter") and inv:
         try:
             import narrate_aplus
-            led = load_json(DATA / "ledger.json") or {}
-            done = [x for x in led.get("entries", []) if x.get("result")]
-            ledger_stats = {"n": len(done), "k": sum(1 for x in done if (x.get("result") or {}).get("ok")),
-                            "kinds": [(x.get("check") or {}).get("kind") for x in done]}
-            _ks = load_json(raw / "kiwoom_sum.json") or {}
-            top_others = ((_ks.get("kospi") or {}).get("top_others_buy")
-                          or (((load_json(raw / "kiwoom_top_others.json") or {}).get("kospi") or {}).get("top_others_buy")) or [])
-            buybacks = (load_json(DATA / "buybacks.json") or {}).get("programs") or []
-            top_move = fl.get("top") if fl.get("ready") else None
-            if not top_move and fl.get("ready") and fl.get("table_t"):
-                _tt, _ty = fl["table_t"], fl.get("table_y") or {}
-                _th = max(_tt, key=lambda x: abs(_tt[x].get("net") or 0))
-                top_move = next((m for m in moves if m["theme"] == _th), None) or {
-                    "theme": _th, "t": _tt[_th].get("net"), "y": (_ty.get(_th) or {}).get("net"), "state": "", "streak": 0,
-                    "spread_names": _tt[_th].get("pos_names") or []}
-            prev_inv = {}
-            for i in range(1, 8):
-                pdd = (datetime.strptime(d, "%Y%m%d") - timedelta(days=i)).strftime("%Y%m%d")
-                pc = load_json(DATA / pdd / "computed_kr.json")
-                if pc:
-                    prev_inv = (pc.get("investors") or {}).get("kospi") or {}
-                    break
-            recent = (((load_json(raw / "kiwoom.json") or {}).get("kospi") or {}).get("daily") or {}).get("recent") or []
-            aplus = narrate_aplus.build_aplus({"date": d, "brand": N["brand"], "kospi": kospi, "inv": inv, "inv_streak": inv_streak,
-                                               "intraday": intraday, "moves": moves, "event": event, "prev_inv": prev_inv,
-                                               "recent_closes": recent, "callback": callback, "ledger_stats": ledger_stats,
-                                               "top_others": top_others, "buybacks": buybacks, "top_move": top_move})
+            c_in = narration_inputs(d, N, inv, raw=raw, fl=fl, kospi=kospi, kosdaq=kosdaq, inv_q=inv_q, inv_src=inv_src,
+                                    inv_streak=inv_streak, intraday=intraday, moves=moves, event=event, callback=callback,
+                                    stocks=stocks, schedule=schedule)
+            if fmt == "hunter":
+                aplus = _build_hunter(d, c_in, N)        # 검사 3회 실패·예외면 None → 아래에서 A+ 로
+            if aplus is None:
+                aplus = narrate_aplus.build_aplus(c_in)  # upload_times 도 넘어간다(설계 보고: 전엔 빠져 '저녁 5시' 기본값만 썼다)
             N = {**N, **aplus}
             watch = [{"q": aplus["next_q"], "how": f"{nxt} 15:40 수급에서 확인", "assist": ""}]
+            if aplus.get("format") == "hunter" and (aplus.get("watch") or [{}])[0].get("q") == aplus["next_q"]:
+                # 헌터 편 S6 는 관측값이 둘(외국인 N일째 + 기타법인 선/유입 이틀째) — 영상이 말한 그대로 남긴다. 장부·스레드·설명문은 watch[0] 만 쓴다
+                watch = [{"q": w["q"], "how": w.get("how") or f"{nxt} 15:40 수급에서 확인", "assist": w.get("assist") or ""} for w in aplus["watch"][:2]]
             if not ledger.record(d, aplus["next_q"]):
                 log(d, "compute", f"⚠ 오늘 약속이 장부에 안 들어갔다 — 내일 회수가 빈다: {aplus['next_q']}")
             out_root = DATA.parent / "out"
@@ -590,7 +673,8 @@ def compute(d: str) -> dict:
         "callback": callback, "bonding": N.get("bonding"), "hook_parts": N.get("hook_parts"), "inv_krx": inv_krx, "s3_story": N.get("s3_story"), "event": event,
         "hook_id": N.get("hook_id"), "weekend_watch": N.get("weekend_watch"), "caution_id": N.get("caution_id"), "devices": N.get("devices"),
         "news_items": (news_kr.get("items") or [])[:20], "glossary": gloss,
-        "format": "aplus" if aplus else "legacy",
+        "format": ((aplus or {}).get("format") or "aplus") if aplus else "legacy",
+        "hunter": (aplus or {}).get("hunter"),
         "protagonist": (aplus or {}).get("protagonist"), "contrast": (aplus or {}).get("contrast"),
         "check": (aplus or {}).get("check"), "ep": (aplus or {}).get("ep"),
         "s2_marks": (aplus or {}).get("s2_marks"), "event_used": (aplus or {}).get("event_used"), "others_top": (aplus or {}).get("others_top"),
@@ -599,6 +683,11 @@ def compute(d: str) -> dict:
     }
     out["edition"] = "kr"
     save_json(DATA / d / "computed_kr.json", out)
+    try:                                   # 전 편 기억(data/script_history.json) — 문장·사실 색인. 실패해도 제작은 계속(record_history 가 예외를 삼킨다)
+        import script_memory
+        script_memory.record_history(d, out)
+    except Exception as e:
+        log(d, "compute", f"script_history 기록 건너뜀: {e}")
     # ── Threads v4(2026-09-11~): 사람 말투 짧은 줄 본문. 이전 본문은 threads_text_legacy로 남긴다 ──
     try:
         import threads_v4
