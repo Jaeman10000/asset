@@ -403,46 +403,110 @@ export const S3V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
 };
 
 /* ───────── s5: 어제 확인 → 결과 카드 → 기록 → 내일 볼 것 카드 ───────── */
-/* ───────── s4: 이슈(있는 날만) — 무슨 일이 있었나 → 그 묶음이 오늘 어떻게 움직였나 ───────── */
+/* ───────── s4: 이슈(있는 날만) — 무슨 일이 있었나(그림) → 그 묶음이 오늘 어떻게 움직였나 ───────── */
 type EvStock = { name: string; pct: number; foreign?: number; inst?: number };
-type Ev = { label: string; group?: string; stocks?: EvStock[] } | null | undefined;
+type Ev = { label: string; group?: string; stocks?: EvStock[]; icons?: string[] } | null | undefined;
+
+/** 이슈를 그림으로 — 외부 이미지는 쓰지 않는다(저작권). 전부 여기서 그린다. */
+const IssueIcon: React.FC<{ kind: string; color: string; size?: number }> = ({ kind, color, size = 300 }) => {
+  const S = size;
+  if (kind === "shield") return (
+    <svg width={S} height={S} viewBox="0 0 100 100" style={{ filter: `drop-shadow(0 0 28px ${color}66)` }}>
+      <path d="M50 6 L86 20 V48 C86 70 68 86 50 94 C32 86 14 70 14 48 V20 Z" fill="rgba(5,8,16,0.6)" stroke={color} strokeWidth="5" strokeLinejoin="round" />
+      <rect x="36" y="46" width="28" height="22" rx="4" fill={color} />
+      <path d="M41 46 V38 a9 9 0 0 1 18 0 V46" fill="none" stroke={color} strokeWidth="5" />
+      <circle cx="50" cy="57" r="3.2" fill="#0B0E16" />
+    </svg>);
+  if (kind === "fiber") return (
+    <svg width={S * 1.4} height={S} viewBox="0 0 140 100" style={{ filter: `drop-shadow(0 0 24px ${color}66)` }}>
+      {[22, 50, 78].map((y, i) => (
+        <g key={i}>
+          <path d={`M4 ${y} C40 ${y - 14}, 70 ${y + 14}, 136 ${y}`} fill="none" stroke={color} strokeWidth="4" opacity="0.55" />
+          <circle cx={30 + i * 28} cy={y - 4 + i * 2} r="5.5" fill={color} />
+          <circle cx={92 - i * 14} cy={y + 4 - i * 2} r="4" fill="#FFFFFF" opacity="0.9" />
+        </g>))}
+      <rect x="2" y="12" width="10" height="76" rx="3" fill={color} opacity="0.9" />
+    </svg>);
+  if (kind === "chip") return (
+    <svg width={S} height={S} viewBox="0 0 100 100" style={{ filter: `drop-shadow(0 0 24px ${color}66)` }}>
+      <rect x="26" y="26" width="48" height="48" rx="6" fill="rgba(5,8,16,0.6)" stroke={color} strokeWidth="5" />
+      {[34, 44, 54, 64].map((v) => (<g key={v}><line x1={v} y1="10" x2={v} y2="26" stroke={color} strokeWidth="4" /><line x1={v} y1="74" x2={v} y2="90" stroke={color} strokeWidth="4" /><line x1="10" y1={v} x2="26" y2={v} stroke={color} strokeWidth="4" /><line x1="74" y1={v} x2="90" y2={v} stroke={color} strokeWidth="4" /></g>))}
+      <rect x="40" y="40" width="20" height="20" rx="3" fill={color} />
+    </svg>);
+  if (kind === "battery") return (
+    <svg width={S} height={S} viewBox="0 0 100 100" style={{ filter: `drop-shadow(0 0 24px ${color}66)` }}>
+      <rect x="14" y="30" width="64" height="40" rx="7" fill="rgba(5,8,16,0.6)" stroke={color} strokeWidth="5" />
+      <rect x="80" y="42" width="8" height="16" rx="2" fill={color} />
+      {[22, 36, 50].map((x) => <rect key={x} x={x} y="38" width="11" height="24" rx="2" fill={color} />)}
+      <path d="M58 24 L50 46 H60 L52 68" fill="none" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
+    </svg>);
+  if (kind === "robot") return (
+    <svg width={S} height={S} viewBox="0 0 100 100" style={{ filter: `drop-shadow(0 0 24px ${color}66)` }}>
+      <line x1="50" y1="8" x2="50" y2="20" stroke={color} strokeWidth="4" />
+      <circle cx="50" cy="7" r="4" fill={color} />
+      <rect x="22" y="20" width="56" height="42" rx="9" fill="rgba(5,8,16,0.6)" stroke={color} strokeWidth="5" />
+      <rect x="32" y="32" width="12" height="12" rx="3" fill={color} />
+      <rect x="56" y="32" width="12" height="12" rx="3" fill={color} />
+      <line x1="36" y1="52" x2="64" y2="52" stroke={color} strokeWidth="4" strokeLinecap="round" />
+      <rect x="30" y="66" width="40" height="26" rx="6" fill="rgba(5,8,16,0.6)" stroke={color} strokeWidth="5" />
+      <rect x="10" y="30" width="8" height="22" rx="3" fill={color} opacity="0.8" />
+      <rect x="82" y="30" width="8" height="22" rx="3" fill={color} opacity="0.8" />
+    </svg>);
+  // 기본: 신문 한 장
+  return (
+    <svg width={S} height={S} viewBox="0 0 100 100" style={{ filter: `drop-shadow(0 0 24px ${color}66)` }}>
+      <rect x="14" y="18" width="72" height="64" rx="6" fill="rgba(5,8,16,0.6)" stroke={color} strokeWidth="5" />
+      <rect x="24" y="30" width="30" height="20" rx="2" fill={color} />
+      {[34, 42, 50].map((y) => <line key={y} x1="60" y1={y} x2="76" y2={y} stroke={color} strokeWidth="4" />)}
+      {[60, 68].map((y) => <line key={y} x1="24" y1={y} x2="76" y2={y} stroke={color} strokeWidth="4" opacity="0.7" />)}
+    </svg>);
+};
 
 export const S4V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
   const pop = usePop();
+  const { f, fps } = useT();
   const ev = (p as unknown as { event?: Ev }).event;
-  const st = (ev?.stocks ?? []).slice(0, 6);   // 6장까지 — 그 아래는 화면을 넘긴다
+  const st = (ev?.stocks ?? []).slice(0, 6);
   const avg = st.length ? st.reduce((a, x) => a + x.pct, 0) / st.length : 0;
   const cl = cues ?? [];
-  // 말에 맞춰 연다: 첫 큐에 무슨 일인지, '평균'이 나오는 큐에 숫자와 종목 줄.
   const t0 = cl[0]?.start ?? 0;
   const t1 = cl.find((c) => /평균|올랐|내렸|종목/.test(c.text))?.start ?? (cl[1]?.start ?? t0 + 3);
   const tone = toneOf(avg);
+  const col = tone === "down" ? BLUE : tone === "up" ? RED : YEL;
+  // 도입 큐(평균 전) 하나마다 그림 하나 — 말을 글로 띄우지 않는다(JJ 2026-09-14)
+  const intro = cl.filter((c) => c.start < t1).slice(0, 3);
+  const icons = (ev?.icons && ev.icons.length ? ev.icons : ["news"]);
+  const fade = interpolate(f, [t1 * fps, (t1 + 0.35) * fps], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const many = st.length > 4;
   return (
     <Shell p={p} cues={cues} badge="오늘의 이슈" bg={<BgChip tone={tone} dim={0.55} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 240 }}>
         <div style={{ fontSize: 44, fontWeight: 800, color: "#CFD6E4", letterSpacing: "0.02em", marginBottom: 14, ...pop(t0) }}>오늘의 이슈</div>
         <div style={{ fontSize: 84, fontWeight: 900, lineHeight: 1.14, letterSpacing: "-0.04em", wordBreak: "keep-all",
           textShadow: "0 6px 30px rgba(0,0,0,0.85)", ...pop(t0 + 0.2) }}>{ev?.label ?? ""}</div>
-        {cl.filter((c) => c.start < t1).slice(0, 3).map((c, k) => (
-          <div key={k} style={{ fontSize: 40, fontWeight: 700, color: k % 2 ? "#FFFFFF" : "#CFD6E4", lineHeight: 1.3, marginTop: 14, wordBreak: "keep-all", ...pop(c.start + 0.1) }}>
-            {c.text.replace(/[.。]$/, "")}
+      </div>
+      {/* 그림 무대 — 평균이 나오면 사라진다 */}
+      <div style={{ position: "absolute", left: 64, right: 64, top: 520, height: 420, display: "flex", justifyContent: "center", alignItems: "center", gap: 60, opacity: fade }}>
+        {intro.map((c, k) => (
+          <div key={k} style={{ ...pop(c.start + 0.1) }}>
+            <IssueIcon kind={icons[k % icons.length]} color={k % 2 ? YEL : col} size={intro.length > 2 ? 250 : 300} />
           </div>
         ))}
       </div>
       {st.length ? (
         <>
-          <div style={{ position: "absolute", left: 64, right: 64, top: 700, ...pop(t1) }}>
+          <div style={{ position: "absolute", left: 64, right: 64, top: 560, ...pop(t1) }}>
             <div style={{ fontSize: 42, fontWeight: 800, color: "#CFD6E4" }}>{ev?.group ?? "관련주"} {st.length}종목 평균</div>
             <div style={{ fontSize: 148, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.04em", marginTop: 4 }}>
               <Grad tone={tone}>{sgn(avg)}{Math.abs(avg).toFixed(1)}%</Grad>
             </div>
           </div>
-          <div style={{ position: "absolute", left: 64, right: 64, top: 1010 }}>
+          <div style={{ position: "absolute", left: 64, right: 64, top: many ? 860 : 1010 }}>
             {st.map((x, i) => (
               <div key={x.name} style={{ ...pop(t1 + 0.35 + i * 0.28) }}>
-                <Card color={colOf(x.pct)} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: st.length > 4 ? 10 : 18, padding: st.length > 4 ? "14px 26px" : undefined }}>
-                  <span style={{ fontSize: st.length > 4 ? 50 : 62, fontWeight: 800, letterSpacing: "-0.02em" }}>{x.name}</span>
-                  <span style={{ fontSize: st.length > 4 ? 58 : 72, fontWeight: 900, color: colOf(x.pct), letterSpacing: "-0.03em" }}>{sgn(x.pct)}{Math.abs(x.pct).toFixed(1)}%</span>
+                <Card color={colOf(x.pct)} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: many ? 10 : 18, padding: many ? "12px 26px" : undefined }}>
+                  <span style={{ fontSize: many ? 48 : 62, fontWeight: 800, letterSpacing: "-0.02em" }}>{x.name}</span>
+                  <span style={{ fontSize: many ? 56 : 72, fontWeight: 900, color: colOf(x.pct), letterSpacing: "-0.03em" }}>{sgn(x.pct)}{Math.abs(x.pct).toFixed(1)}%</span>
                 </Card>
               </div>
             ))}
@@ -582,12 +646,29 @@ export const S5V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cue
 /* ───────── s6: 끝 ───────── */
 export const S6V4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
   const pop = usePop();
+  // 끝 화면은 말과 같은 시각을 보여준다(JJ 2026-09-15: "마지막 멘트와 장면이 바뀌어야 해. 5시로!").
+  // 시각은 대사에서 읽는다 — 대사가 '저녁 5시'면 화면도 '저녁 5시'. 대사에 없으면 기본값.
+  const all = (cues || []).map((c) => c.text || "").join(" ");
+  const when = (all.match(/매일\s*((?:아침|오후|저녁|밤)\s*\d+시(?:\s*\d+분)?)/) || [])[1] || "저녁 5시";
+  const after = /애프터마켓/.test(all);                 // 이번 주만: 정규장 뒤 저녁 8시까지 거래된다는 안내
+  const afterAt = (cues || []).find((c) => /애프터마켓/.test(c.text || ""));
+  const sigAt = (cues || []).find((c) => /올라옵니다/.test(c.text || ""));
+  const t0 = afterAt ? afterAt.start : 0.1;
+  const t1 = sigAt ? sigAt.start : 0.1;
   return (
     <Shell p={p} cues={cues} hideSub bg={<BgCity tone="neutral" dim={0.2} />}>
-      <div style={{ position: "absolute", left: 64, right: 64, top: 560, ...pop(0.1, 30) }}>
+      {after && (
+        <div style={{ position: "absolute", left: 64, right: 64, top: 300, ...pop(t0, 30) }}>
+          <div style={{ fontSize: 46, fontWeight: 700, opacity: 0.85, textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>정규장이 끝나도</div>
+          <div style={{ fontSize: 76, fontWeight: 900, letterSpacing: "-0.03em", textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
+            <span style={{ color: YEL }}>저녁 8시</span>까지 애프터마켓
+          </div>
+        </div>
+      )}
+      <div style={{ position: "absolute", left: 64, right: 64, top: after ? 700 : 560, ...pop(t1, 30) }}>
         <Logo scale={2.4} />
         <div style={{ fontSize: 64, fontWeight: 800, marginTop: 190, textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>국장 마감은 매일</div>
-        <div style={{ fontSize: 120, fontWeight: 900, color: YEL, letterSpacing: "-0.04em", textShadow: "0 0 30px rgba(255,216,77,0.35), 0 6px 26px rgba(0,0,0,0.8)" }}>오후 4시 30분</div>
+        <div style={{ fontSize: 120, fontWeight: 900, color: YEL, letterSpacing: "-0.04em", textShadow: "0 0 30px rgba(255,216,77,0.35), 0 6px 26px rgba(0,0,0,0.8)" }}>{when}</div>
       </div>
     </Shell>
   );

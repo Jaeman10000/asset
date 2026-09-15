@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from narrate import _and, _bat, _won_screen, days_ko, josa, obj, pct, ro, subj, won
 import weekend_watch
 
+AFTER_MARKET_NOTICE_UNTIL = "20260918"   # 애프터마켓 안내를 끝에 붙이는 마지막 날(JJ: 이번 주 영상들)
+
 
 def _ieot(w: str) -> str:
     return w + ('이었습니다.' if _bat(w) else '였습니다.')
@@ -755,20 +757,32 @@ def build_aplus(c: dict) -> dict:
     # 다음 확인은 '하나만'. 조건 분기('이어지면…끊기면…')는 뺀다 — 시청자가 들고 가는 게 판단이 아니라 숙제가 된다.
     parts5.append(f"{when_x} 하나만 봅니다. {P} {word}가 {days_ko(nxt_n) + ' ' if nxt_n else ''}이어지는지.")
     _th = (c.get("top_move") or {}).get("theme") or ((c.get("moves") or [{}])[0].get("theme"))
-    parts5.append(_ask_viewer(d, P, _th, when_x))          # ② 시청자에게 묻는다 — 댓글이 0인 이유
+    # ② 시청자에게 묻던 줄은 뺐다 — 대본 시스템 v1.2 §0-1(JJ 2026-09-15): "여러분은 어떻게 읽으셨습니까" 삭제, S5 는 판정과 뒤집히는 조건으로 끝난다
+    _ = (_ask_viewer, _th, when_x)
     parts5.append(_like_sub(d))                            # ③ 좋아요 + 구독 한 줄
     s5 = " ".join(parts5)
 
-    s6 = f"{_ieot(brand)} 국장 마감은 매일 오후 4시 30분에 올라옵니다."   # JJ 원래 멘트(2026-09-11 복원)
+    # 끝 멘트(JJ 2026-09-15: "내일부터는 저녁 5시에 올린다고 명시… 마지막 멘트와 장면이 바뀌어야 해").
+    # 9/15 편만 '내일부터', 그 뒤로는 '매일 저녁 5시'. 시각 문구는 publish_config 의 publish_at 에서 온다.
+    # 이번 주(9/14~9/18)는 애프터마켓(9/14 개시, 정규장 후 16~20시)을 시그니처 앞에 한 문장 붙인다.
+    _when = (c.get("upload_times") or {}).get("kr") or "저녁 5시"
+    _after = "정규장이 끝나도 저녁 8시까지 애프터마켓에서 거래됩니다. " if d <= AFTER_MARKET_NOTICE_UNTIL else ""
+    _since = "내일부터 " if d == "20260915" else ""
+    s6 = f"{_after}{_ieot(brand)} 국장 마감은 {_since}매일 {_when}에 올라옵니다."
 
     # 화면용: 막대(말하는 순서), 카드 제목
     bars = [{"name": P, "v": amount}] + [{"name": n, "v": v} for n, v in opp] + [{"name": n, "v": v} for n, v in same] + \
            [{"name": n, "v": v} for n, v in parties if n not in {x for x, _ in opp} | {x for x, _ in same}]
     s2_title = f"{P} {_won_screen(amount, True)},<br>{'·'.join(n for n, _ in opp) or '—'}{'이' if opp else ''} {'받았다' if sold else '팔았다'}"
 
-    if s3:                                   # s3 는 답까지 하고 닫혀 있었다 — 다음 장면으로 넘기는 한 줄을 붙인다
-        _bw = _day_word(d, datetime.strptime(cb["prev_date"], "%Y%m%d"), past=True) if (cb and cb.get("prev_date")) else ""
-        s3 = s3.rstrip() + " " + _bridge(d, cb, _bw, _took)
+    # 다리 질문("…어떻게 됐을까요?")은 답(s5) 바로 앞 장면에 붙인다. s3 에 붙이고 s4 가 끼면
+    # 질문 뒤에 이슈가 나와 답이 끊긴다(JJ 2026-09-14). 이슈가 있는 날은 s4 끝, 없는 날은 s3 끝.
+    _bw = _day_word(d, datetime.strptime(cb["prev_date"], "%Y%m%d"), past=True) if (cb and cb.get("prev_date")) else ""
+    _br = _bridge(d, cb, _bw, _took)
+    if s4:
+        s4 = s4.rstrip() + " " + _br
+    elif s3:
+        s3 = s3.rstrip() + " " + _br
     scenes = [{"id": "s0", "min": 4.0, "tts": s0, "sub": ""},
               {"id": "s2", "min": 8.0, "tts": s2, "sub": s2}]
     if s3:

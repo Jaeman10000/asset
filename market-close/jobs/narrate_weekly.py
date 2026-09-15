@@ -65,7 +65,7 @@ HAN = {1: "하나", 2: "둘", 3: "셋", 4: "넷", 5: "다섯", 6: "여섯", 7: "
 GROUPS = (("개인", "indiv"), ("외국인", "foreign"), ("기관", "inst"), ("기타법인", "others"))
 GNAMES = tuple(n for n, _ in GROUPS)
 MAIN3 = ("외국인", "기관", "개인")          # 동률이면 이 순서
-SIGNOFF = "누가샀나 주간 결산이었습니다. 평일엔 매일 오후 4시 30분에 국장 마감이 올라옵니다."
+SIGNOFF = "누가샀나 주간 결산이었습니다. 평일엔 매일 저녁 5시에 국장 마감이 올라옵니다."
 TAG = "#국장"
 NEUTRAL = 300          # 억: 이보다 작은 날은 방향 판단에서 어느 쪽으로도 센다
 MIN_PART = 5000        # 억: 주 중 방향 전환으로 인정하는 앞·뒤 최소 금액
@@ -1412,7 +1412,7 @@ def build_threads(F: dict, pk: Picker, htype: str) -> tuple[str, str]:
     q_full = _q_plain(F["next_q"])
     # 채널 고지·링크·다음 주에 볼 것은 전부 이 답글이 맡는다(본문에는 넣지 않는다).
     reply = ("영상 전체는 여기서 → {YT}\n"
-             "평일엔 매일 오후 4시 30분, 그날 한국 시장에서 누가 샀는지 올려."
+             "평일엔 매일 저녁 5시, 그날 한국 시장에서 누가 샀는지 올려."
              + (f"\n다음 주엔 {q_full} 볼게." if q_full else ""))
     return body + "\n" + TAG, reply
 

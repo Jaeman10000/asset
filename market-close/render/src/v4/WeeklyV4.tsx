@@ -864,7 +864,7 @@ export const W6: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues 
         <div style={{ position: "absolute", left: 64, right: 64, top: 560, ...pop(endAt + 0.05, 30) }}>
           <Logo scale={2.4} />
           <div style={{ fontSize: 64, fontWeight: 800, marginTop: 190, textShadow: SH }}>국장 마감은 매일</div>
-          <div style={{ fontSize: 120, fontWeight: 900, color: YEL, letterSpacing: "-0.04em", textShadow: SH_Q }}>오후 4시 30분</div>
+          <div style={{ fontSize: 120, fontWeight: 900, color: YEL, letterSpacing: "-0.04em", textShadow: SH_Q }}>저녁 5시</div>
         </div>
       </WShell>
     );

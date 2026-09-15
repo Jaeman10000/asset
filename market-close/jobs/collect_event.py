@@ -60,7 +60,7 @@ async def main(d: str) -> dict:
         log(d, "event", "종목 데이터 없음(휴장?)")
         return {}
     stocks.sort(key=lambda s: -s["pct"])
-    out = {k: ev.get(k) for k in ("label", "spoken", "group", "keywords", "hashtags", "news_query", "image", "head")}
+    out = {k: ev.get(k) for k in ("label", "spoken", "group", "keywords", "hashtags", "news_query", "image", "head", "icons")}
     out.update({"date": d, "stocks": stocks, "avg_pct": round(sum(s["pct"] for s in stocks) / len(stocks), 2),
                 "n_up": sum(1 for s in stocks if s["pct"] > 0), "n_down": sum(1 for s in stocks if s["pct"] < 0)})
     save_json(day_dir(d) / "event.json", out)

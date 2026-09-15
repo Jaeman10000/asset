@@ -201,7 +201,7 @@ def _texts(kind: str, script: dict, w: dict, od, rng: str) -> None:
                 "미국 국채 금리", "10년물 금리", "달러", "엔화", "환율", "CPI", "PPI", "FOMC", "연준", "트럼프", "누가샀나"]
         hashtags = "#미국주식 #나스닥 #유가 #금리 #환율 #FOMC #미장 #주간증시 #누가샀나"
     desc = (f"{script['title']}\n누가샀나 {k['label']} — {rng} 한 주 동안 돈이 어디서 빠져 어디로 갔는지, 그 주 뉴스와 함께 정리합니다. "
-            f"평일엔 매일 오후 4시 30분에 국장 마감이 올라옵니다.\n\n{body}\n\n{DISCLAIMER}\n\n{hashtags}")
+            f"평일엔 매일 저녁 5시에 국장 마감이 올라옵니다.\n\n{body}\n\n{DISCLAIMER}\n\n{hashtags}")
     (od / "youtube_title.txt").write_text(script["title"], encoding="utf-8")
     (od / "youtube_description.txt").write_text(desc[:5000], encoding="utf-8")
     (od / "youtube_tags.txt").write_text(", ".join(tags), encoding="utf-8")

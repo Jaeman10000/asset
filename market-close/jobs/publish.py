@@ -34,19 +34,19 @@ REPO = ROOT.parent                       # asset/
 ASSETS_DIR = ROOT / ".assets"            # assets 브랜치 워크트리
 CONFIG = DATA / "publish_config.json"
 DEFAULT_CONFIG = {"mode": "confirm", "youtube": {"privacy": "private", "category": "25"}, "tiktok": {"privacy": "SELF_ONLY"},
-                  "threads": {"enabled": True, "media": "card", "link_in_reply": True}, "assets_branch": "assets", "publish_at": {"kr": "16:30"}, "editions": {"kr": True, "us": False},
+                  "threads": {"enabled": True, "media": "card", "link_in_reply": True}, "assets_branch": "assets", "publish_at": {"kr": "17:00"}, "editions": {"kr": True, "us": False},
                   "targets": ["threads"]}
 
 
 def spoken_time(hhmm: str) -> str:
     """'07:30' → '아침 7시 30분', '18:30' → '저녁 6시 30분'"""
     h, m = int(hhmm[:2]), int(hhmm[3:5])
-    part = "새벽" if h < 6 else "아침" if h < 11 else "오후" if h < 18 else "저녁" if h < 21 else "밤"
+    part = "새벽" if h < 6 else "아침" if h < 11 else "오후" if h < 17 else "저녁" if h < 21 else "밤"   # 17시 = 저녁 5시(JJ 2026-09-15)
     return f"{part} {h if h <= 12 else h - 12}시" + (f" {m}분" if m else "")
 
 
 def publish_at_dt(d: str, ed: str) -> datetime:
-    hhmm = config()["publish_at"].get(ed, "16:30")
+    hhmm = config()["publish_at"].get(ed, "17:00")
     return datetime.strptime(d + hhmm, "%Y%m%d%H:%M")
 
 
@@ -153,7 +153,7 @@ def texts(comp: dict, ed: str) -> dict:
         label = "미국장 마감"
     title = title[:100]
     script = "\n".join(sc["tts"] for sc in comp["scenes"])
-    when = (comp.get("upload_times") or {}).get("kr") or "오후 4시 30분"
+    when = (comp.get("upload_times") or {}).get("kr") or "저녁 5시"
     import narrate
     summary = _desc_summary(comp) if ed == "kr" else ""
     img = ((comp.get("event") or {}).get("image") or {}) if ed == "kr" else {}

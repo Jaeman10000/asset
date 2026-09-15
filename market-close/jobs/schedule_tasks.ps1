@@ -25,5 +25,5 @@ Register-Job "BamNatJang-Morning"   "--edition=us"                  @("Monday","
 Register-Job "BamNatJang-Intraday" "--edition=kr --stage=intraday"    @("Monday","Tuesday","Wednesday","Thursday","Friday") "14:00"
 Register-Job "BamNatJang-EveningCollect" "--edition=kr --stage=collect"  @("Monday","Tuesday","Wednesday","Thursday","Friday") "15:41"
 Register-Job "BamNatJang-EveningBuild" "--edition=kr --stage=krx"      @("Monday","Tuesday","Wednesday","Thursday","Friday") "15:55"
-Register-Job "BamNatJang-PublishEvening" "--edition=kr --stage=publish" @("Monday","Tuesday","Wednesday","Thursday","Friday") "16:30"
+Register-Job "BamNatJang-PublishEvening" "--edition=kr --stage=publish" @("Monday","Tuesday","Wednesday","Thursday","Friday") "17:00"
 Get-ScheduledTask -TaskName "BamNatJang-*" | Select-Object TaskName, State | Format-Table -AutoSize

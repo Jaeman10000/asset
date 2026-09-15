@@ -15,6 +15,8 @@
 """
 from __future__ import annotations
 
+import re
+
 import asyncio
 import sys
 from datetime import datetime
@@ -76,7 +78,7 @@ def check(d: str) -> list[str]:
         spoken = _tts.speakable(s["tts"])
         if hits := forbidden.find(spoken):
             bad.append(f"{s['id']} 금지어 {hits}")
-    if comp["scenes"] and comp["scenes"][-1]["tts"].strip() != "누가샀나였습니다. 국장 마감은 매일 오후 4시 30분에 올라옵니다.":
+    if comp["scenes"] and not re.search(r"누가샀나였습니다\. 국장 마감은 (?:내일부터 )?매일 .+에 올라옵니다\.$", comp["scenes"][-1]["tts"].strip()):
         bad.append("끝 멘트가 고정문과 다르다")
     qs = sum(1 for s in comp["scenes"] if "?" in s["tts"])
     if qs < 3:

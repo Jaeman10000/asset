@@ -590,7 +590,7 @@ def build(c: dict) -> dict:
 
     # S6 아웃트로
     ut = c.get("upload_times") or {}
-    s6 = f"{brand_was(brand)} 국장 마감은 매일 {ut.get('kr', '오후 4시 30분')}에 올라옵니다."
+    s6 = f"{brand_was(brand)} 국장 마감은 매일 {ut.get('kr', '저녁 5시')}에 올라옵니다."
 
     return {
         "brand": brand, "tagline": c.get("tagline") or TAGLINE, "hook": hook, "hook_parts": hook_parts, "bonding": bonding, "s3_story": s3_story,
