@@ -84,7 +84,10 @@ def main() -> None:
             collect_us_index.main(d)     # 간밤 나스닥(방향 연결)
         if stage in ("all", "compute", "krx"):
             import collect_news
-            collect_news.main(d, "kr")   # 마감시황 기사는 15:35~17:00에 나오므로 18:00 제작 단계에서 수집
+            if d.isdigit() and len(d) == 8:
+                collect_news.main(d, "kr")   # 마감시황 기사는 15:35~17:00에 나오므로 18:00 제작 단계에서 수집
+            else:
+                log(d, "run", "접미사 날짜(샘플 판) — 뉴스 재수집 생략, 복사해 둔 raw/news_kr.json 사용")
             try:
                 import collect_event
                 asyncio.run(collect_event.main(d))   # data/events.json에 오늘 이슈가 있으면 종목 묶음 수집
