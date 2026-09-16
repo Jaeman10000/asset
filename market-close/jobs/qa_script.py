@@ -97,6 +97,19 @@ S4_CALC = re.compile(r"(?:\d|" + _HNUM + r")\s?배(?!경|당|달|우|추|송|터
                      r"|\d+분의\s?\d+|며칠치|\d+\s?(?:거래|영업)?일치|\d[\d,.]*\s?%")
 S6_THRESH = re.compile(r"(?:\d[\d,.]*|" + _HNUM + r")\s?(?:거래|영업)?(?:천|백)?(?:일째|억|조|%|선)" + r"|" + _DAYWORD + r"째")
 SCREEN_DIR = re.compile(r"보세요|여기 이 칸|왼쪽|오른쪽|위 칸|아래 칸|막대|여기 진행률")
+# 브리핑(평일편)은 반대로 **화면을 말로 설명하면 실패**한다(JJ 2026-09-16: "오른쪽 도장입니다를 왜 말로 설명해? 이미 화면에 보여주는데").
+# 화면은 말에 맞춰 켜진다 — 말은 사람이 시장을 설명하듯 한다. 따옴표 안(뉴스 제목)은 세지 않는다('신용카드'·'디스플레이 화면' 같은 기사 낱말).
+SCREEN_TALK = re.compile(r"막대|(?:위|아래|이|그|두|종목|뉴스|판정|왼쪽|오른쪽)\s?칸|왼쪽|오른쪽|카드|도장|종목 칩|보세요|화면|그래프|네 번째")
+_QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"|‘[^’]*’|“[^”]*”")
+
+
+def strip_quotes(s: str) -> str:
+    return _QUOTED.sub("", s or "")
+
+
+# S5 판정·뒤집히는 조건 — 브리핑은 "돈 쪽입니다" 같은 딱딱한 틀 대신 사람 말로 한다(JJ 2026-09-16). 옛 틀도 그대로 통과한다.
+S5_VERDICT = re.compile(r"쪽입니다|움직인 하루|움직였[습고]|만들었[습고]|만든 건|움직인 건|끌었[습고]")
+S5_FLIP = re.compile(r"뒤집히는 조건|뒤집히려면|바뀌려면|바뀌는 신호|달라지는 조건|바뀌었다고 보려면")
 SCREEN_ONLY = re.compile(r"(?:보세요|보시죠)[.!]?$|^여기 (?:이 칸|진행률)입니다[.!]?$")    # 화면만 가리키는 문장(블록 끝 판정에서 뺀다)
 BANNED_ALL = re.compile(r"여러분|지난 영상|영상에서|우리 채널|구독하고 알림")
 # 종목 추천·매매 판단 표현 — '사라'는 '사라지다/사라졌다' 를 빼고 잡는다
@@ -251,7 +264,7 @@ def verify_calc(calc: dict, s4_text: str) -> list[str]:
     return out
 
 
-def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None) -> list[str]:
+def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None, screen: str = "require") -> list[str]:
     """헌터 포맷 대본 검사. 빈 목록이면 통과.
 
     실패 문자열: "[장면] 규칙 :: 걸린 문장" — compute 는 ' :: ' 뒤 문장을 avoid 에 넣고 다시 만든다.
@@ -332,9 +345,9 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None)
 
     # ⑧⑨ S5: 판정 문장 + 뒤집히는 조건, 질문으로 끝내지 않는다
     if sents.get("s5"):
-        if "쪽입니다" not in txt["s5"]:
+        if not S5_VERDICT.search(txt["s5"]):
             fail("s5", "판정 문장 없음('오늘은 ___ 쪽입니다')", sents["s5"][-1])
-        if "뒤집히는 조건" not in txt["s5"]:
+        if not S5_FLIP.search(txt["s5"]):
             fail("s5", "뒤집히는 조건 없음", sents["s5"][-1])
         if is_question(sents["s5"][-1]):
             fail("s5", "판정 장면이 질문으로 끝남", sents["s5"][-1])
@@ -387,9 +400,14 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None)
             if len(toks) > 2:
                 fail(sid, f"한 문장에 숫자 {len(toks)}개 {toks} — 최대 2개", x)
 
-    # 규칙 6: 화면 지시어 4회 이상(S2~S4, 문장 단위)
+    # 규칙 6: 화면 지시어 4회 이상(S2~S4, 문장 단위) — 브리핑(screen="ban")은 거꾸로 화면 설명 금지
     n_dir = sum(1 for sid in SCREEN_IDS for x in (sents.get(sid) or []) if SCREEN_DIR.search(x))
-    if n_dir < 4:
+    if screen == "ban":
+        for sid in HUNTER_IDS:
+            for x in sents.get(sid) or []:
+                if not _is_sig(x) and SCREEN_TALK.search(strip_quotes(x)):
+                    fail(sid, "화면을 말로 설명함(막대·칸·카드·도장·왼쪽·오른쪽·보세요 금지)", x)
+    elif n_dir < 4:
         # 문장 없는 실패는 compute 가 avoid 를 못 늘려 첫 회에 폴백했다(리뷰 2). 지시어 없는 S4 문장(숫자가 있는 칸 문장 우선)을 붙인다.
         no_dir = [x for x in (sents.get("s4") or []) if not SCREEN_DIR.search(x) and not _is_sig(x)]
         hit = next((x for x in no_dir if num_tokens(x)), no_dir[0] if no_dir else "")
@@ -428,7 +446,7 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
       총 글자 수 > 1,250 실패, < 900 경고 — 경고는 warn 목록에 담고(없으면 stderr) 실패로 치지 않는다.
     실패 문자열은 헌터와 같다: "[장면] 규칙 :: 걸린 문장" — compute 는 ' :: ' 뒤 문장을 avoid 에 넣고 다시 만든다.
     """
-    bad = check_hunter(scenes, comp, recs)
+    bad = check_hunter(scenes, comp, recs, screen="ban")
 
     def fail(scene: str, rule: str, sent: str = "") -> None:
         bad.append(f"[{scene}] {rule} :: {sent}")

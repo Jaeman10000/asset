@@ -108,6 +108,22 @@ class ScenePick:
         return r
 
 
+class NoScreenPick:
+    """Picker 를 감싼다 — 화면을 말로 설명하는 후보(막대·칸·카드·도장·왼쪽·오른쪽·보세요)는 먼저 뺀다(JJ 2026-09-16).
+    화면은 말에 맞춰 알아서 켜지니 말로 가리키지 않는다. 전부 걸리면 원래 후보로 고르고 검사(check_brief)가 잡는다."""
+
+    def __init__(self, pk: Picker):
+        self.pk = pk
+
+    def __getattr__(self, k):
+        return getattr(self.pk, k)
+
+    def __call__(self, cands: list[str], fallback: str = "") -> str:
+        cands = [c for c in cands if c and c.strip()]
+        ok = [c for c in cands if not _qa.SCREEN_TALK.search(_qa.strip_quotes(c))]
+        return self.pk(ok or cands, fallback)
+
+
 def tname(th: str | None) -> str:
     """말하는 업종 이름 — '원전/에너지' → '원전'."""
     return SPOKEN_THEME.get(th or "", th or "")
@@ -305,17 +321,49 @@ def _flow_score(x: dict) -> tuple[int, list[str]]:
 
 
 _FLOW_TXT = {
-    2: ["돈이 들어오는 쪽으로 방향을 잡아 가는 흐름입니다.", "받는 손이 늘어나는 쪽입니다.", "들어오는 돈이 나가는 돈을 눌러 가는 흐름입니다.",
-        "돈의 무게가 들어오는 쪽으로 실린 하루입니다.", "받는 쪽이 더 무거워진 흐름입니다."],
-    1: ["아직 세지는 않지만 들어오는 쪽으로 기운 하루입니다.", "세지는 않아도 무게는 들어오는 쪽입니다.", "조금이지만 돈은 들어오는 쪽으로 기울었습니다.",
-        "약하게나마 받는 손이 앞선 하루입니다.", "들어오는 쪽이 아주 조금 더 무거운 하루입니다."],
-    0: ["들어온 돈과 나간 돈이 맞서는 하루입니다.", "나간 돈과 들어온 돈이 팽팽한 하루입니다.", "어느 쪽으로도 기울지 않은 하루입니다.",
-        "들어온 돈과 나간 돈이 서로를 지운 하루입니다.", "양쪽 무게가 비슷한 하루입니다."],
-    -1: ["들어온 돈이 나간 돈을 못 받치는 쪽입니다.", "받는 손이 나가는 돈을 다 못 받은 쪽입니다.", "나가는 쪽이 조금 더 무거운 하루입니다.",
-         "들어온 돈만으로는 나간 자리를 못 메운 하루입니다.", "무게는 나가는 쪽으로 살짝 기울었습니다."],
-    -2: ["돈이 빠져나가는 흐름이 더 무겁습니다.", "아직 나가는 쪽이 이기고 있는 하루입니다.", "돈의 방향은 나가는 쪽에 있습니다.",
-         "나가는 돈이 들어오는 돈을 누르는 흐름입니다.", "무게는 여전히 나가는 쪽입니다."],
+    2: ["들어오는 돈이 나가는 돈보다 커지고 있습니다.", "사는 손이 파는 손을 눌러 가는 흐름입니다.", "돈이 들어오는 힘이 더 셉니다.",
+        "받는 손이 점점 커지고 있습니다.", "흐름만 보면 돈은 들어오는 중입니다.", "들어오는 돈이 나간 자리를 채워 가고 있습니다."],
+    1: ["조금이지만 들어오는 돈이 더 컸습니다.", "세지는 않아도 사는 손이 조금 앞섰습니다.", "약하게나마 돈이 들어온 하루였습니다.",
+        "들어오는 돈이 아주 조금 더 많았습니다.", "받는 힘이 조금 더 셌습니다.", "흐름은 살짝 들어오는 쪽으로 기울었습니다."],
+    0: ["들어온 돈과 나간 돈이 비슷했습니다.", "사는 손과 파는 손이 팽팽했습니다.", "아직 어느 한쪽으로 기울지 않았습니다.",
+        "들어온 돈과 나간 돈이 서로 지운 하루입니다.", "돈의 방향은 아직 정해지지 않았습니다.", "사는 힘과 파는 힘이 비슷한 하루였습니다."],
+    -1: ["들어온 돈이 나간 돈을 다 받아내지는 못했습니다.", "받는 손보다 파는 손이 조금 더 컸습니다.", "나가는 돈이 조금 더 많았던 하루입니다.",
+         "들어온 돈만으로는 나간 자리를 다 메우지 못했습니다.", "파는 힘이 아주 조금 더 셌습니다.", "흐름은 살짝 빠져나가는 쪽으로 기울었습니다."],
+    -2: ["아직은 나가는 돈이 더 큽니다.", "돈이 빠져나가는 힘이 아직 더 셉니다.", "들어오는 돈보다 나가는 돈이 아직 많습니다.",
+         "아직은 파는 손이 사는 손보다 큽니다.", "흐름만 보면 돈은 아직 빠져나가는 중입니다.", "나가는 돈이 들어오는 돈을 아직 누르고 있습니다."],
 }
+
+
+def _say_side(tn: str, side: str, ilab: str = "", second: bool = False, same: bool = True, short: str = "") -> list[str]:
+    """업종 판정 한 문장 후보 — side 'b' 는 돈이 올린 값, 'a' 는 뉴스가 올린 값.
+    **후보 하나 = 한 문장**(화면 단계 steps 가 문장 수와 맞아야 한다). short 는 '…고, {short}.' 로 한 문장 안에 잇는다.
+    ilab 이 있으면 이슈 라벨을 앞에 붙이고(BRIEF_FIX_2 §D-3), second 면 둘째 업종 꼴('…도' / '반면 …')."""
+    money = side == "b"
+    lo = "뉴스" if money else "돈"
+    hi_s = "돈이" if money else "뉴스가"
+    hi_x = "수급이" if money else "뉴스가"
+    first = "기사보다 돈이" if money else "돈보다 기사가"
+    # (끝이 '습니다.' 인 꼴, 끝을 '고, {short}.' 로 바꿀 줄기) 짝
+    stems = [(f"{J(tn)} {lo}보다 {hi_s} 움직인 하루였습니다.", f"{J(tn)} {lo}보다 {hi_s} 움직였"),
+             (f"{tn} 값은 {lo}보다 {hi_x} 만들었습니다.", f"{tn} 값은 {lo}보다 {hi_x} 만들었"),
+             (f"{J(tn)} {first} 먼저 움직였습니다.", f"{J(tn)} {first} 먼저 움직였"),
+             (f"{tn}에선 {lo}보다 {hi_s} 값을 움직였습니다.", f"{tn}에선 {lo}보다 {hi_s} 값을 움직였"),
+             (f"{tn} 흐름은 {lo}보다 {hi_s} 만들었습니다.", f"{tn} 흐름은 {lo}보다 {hi_s} 만들었"),
+             (f"결국 {tn} 값을 움직인 건 {lo}보다 {hi_s[:-1]}였습니다." if not money else f"결국 {tn} 값을 움직인 건 뉴스보다 돈이었습니다.",
+              f"{J(tn)} {lo}보다 {hi_s} 값을 끌었")]
+    if second and same:
+        stems = [(f"{tn}도 {lo}보다 {hi_s} 움직였습니다.", f"{tn}도 {lo}보다 {hi_s} 움직였"),
+                 (f"{tn} 역시 {lo}보다 {hi_x} 값을 만들었습니다.", f"{tn} 역시 {lo}보다 {hi_x} 값을 만들었"),
+                 (f"{tn}도 {hi_s} 먼저 움직였습니다.", f"{tn}도 {hi_s} 먼저 움직였"),
+                 (f"{tn}도 같은 모습입니다. {lo}보다 {hi_s} 움직였습니다.", f"{tn}도 {lo}보다 {hi_s} 값을 끌었")]
+        stems = [stems[0], stems[1], stems[2], (f"{tn}도 {lo}보다 {hi_s} 값을 끌었습니다.", stems[3][1])]
+    elif second:
+        stems = [("반면 " + a, "반면 " + b) for a, b in stems[:4]]
+    elif ilab:
+        stems = [(f"{ilab} 가운데 " + a, f"{ilab} 가운데 " + b) for a, b in stems[:4]]
+    if short:
+        return [f"{b}고, {short}." for _, b in stems]
+    return [a for a, _ in stems]
 
 
 def _flow_grade(n: int) -> int:
@@ -487,8 +535,8 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
     is_top = bool(x["buyers"]) and x["buyers"][0][0] == "기타법인"
     days_word = None
     if oth >= 3000:
-        pairs.append(("turn", pk(["그런데 맨 오른쪽에 막대가 하나 더 있습니다.", "그런데 네 번째 막대를 보세요.", "그런데 오른쪽 끝에 막대가 하나 더 섭니다.",
-                                  "그런데 막대는 셋이 아니라 넷입니다.", "그런데 오른쪽 끝, 네 번째 막대입니다.", "그런데 맨 오른쪽 막대가 남았습니다."])))
+        pairs.append(("turn", pk(["그런데 여기서 눈에 띄는 게 하나 있습니다.", "그런데 이름이 하나 더 남았습니다.", "그런데 이 셋만 보면 안 됩니다.",
+                                  "그런데 빠진 손이 하나 있습니다.", "그런데 여기서 끝이 아닙니다.", "그런데 하나를 더 봐야 합니다."])))
         if ob_days >= 2:
             days_word = obw
             if is_top and cont.get("top_buyer_days", 1) >= 2:
@@ -519,8 +567,8 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
             pairs.append(("top", pk([f"가장 큰 이름은 {top[0]['name']}, {hwon(top[0]['v'])}입니다.", f"기타법인 돈이 가장 많이 간 곳은 {top[0]['name']}입니다.",
                                      f"{top[0]['name']} {subj(hwon(top[0]['v']))} 그 막대의 맨 위입니다."])))
     else:
-        pairs.append(("turn", pk([f"그런데 네 번째 막대는 작습니다. 기타법인 {O}입니다.", f"그런데 오른쪽 끝 막대, 기타법인은 {O}뿐입니다.", f"그런데 네 번째 막대를 보세요. 기타법인 {O}에 그쳤습니다.",
-                                  f"그런데 기타법인 막대는 {O}, 오늘은 짧습니다."])))
+        pairs.append(("turn", pk([f"그런데 기타법인은 {O}에 그쳤습니다.", f"그런데 기타법인은 오늘 {O}뿐입니다.", f"그런데 기타법인 순매수는 {O}로 작았습니다.",
+                                  f"그런데 오늘 기타법인은 {O}로 조용했습니다.", f"그런데 기타법인은 {O}에 머물렀습니다.", f"그런데 기타법인은 {O}, 크지 않았습니다."])))
     pairs.append(("q", pk(_S2_Q)))
     bars = [{"name": n, "v": vals.get(n), "days": (st_f if n == "외국인" else st_i if n == "기관" else None) or None}
             for n in ("외국인", "기관", "개인") if vals.get(n) is not None]
@@ -714,25 +762,31 @@ def _s3b(x: dict, pk: Picker) -> tuple[list, dict]:
         fo, io = r["foreign"], r["inst"]
         if fo < 0 and io < 0:
             # 머리 문장은 어느 후보를 골라도 '빠졌|나갔|순매도'를 달고 나온다 — 합계(sum)가 예산에서 빠져도 s3b 가 뜻을 잃지 않는다(qa_script.S3B_OUT)
-            pairs.append(("head", pk([f"{tn} 막대에서 외국인 {F}, 기관 {subj(I)} 빠졌습니다.", f"{tn} 막대는 외국인 {F}, 기관 {I} 순매도입니다.", f"빠진 곳은 {tn}, 막대는 외국인 {F}에 기관 {I} 순매도.",
-                                      f"나간 돈 1위 막대는 {tn}, 외국인 {F}, 기관 {I} 순매도.", f"가장 긴 막대는 {tn}, 외국인 {F}에 기관 {subj(I)} 빠졌습니다.",
-                                      f"가장 큰 유출 막대는 {tn}, 외국인 {F}, 기관 {I} 순매도."])))
+            pairs.append(("head", pk([f"가장 많이 빠진 곳은 {tn}입니다. 외국인 {F}, 기관 {I} 순매도.", f"{tn}에서 외국인 {F}, 기관 {subj(I)} 빠졌습니다.",
+                                      f"돈이 가장 많이 나간 곳은 {tn}, 외국인 {F}에 기관 {I} 순매도입니다.", f"{tn}에서 외국인 {F}, 기관 {subj(I)} 나갔습니다.",
+                                      f"나간 돈 1위는 {tn}, 외국인 {F}, 기관 {I} 순매도.", f"오늘 가장 크게 빠진 곳은 {tn}입니다. 외국인 {F}, 기관 {I} 순매도."])))
         else:
             big = ("외국인", fo, "기관", io) if fo < io else ("기관", io, "외국인", fo)
-            pairs.append(("head", pk([f"가장 긴 막대는 {tn}입니다. {big[0]} {hwon(big[1])} 순매도, {big[2]}은 {hwon(big[3])} {_word(big[3])}입니다.",
-                                      f"왼쪽 막대 1위는 {tn}, {big[0]} {hwon(big[1])} 순매도, {big[2]} {hwon(big[3])} {_word(big[3])}.",
-                                      f"{tn} 막대에서 돈이 빠졌습니다. 뺀 쪽은 {big[0]} {hwon(big[1])} 순매도, {big[2]}은 {hwon(big[3])} {_word(big[3])}입니다.",
-                                      f"막대가 가장 긴 곳은 {tn}입니다. {big[0]} {hwon(big[1])} 순매도, {big[2]}은 {hwon(big[3])} {_word(big[3])}입니다."])))
+            b0, b1, b2, b3 = big
+            pairs.append(("head", pk([f"돈이 가장 많이 빠진 곳은 {tn}입니다. {b0} {hwon(b1)} 순매도, {b2}은 {hwon(b3)} {_word(b3)}입니다.",
+                                      f"나간 돈 1위는 {tn}, {b0} {hwon(b1)} 순매도, {b2} {hwon(b3)} {_word(b3)}.",
+                                      f"{tn}에서 돈이 빠졌습니다. 판 쪽은 {b0} {hwon(b1)}, {b2}은 {hwon(b3)} {_word(b3)}입니다.",
+                                      f"오늘 가장 크게 빠진 곳은 {tn}입니다. {b0} {hwon(b1)} 순매도, {b2}은 {hwon(b3)} {_word(b3)}.",
+                                      f"가장 많이 나간 곳은 {tn}입니다. {b0} {hwon(b1)} 순매도에 {b2}은 {hwon(b3)} {_word(b3)}.",
+                                      f"답은 {tn}입니다. {b0} {hwon(b1)} 순매도, {b2}은 {hwon(b3)} {_word(b3)}입니다."])))
     else:
         pairs.append(("head", pk([f"{tn}에서 돈이 빠졌습니다.", f"나간 돈 1위는 {tn}, 여기서 빠졌습니다.", f"빠진 자리부터, {tn}에서 나갔습니다.",
                                   f"돈이 가장 많이 빠진 곳, {tn}에서 나갔습니다."])))
     wy = _day_word(d, x["prev_date"], past=True)
-    if stk >= 2:
-        pairs.append(("sum", pk([f"왼쪽 막대, 합쳐 {subj(T)} {dko(stk)} 나갔습니다.", f"왼쪽 막대, 합쳐 {T} {dko(stk)} 순매도입니다.", f"왼쪽 막대를 보세요. 합쳐 {T} {dko(stk)} 순매도입니다.",
-                                 f"둘을 더하면 {T}, 왼쪽 막대가 {dko(stk)} 나갔습니다.", f"왼쪽 막대, 합계 {subj(T)} {dko(stk)} 빠졌습니다.",
-                                 f"{subj(T)} {dko(stk)} 나갔습니다. 왼쪽 막대입니다."])))
+    # 외국인·기관이 반대로 간 날(9/16: −9,900억 + 8,100억)은 '합쳐 1,800억이 나갔다'가 오해를 부른다 — 합계를 말하지 않는다
+    split = F is not None and I is not None and (r["foreign"] < 0) != (r["inst"] < 0)
+    if split:
+        pass
+    elif stk >= 2:
+        pairs.append(("sum", pk([f"둘을 합치면 {T}, {dko(stk)} 빠져나갔습니다.", f"합쳐서 {subj(T)} {dko(stk)} 나갔습니다.", f"외국인과 기관을 더하면 {T}, {dko(stk)} 순매도입니다.",
+                                 f"더하면 {T}, {dko(stk)} 이어진 유출입니다.", f"합계로는 {T}, {dko(stk)} 빠졌습니다.", f"둘을 더한 {subj(T)} {dko(stk)} 나갔습니다."])))
     else:
-        pairs.append(("sum", pk([f"왼쪽 막대, 합쳐 {subj(T)} 나갔습니다.", f"둘을 더하면 {T}, 왼쪽 막대가 나갔습니다.", f"왼쪽 막대, 합계 {T} 순매도입니다."])))
+        pairs.append(("sum", pk([f"합치면 {subj(T)} 나갔습니다.", f"둘을 더하면 {T} 순매도입니다.", f"외국인과 기관을 더하면 {subj(T)} 빠졌습니다.", f"합계로는 {subj(T)} 나갔습니다."])))
     yv = _num(r.get("y"))
     if yv is not None and yv < 0 and abs(yv) >= 100:
         Y = hwon(yv)
@@ -814,8 +868,8 @@ def _s3b(x: dict, pk: Picker) -> tuple[list, dict]:
             pairs.append(("meaning", pk(["돈은 나갔는데 값은 서 있는 자리입니다.", "값과 돈이 따로 노는 자리, 정체는 여기입니다.", "나간 돈만큼 값이 밀리지 않은 자리입니다."])))
     else:
         rt = _num(r.get("ret"))
-        pairs.append(("turn", pk([f"그런데 {tn} 값은 {pct1_dir(rt)}{'에 그쳤습니다' if abs(rt) < 1 else '입니다'}." if rt is not None else "그런데 이 막대 하나가 오늘 유출의 대부분입니다.",
-                                  f"그런데 업종 등락은 {pct1_dir(rt)}입니다." if rt is not None else "그런데 나머지 막대는 이보다 훨씬 짧습니다."])))
+        pairs.append(("turn", pk([f"그런데 {tn} 값은 {pct1_dir(rt)}{'에 그쳤습니다' if abs(rt) < 1 else '입니다'}." if rt is not None else "그런데 오늘 유출은 대부분 이 업종 하나에서 나왔습니다.",
+                                  f"그런데 업종 등락은 {pct1_dir(rt)}입니다." if rt is not None else "그런데 나머지 업종은 이보다 훨씬 작습니다."])))
     out_rows = [{"theme": t, "v": round(themes[t]["net"]), "foreign": themes[t].get("foreign"), "inst": themes[t].get("inst"), "ret": themes[t].get("ret"),
                  "streak": themes[t].get("streak"), "y": themes[t].get("y")} for t in outs[:4]]
     pairs.append(("q", pk(_S3B_Q)))
@@ -846,9 +900,8 @@ def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
         sell_side, skey = ("외국인", "foreign") if got_side == "기관" else ("기관", "inst")
         all_neg = len(themes) >= 5 and all((_num(themes[t].get(skey)) or 0) < 0 for t in themes)
         why = f"{J(sell_side)} 업종 전부에서 팔았기 때문입니다." if all_neg else f"{sell_side} 매도가 합계를 눌렀기 때문입니다."
-        # 머리 문장은 어느 후보를 골라도 '막대'를 달고 나온다(화면 지시어 4회, 규칙 6)
-        pairs.append(("head", pk([f"막대로는 들어온 곳이 없었습니다. {why}", f"들어온 막대가 없습니다. {why}",
-                                  f"들어온 곳이 없었습니다. 막대가 전부 한쪽입니다. {why}", f"막대를 보세요. 들어온 곳이 없었습니다. {why}"])))
+        pairs.append(("head", pk([f"업종으로 묶어 보면 들어온 곳이 없었습니다. {why}", f"합계로는 들어온 곳이 없었습니다. {why}",
+                                  f"업종 합계로는 들어온 곳이 없었습니다. {why}", f"외국인과 기관을 더하면 들어온 곳이 없었습니다. {why}"])))
         top0 = x["outs"][0] if x["outs"] else None            # 유출 1위는 s3b 에서 이미 말했다 — 되풀이하지 않는다
         got = sorted([(t, _num(themes[t].get(gkey)) or 0) for t in themes
                       if (_num(themes[t].get(gkey)) or 0) > 0 and t != top0], key=lambda r: -r[1])[:2]
@@ -866,9 +919,9 @@ def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
                                         f"{got_side}이 받은 자리는 {n1} {v1}입니다."])))
         elif x["outs"]:
             least = max(x["outs"], key=lambda t: themes[t]["net"])
-            pairs.append(("t1", pk([f"가장 짧은 막대는 {tname(least)}, {hwon(themes[least]['net'])}입니다.",
-                                    f"가장 덜 빠진 막대는 {tname(least)} {hwon(themes[least]['net'])}입니다.",
-                                    f"그나마 덜 나간 곳이 {tname(least)} {hwon(themes[least]['net'])}입니다."])))
+            pairs.append(("t1", pk([f"그나마 덜 나간 곳이 {tname(least)} {hwon(themes[least]['net'])}입니다.",
+                                    f"가장 적게 빠진 곳은 {tname(least)}, {hwon(themes[least]['net'])}입니다.",
+                                    f"{subj(tname(least))} 가장 적게 빠졌습니다. {hwon(themes[least]['net'])}입니다."])))
         pairs.append(("q", pk(_S3C_Q)))
         return pairs, {"in": [], "ratio": None, "got_side": got_side,
                        "got": [{"theme": t, "v": round(v)} for t, v in got], "pairs": pairs}
@@ -895,17 +948,17 @@ def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
             fo, io = r["foreign"], r["inst"]
             if fo > 0 and io > 0:
                 if tag == "t1":
-                    pairs.append((tag, pk([f"{tn} 막대에 외국인 {F}, 기관 {subj(I)} 들어왔습니다.", f"{tn} 막대, 외국인 {F}에 기관 {I} 순매수.", f"{tn} 막대는 외국인 {F}, 기관 {I} 순매수.",
-                                           f"{tn} 막대를 보세요. 외국인 {F}, 기관 {I} 순매수.", f"{tn} 막대는 두 색, 외국인 {F}에 기관 {I} 순매수.",
-                                           f"막대의 두 색, {tn} 외국인 {F}, 기관 {I} 순매수."])))
+                    pairs.append((tag, pk([f"{tn}에 외국인 {F}, 기관 {subj(I)} 들어왔습니다.", f"{J(tn)} 외국인 {F}, 기관 {I} 순매수입니다.", f"먼저 {tn}, 외국인 {F}에 기관 {I} 순매수.",
+                                           f"{tn}에는 외국인 {F}, 기관 {subj(I)} 들어왔습니다.", f"가장 많이 받은 곳은 {tn}, 외국인 {F}, 기관 {I} 순매수.",
+                                           f"{tn}부터 보면 외국인 {F}, 기관 {I} 순매수입니다."])))
                 else:
                     pairs.append((tag, pk([f"{J(tn)} 외국인 {F}, 기관 {I} 순매수입니다.", f"{tn}에는 외국인 {F}, 기관 {I} 순매수.", f"{tn}에 외국인 {F}, 기관 {subj(I)} 들어왔습니다.",
                                            f"{J(tn)} 외국인 {F}에 기관 {I} 순매수입니다.", f"{tn} 쪽은 외국인 {F}, 기관 {I} 순매수.", f"{tn}에도 외국인 {F}, 기관 {I} 순매수."])))
             else:
                 who, wv, other, ov = ("외국인", fo, "기관", io) if fo > io else ("기관", io, "외국인", fo)
                 if tag == "t1":
-                    pairs.append((tag, pk([f"{tn} 막대를 보세요. {who} {hwon(wv)} 순매수, {other}은 {hwon(ov)} {_word(ov)}.", f"{J(tn)} {who}이 {obj(hwon(wv))} 넣었고, {other}은 {hwon(ov)} {_word(ov)}입니다.",
-                                           f"{tn} 막대는 {who} {subj(hwon(wv))} 세웠습니다. {other}은 {hwon(ov)} {_word(ov)}."])))
+                    pairs.append((tag, pk([f"{tn}에는 {who} {hwon(wv)} 순매수, {other}은 {hwon(ov)} {_word(ov)}.", f"{J(tn)} {who}이 {obj(hwon(wv))} 넣었고, {other}은 {hwon(ov)} {_word(ov)}입니다.",
+                                           f"{J(tn)} {who} {subj(hwon(wv))} 받쳤습니다. {other}은 {hwon(ov)} {_word(ov)}."])))
                 else:
                     pairs.append((tag, pk([f"{tn}에는 {who} {hwon(wv)} 순매수, {other} {hwon(ov)} {_word(ov)}.", f"{J(tn)} {who}이 {hwon(wv)}, {other}이 {hwon(ov)}입니다."])))
             if RT:
@@ -914,9 +967,9 @@ def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
                 pairs.append((f"{tag}_sum", pk([f"합쳐 {subj(T)} 들어왔습니다.", f"둘을 더하면 {T}입니다.", f"합계 {T}입니다."])))
         else:
             if RT:
-                pairs.append((tag, pk([f"{tn} 막대를 보세요. {subj(T)} 들어왔고, {RT}습니다.", f"{tn}에 {T}, 업종은 {RT}습니다.", f"{tn} 막대는 {T}, 값은 {RT}습니다."])))
+                pairs.append((tag, pk([f"{tn}에는 {subj(T)} 들어왔고, {RT}습니다.", f"{tn}에 {T}, 업종은 {RT}습니다.", f"{J(tn)} {T}, 값은 {RT}습니다."])))
             else:
-                pairs.append((tag, pk([f"{tn} 막대를 보세요. {subj(T)} 들어왔습니다.", f"{tn}에 {T}입니다.", f"{tn} 막대는 {T}입니다."])))
+                pairs.append((tag, pk([f"{tn}에는 {subj(T)} 들어왔습니다.", f"{tn}에 {T}입니다.", f"{J(tn)} {T} 순매수입니다."])))
         names = [n for n in (r.get("pos_names") or []) if n][:4]
         n_all = r.get("n")
         if tag == "t1" and names:
@@ -1013,8 +1066,8 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
     calc, kind = None, "K0"
     rows_out = []
     if not stocks:
-        pairs.append(("row:0", pk(["오늘은 종목 표가 비어 있습니다. 업종 합계까지만 확정입니다.", "종목 칸은 집계 대기입니다. 위 칸의 업종 숫자까지가 확정입니다.", "종목별 칸은 오늘 비어 있어 업종 표까지만 봅니다."])))
-        pairs.append(("calc", pk(["확정치가 오면 이 칸에서 계산을 다시 합니다.", "숫자가 오면 같은 자리에서 비율을 셉니다.", "이 칸은 다음 편에 다시 채웁니다."])))
+        pairs.append(("row:0", pk(["오늘은 종목별 숫자가 아직 안 나왔습니다. 업종 합계까지만 확정입니다.", "종목별 집계는 아직입니다. 업종 숫자까지가 확정입니다.", "종목별 숫자는 오늘 비어 있어 업종까지만 봅니다."])))
+        pairs.append(("calc", pk(["확정치가 나오면 다음 편에서 비율을 다시 셉니다.", "숫자가 오면 그때 비율을 계산합니다.", "계산은 다음 편에서 다시 하겠습니다."])))
         return pairs, {"doc": doc, "date": day, "stocks": [], "calc": None, "kind": kind, "full": full, "no_indiv": True, "pairs": pairs}, kind
     tn = tname(th)
     for i, s in enumerate(stocks):
@@ -1028,28 +1081,28 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
         if iss:
             x["issue_said"] = name
         if i == 0:
-            pairs.append((f"row:{i}", pk(([f"위 칸, 이슈 종목인 {J(name)} {P1}습니다.", f"위 칸, {tn} 대장주이자 이슈 종목 {name} {PD}입니다.",
-                                           f"이슈 종목인 {J(name)} {P1}습니다. 위 칸입니다.", f"위 칸을 보세요. 이슈 종목 {name} {PD}.",
-                                           f"위 칸, 오늘 이슈 종목 {name} {PD}."] if iss else
-                                          [f"위 칸, {tn} 대장주 {J(name)} {P1}습니다.", f"위 칸, {tn} 대장주 {name} {PD}입니다.", f"위 칸의 {tn} 대장주 {J(name)} {P1}습니다.",
-                                           f"{tn} 대장주 {J(name)} {P1}습니다. 위 칸입니다.", f"위 칸을 보세요. {tn} 대장주 {name} {PD}.", f"위 칸, {tn} 대장주 {name} {PD}."])) if P1 else
-                          pk([f"위 칸, {tn} 대장주 {name}입니다.", f"위 칸을 보세요. {tn} 대장주 {name}입니다.", f"위 칸의 {tn} 대장주는 {name}입니다."])))
+            pairs.append((f"row:{i}", pk(([f"먼저 이슈 종목인 {J(name)} {P1}습니다.", f"{tn} 대장주이자 이슈 종목 {name}, {PD}입니다.",
+                                           f"이슈 종목 {J(name)} {P1}습니다.", f"오늘 이슈 종목 {name}, {PD}.",
+                                           f"대장주이자 이슈 종목인 {J(name)} {P1}습니다."] if iss else
+                                          [f"먼저 {tn} 대장주 {J(name)} {P1}습니다.", f"{tn} 대장주 {name}, {PD}입니다.", f"대장주부터 보면 {J(name)} {P1}습니다.",
+                                           f"{tn} 대장주 {J(name)} {P1}습니다.", f"먼저 대장주 {name}, {PD}.", f"{tn} 대장주인 {J(name)} {P1}습니다."])) if P1 else
+                          pk([f"먼저 {tn} 대장주 {name}입니다.", f"{tn} 대장주는 {name}입니다.", f"대장주는 {name}입니다."])))
         else:
             lim = pct is not None and pct >= 29.5
             rl = "최대 상승" if role == "최대 상승" else "가장 덜 내린 종목" if role == "가장 덜 내림" else "둘째 종목"
             if iss and pct is not None:
-                pairs.append((f"row:{i}", pk([f"아래 칸, 이슈 종목인 {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다.",
-                                              f"아래 칸, 이슈 종목 {name} {'상한가 ' if lim else ''}{pct2(pct)}입니다.",
-                                              f"아래 칸은 {name}, 이슈 종목이자 {rl}입니다.",
-                                              f"아래 칸의 이슈 종목 {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다.",
-                                              f"아래 칸은 이슈 종목 {name}, {'상한가 ' if lim else ''}{PD}."])))
+                pairs.append((f"row:{i}", pk([f"다음은 이슈 종목인 {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다.",
+                                              f"이슈 종목 {name}, {'상한가 ' if lim else ''}{pct2(pct)}입니다.",
+                                              f"{J(name)} 이슈 종목이자 {rl}입니다.",
+                                              f"이어서 이슈 종목 {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다.",
+                                              f"이슈 종목 {name}, {'상한가 ' if lim else ''}{PD}."])))
             else:
                 pairs.append((f"row:{i}", pk([f"{J(rl)} {name}, {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"{J(rl)} {name}입니다.",
-                                              f"아래 칸, {rl} {name} {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"아래 칸, {rl} {name}입니다.",
+                                              f"다음은 {rl} {name}, {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"다음은 {rl} {name}입니다.",
                                               f"{name}, {rl}입니다. {'상한가 ' if lim else ''}{PD}." if pct is not None else f"{name}, {rl}입니다.",
-                                              f"아래 칸의 {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"아래 칸의 {J(name)} {rl}입니다.",
-                                              f"아래 칸은 {rl} {name}, {'상한가 ' if lim else ''}{PD}." if pct is not None else f"아래 칸은 {rl} {name}입니다.",
-                                              f"{rl} {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"{rl} 칸은 {name}입니다."])))
+                                              f"이어서 {rl} {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"이어서 {J(name)} {rl}입니다.",
+                                              f"{J(rl)} {name}, {'상한가 ' if lim else ''}{PD}." if pct is not None else f"{J(rl)} {name}입니다.",
+                                              f"{rl} {J(name)} {'상한가 ' if lim else ''}{pct2(pct)}입니다." if pct is not None else f"{rl}, {name}입니다."])))
         if fo is not None and io is not None and dv is not None:
             dn, dvv = _driver(s)
             oth = [(n, v) for n, v in (("외국인", fo), ("기관", io), ("개인", dv)) if n != dn]
@@ -1137,10 +1190,10 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
 # S5 뉴스와 맞물렸나 — 뉴스 ≤2(이슈 메모 head 문장 → 제목에 업종·종목 이름이 든 기사; 압축 판은 이슈 키워드 한 줄) → 양면 프레임 고정(말은 회전)
 # → 업종마다 '오늘 [업종]은 [돈/뉴스] 쪽입니다' → 뒤집히는 조건(임계값) → S0 콜백(계산) → 한계 1문장. 대체: 이슈·기사 없음 → '뉴스 없이 수급만 움직인 날' + 판정은 돈 쪽.
 # ══════════════════════════════════════════════════════════════════════════════
-_A = ["뉴스가 올린 값이면 큰손 돈은 작습니다.", "뉴스가 올린 값에는 큰손 막대가 짧습니다.", "값을 뉴스가 올렸다면 큰손 돈은 작습니다.",
-      "뉴스가 밀어 올린 값이면 큰손 순매수는 작습니다.", "왼쪽 칸, 뉴스가 올린 값이면 큰손 돈은 작습니다.", "뉴스가 올린 값이면 큰손 순매수가 작습니다."]
-_B = ["돈이 올린 값이면 큰손이 같이 삽니다.", "돈이 올린 값에는 큰손 막대가 같이 섭니다.", "값을 돈이 올렸다면 큰손이 같이 삽니다.",
-      "돈이 밀어 올린 값이면 큰손 막대가 나란히 섭니다.", "오른쪽 칸, 돈이 올린 값이면 큰손이 같이 삽니다.", "돈이 올린 값이면 외국인과 기관이 같이 삽니다."]
+_A = ["뉴스만으로 오른 거라면 외국인과 기관은 크게 사지 않습니다.", "기사 힘으로 오른 날엔 큰손 돈이 작습니다.", "뉴스가 끌어올린 값이면 큰손은 별로 안 삽니다.",
+      "뉴스 덕에 오른 거라면 외국인·기관 순매수는 작습니다.", "재료만으로 오른 날은 큰손이 따라 사지 않습니다.", "뉴스가 올린 값이면 큰손 매수는 작게 나옵니다."]
+_B = ["돈이 끌어올린 값이면 외국인과 기관이 같이 삽니다.", "진짜 돈이 들어온 날엔 큰손이 같이 삽니다.", "수급이 올린 값이면 외국인·기관 순매수가 따라붙습니다.",
+      "돈이 만든 상승이면 큰손 매수가 같이 들어옵니다.", "돈이 올린 날엔 외국인이나 기관이 크게 삽니다.", "돈이 올린 값이면 큰손이 먼저 사 둡니다."]
 NEWS_MAX = 46      # 말하는 뉴스 문장 상한(글자) — 넘거나 한 업종에 문장이 둘이면 이슈 키워드 한 줄로 줄인다(BRIEF_FIX_1 §B)
 
 
@@ -1300,8 +1353,8 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
         pairs.append(("news:0", pk(["뉴스 없이 수급만 움직인 날입니다.", "오늘은 업종 이름이 든 뉴스가 없었습니다. 돈만 움직였습니다.", "뉴스 카드는 비어 있습니다. 수급만 움직인 날입니다.",
                                     "제목에 이 업종이 든 기사가 없는 날, 돈만 먼저 움직였습니다.", "뉴스 칸은 비었습니다. 오늘은 돈이 먼저였습니다.", "업종 이름이 든 기사 없이 수급만 움직였습니다."])))
     if compact:
-        pairs.append(("ab", pk(["뉴스가 올린 값이냐 돈이 올린 값이냐, 둘로 가릅니다.", "뉴스가 올린 값이면 큰손 돈이 작고, 돈이 올린 값이면 큰손이 같이 삽니다.",
-                                "값을 올린 게 뉴스냐 돈이냐, 두 칸으로 봅니다.", "뉴스가 올린 값과 돈이 올린 값, 이 둘을 가릅니다.", "왼쪽 칸은 뉴스가 올린 값, 오른쪽 칸은 돈이 올린 값입니다.", "판정 칸은 둘, 뉴스가 올린 값이냐 돈이 올린 값이냐입니다."])))
+        pairs.append(("ab", pk(["뉴스가 올린 값인지 돈이 올린 값인지 가려 봅니다.", "뉴스가 올린 거면 큰손 돈이 작고, 돈이 올린 거면 큰손이 같이 삽니다.",
+                                "값을 올린 게 뉴스인지 돈인지 봅니다.", "뉴스 힘인지 돈 힘인지, 이걸 가립니다.", "기사가 올렸는지 돈이 올렸는지 나눠 봅니다.", "뉴스가 먼저인지 돈이 먼저인지 봅니다."])))
     else:
         pairs.append(("a", pk(_A)))
         pairs.append(("b", pk(_B)))
@@ -1331,25 +1384,18 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
                     why = "뉴스보다 외국인·기관 매도가 값을 눌렀습니다" if has_news else "뉴스 없이 외국인과 기관이 같이 팔았습니다"
             else:
                 why = "뉴스와 외국인·기관 순매수가 같이 갔습니다" if has_news else "뉴스 없이 외국인과 기관이 같이 샀습니다"
-            txt = pk(([f"이슈로 묶인 {ilab} 가운데 {J(tn)} {sw} 쪽입니다.", f"{ilab} 가운데 {J(tn)} {sw} 쪽입니다.",
-                       f"이슈로 묶인 {ilab}, 그중 {tn} 판정은 {sw} 쪽입니다.", f"{ilab} 중에서 {J(tn)} {sw} 쪽입니다."] if ilab else
-                      [f"오늘 {J(tn)} {sw} 쪽입니다.", f"{J(tn)} {sw} 쪽입니다.", f"한 줄로, {J(tn)} {sw} 쪽입니다.", f"판정은 {tn} {sw} 쪽입니다.", f"오늘 판정, {J(tn)} {sw} 쪽입니다.", f"{tn} 판정은 {sw} 쪽입니다."]) if i == 0 else
-                     [f"{tn}도 {sw} 쪽입니다.", f"{tn} 역시 {sw} 쪽입니다.", f"오늘 {J(tn)} {sw} 쪽입니다.", f"{tn}도 같은 {sw} 쪽입니다.", f"{tn} 판정도 {sw} 쪽입니다.", f"{tn}도 오늘은 {sw} 쪽입니다."])
+            txt = pk(_say_side(tn, side, ilab=ilab if i == 0 else "", second=i > 0, same=(i == 0 or verdicts[0]["side"] == side)))
             pairs.append(("verdict:0" if i == 0 else "verdict:1", txt))
-            pairs.append(("verdict_why", pk([f"{why}.", f"{tn}에선 {why}." if has_news else f"{J(tn)} {why}.", f"{why}, 그래서 돈 쪽입니다.", f"근거는 하나, {why}.", f"{tn} 쪽은 {why}.", f"{why}, 그 칸에 섭니다."])))
+            pairs.append(("verdict_why", pk([f"{why}.", f"{tn}에선 {why}." if has_news else f"{J(tn)} {why}.", f"근거는 하나, {why}.", f"이유는 간단합니다. {why}.",
+                                             f"숫자로 보면 {why}.", f"{why}. 그게 이유입니다."])))
         else:
             why = f"들어온 큰손 돈은 {ro(T)} 작았습니다" if (r.get("net") or 0) > 0 else "큰손 돈은 오히려 나갔습니다"
             short = f"큰손 돈은 {T}뿐입니다" if (r.get("net") or 0) > 0 else "큰손 돈은 나갔습니다"
-            txt = pk(([f"이슈로 묶인 {ilab} 가운데 {J(tn)} {sw} 쪽입니다, {short}.", f"{ilab} 가운데 {J(tn)} {sw} 쪽입니다, {short}.",
-                       f"이슈로 묶인 {ilab}, 그중 {tn} 판정은 {sw} 쪽입니다.", f"{ilab} 중에서 {J(tn)} {sw} 쪽입니다, {short}."] if ilab else
-                      [f"오늘 {J(tn)} {sw} 쪽입니다, {short}.", f"{J(tn)} {sw} 쪽입니다, {short}.", f"판정은 {tn} {sw} 쪽입니다, {short}.", f"오늘 판정, {J(tn)} {sw} 쪽입니다, {short}.",
-                          f"{tn} 판정은 {sw} 쪽입니다, {short}.", f"한 줄로, {J(tn)} {sw} 쪽입니다, {short}."]) if i == 0 else
-                     [f"반면 {J(tn)} {sw} 쪽입니다, {short}.", f"{J(tn)} {sw} 쪽입니다, {short}.", f"{tn} 판정은 {sw} 쪽입니다, {short}.", f"{tn}은 반대로 {sw} 쪽입니다, {short}.",
-                          f"반면 오늘 판정, {J(tn)} {sw} 쪽입니다, {short}.", f"반면 {tn} 판정은 {sw} 쪽입니다, {short}."])
+            txt = pk(_say_side(tn, side, ilab=ilab if i == 0 else "", second=i > 0, same=(i == 0 or verdicts[0]["side"] == side), short=short))
             pairs.append(("verdict:0" if i == 0 else "verdict:1", txt))
         verdicts.append({"theme": th, "side": side, "text": txt})
     if not verdicts:
-        txt = pk(["오늘은 돈 쪽입니다. 뉴스 없이 수급만 움직였습니다.", "판정은 돈 쪽입니다. 뉴스가 아니라 돈이 먼저였습니다.", "한 줄로, 오늘은 돈 쪽입니다."])
+        txt = pk(["오늘은 뉴스보다 돈이 먼저 움직였습니다. 업종 이름이 든 기사가 없었습니다.", "뉴스 없이 수급만 움직인 하루였습니다.", "기사보다 돈이 먼저 움직인 하루였습니다."])
         pairs.append(("verdict", txt))
         verdicts.append({"theme": "", "side": "b", "text": txt})
     verdict = verdicts[0]["side"]
@@ -1381,8 +1427,8 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
         cond = f"{nxt} 외국인이 {'사는' if x['sold'] else '파는'} 쪽으로 돌아서는"
         cond_note = "판정이 뒤집힙니다"
     cond_k = cond.replace("외국인·기관 돈이", "큰손 돈이").replace("외국인·기관이", "큰손이")
-    pairs.append(("condition", pk([f"뒤집히는 조건은 하나, {cond_k} 겁니다.", f"뒤집히는 조건은 딱 하나, {cond_k} 겁니다.", f"이 판정이 뒤집히는 조건은 하나, {cond_k} 겁니다.",
-                                   f"뒤집히는 조건은 {cond_k} 것 하나입니다.", f"판정이 뒤집히는 조건은 하나, {cond_k} 겁니다.", f"뒤집히는 조건은 그 하나, {cond_k} 겁니다."])))
+    pairs.append(("condition", pk([f"흐름이 바뀌는 신호는 하나, {cond_k} 겁니다.", f"이 판단이 뒤집히려면 {cond_k} 게 보여야 합니다.", f"달라지는 조건은 하나, {cond_k} 겁니다.",
+                                   f"뒤집히는 조건은 하나, {cond_k} 겁니다.", f"흐름이 바뀌려면 {cond_k} 게 먼저입니다.", f"흐름이 바뀌었다고 보려면 {cond_k} 게 필요합니다."])))
     # S0 콜백(계산)
     cb_text, cb = _callback(s0, x, said_frac=False, pk=pk)
     if cb_text:
@@ -1507,7 +1553,7 @@ def _build_once(c: dict, avoid: set[str] | None, attempt: int, compact: bool) ->
     except Exception:
         cont = {"top_buyer_days": 1, "others_buy_days": 1 if x["oth"] > 0 else 0, "protagonist_days": 1, "yesterday": None}
     # 압축 판은 숫자만 다른 문장(masked)을 피하지 않는다 — 검사는 글자 그대로 겹침만 실패로 보고, 짧은 후보가 연일 소진되면 길이가 늘어난다
-    pk = Picker(d, exact, {} if compact else masked, avoid, attempt, compact=compact)
+    pk = NoScreenPick(Picker(d, exact, {} if compact else masked, avoid, attempt, compact=compact))
 
     hook_kind, hook_parts, s0 = nh._s0(x, pk, attempt)
     p1, s1, q_kind = _s1(x, pk, attempt)

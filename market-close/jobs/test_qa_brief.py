@@ -28,12 +28,12 @@ GOOD = [
     {"id": "s0", "tts": "외국인 1조 5,700억 순매도. 코스피는 0.85%만 내렸습니다."},
     {"id": "s1", "tts": "그 돈이 어디로 갔느냐. 오늘은 이것 하나만 봅니다."},
     {"id": "s2", "tts": "새 돈이라고 생각하기 쉽습니다. 외국인 1조 5,700억 순매도, 닷새째입니다. 기관 9천억 순매도, 개인 8,300억 순매수입니다. "
-                        "그런데 네 번째 막대를 보세요. 기타법인 1조 6,400억, 1위입니다. 99%가 삼성전자와 SK하이닉스 자사주입니다. 코스닥은 어땠을까요."},
-    {"id": "s3a", "tts": "코스닥은 반대, 위 칸 막대를 보세요. 외국인 240억, 기관 1,100억 순매수였습니다. 개인은 1,400억 팔았습니다. "
+                        "그런데 여기서 눈에 띄는 게 하나 있습니다. 기타법인 1조 6,400억, 1위입니다. 99%가 삼성전자와 SK하이닉스 자사주입니다. 코스닥은 어땠을까요."},
+    {"id": "s3a", "tts": "코스닥은 반대였습니다. 외국인 240억, 기관 1,100억 순매수였습니다. 개인은 1,400억 팔았습니다. "
                          "코스피 0.85% 하락, 코스닥 0.70% 상승입니다. 그런데 코스닥 큰손은 반대로 샀습니다. 어느 업종에서 나갔을까요."},
-    {"id": "s3b", "tts": "빠진 곳은 반도체, 왼쪽 막대를 보세요. 외국인 1조 3,400억, 기관 7,100억이 나갔습니다. 합쳐 2조 400억, 닷새째입니다. "
+    {"id": "s3b", "tts": "가장 많이 빠진 곳은 반도체입니다. 외국인 1조 3,400억, 기관 7,100억이 나갔습니다. 합쳐 2조 400억, 닷새째입니다. "
                          "그런데 삼성전자는 0.2%, SK하이닉스는 0.4%만 내렸습니다. 자사주 1조 6,300억이 값을 붙든 겁니다. 어디로 옮겨 갔을까요."},
-    {"id": "s3c", "tts": "이번엔 들어온 쪽, 오른쪽 막대를 보세요. 이차전지에 외국인 480억, 기관 460억이 들어왔습니다. 로봇에는 외국인 260억, 기관 120억입니다. "
+    {"id": "s3c", "tts": "이번엔 들어온 쪽입니다. 이차전지에 외국인 480억, 기관 460억이 들어왔습니다. 로봇에는 외국인 260억, 기관 120억입니다. "
                          "반도체에서 나간 돈의 16분의 1입니다. 그 안에서 누가 샀을까요."},
     {"id": "s4", "tts": "9월 15일 키움 종목별 투자자 표를 직접 열어봤습니다. 대장주 LG에너지솔루션은 3.98% 올랐습니다. "
                         "기관 410억 순매수, 개인 320억 순매도입니다. 외국인 8억 순매도, 기관이 올린 겁니다. 최대 상승 삼현은 상한가 29.8%입니다. "
@@ -96,12 +96,28 @@ def short_scenes() -> list[dict]:
     return scenes
 
 
+def _tts(sid: str) -> str:
+    return next(x["tts"] for x in GOOD if x["id"] == sid)
+
+
 def has(bad: list[str], scene: str, frag: str) -> bool:
     return any(b.startswith(f"[{scene}]") and frag in b for b in bad)
 
 
 def total(scenes: list[dict]) -> int:
     return sum(len(s["tts"]) for s in scenes)
+
+
+class ScreenTalk(unittest.TestCase):
+    """JJ 2026-09-16: 화면을 말로 설명하지 않는다 — '오른쪽 도장입니다', '네 번째 막대를 보세요'는 실패."""
+
+    def test_screen_talk_fails(self):
+        bad = run(edit("s2", _tts("s2").replace("그런데 여기서 눈에 띄는 게 하나 있습니다.", "그런데 네 번째 막대를 보세요.")), COMP)
+        self.assertTrue(has(bad, "s2", "화면을 말로 설명함"), bad)
+
+    def test_news_title_in_quotes_is_ok(self):
+        bad = run(edit("s5", _tts("s5").replace("뉴스는 둘,", "기사 제목은 '카드사 화면 개편'이고,")), COMP)
+        self.assertFalse(has(bad, "s5", "화면을 말로 설명함"), bad)
 
 
 class Passing(unittest.TestCase):
@@ -113,8 +129,9 @@ class Passing(unittest.TestCase):
         self.assertTrue(qa.BRIEF_TOTAL_MIN <= total(GOOD) <= qa.BRIEF_TOTAL_MAX, total(GOOD))
 
     def test_sample_also_passes_hunter(self):
-        """브리핑은 헌터 장치 위에 얹은 것 — 헌터 검사만 따로 돌려도 통과."""
-        bad = qa.check_hunter(GOOD, COMP, recs=[])
+        """브리핑은 헌터 장치 위에 얹은 것 — 헌터 검사만 따로 돌려도 통과.
+        단 화면 지시어는 갈라졌다: 헌터는 4회 이상 요구, 브리핑은 금지(JJ 2026-09-16). 그래서 screen="ban" 으로 돌린다."""
+        bad = qa.check_hunter(GOOD, COMP, recs=[], screen="ban")
         self.assertEqual(bad, [], "\n".join(bad))
 
     def test_fixed_chain_facts_in_order(self):
