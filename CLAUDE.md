@@ -1,7 +1,8 @@
 # asset — 작업 규칙 (JJ)
 
 ## market-close (누가샀나 국장 마감 쇼츠)
-- **평일편은 '수급 브리핑' 형식이다 — 먼저 읽는다: `market-close/docs/BRIEF_FORMAT_DESIGN.md`**(만들어진 대로 + 변경 이력). 그 장치의 근거 정본은 `market-close/docs/SCRIPT_SYSTEM_HUNTER_v1.0.md` (경제사냥꾼 완주 장치 분석 → 슬롯 S0~S6 데일리 포맷, 문장 규칙 10, 녹음 전 체크리스트 11항). JJ 2026-09-15: "항상 들어올 때마다 이걸 읽도록 해. 모든 내용을 여기에 맞춰. 대신 대사는 달라야 해." 보조 문서: `market-close/docs/SCRIPT_SYSTEM_v1.2.md`(JJ 색깔 매핑·S3-1 콜백), `market-close/docs/SCRIPT_PLAYBOOK.md`(훅·전환 장치 목록), `market-close/docs/HUNTER_FORMAT_DESIGN.md`(7슬롯만 돌린 첫 판 — 평일엔 쓰지 않고 주간 결산편용으로 보관).
+- **세션을 시작하면 제일 먼저 읽는다: `market-close/docs/SCRIPT_GUIDE.md`** — 대본·말투·이어짐·숫자·화면·썸네일·제목·길이·시간표·업로드까지 JJ가 정한 것 전부(최신 정본, 다른 문서와 부딪히면 이게 이긴다). 대본은 이야기다: 장면 끝 질문 → 다음 장면 첫 문장이 답.
+- 평일편은 '수급 브리핑' 형식 — 코드가 어떻게 만들어졌는지는 `market-close/docs/BRIEF_FORMAT_DESIGN.md`**(만들어진 대로 + 변경 이력). 그 장치의 근거 정본은 `market-close/docs/SCRIPT_SYSTEM_HUNTER_v1.0.md` (경제사냥꾼 완주 장치 분석 → 슬롯 S0~S6 데일리 포맷, 문장 규칙 10, 녹음 전 체크리스트 11항). JJ 2026-09-15: "항상 들어올 때마다 이걸 읽도록 해. 모든 내용을 여기에 맞춰. 대신 대사는 달라야 해." 보조 문서: `market-close/docs/SCRIPT_SYSTEM_v1.2.md`(JJ 색깔 매핑·S3-1 콜백), `market-close/docs/SCRIPT_PLAYBOOK.md`(훅·전환 장치 목록), `market-close/docs/HUNTER_FORMAT_DESIGN.md`(7슬롯만 돌린 첫 판 — 평일엔 쓰지 않고 주간 결산편용으로 보관).
 - **매일 순서(고정):** 코스피 4주체 수급 → 코스닥 3주체+지수 → 돈이 빠진 곳·정체된 곳 → 돈이 들어온 곳(업종별 외국인·기관, 종목 이름) → 대장주 1+최대 상승 1의 외국인·기관·개인·거래대금 → 뉴스 맞물림 판정 → 내일 볼 것. 코스닥 개인·종목별 개인·거래대금은 길이 예산에서 빼지 않는다. 길이 1,200자(약 165초).
 - **평일 시간표:** 15:31 수집+대본 → **15:40 대본을 JJ에게 먼저 보낸다**(예약 작업 `nugasatna-script-preview`) → **JJ가 OK 하면 `market-close/data/<날짜>/APPROVED` 파일을 만든다**(내용: 승인 시각) → 15:55부터 기다리던 제작 작업이 그걸 보고 음성·영상을 만든다(대본 재생성 없음, 16:45까지 OK 없으면 안 만듦) → 17:00 업로드. JJ가 고칠 곳을 말하면 compute 를 다시 돌려 새 대본을 보여 주고 다시 OK 를 받는다. **OK 없이 APPROVED 를 만들지 않는다.**
 - **대사는 매일 다르다.** 슬롯 순서는 고정, 문장은 전 편과 글자까지 같으면 안 된다(시그니처만 예외). 전 편의 사실이 오늘도 이어지면 "오늘도 마찬가지로 … N일째" 틀로 이어서 말한다. 전 편 기억은 `market-close/jobs/script_memory.py`, 검사는 `jobs/qa_script.py`.
