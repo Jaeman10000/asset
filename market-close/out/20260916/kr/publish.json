@@ -1,0 +1,20 @@
+{
+  "date": "20260916",
+  "edition": "kr",
+  "youtube": {
+    "video_id": "cK_vtak6B90",
+    "url": "https://youtube.com/shorts/cK_vtak6B90",
+    "title": "외국인 1.7조 팔았는데 코스피는 왜 올랐을까? | 9월 16일 국장 마감 수급",
+    "status": "scheduled",
+    "publish_at": "2026-09-16T17:00:00+09:00",
+    "thumbnail": "thumb_A.jpg",
+    "uploaded_by": "claude-chrome",
+    "note": "태그는 넣지 못함(고급 설정 펼침이 먹지 않음). 다음 편에서 보완."
+  },
+  "threads": {
+    "post_url": "https://www.threads.com/@bearpicks_official/post/DdVzm5GH2rW",
+    "reply_url": "https://www.threads.com/@bearpicks_official/post/DdVzzsPH1DI",
+    "media": null,
+    "note": "본문 텍스트만 올라감. 확장이 넣은 file input 을 Threads 가 신뢰하지 않아 card.png/video.mp4 가 붙지 않았다. 답글의 유튜브 링크 미리보기로 썸네일은 보인다."
+  }
+}

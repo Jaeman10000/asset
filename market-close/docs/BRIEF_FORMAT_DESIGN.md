@@ -50,10 +50,10 @@ JJ 2026-09-15 밤: "매일 내 영상을 보려는 이유는 그날 장의 수�
 | `jobs/script_memory.py` | 전 편 문장·사실 색인. `pick`(문장 단위), `overlaps`, `continuity`(가장 산 쪽·기타법인·주인공·업종·약속 연속일), `record_history` |
 | `render/src/v4/BriefV4.tsx` | s3a(코스닥+지수+도장) s3b(유출 막대+종목 칩+자사주) s3c(유입 두 색 막대+종목 이름+비율) s4(종목 표+계산) s5(뉴스+양면 판정). s0·s1·s2·s6 은 HunterV4 재사용 |
 | `jobs/make_thumb_auto.py` | 훅의 두 숫자로 썸네일 세 줄. review 단계에서 매일 자동 |
-| `data/publish_config.json` | `script_format: "brief"`, `mode: "manual"`(이번 주는 JJ가 직접 업로드) |
+| `data/publish_config.json` | `script_format: "brief"`, `mode: "manual"`(자동 게시 끔 — 업로드는 크롬으로 사람 손처럼 직접) |
 
 ## 4. 하루 흐름 (월~금)
-15:41 수집(`collect`) → 15:55 제작(`krx`: collect_news → collect_event → collect_brief → 뉴스 추가 수집 → compute(브리핑, 실패 3회면 aplus 폴백) → tts → render → review + 썸네일) → 17:00 게시 작업은 `mode: manual` 이라 아무것도 내보내지 않는다. 산출물: `out/<날짜>/kr/` 의 `video.mp4· script.txt· youtube_title.txt· youtube_description.txt· youtube_tags.txt· thumb_A.jpg· threads.txt· card.png`.
+15:41 수집(`collect`) → 15:55 제작(`krx`: collect_news → collect_event → collect_brief → 뉴스 추가 수집 → compute(브리핑, 실패 3회면 aplus 폴백) → tts → render → review + 썸네일) → 17:00 게시는 `mode: manual` 이라 파이프라인이 내보내지 않는다 — 크롬으로 직접 올린다(§7). 산출물: `out/<날짜>/kr/` 의 `video.mp4· script.txt· youtube_title.txt· youtube_description.txt· youtube_tags.txt· thumb_A.jpg· threads.txt· card.png`.
 
 ## 5. 검증 방법
 - `python brief_try.py 20260915` — check_brief 통과, ≤1,200자, §1-1 칸이 전부 있는지.
@@ -63,9 +63,33 @@ JJ 2026-09-15 밤: "매일 내 영상을 보려는 이유는 그날 장의 수�
 - 샘플 영상: `data/<날짜>_b1/` 로 복사해 `run_day.py <날짜>_b1 --stage=tts|render|review`. **ledger.json 은 미리 백업하고 끝나면 복원**(compute 를 돌릴 때만 해당).
 
 ## 6. 변경 이력
+- **2026-09-16 17:05** — 오늘 편 업로드 완료(유튜브 17:00 예약 공개 `cK_vtak6B90`, Threads 본문+첫 답글). 제작이 15:55에 죽은 원인은 `polish.py` f-string 문법 오류였고, 되살린 뒤 사실 오류 셋(반도체 값 방향, s5 근거, 썸네일 M2 앞뒤)을 고쳐 16:35에 다시 뽑았다. 업로드 절차와 함정은 §7.
 - **2026-09-16 09:20** — 이번 주 업로드는 JJ가 직접(`mode: manual`). 썸네일 자동 생성 붙임. 길이 1,250 → 1,200자. BriefV4 유입 막대가 도입 문장에 먼저 켜지던 것 수정.
 - **2026-09-16 01:40** — 군더더기 문장 정리(150자 절약)로 로봇 수급·자사주 받침·다음 이벤트·양면 프레임 두 쪽·로봇 판정을 모두 넣음. 코스닥 개인·종목별 개인을 예산 제외 칸으로 고정. 9/15 샘플 영상(2:50) 확인.
 - **2026-09-16 00:30** — 브리핑 형식 1차 완성(narrate_brief·collect_brief·BriefV4·check_brief). 9/11·9/14·9/15 통과, 5일 연쇄 폴백 0, 조사 오류 0.
 - **2026-09-15 23:00** — JJ 판정: 헌터 7슬롯은 "어지럽고 정신없다" → 평일은 수급 브리핑, 헌터는 주간용 보관. 장치는 정본 그대로 쓰라는 조건.
 - **2026-09-15 21:00** — 헌터 포맷 리뷰 반영(100억 정밀도, 이어짐 문장, 재시도 회전, 조사·화면 수정).
 - **2026-09-15 저녁** — 경제사냥꾼 PDF v1.0 을 `docs/SCRIPT_SYSTEM_HUNTER_v1.0.md` 로 저장, 루트 `CLAUDE.md` 가 매 세션 먼저 읽게 함. 전 편 기억 `script_memory.py` 신설(9/11·9/14·9/15 가 "바깥에서 새 돈이 들어온 게 아니라…"를 그대로 반복한 것이 근거).
+
+## 7. 업로드 절차 (크롬, 2026-09-16 실측)
+브라우저 자동화가 걸려 넘어진 자리를 그대로 적어 둔다. 매일 같은 함정이다.
+
+### 유튜브
+1. `studio.youtube.com/channel/<채널ID>/videos/upload?d=ud` → `find "file input"` → `file_upload` 로 `video.mp4`(10MB 한도).
+2. **좌표 클릭은 믿지 않는다.** 이 크롬은 페이지 확대가 걸려 있어 스크린샷 좌표와 CSS 좌표가 약 1.11배 어긋난다. 어떤 버튼은 눌리고 어떤 버튼은 안 눌린다.
+   - 제목: 제목 칸을 **triple_click** 해서 기존 "video" 를 잡고 그 자리에 type. 그래도 뒤에 "video" 가 남으면 `Delete` 를 6번.
+   - 설명: 칸을 클릭하고 type. `Input.insertText` 가 30초 타임아웃을 내도 **글자는 들어가 있다** — 다시 넣지 말고 화면으로 확인부터.
+   - 버튼(`다음`·`저장`·`예약`)은 `find` 로 ref 를 받아 ref 로 누른다.
+3. 썸네일: `find "file input"` → `file_upload thumb_A.jpg`.
+4. 아동용 "아니요"는 대개 이미 찍혀 있다. 태그(고급 설정)는 펼침이 안 먹는 날이 있다 — 못 넣어도 올린다.
+5. 공개 상태 → `예약` 펼침(`Click to expand` ref) → 날짜 칸의 달력 버튼 → **오늘 날짜 칸은 shadow DOM 안이라 find 가 못 찾는다**. `javascript_tool` 로 `calendar-day today` 를 찾아 pointer/mouse 이벤트를 쏜다.
+6. 시간 칸을 triple_click 하고 `오후 5:00` 을 type → `Return` → `예약`.
+7. **다이얼로그 밖을 클릭하면 창이 닫히고 초안이 사라진다.** 9/16 1차 업로드가 이렇게 날아갔다.
+
+### Threads
+1. 프로필 → 작성 칸 클릭.
+2. **type 으로 여러 줄을 넣으면 줄바꿈이 전부 사라진다**(Lexical 에디터). `Return` 키도 안 먹는다. `javascript_tool` 로 `ClipboardEvent('paste')` 에 `text/plain` 을 실어 보내면 줄바꿈이 산다.
+3. 한글 type 은 받침이 가끔 깨진다("나눠"→"나눴", "너넨"→"너넘"). 넣은 뒤 `el.innerText` 로 반드시 읽어 본다.
+4. **다시 붙여넣기는 덧붙는다.** 앞의 글을 지우려면 취소 → "저장 안 함" → 새 창에서 한 번에 붙인다.
+5. **미디어(card.png·video.mp4)는 확장으로 못 붙인다.** file input 에 파일은 들어가지만 Threads 가 합성 change/drop 이벤트를 무시한다. 본문만 올라가도 글이 혼자 읽히게 쓴다(기억 `threads-copy-standalone`).
+6. 게시 버튼은 `게시` 글자를 가진 `div[role=button]` 중 **마지막 것**. 답글은 답글 아이콘(`svg[aria-label=답글]`)을 눌러 칸을 연 뒤 같은 방법으로 붙이고, 오른쪽 아래 동그란 화살표 버튼으로 보낸다.

@@ -49,6 +49,19 @@ def spec(d: str) -> dict | None:
     k1, k2 = _kw(a.get("label") or ""), _kw(b.get("label") or "")
     an = a.get("num")
     day = int(d[6:8]) if d[:8].isdigit() else 1                 # 접미사 날짜(20260915_b1)도 받는다
+    kind = h.get("kind") or ""
+    if kind == "M2":                                            # 오후 2시 스냅 → 마감. 뒤 숫자가 더 크다
+        line1 = f"오후 2시 {a['value']}"
+        mid = "그런데 마감엔"
+        line3 = f"{b['value']}?!"
+        tone = "down" if (c.get("kospi") or {}).get("chg_pct", 0) < 0 else "up"
+        return {"out": f"out/{d}/kr",
+                "cands": {"A": {"bg": "city", "tone": tone, "dim": 0.45,
+                                "objects": [{"k": "glow", "x": 540, "y": 640, "r": 620, "color": "yellow", "a": 0.18}],
+                                "lines": [{"t": line1[:13], "size": 1.0, "color": "yellow"},
+                                          {"t": mid, "size": 0.85},
+                                          {"t": line3[:13], "size": 1.0, "color": "yellow"}],
+                                "logo": True}}}
     line1 = f"{k1} {a['value']}".strip()
     mid = (MID_OUT if (isinstance(an, (int, float)) and an < 0) else MID_IN)[day % 3]
     v2 = str(b["value"]).lstrip("+")
