@@ -90,9 +90,9 @@ Q_TAIL = re.compile(r"(?:느냐|냐|는가|은가|인가|일까요|을까요|일
 Q_MID = re.compile(r"(?:느냐|는가|은가|인가|일까|을까|었나|았나|는지|은지|인지)(?=[\s,가는이를도의])")
 S0_BANNED = re.compile(r"안녕하세요|안녕하십니까|반갑습니다|누가샀나|국장 ?마감|오늘 시장은|\d{1,2}월\s?\d{1,2}일|\d{4}년|"
                        r"[월화수목금토일]요일입니다|오늘은 \d{1,2}일")
-S1_DECL = re.compile(r"하나만 봅니다|전부입니다|하나만 찾습니다|하나만 보겠습니다")
+S1_DECL = re.compile(r"하나만 봅니다|전부입니다|하나만 찾습니다|하나만 보겠습니다|따라가 보겠습니다|찾아보겠습니다")
 S2_NAIVE = re.compile(r"생각하기 쉽습니다|보이기 쉽습니다|읽히기 쉽습니다")
-S4_OPEN = re.compile(r"직접 열어\s?봤습니다|열어\s?보면|여기 이 칸")
+S4_OPEN = re.compile(r"직접 열어\s?봤습니다|열어\s?보면|여기 이 칸|직접 확인해\s?봤습니다")
 S4_CALC = re.compile(r"(?:\d|" + _HNUM + r")\s?배(?!경|당|달|우|추|송|터|급|제|치|후)"       # 29배, 다섯 배
                      r"|\d+분의\s?\d+|며칠치|\d+\s?(?:거래|영업)?일치|\d[\d,.]*\s?%")
 S6_THRESH = re.compile(r"(?:\d[\d,.]*|" + _HNUM + r")\s?(?:거래|영업)?(?:천|백)?(?:일째|억|조|%|선)" + r"|" + _DAYWORD + r"째")
@@ -108,7 +108,10 @@ def strip_quotes(s: str) -> str:
 
 
 # S5 판정·뒤집히는 조건 — 브리핑은 "돈 쪽입니다" 같은 딱딱한 틀 대신 사람 말로 한다(JJ 2026-09-16). 옛 틀도 그대로 통과한다.
-S5_VERDICT = re.compile(r"쪽입니다|움직인 하루|움직였[습고]|만들었[습고]|만든 건|움직인 건|끌었[습고]")
+S5_VERDICT = re.compile(r"쪽입니다|움직인 하루|움직였[습고]|만들었[습고]|만든 건|움직인 건|끌었[습고]|때문만이 아니|(?:뉴스|기사)에 올랐|값이 밀렸|값을 받쳤|값을 올렸")
+# 브리핑 금지 말투(JJ 2026-09-17) — 사람 입에서 안 나오는 말. 따옴표 안(뉴스 제목)은 세지 않는다.
+JARGON = re.compile(r"(?:받은|받는|사는|파는|산|판|한|큰|빠진|돌아선|같은)\s?손(?![실해절])|쪽입니다|묶어 보면|움직인 하루|행방|무게는|정체는 여기|"
+                    r"(?:하루|이틀|사흘|나흘|닷새|엿새|이레|여드레|아흐레|열흘)째|(?:두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s배")
 S5_FLIP = re.compile(r"뒤집히는 조건|뒤집히려면|바뀌려면|바뀌는 신호|달라지는 조건|바뀌었다고 보려면")
 SCREEN_ONLY = re.compile(r"(?:보세요|보시죠)[.!]?$|^여기 (?:이 칸|진행률)입니다[.!]?$")    # 화면만 가리키는 문장(블록 끝 판정에서 뺀다)
 BANNED_ALL = re.compile(r"여러분|지난 영상|영상에서|우리 채널|구독하고 알림")
@@ -117,12 +120,12 @@ RECO = re.compile(r"사세요|파세요|사라(?![지져졌질짐])|팔아라|�
 _SIG_KEYS = ("누가샀나였습니다", "국장 마감은 매일", "국장 마감은 내일부터", "정규장이 끝나도 저녁 8시까지", "궁금하면 구독", "국장마감, 매일")
 
 # ── 브리핑 포맷 고정 내용(설계 §1 표 · §3 check_brief) ──
-BRIEF_TOTAL_MAX = 1200            # 총 글자 수 상한(넘으면 실패)
+BRIEF_TOTAL_MAX = 1250            # 총 글자 수 상한(넘으면 실패)
 BRIEF_TOTAL_MIN = 900             # 이 밑이면 경고(실패 아님) — 설계 §0 "길이 950~1,250자"
 BRIEF_PARTIES = ("외국인", "기관", "개인")
 BRIEF_OTHERS_MIN = 3000           # 기타법인 |순매수| 가 이 밑이면 s2 에서 이름을 빼도 된다(설계 §2 "기타법인 <3,000억")
 S3B_OUT = re.compile(r"빠졌|나갔|순매도")
-S3C_IN = re.compile(r"들어왔|순매수|들어온 곳이 없었")
+S3C_IN = re.compile(r"들어왔|순매수|들어온 곳이 없었|샀습니다|사들였|샀고|들어간 곳|들어온 곳")
 # 시그니처 고정문 — 9/15 편만 '내일부터', 그 뒤로는 '매일 저녁 5시'(CLAUDE.md). 애프터마켓 문장은 9/14~9/18(narrate_aplus.AFTER_MARKET_NOTICE_UNTIL).
 SIG_BRAND = "누가샀나였습니다."
 SIG_DAILY = "국장 마감은 매일 저녁 5시에 올라옵니다."
@@ -305,7 +308,7 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None,
 
     # ③ S2: 뻔한 답 대변 + '그런데' 차단
     if sents.get("s2"):
-        if not S2_NAIVE.search(txt["s2"]):
+        if screen != "ban" and not S2_NAIVE.search(txt["s2"]):   # 브리핑은 대변 문장을 요구하지 않는다(JJ 2026-09-17: 질문 뒤에 뜬금없이 끼어든다)
             fail("s2", "대변 틀 없음(생각하기 쉽습니다|보이기 쉽습니다|읽히기 쉽습니다)", sents["s2"][0])
         if "그런데" not in txt["s2"]:
             fail("s2", "그런데 없음", sents["s2"][-1])
@@ -407,6 +410,9 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None,
             for x in sents.get(sid) or []:
                 if not _is_sig(x) and SCREEN_TALK.search(strip_quotes(x)):
                     fail(sid, "화면을 말로 설명함(막대·칸·카드·도장·왼쪽·오른쪽·보세요 금지)", x)
+                jm = JARGON.search(strip_quotes(x)) if not _is_sig(x) else None
+                if jm:
+                    fail(sid, f"사람이 안 쓰는 말({jm.group(0)}) — 쉬운 말로, 날짜는 숫자로(6일째)", x)
     elif n_dir < 4:
         # 문장 없는 실패는 compute 가 avoid 를 못 늘려 첫 회에 폴백했다(리뷰 2). 지시어 없는 S4 문장(숫자가 있는 칸 문장 우선)을 붙인다.
         no_dir = [x for x in (sents.get("s4") or []) if not SCREEN_DIR.search(x) and not _is_sig(x)]
@@ -496,7 +502,7 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
                      _first_with(sents["s4"], lambda x: bool(num_tokens(x)) and not S4_OPEN.search(x), sents["s4"][-1]))
 
     # s5 뉴스와 맞물렸나 — '뉴스' 한 마디는 뉴스가 없는 날("뉴스 없이 수급만 움직인 날")에도 있다
-    if sents.get("s5") and "뉴스" not in txt["s5"]:
+    if sents.get("s5") and not re.search(r"뉴스|이슈|소식", txt["s5"]):      # 브리핑은 '오늘 주요 이슈를 보겠습니다' 로 연다(JJ 2026-09-17)
         fail("s5", "뉴스 없음 — 뉴스와 맞물렸는지 말해야 한다(없으면 '뉴스 없이 수급만 움직인 날')", sents["s5"][0])
 
     # s6 시그니처 고정문 + 애프터마켓 문장(임계값 숫자는 헌터 ⑩)

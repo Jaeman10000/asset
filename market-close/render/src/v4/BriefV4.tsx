@@ -28,7 +28,7 @@ const SH = "0 3px 14px rgba(0,0,0,0.85)";
 const AMBER = "#FFB347";       // 유입 막대의 기관 몫(외국인은 빨강) — 둘 다 순매수라 빨강 계열 두 색
 const PALE = "#8FA7D9";        // 판정 전 카드 테두리(헌터 S5 와 같다)
 /** 말과 같은 연속일 수사(narrate_hunter.dko): 5→닷새째 · 11→11일째. 2 미만은 없음 */
-const dTag = (n?: number | null) => { const a = Math.abs(n ?? 0); return a >= 2 ? (DKO[a] ? `${DKO[a]}째` : `${a}일째`) : null; };
+const dTag = (n?: number | null) => { const a = Math.abs(n ?? 0); return a >= 2 ? `${a}일째` : null; };   // JJ 2026-09-17: 엿새째 대신 6일째
 const dRe = (n: number) => new RegExp(`(?:${DKO[n] || "\\u0000"}|${n}일)째`);
 /** 등락은 말한 그대로 두 자리(3.98% · 29.8%) — 표 칸용 */
 const fmtPct2 = (v: number) => `${sgn(v)}${Math.abs(v).toFixed(2).replace(/0$/, "")}%`;

@@ -404,7 +404,7 @@ export const S2H: React.FC<SC> = ({ p, cues }) => {
   else if (hasBarSteps) bars.forEach((_, k) => { if (k !== rk && t >= barAt[k] && (hi < 0 || barAt[k] >= barAt[hi])) hi = k; });
   else if (t >= n1) hi = naiveIdx;
   // 연속일 태그: 말과 같은 수사(dko: 5→닷새째, 11→11일째). 공개 막대는 days_word('9월 들어 매일')가 있으면 그것
-  const dTag = (n?: number | null, w?: string | null) => w || ((n ?? 0) >= 2 ? (DKO[n ?? 0] ? `${DKO[n ?? 0]}째` : `${n}일째`) : null);
+  const dTag = (n?: number | null, w?: string | null) => (w ? w.replace(/(하루|이틀|사흘|나흘|닷새|엿새|이레|여드레|아흐레|열흘)째/, (_m, k: string) => `${DKO.indexOf(k)}일째`) : null) || ((n ?? 0) >= 2 ? `${n}일째` : null);
   const tags = bars.map((b, k) => (rv && k === rk ? dTag(rv.days, rv.days_word) : dTag(b.days)));
   const tagAt = bars.map((b, k) => {
     if (rv && k === rk) return Math.max(n3, nb + 0.3);
