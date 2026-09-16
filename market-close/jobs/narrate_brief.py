@@ -750,11 +750,29 @@ def _s3b(x: dict, pk: Picker) -> tuple[list, dict]:
                                           f"그런데 {a['name']} {pct1(a['pct'])}, {b['name']} {pct1(b['pct'])} {'하락' if a['pct'] < 0 else '등락'}뿐입니다.",
                                           f"그런데 값은 {a['name']} {pct1_dir(a['pct'])}에 {b['name']} {pct1_dir(b['pct'])}입니다.",
                                           f"그런데 종목 칩은 {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}."])))
-            else:
+            elif a["pct"] < 0 and (b["pct"] < 0):
                 pairs.append(("turn", pk([f"그런데 값도 같이 밀려 {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}입니다.",
                                           f"그런데 {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}, 값까지 같이 빠진 자리입니다.",
                                           f"그런데 돈도 값도 나간 자리, {a['name']} {pct1_dir(a['pct'])}에 {b['name']} {pct1_dir(b['pct'])}입니다.",
                                           f"그런데 종목 칩도 같은 색, {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}입니다."])))
+            elif a["pct"] > 0 and b["pct"] > 0:
+                # 돈은 빠졌는데 값은 오른 날 — 받은 쪽이 따로 있다는 뜻이다(9/16: 외국인이 팔고 기관이 받았다).
+                # 까닭을 먼저 말하고 '그런데'로 닫는다 — 블록 끝은 '그런데' 문장이나 질문이어야 한다(정본 체크리스트 ⑤).
+                _who = "기관" if (x["themes"].get(th) or {}).get("inst", 0) > 0 else ""
+                if _who:
+                    pairs.append(("turn_why", pk([f"판 쪽은 외국인이고, 받은 쪽은 {_who}입니다.",
+                                                  f"{_who}이 그 물량을 받았습니다.",
+                                                  f"외국인이 내놓은 걸 {_who}이 받았습니다.",
+                                                  f"받은 쪽에 {_who}이 있었습니다."])))
+                pairs.append(("turn", pk([f"그런데 값은 올랐습니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}입니다.",
+                                          f"그런데 종목 칩은 반대입니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}.",
+                                          f"그런데 값은 거꾸로 갔습니다. {a['name']} {pct1_dir(a['pct'])}에 {b['name']} {pct1_dir(b['pct'])}입니다.",
+                                          f"그런데 판 쪽 값이 올랐습니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}."])))
+            else:
+                pairs.append(("turn", pk([f"그런데 값은 갈렸습니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}입니다.",
+                                          f"그런데 종목 칩은 서로 다릅니다. {a['name']} {pct1_dir(a['pct'])}에 {b['name']} {pct1_dir(b['pct'])}.",
+                                          f"그런데 두 종목 값이 엇갈렸습니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}.",
+                                          f"그런데 값은 한 방향이 아닙니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}."])))
         else:
             pairs.append(("turn", pk([f"그런데 {J(a['name'])} {pct1_dir(a['pct'])}{'에 그쳤습니다' if small else '입니다'}.", f"그런데 대장주 {a['name']}의 값은 {pct1_dir(a['pct'])}입니다.",
                                       f"그런데 값은 {a['name']} {pct1_dir(a['pct'])}{'뿐입니다' if small else '입니다'}."])))
@@ -1184,7 +1202,11 @@ def _news_for(x: dict, themes: list[str], stock_names: list[str]) -> tuple[list[
             title = re.split(r"…|\.\.\.|\s[-–—]\s", title)[0].strip()[:48]
             if len(title) < 8:
                 continue
-            out.append({"theme": th, "spoken": f"{tname(th)} 쪽 기사는 {it.get('source') or '매체'}의 '{title}'입니다.", "title": title, "source": it.get("source") or "", "extra": False})
+            # 매체 이름이 도메인이면(digitaltoday.co.kr) 읽지 않는다 — 소리로 들으면 알아들을 수 없다
+            src = (it.get("source") or "").strip()
+            say_src = "" if ("." in src or not src) else src
+            sp = f"{tname(th)} 쪽 기사는 {say_src}의 '{title}'입니다." if say_src else f"{tname(th)} 쪽 기사 제목은 '{title}'입니다."
+            out.append({"theme": th, "spoken": sp, "title": title, "source": src, "extra": False})
             used.add(th)
             break
     return out, compact
@@ -1258,7 +1280,15 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
         ilab = _issue_lab(x, th) if has_news else ""
         if side == "b":
             if net <= 0:
-                why = "뉴스보다 외국인·기관 매도가 값을 눌렀습니다" if has_news else "뉴스 없이 외국인과 기관이 같이 팔았습니다"
+                _lead = _leaders(x, th)
+                _up = bool(_lead) and (_lead[0].get("pct") or 0) > 0
+                _inst = (r.get("inst") or 0) > 0 and (r.get("foreign") or 0) < 0
+                if _up and _inst:            # 9/16 실측: 외국인이 팔고 기관이 받아 값이 오른 날
+                    why = "외국인이 판 물량을 기관이 받아 값이 올랐습니다"
+                elif _up:
+                    why = "큰손 돈은 빠졌는데 값이 올랐습니다"
+                else:
+                    why = "뉴스보다 외국인·기관 매도가 값을 눌렀습니다" if has_news else "뉴스 없이 외국인과 기관이 같이 팔았습니다"
             else:
                 why = "뉴스와 외국인·기관 순매수가 같이 갔습니다" if has_news else "뉴스 없이 외국인과 기관이 같이 샀습니다"
             txt = pk(([f"이슈로 묶인 {ilab} 가운데 {J(tn)} {sw} 쪽입니다.", f"{ilab} 가운데 {J(tn)} {sw} 쪽입니다.",
