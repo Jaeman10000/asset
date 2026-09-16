@@ -83,9 +83,13 @@ export type Hunter = {
 const hunterOf = (p: Props): Hunter => ((p as unknown as { hunter?: Hunter }).hunter ?? {});
 
 /* ───────── 단계 = 큐 순서 ───────── */
+/** 글씨만 떠 있는 화면(질문 화면·오늘의 질문)의 최대 길이(초). JJ 2026-09-16: "3초 이상 글씨로만 보여주는 건 절대 안 돼." */
+export const TEXT_ONLY_MAX = 3;
+
 export const useSteps = (p: Props, id: string, cues?: Cue[]) => {
-  const { t } = useT();
+  const { t, fps } = useT();
   const sc = p.scenes.find((s) => s.id === id);
+  const endSec = sc ? (sc.frames ?? Math.round((sc.sec ?? sc.min) * fps)) / fps : Number.POSITIVE_INFINITY;
   const steps = sc?.steps;
   // 단계 시각은 문장 경계(bounds, tts.py 가 문장마다 1개 저장)로 잡는다. cues 는 자막용이라 55자 넘는 문장을 ', ' 에서 쪼개므로
   // steps[i] 와 cues[i] 가 어긋날 수 있다(tts_typecast.cues_from_words · tts.make_cues). bounds 가 steps 와 개수가 맞을 때만 쓴다.
@@ -111,8 +115,9 @@ export const useSteps = (p: Props, id: string, cues?: Cue[]) => {
   const cur = ci >= 0 ? list[ci] : undefined;
   const qk = steps ? steps.indexOf("q") : -1;
   const q = qk >= 0 && list[qk] ? list[qk] : list.find((c) => /\?$/.test(c.text.trim()));
-  const inQ = !!q && t >= q.start;
-  return { t, list, steps, at, say, find, ci, cur, q, inQ };
+  // 질문 화면(카드를 다 내리고 질문 글씨만)은 장면 끝 3초 안쪽에서만 켠다 — 질문이 일찍 시작해도 그 전까지는 앞 화면을 둔다(자막이 질문을 읽어 준다)
+  const inQ = !!q && t >= Math.max(q.start, endSec - TEXT_ONLY_MAX);
+  return { t, list, steps, at, say, find, ci, cur, q, inQ, endSec };
 };
 /** 말에서 쓰는 날 수(narrate_hunter.dko 와 같다): 2→이틀, 8→여드레 … 태그 '8일째' 를 그 말이 나오는 문장에 맞춰 띄울 때 쓴다 */
 export const DKO = ["", "하루", "이틀", "사흘", "나흘", "닷새", "엿새", "이레", "여드레", "아흐레", "열흘"];
@@ -295,9 +300,39 @@ export const S0H: React.FC<SC> = ({ p, cues }) => {
 };
 
 /* ───────── s1: 질문 선언 — 야경(어둡게) 위에 '오늘의 질문' 라벨 + 노란 질문 + 꼬리('하나만 봅니다')까지 문장 전체 ───────── */
+/** 코스피 장중 흐름(1분봉 등락률) — 글씨만 있는 화면에 붙이는 그림. 선이 왼쪽부터 그려진다 */
+export const IdxSpark: React.FC<{ p: Props; at: number; top: number }> = ({ p, at, top }) => {
+  const { t } = useT();
+  const pop = usePop();
+  const pts = (((p.kospi as unknown as { minutes?: { points?: { t: string; pct: number }[] } }).minutes?.points) ?? []).filter((x) => Number.isFinite(x.pct));
+  if (pts.length < 10 || t < at) return null;
+  const chg = p.kospi.chg_pct ?? pts[pts.length - 1].pct;
+  const col = chg >= 0 ? RED : BLUE;
+  const W = 952, H = 330;
+  const lo = Math.min(0, ...pts.map((x) => x.pct)), hi = Math.max(0, ...pts.map((x) => x.pct));
+  const span = hi - lo || 1;
+  const X = (i: number) => (i / (pts.length - 1)) * W;
+  const Y = (v: number) => H - ((v - lo) / span) * (H - 20) - 10;
+  const d = pts.map((x, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(x.pct).toFixed(1)}`).join(" ");
+  const k = interpolate(t, [at, at + 1.2], [0, 1], { ...CLAMP, easing: ease });
+  return (
+    <div style={{ position: "absolute", left: 64, right: 64, top, ...pop(at, 20) }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 18, marginBottom: 10 }}>
+        <div style={{ fontSize: 40, fontWeight: 800, color: SUBC, textShadow: SH }}>코스피 오늘</div>
+        <div style={{ fontSize: 64, fontWeight: 900, color: col, textShadow: SH }}>{`${chg >= 0 ? "+" : "−"}${Math.abs(chg).toFixed(2)}%`}</div>
+      </div>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
+        <line x1={0} x2={W} y1={Y(0)} y2={Y(0)} stroke="rgba(255,255,255,0.35)" strokeWidth={3} strokeDasharray="10 10" />
+        <path d={d} fill="none" stroke={col} strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" pathLength={1}
+          strokeDasharray={1} strokeDashoffset={1 - k} style={{ filter: `drop-shadow(0 0 14px ${col}88)` }} />
+      </svg>
+    </div>
+  );
+};
+
 export const S1H: React.FC<SC> = ({ p, cues }) => {
   const h = hunterOf(p).s1;
-  const { at, list, steps } = useSteps(p, "s1", cues);
+  const { at, list, steps, endSec } = useSteps(p, "s1", cues);
   const pop = usePop();
   if (!h) return <Empty p={p} sub="" cues={cues} />;
   const q0 = at("q", 0, 0);
@@ -317,6 +352,8 @@ export const S1H: React.FC<SC> = ({ p, cues }) => {
         <div style={{ fontSize: 112, fontWeight: 900, lineHeight: 1.18, letterSpacing: "-0.04em", color: YEL, wordBreak: "keep-all", textShadow: SH_Q }}>{h.q}</div>
         {tail ? <div style={{ fontSize: 56, fontWeight: 800, color: "#FFFFFF", marginTop: 40, textShadow: SH, wordBreak: "keep-all", ...pop(q0 + 0.8) }}>{tail}</div> : null}
       </div>
+      {/* 글씨만 3초를 넘기지 않게 — 장면이 3초보다 길면 2.4초에 장중 흐름 그림을 올린다 */}
+      {endSec - q0 > TEXT_ONLY_MAX ? <IdxSpark p={p} at={q0 + 2.4} top={1180} /> : null}
     </Shell>
   );
 };
