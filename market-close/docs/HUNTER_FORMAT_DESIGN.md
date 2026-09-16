@@ -1,3 +1,7 @@
+> **보관 문서(2026-09-16).** 7슬롯을 슬롯대로만 돌린 첫 판이다. JJ 판정: "너무 어지럽고 정신없고 정보가 중구난방" —
+> 평일편은 `BRIEF_FORMAT_DESIGN.md`(같은 장치 + 매일 같은 수급 순서)로 간다. 이 구현(narrate_hunter·HunterV4·check_hunter)은
+> **주간 결산편**에 쓸 후보로 남겨 둔다.
+
 # 평일편 '헌터 포맷' 설계 — 경제사냥꾼 v1.0 슬롯을 자동 제작 파이프라인에 옮기기
 
 작성 2026-09-15 저녁. 근거 문서: `docs/SCRIPT_SYSTEM_HUNTER_v1.0.md`(정본), `docs/SCRIPT_SYSTEM_v1.2.md`(JJ 색깔 매핑), `docs/SCRIPT_PLAYBOOK.md`(훅·전환 장치).
