@@ -187,7 +187,11 @@ def selftest() -> None:
         return out
 
     o = go("base", base, must={"s2": "닷새째", "s3a": "코스닥", "s3b": "반도체", "s3c": "16분의 1", "s4": "삼현", "s5": "쪽입니다", "s6": "엿새째"})
-    assert o["hunter"]["s4"]["calc"]["verified"] and o["hunter"]["s4"]["calc"]["result"] == "34%", o["hunter"]["s4"]["calc"]
+    # 계산 1칸(s4 calc)은 GLOBAL_DROP 의 끝에서 두 번째 — 사실이 꽉 찬 날엔 밀린다.
+    # JJ 가 매일 요구한 칸(유출 2·3위 업종, 코스닥 개인, 종목별 개인·거래대금)이 먼저고, 계산은 그다음이다.
+    # 그래서 '들어갔으면 검산이 맞아야 한다'로만 본다(안 들어간 날은 화면 칩도 안 뜬다 — narrate_brief 1542행).
+    _calc = o["hunter"]["s4"]["calc"]
+    assert _calc is None or (_calc["verified"] and _calc["result"] == "34%"), _calc
     assert o["hunter"]["s5"]["verdicts"][0]["side"] == "b" and o["hunter"]["s5"]["verdicts"][1]["side"] == "a", o["hunter"]["s5"]["verdicts"]
     assert "92%" in o["scenes"][8]["tts"], o["scenes"][8]["tts"]
     # 유입 업종 없음
@@ -222,7 +226,9 @@ def selftest() -> None:
     c = copy.deepcopy(base)
     c["brief_stocks"] = {}
     o = go("no_brief_stocks", c, must={"s4": "LG에너지솔루션"}, must_not={"s4": "개인"})
-    assert o["hunter"]["s4"]["calc"]["kind"] == "share" and not o["hunter"]["s4"]["full"], o["hunter"]["s4"]["calc"]
+    _calc = o["hunter"]["s4"]["calc"]                       # 위와 같은 이유로 예산에서 밀릴 수 있다
+    assert _calc is None or _calc["kind"] == "share", _calc
+    assert not o["hunter"]["s4"]["full"]
     assert o["hunter"]["s4"]["stocks"][1]["name"] == "포스코퓨처엠", o["hunter"]["s4"]["stocks"]
     # 오후 2시 스냅이 16시 이후 수집 → M2 제외
     c = copy.deepcopy(base)
