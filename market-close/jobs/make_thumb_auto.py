@@ -6,7 +6,11 @@
 규칙(기억 [[thumbnail-rule]]): 큰 글자 2~3줄 질문, 표·고지 카드 금지, 지저분하면 안 누른다
 (JJ 2026-09-14: "저렇게 지저분하게 만들면 누가 누르겠냐"). 그래서 글로우 하나 + 세 줄만 둔다.
 
-  1줄 숫자 A(노랑)  ·  2줄 잇는 말  ·  3줄 숫자 B + ?!
+  1줄 숫자 A(흰색, 깔아 두는 숫자)  ·  2줄 잇는 말  ·  3줄 숫자 B(노랑, 반전) + ?!
+
+색과 크기로 순서를 만든다(JJ 2026-09-16: "둘이 색이 같아서 뒤 숫자에 눈이 안 간다").
+깔아 두는 숫자는 흰색으로 작게, **눈이 가야 할 반전 숫자만 노란색으로 가장 크게**.
+그리고 조 단위 소수점(1.68조)은 한눈에 안 읽힌다 — 사람이 말하는 대로 "1조 7천억"으로 쓴다(조 위는 천억까지 — 더 길면 두 줄로 접힌다).
 
 쓰기(market-close/jobs 에서):
   python make_thumb_auto.py 20260916            data/D/thumbs.json 을 만들고 out/D/kr/thumb_A.jpg 까지
@@ -26,6 +30,19 @@ ROOT = Path(__file__).resolve().parent.parent
 # 2줄에 쓸 잇는 말 — 1줄이 유출(−)이냐 유입(+)이냐로 고른다
 MID_OUT = ("빠졌는데", "나갔는데", "던졌는데")
 MID_IN = ("들어왔는데", "샀는데", "받았는데")
+
+
+def _won(eok: float | int) -> str:
+    """억 정수 → 사람이 읽는 대로. 16809 → "1조 7천억", 1826 → "1,800억".
+    소수점 조(1.68조)는 썸네일에서 한눈에 안 읽힌다(JJ 2026-09-16)."""
+    a = abs(int(eok))
+    if a < 10000:
+        return f"{round(a, -2):,}억"
+    jo, rem = divmod(a, 10000)
+    chun = round(rem / 1000)                                  # 조 위는 천억까지만 — 길면 두 줄로 접힌다
+    if chun >= 10:                                            # 9,950억이 반올림으로 1조가 되는 경우
+        jo, chun = jo + 1, 0
+    return f"{jo}조" if chun == 0 else f"{jo}조 {chun}천억"
 
 
 def _kw(label: str) -> str:
@@ -51,16 +68,18 @@ def spec(d: str) -> dict | None:
     day = int(d[6:8]) if d[:8].isdigit() else 1                 # 접미사 날짜(20260915_b1)도 받는다
     kind = h.get("kind") or ""
     if kind == "M2":                                            # 오후 2시 스냅 → 마감. 뒤 숫자가 더 크다
-        line1 = f"오후 2시 {a['value']}"
-        mid = "그런데 마감엔"
-        line3 = f"{b['value']}?!"
+        # 네 줄로 끊는다 — 한 줄이 길면 저절로 접혀서 글자가 작아진다.
+        # 앞 두 줄은 깔아 두는 숫자(흰색), 마지막 줄이 반전(노랑, 가장 큼).
+        n1 = _won(a.get("num")) if isinstance(a.get("num"), (int, float)) else str(a["value"])
+        n2 = _won(b.get("num")) if isinstance(b.get("num"), (int, float)) else str(b["value"])
         tone = "down" if (c.get("kospi") or {}).get("chg_pct", 0) < 0 else "up"
         return {"out": f"out/{d}/kr",
                 "cands": {"A": {"bg": "city", "tone": tone, "dim": 0.45,
-                                "objects": [{"k": "glow", "x": 540, "y": 640, "r": 620, "color": "yellow", "a": 0.18}],
-                                "lines": [{"t": line1[:13], "size": 1.0, "color": "yellow"},
-                                          {"t": mid, "size": 0.85},
-                                          {"t": line3[:13], "size": 1.0, "color": "yellow"}],
+                                "objects": [{"k": "glow", "x": 540, "y": 780, "r": 640, "color": "yellow", "a": 0.20}],
+                                "lines": [{"t": "오후 2시", "size": 0.72},
+                                          {"t": n1, "size": 0.92},
+                                          {"t": "그런데 마감엔", "size": 0.70, "gap": 26},
+                                          {"t": f"{n2}?!", "size": 1.18, "color": "yellow"}],
                                 "logo": True}}}
     line1 = f"{k1} {a['value']}".strip()
     mid = (MID_OUT if (isinstance(an, (int, float)) and an < 0) else MID_IN)[day % 3]
