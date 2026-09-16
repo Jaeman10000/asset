@@ -137,6 +137,9 @@ def main() -> None:
     if stage in ("all", "review", "krx"):
         import review
         review.write(d, ed)
+        if ed == "kr":                    # 썸네일도 같이 — JJ 2026-09-16 "이번 주는 내가 업로드 직접할게"
+            import make_thumb_auto
+            make_thumb_auto.main(d)
     if stage in ("all", "krx", "publish") or "--publish" in sys.argv:
         import publish
         mode = publish.config().get("mode", "confirm")

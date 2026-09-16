@@ -37,7 +37,7 @@ except Exception:  # noqa: BLE001 — 검사 모듈이 없어도 대본은 나�
 
 AFTER_MARKET_NOTICE_UNTIL = na.AFTER_MARKET_NOTICE_UNTIL
 NAME_KEY = na.NAME_KEY
-TOTAL_MAX, TOTAL_MIN = 1250, 950   # 1,250자 ≈ 168초(실측 7.45자/초, 장면 간격 포함) — 쇼츠 한계 172초 안
+TOTAL_MAX, TOTAL_MIN = 1200, 950   # 1,200자 ≈ 164초(9/15 실측 1,241자=169.6초) — 쇼츠 한계 180초, 우리 상한 172초에 여유를 둔다
 MONEY_MIN = 500     # 억 — 이 아래면 '들어온 큰손 돈은 작았다'(JJ 9/15 판정: 로봇 380억은 뉴스 쪽, 이차전지 940억은 돈 쪽)
 COUNT_WORD = {1: "하나", 2: "둘", 3: "셋", 4: "넷"}
 # 말할 때 줄이는 업종 이름(화면은 원래 이름)

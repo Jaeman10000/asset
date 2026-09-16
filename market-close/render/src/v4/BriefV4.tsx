@@ -294,8 +294,10 @@ export const S3cB: React.FC<SC> = ({ p, cues }) => {
   const ins = (h.in ?? []).slice(0, 2);
   const more = (h.more ?? []).slice(0, 2);
   const m0 = at("move", 0, 0);
-  const inAt = ins.map((r, k) => stepAt(`row:${k}`) ?? say(r.theme) ?? m0 + 1 + k * 4);
-  const subAt = ins.map((r, k) => stepAt(`names:${k}`) ?? (r.names?.[0] ? say(r.names[0]) : undefined) ?? inAt[k] + 2.5);
+  // 단계 이름은 narrate 가 t1/t2(업종)·names(종목 이름)로 준다. row:k/names:k 는 예전 이름이라 둘 다 본다.
+  // say(theme) 로 떨어지면 "이차전지와 로봇입니다" 같은 도입 문장에 둘째 업종까지 걸려 말보다 먼저 켜진다(9/15 실측) — 그래서 단계 이름이 먼저다.
+  const inAt = ins.map((r, k) => stepAt(`row:${k}`) ?? stepAt(k === 0 ? "t1" : "t2") ?? (k === 0 ? say(r.theme) : undefined) ?? m0 + 1 + k * 4);
+  const subAt = ins.map((r, k) => stepAt(`names:${k}`) ?? (k === 0 ? stepAt("names") : undefined) ?? (r.names?.[0] ? say(r.names[0]) : undefined) ?? inAt[k] + 2.5);
   const lastIn = Math.max(m0, ...inAt, ...subAt);
   const moreAt = more.map((r, k) => stepAt(`more:${k}`) ?? say(r.name) ?? lastIn + 0.3 * (k + 1));
   const ratio = h.ratio ?? null;
