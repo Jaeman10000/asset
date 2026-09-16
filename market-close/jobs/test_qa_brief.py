@@ -282,7 +282,7 @@ class S6(unittest.TestCase):
 class Length(unittest.TestCase):
     def test_too_long_fails_with_longest_sentence(self):
         filler = "돈의 방향을 다시 짚어 보면 반도체에서 빠진 돈이 이차전지와 로봇으로 일부만 옮겨 갔다는 사실이 남는다는 뜻입니다."
-        scenes = edit("s5", filler + " " + GOOD[7]["tts"] + " " + filler.replace("돈의", "값의"))
+        scenes = edit("s5", filler + " " + GOOD[7]["tts"] + " " + filler.replace("돈의", "값의") + " " + filler.replace("돈의", "힘의") + " " + filler.replace("돈의", "길의"))
         self.assertGreater(total(scenes), qa.BRIEF_TOTAL_MAX)
         warn: list[str] = []
         bad = run(scenes, warn=warn)

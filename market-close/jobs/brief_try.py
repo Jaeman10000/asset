@@ -192,7 +192,9 @@ def selftest() -> None:
     # 그래서 '들어갔으면 검산이 맞아야 한다'로만 본다(안 들어간 날은 화면 칩도 안 뜬다 — narrate_brief 1542행).
     _calc = o["hunter"]["s4"]["calc"]
     assert _calc is None or (_calc["verified"] and _calc["result"] == "34%"), _calc
-    assert o["hunter"]["s5"]["verdicts"][0]["side"] == "b" and o["hunter"]["s5"]["verdicts"][1]["side"] == "a", o["hunter"]["s5"]["verdicts"]
+    _v = o["hunter"]["s5"]["verdicts"]
+    # 오른 종목에 이슈 기사가 있으면 종목 판정(name 이 붙는다), 없으면 업종 판정(이차전지=돈, 로봇=뉴스) — JJ 2026-09-17
+    assert (_v and _v[0].get("name")) or (_v[0]["side"] == "b" and _v[1]["side"] == "a"), _v
     assert "92%" in o["scenes"][8]["tts"], o["scenes"][8]["tts"]
     # 유입 업종 없음
     c = copy.deepcopy(base)
@@ -209,7 +211,7 @@ def selftest() -> None:
     # 이슈 없음 → 제목에 업종·종목 이름이 든 기사만 / 그것도 없으면 '뉴스 없이'
     c = copy.deepcopy(base)
     c["event"] = None
-    o = go("no_event_news", c, must={"s5": "소식이 있었습니다"})
+    o = go("no_event_news", c, must={"s5": "이슈"})
     c["news_items"] = []
     o = go("no_event_no_news", c, must={"s5": "뉴스"})
     assert all(v["side"] == "b" for v in o["hunter"]["s5"]["verdicts"]), o["hunter"]["s5"]["verdicts"]
