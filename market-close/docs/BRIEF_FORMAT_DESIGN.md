@@ -53,7 +53,11 @@ JJ 2026-09-15 밤: "매일 내 영상을 보려는 이유는 그날 장의 수�
 | `data/publish_config.json` | `script_format: "brief"`, `mode: "manual"`(자동 게시 끔 — 업로드는 크롬으로 사람 손처럼 직접) |
 
 ## 4. 하루 흐름 (월~금)
-15:41 수집(`collect`) → 15:55 제작(`krx`: collect_news → collect_event → collect_brief → 뉴스 추가 수집 → compute(브리핑, 실패 3회면 aplus 폴백) → tts → render → review + 썸네일) → 17:00 게시는 `mode: manual` 이라 파이프라인이 내보내지 않는다 — 크롬으로 직접 올린다(§7). 산출물: `out/<날짜>/kr/` 의 `video.mp4· script.txt· youtube_title.txt· youtube_description.txt· youtube_tags.txt· thumb_A.jpg· threads.txt· card.png`.
+14:00 장중 스냅(`intraday`) → **15:31 수집+대본**(`jobs/tasks/evening_collect.ps1`: collect 약 8분 = 업종 80초·코스피 전 종목 127초·코스닥 전 종목 240초 → compute: 뉴스 → 이슈 → collect_brief → 뉴스 추가 → 브리핑 대본, 실패 3회면 aplus 폴백) →
+**15:40 대본을 JJ에게 먼저 보낸다**(Claude 예약 작업 `nugasatna-script-preview`, 앱이 켜져 있어야 돈다) →
+15:55 음성·영상·검토·썸네일(`jobs/tasks/evening_build.ps1`: tts → render → review — **대본을 다시 뽑지 않는다**. 다시 뽑으면 그사이 늘어난 뉴스로 JJ가 본 대본과 영상 대사가 달라진다) →
+17:00 유튜브 예약 공개·Threads(크롬으로 직접). JJ가 대본을 고치라고 하면 compute 를 손으로 다시 돌리고 tts·render·review 를 다시 한다.
+산출물: `out/<날짜>/kr/` 의 `script_preview.txt(15:40) · video.mp4 · script.txt · youtube_title.txt · youtube_description.txt · youtube_tags.txt · thumb_A.jpg · threads.txt · card.png`.
 
 ## 5. 검증 방법
 - `python brief_try.py 20260915` — check_brief 통과, ≤1,200자, §1-1 칸이 전부 있는지.
@@ -63,6 +67,7 @@ JJ 2026-09-15 밤: "매일 내 영상을 보려는 이유는 그날 장의 수�
 - 샘플 영상: `data/<날짜>_b1/` 로 복사해 `run_day.py <날짜>_b1 --stage=tts|render|review`. **ledger.json 은 미리 백업하고 끝나면 복원**(compute 를 돌릴 때만 해당).
 
 ## 6. 변경 이력
+- **2026-09-16 22:40** — JJ: "대본을 최대한 빨리 먼저 보여줘, 3시 40분 정도에." 수집을 15:41 → 15:31 로 당기고 수집 직후 대본까지 만든다. 15:40 예약 작업이 대본을 JJ에게 보내고, 15:55 제작은 대본을 다시 뽑지 않고 그 대본으로 음성·영상만 만든다.
 - **2026-09-16 18:10** — JJ 지적 셋을 고쳤다. ① 어제 숙제의 답에서 화면 지시어를 말로 설명하지 않는다("…이어짐, 오른쪽 도장입니다" → "어제 보자고 한 외국인 순매도는 오늘도 이어졌습니다") — 화면에 이미 도장이 찍히는데 말로 또 읽으면 기계처럼 들린다.
   ② 유출 2·3위 업종(s3b others)을 예산에서 빼지 않는다 — 1위만 말하면 "왜 반도체만 말해?"가 된다. 자리는 '그런데' 앞으로 옮겼다(블록은 반전·질문으로 닫아야 한다).
   ③ 합계 유입이 0인 날 "들어온 곳이 없었습니다"로 끝내지 않는다 — 한쪽이 전 업종에서 팔면 합계는 전부 마이너스가 되지만 **받은 손**은 따로 있다.
