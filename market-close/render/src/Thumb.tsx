@@ -13,7 +13,7 @@
  *     {k:"arrow", x:520, y:1180, w:220, color:"yellow", dir:"right"}
  *   ],
  *   badge?: "내일 9월 14일",
- *   lines: [{t:"밤 8시까지", size?:1.0, color?:"yellow", gap?:46}, ...],   // gap = 이 줄 위에 띄우는 px
+ *   lines: [{t:"밤 8시까지", size?:1.0, color?:"yellow"}, ...],
  *   sub?: "그런데 종가는 3시 반?",
  *   logo?: boolean
  * }
@@ -26,7 +26,7 @@ import type { Props } from "./types";
 const COL: Record<string, string> = { yellow: "#FFD84D", white: "#FFFFFF", red: "#FF4D4D", blue: "#3D7BFF", green: "#2FD27A", grey: "#8C99AD" };
 const col = (c?: string) => COL[c ?? "white"] ?? c ?? "#FFFFFF";
 
-type Line = { t: string; size?: number; color?: string; gap?: number };
+type Line = { t: string; size?: number; color?: string };
 type Obj = Record<string, never> & { k: string; [k: string]: unknown };
 type T = { bg?: string; tone?: string; dim?: number; badge?: string; lines?: Line[]; sub?: string; logo?: boolean; objects?: Obj[] };
 
@@ -135,7 +135,7 @@ export const Thumb: React.FC<Props> = (p) => {
         ) : null}
         {lines.map((l, i) => (
           <div key={i} style={{ fontSize: Math.round(base * (l.size ?? 1)), fontWeight: 900, lineHeight: 1.04, letterSpacing: "-0.055em",
-            marginTop: l.gap ?? 0, color: col(l.color), wordBreak: "keep-all",
+            color: col(l.color), wordBreak: "keep-all",
             textShadow: (l.color === "yellow" ? "0 0 46px rgba(255,216,77,0.5), " : "") + "0 10px 40px rgba(0,0,0,0.9)" }}>{l.t}</div>
         ))}
         {t.sub ? (

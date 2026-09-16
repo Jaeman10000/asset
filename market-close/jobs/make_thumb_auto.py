@@ -1,21 +1,12 @@
-"""썸네일 자동 생성 — 그날 '가장 크게 움직인 주체'와 '지수'를 맞붙인다.
+"""썸네일 자동 생성 — 그날 훅의 두 숫자로 큰 글자 세 줄을 만든다.
 
-왜(JJ 2026-09-16 저녁): 제목과 썸네일이 서로 다른 궁금증을 만들면 안 된다.
-제목이 "외국인 1.7조 팔았는데 코스피는 왜 올랐을까?"인데 썸네일이 "오후 2시 1,800억 → 마감 1.68조"이면,
-제목은 '시장이 왜 올랐나'를 묻고 썸네일은 '외국인이 왜 갑자기 팔았나'를 묻는다. 궁금증이 둘로 쪼개진다.
-그래서 **썸네일 = 부딪히는 사실 하나, 제목 = 그 사실에 대한 질문**으로 역할을 나눈다.
+왜(JJ 2026-09-16): 이번 주는 JJ가 직접 올린다. 영상·제목·설명·태그만 있고 썸네일이 없으면
+올릴 때마다 손이 한 번 더 간다. 훅(s0)이 이미 부딪히는 숫자 둘을 들고 있으니 그걸로 만든다.
 
-  외국인            (작게)
-  −1.7조            (크게, 노랑)
-  그런데 코스피      (작게)
-  +1.37%            (크게, 오르면 빨강 내리면 파랑)
-  누가 받았나?       (sub)
+규칙(기억 [[thumbnail-rule]]): 큰 글자 2~3줄 질문, 표·고지 카드 금지, 지저분하면 안 누른다
+(JJ 2026-09-14: "저렇게 지저분하게 만들면 누가 누르겠냐"). 그래서 글로우 하나 + 세 줄만 둔다.
 
-주체는 **지수와 반대로 간 쪽 중 금액이 가장 큰 쪽**을 고른다(= 모순이 가장 센 자리).
-반대로 간 쪽이 없으면 금액이 가장 큰 쪽을 쓰고 '그런데'를 뺀다.
-
-규칙(기억 [[thumbnail-rule]]): 큰 숫자 두 개, 표·고지 카드 금지, 지저분하면 안 누른다
-(JJ 2026-09-14: "저렇게 지저분하게 만들면 누가 누르겠냐"). 그래서 글로우 하나 + 네 줄뿐이다.
+  1줄 숫자 A(노랑)  ·  2줄 잇는 말  ·  3줄 숫자 B + ?!
 
 쓰기(market-close/jobs 에서):
   python make_thumb_auto.py 20260916            data/D/thumbs.json 을 만들고 out/D/kr/thumb_A.jpg 까지
@@ -45,67 +36,36 @@ def _kw(label: str) -> str:
     return parts[0] if parts else ""
 
 
-def _money(eok: int) -> str:
-    """억 단위 정수 → 썸네일용 짧은 글자. 1조 넘으면 조로, 아니면 억으로."""
-    a = abs(int(eok))
-    if a >= 10000:
-        t = f"{a / 10000:.1f}"
-        return (t[:-2] if t.endswith(".0") else t) + "조"
-    return f"{a:,}억"
-
-
-def _pick_actor(c: dict) -> tuple[str, int] | None:
-    """지수와 반대로 간 주체 중 금액이 가장 큰 쪽. 없으면 금액이 가장 큰 쪽."""
-    bars = ((c.get("investors") or {}).get("bars")) or []
-    bars = [b for b in bars if isinstance(b.get("v"), (int, float)) and b.get("name")]
-    if not bars:
-        return None
-    idx = (c.get("kospi") or {}).get("chg_pct") or 0
-    against = [b for b in bars if (b["v"] < 0) == (idx > 0) and b["v"] != 0]
-    b = max(against or bars, key=lambda x: abs(x["v"]))
-    return b["name"], int(b["v"])
-
-
 def spec(d: str) -> dict | None:
-    """computed_kr.json 의 주체 수급 + 지수 등락으로 썸네일 네 줄을 만든다.
-    한 줄이 길면 화면에서 접혀 지저분해진다 — 라벨은 짧게, 숫자는 부호까지만."""
+    """computed_kr.json 의 훅(s0)에서 썸네일 세 줄을 만든다. 훅이 없으면 None.
+    한 줄 11자를 넘기면 화면에서 두 줄로 접혀 지저분해진다 — 그래서 라벨은 첫 낱말만 쓴다."""
     c = load_json(DATA / d / "computed_kr.json")
     if not c:
         return None
-    actor = _pick_actor(c)
-    pct = (c.get("kospi") or {}).get("chg_pct")
-    if not actor or pct is None:
-        return _spec_hook(c, d)                                 # 수급이 없는 날은 옛 훅 방식으로
-    name, v = actor
-    idx_up = pct > 0
-    clash = (v < 0) == idx_up                                   # 주체와 지수가 반대로 갔나
-    sign = "−" if v < 0 else "+"
-    lines = [
-        {"t": name, "size": 0.58},
-        {"t": f"{sign}{_money(v)}", "size": 1.52, "color": "yellow"},
-        {"t": ("그런데 코스피" if clash else "코스피"), "size": 0.58, "gap": 46},
-        {"t": f"{'+' if idx_up else '−'}{abs(pct):.2f}%", "size": 1.34, "color": ("red" if idx_up else "blue")},
-    ]
-    sub = "누가 받았나?" if v < 0 else "누가 판 걸까?"
-    return {"out": f"out/{d}/kr",
-            "cands": {"A": {"bg": "city", "tone": "up" if idx_up else "down", "dim": 0.45,
-                            "objects": [{"k": "glow", "x": 540, "y": 700, "r": 620, "color": "yellow", "a": 0.18}],
-                            "lines": lines, "sub": sub, "logo": True}}}
-
-
-def _spec_hook(c: dict, d: str) -> dict | None:
-    """대비(대체) — 수급이 비어 훅(s0)의 두 숫자밖에 없는 날."""
     h = ((c.get("hunter") or {}).get("s0")) or {}
     a, b = h.get("a") or {}, h.get("b") or {}
     if not a.get("value") or not b.get("value"):
         return None
     k1, k2 = _kw(a.get("label") or ""), _kw(b.get("label") or "")
     an = a.get("num")
-    day = int(d[6:8]) if d[:8].isdigit() else 1
+    day = int(d[6:8]) if d[:8].isdigit() else 1                 # 접미사 날짜(20260915_b1)도 받는다
+    kind = h.get("kind") or ""
+    if kind == "M2":                                            # 오후 2시 스냅 → 마감. 뒤 숫자가 더 크다
+        line1 = f"오후 2시 {a['value']}"
+        mid = "그런데 마감엔"
+        line3 = f"{b['value']}?!"
+        tone = "down" if (c.get("kospi") or {}).get("chg_pct", 0) < 0 else "up"
+        return {"out": f"out/{d}/kr",
+                "cands": {"A": {"bg": "city", "tone": tone, "dim": 0.45,
+                                "objects": [{"k": "glow", "x": 540, "y": 640, "r": 620, "color": "yellow", "a": 0.18}],
+                                "lines": [{"t": line1[:13], "size": 1.0, "color": "yellow"},
+                                          {"t": mid, "size": 0.85},
+                                          {"t": line3[:13], "size": 1.0, "color": "yellow"}],
+                                "logo": True}}}
     line1 = f"{k1} {a['value']}".strip()
     mid = (MID_OUT if (isinstance(an, (int, float)) and an < 0) else MID_IN)[day % 3]
     v2 = str(b["value"]).lstrip("+")
-    if "%" in v2:
+    if "%" in v2:                                              # 지수·등락이면 '0.2%만 내렸다?!'
         line3 = f"{v2.lstrip('−-')}만 {'내렸다' if v2.startswith(('−', '-')) else '올랐다'}?!"
     elif k2 and k2 != k1:
         line3 = f"{k2} {v2}?!"
@@ -129,8 +89,7 @@ def main(d: str, draw: bool = True) -> Path | None:
             return None
         p = DATA / d / "thumbs.json"
         save_json(p, s)
-        a = s["cands"]["A"]
-        lines = " / ".join([x["t"] for x in a["lines"]] + ([a["sub"]] if a.get("sub") else []))
+        lines = " / ".join(x["t"] for x in s["cands"]["A"]["lines"])
         log(d, "thumb", f"대본: {lines}")
         if not draw:
             return p
