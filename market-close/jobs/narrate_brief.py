@@ -70,9 +70,9 @@ GLOBAL_DROP = [("s5", "news_x"), ("s3a", "verdict"), ("s3c", "issue"), ("s3b", "
                ("s2", "inst_streak"), ("s3c", "streak"),
                ("s4", "driver"), ("s6", "note"), ("s5", "limit"), ("s3b", "y"), ("s6", "intro"),
                ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s2", "week"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
-               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "size"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "support"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b"),
+               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "size"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "support"), ("s3b", "sum"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b"),
                # 마지막 수단(여기까지 와도 1,300자를 넘는 날만): 금리 금융 연결 → 자사주 조기 종료. 넘치면 검사 실패 → A+ 폴백이라 그보다 낫다
-               ("s5", "macro_link"), ("s3b", "support_2")]
+               ("s5", "bond"), ("s5", "macro_link"), ("s3b", "support_2")]
 # JJ 2026-09-15 가 매일 요구한 칸은 예산에서 절대 빼지 않는다(그래서 위 목록에 없다 — BRIEF_FIX_1 §A):
 #   코스닥 개인(s3a kosdaq_2) · 종목별 개인·거래대금(s4 row:0_3 · row:1_3) — "외국인 개인 기관 이것도 샀는지 팔았는지 알려주고"
 #   둘째 유입 업종 수급(s3c t2) · 자사주 받침(s3b support) · 다음 이벤트(s6 event) — 빼면 s6 이 '…는지.'로 끝나 검사도 실패한다.
@@ -1687,6 +1687,40 @@ _MOVE_DN = re.compile(r"약세|하락|급락|↓|내림|떨어|추락|신저가|
 _BAD_REASON = re.compile(r"제재|과징금|벌금|소송|적발|압수수색|기소|징계|사고|화재|파업|리콜|횡령|배임")
 
 
+_BOND_MARK = ("숫자와 친해", "기분이나 감", "감으로 사고팔", "기분은 매일 바뀌")
+
+
+def _bond(d: str, x: dict, s4: dict, pk, pairs: list) -> tuple[int, str] | None:
+    """채널의 생각 한 줄 — 시청자와의 유대(JJ 2026-09-17: "숫자와 친해져야 합니다. 매수·매도할 때 그 순간의 기분, 감으로 하시면 절대 안 됩니다.
+    숫자와 친해져서 그 숫자의 의미를 파악해야 합니다."). 매일 같은 훈계는 설교·AI 티라서 격일(전 편에 있었으면 쉰다).
+    숫자를 되풀이하지 않고 바로 앞 문장의 숫자에 '이런·이렇게'로 붙인다. '매수·매도' 낱말은 금지어라 '사고팔'로. 반환: (넣을 자리, 문장)."""
+    try:
+        from _common import DATA, load_json
+        h = load_json(DATA / "script_history.json") or {}
+        eds = sorted([e for e in (h.get("editions") or []) if isinstance(e, dict) and str(e.get("date", ""))[:8] < d[:8] and not e.get("draft")],
+                     key=lambda e: str(e.get("date")))
+        if eds and any(m in " ".join(z.get("raw", "") for z in (eds[-1].get("sentences") or [])) for m in _BOND_MARK):
+            return None
+    except Exception:
+        pass
+    tags = [t for t, _ in pairs]
+    # ① 돈이 실제로 들어온 종목 판정 바로 뒤
+    for k, (t, txt) in enumerate(pairs):
+        if t.startswith("verdict:") and re.search(r"실제로 (?:돈이 )?들어온|실제로 들어왔", txt):
+            return k + 1, pk(["오른 기분보다, 누가 얼마를 샀는지라는 숫자와 먼저 친해져야 합니다.",
+                              "사고팔 때 그 순간의 감으로 하면 안 됩니다. 이렇게 숫자의 뜻을 먼저 읽어야 합니다.",
+                              "숫자와 친해져야 합니다. 오른 이유를 기분이 아니라 이런 숫자로 읽어야 합니다."])
+    # ② 흐름 근거(외국인 연속 매도 등) 바로 뒤
+    if "flow" in tags:
+        k = tags.index("flow")
+        frg = _num((x.get("vals") or {}).get("외국인"))
+        cands = (["감으로 사고팔면 이런 날 겁부터 나지만, 숫자와 친해지면 돈이 어디로 갔는지가 보입니다.",
+                  "사고팔 때의 기분은 매일 바뀌지만, 이 숫자는 그대로 남습니다. 숫자와 먼저 친해져야 합니다."] if (frg or 0) < 0 else
+                 ["산 날일수록 기분보다, 그 돈이 어디로 갔는지 숫자와 먼저 친해져야 합니다."])
+        return k + 1, pk(cands)
+    return None
+
+
 def _big_mover(s4: dict) -> dict | None:
     """이슈 없는 날 — s4 종목 가운데 등락률이 가장 크게 움직인 하나(±3% 이상)를 말하고, 외국인·기관·개인 숫자로 그 뜻을 풀이한다."""
     rows = [r for r in (s4.get("stocks") or []) if _num(r.get("pct")) is not None]
@@ -1984,6 +2018,11 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
     limit = pk(["주체별 합계라 종목 사이 이동은 이 표에 안 보입니다.", "정규장 체결만 더한 값이라 대량매매는 빠져 있습니다.", "업종 합계는 종목 안의 손바뀜까지는 말해 주지 않습니다.",
                 "합산표라 한 종목 안에서 누가 누구에게 넘겼는지는 안 보입니다.", "시간외 거래는 이 합산에 들어 있지 않습니다.", "업종 합계는 그날 손바뀜의 결과일 뿐 이유까지는 말하지 않습니다."])
     pairs.append(("limit", limit))
+    # 누가샀나의 생각 한 줄(JJ 2026-09-17: "숫자와 친해져야 합니다. 매수·매도할 때 그 순간의 기분, 감으로 하시면 절대 안 됩니다.") — 격일, 그날 숫자 하나에 묶는다
+    bond = _bond(d, x, s4, pk, pairs)
+    if bond:
+        at, txt = bond                       # 판정 바로 뒤(돈이 들어온 종목) 또는 흐름 근거 바로 뒤(외국인 연속 매도) — 앞 얘기로 되돌아가지 않게
+        pairs.insert(at, ("bond", txt))
     first = verdicts[0]
     r0 = x["themes"].get(first["theme"]) or {}
     support = {"label": f"{tname(first['theme'])} 외국인·기관", "value": hwon(r0.get("net") or 0)} if first["theme"] else None
