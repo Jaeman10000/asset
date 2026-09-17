@@ -70,7 +70,7 @@ GLOBAL_DROP = [("s5", "news_x"), ("s3a", "verdict"), ("s3c", "issue"), ("s3b", "
                ("s2", "inst_streak"), ("s3c", "streak"),
                ("s4", "driver"), ("s6", "note"), ("s5", "limit"), ("s3b", "y"), ("s6", "intro"),
                ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
-               ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s4", "calc"), ("s5", "b")]
+               ("s5", "verdict:1"), ("s5", "issue:1"), ("s5", "macro_2"), ("s4", "open_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s4", "calc"), ("s5", "b")]
 # JJ 2026-09-15 가 매일 요구한 칸은 예산에서 절대 빼지 않는다(그래서 위 목록에 없다 — BRIEF_FIX_1 §A):
 #   코스닥 개인(s3a kosdaq_2) · 종목별 개인·거래대금(s4 row:0_3 · row:1_3) — "외국인 개인 기관 이것도 샀는지 팔았는지 알려주고"
 #   둘째 유입 업종 수급(s3c t2) · 자사주 받침(s3b support) · 다음 이벤트(s6 event) — 빼면 s6 이 '…는지.'로 끝나 검사도 실패한다.
@@ -504,12 +504,87 @@ def _q1_cands(kind: str, P: str, sold: bool, chg) -> list[str]:
     return _q1_cands("Q1", P, sold, chg)
 
 
+def _overnight(d: str) -> dict | None:
+    """간밤 미국 금리 결정(FOMC). JJ 2026-09-17: "새벽에 나온 FOMC 금리 인상과 매파 발언, 관련 뉴스를 간단하게 언급 —
+    이 여파로 피바람이 불면 같이 엮고, 보합이나 상승이면 훅으로 쓰기 좋은 멘트."
+    **지어내지 않는다** — 아침 미국편(05:40)이 모은 raw/news_us.json 제목과 computed_us.json 지수로만 말한다.
+    같은 결정(인상·인하·동결)을 말하는 제목이 3건 이상일 때만 이벤트로 본다."""
+    from collections import Counter
+    from _common import DATA, load_json
+    n = load_json(DATA / d / "raw" / "news_us.json") or {}
+    titles = [str(it.get("title") or "") for it in (n.get("items") or []) if isinstance(it, dict)]
+    fed = [t for t in titles if re.search(r"연준|Fed|FOMC|금리", t)]
+    cnt = {"인상": sum(1 for t in fed if re.search(r"금리\s?인상", t)), "인하": sum(1 for t in fed if re.search(r"금리\s?인하", t)),
+           "동결": sum(1 for t in fed if re.search(r"금리\s?동결", t))}
+    act, k = max(cnt.items(), key=lambda kv: kv[1])
+    if k < 3:
+        return None
+    yrs = Counter(int(m.group(1)) for t in fed for m in [re.search(r"(\d+)\s?년\s?(?:여\s?)?만", t)] if m)
+    y10s = Counter(m.group(1) for t in titles for m in [re.search(r"10년물[^0-9%]{0,10}(\d+(?:\.\d+)?)%\s?(?:돌파|넘)", t)] if m)
+    cu = load_json(DATA / d / "computed_us.json") or {}
+    idx = cu.get("idx") or {}
+    return {"act": act, "years": yrs.most_common(1)[0][0] if yrs else None,
+            "more": act == "인상" and sum(1 for t in fed if re.search(r"추가\s?(?:인상|긴축)", t)) >= 2,
+            "hawk": sum(1 for t in titles if "매파" in t) >= 2,
+            "y10": y10s.most_common(1)[0][0] if y10s and y10s.most_common(1)[0][1] >= 2 else None,
+            "dow": _num((idx.get("DJI") or {}).get("pct")), "nasdaq": _num((idx.get("IXIC") or {}).get("pct"))}
+
+
+def _ov_act(ov: dict) -> str:
+    """'3년 만에 금리를 올렸' / '금리를 내렸' / '금리를 그대로 뒀'."""
+    v = {"인상": "금리를 올렸", "인하": "금리를 내렸", "동결": "금리를 그대로 뒀"}[ov["act"]]
+    return f"{ov['years']}년 만에 {v}" if ov.get("years") and ov["act"] != "동결" else v
+
+
+def _ov_extra(ov: dict) -> str:
+    if ov.get("more"):
+        return "추가 인상 신호까지 줬습니다"
+    if ov.get("hawk"):
+        return "매파 발언까지 나왔습니다"
+    return ""
+
+
+def _macro_hook(x: dict) -> dict | None:
+    """코스피가 버티거나 오르면(−0.3% 이상) 부딪히는 훅, 크게 빠지면(−1.5% 이하) 같이 엮는 훅. 그 사이는 s5 에서만 짧게."""
+    ov = x.get("ov")
+    chg = x.get("chg")
+    if not ov or chg is None or ov["act"] == "동결":
+        return None
+    tight = ov["act"] == "인상"
+    l1 = f"간밤 미국 연준이 {_ov_act(ov)}습니다."
+    if tight and chg >= -0.3:
+        mode = "clash"
+        l2 = (f"그런데 오늘 코스피는 {pct_s(chg)} 올랐습니다." if chg > 0.05 else f"그런데 오늘 코스피는 {pct_s(chg)}{'밖에 안 내렸' if chg < 0 else ' 그대로였'}습니다.")
+    elif tight and chg <= -1.5:
+        mode = "hit"
+        l2 = f"그리고 다음 날인 오늘, 코스피는 {pct_s(chg)} 빠졌습니다."
+    elif (not tight) and chg <= -0.3:
+        mode = "clash"
+        l2 = f"그런데 오늘 코스피는 {pct_s(chg)} 내렸습니다."
+    else:
+        return None
+    if not ov.get("years") and not re.search(r"\d", l2):
+        return None
+    a = {"label": "미국 금리", "value": (f"{ov['years']}년 만에 {ov['act']}" if ov.get("years") else ov["act"]), "num": -1 if tight else 1, "unit": ""}
+    b = {"label": "코스피", "value": sgn_pct(chg), "num": chg, "unit": "%"}
+    return {"kind": "MF", "mode": mode, "a": a, "b": b, "pairs": [("a", l1), ("b", l2)], "parts": [l1, l2]}
+
+
 def _s1(x: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]:
     d = x["d"]
     pk = ScenePick(pk)
     kinds = [k for k in _Q1_KINDS if not (k == "Q2" and x.get("s0_names_theme"))]
     kind = _choose(kinds, _recent_ids(d, "devices"), d, attempt)
     qs = _q1_cands(kind, x["P"], x["sold"], x.get("chg"))
+    hm = x.get("hook_macro")
+    if hm and hm["mode"] == "clash":
+        kind = "QM"
+        up = (x.get("chg") or 0) > 0
+        qs = ([f"미국이 금리를 올렸는데 코스피는 왜 {'올랐' if up else '버텼'}을까요?", f"금리 인상에도 코스피가 {'오른' if up else '버틴'} 이유는 뭘까요?"]
+              if hm["a"]["num"] < 0 else [f"미국이 금리를 내렸는데 코스피는 왜 내렸을까요?"])
+    elif hm and hm["mode"] == "hit":
+        kind = "QM"
+        qs = ["그럼 오늘 누가 팔았고, 누가 받아냈을까요?", "그럼 이 하락에 누가 팔고 누가 샀을까요?"]
     s = pk([f"{q} {t}" for q in qs for t in _Q1_TAIL])
     q = next((q for q in qs if q in s), qs[0])
     tail = next((t for t in _Q1_TAIL if t in s), _Q1_TAIL[0])
@@ -1494,17 +1569,32 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
     pairs: list[tuple[str, str]] = []
     sis = _stock_issues(x, s4, kwl)
     verdicts = []
+    ov = x.get("ov")
+    if ov:
+        # 주간 미국 브리핑에서 자세히 다룬다 — 여기선 두 문장 안에서(JJ 2026-09-17 "간단하게")
+        pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "먼저 오늘의 주요 이슈입니다."])))
+        ex = _ov_extra(ov)
+        if x.get("hook_macro"):
+            bits = [ex.replace("줬습니다", "줬고").replace("나왔습니다", "나왔고") if ex else "", f"미국 10년물 금리는 {ov['y10']}%를 넘었습니다" if ov.get("y10") else ""]
+            line = ", ".join(b for b in bits if b)
+            if line:
+                pairs.append(("macro", f"간밤 연준은 {line}." if not line.endswith("다") else f"간밤 연준은 {line}."))
+        else:
+            pairs.append(("macro", f"간밤 미국 연준이 {_ov_act(ov)}고, {ex}." if ex else f"간밤 미국 연준이 {_ov_act(ov)}습니다."))
+            if ov.get("y10"):
+                pairs.append(("macro_2", f"미국 10년물 금리는 {ov['y10']}%를 넘었습니다."))
     if sis:
-        pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "오늘 오른 종목에 어떤 뉴스가 있었는지 보겠습니다.", "이번엔 오른 종목의 뉴스를 보겠습니다."])))
+        if not ov:
+            pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "오늘 오른 종목에 어떤 뉴스가 있었는지 보겠습니다.", "이번엔 오른 종목의 뉴스를 보겠습니다."])))
         for k, o in enumerate(sis[:2]):
-            pairs.append((f"issue:{k}", o["say"]))
+            pairs.append((f"issue:{k}", ("종목으로 보면 " + o["say"]) if (ov and k == 0) else o["say"]))
             pairs.append((f"verdict:{k}", o["judge"]))
             verdicts.append({"theme": o["theme"] or (themes_in[0] if themes_in else ""), "name": o["name"], "side": o["side"], "text": o["judge"]})
             if o["side"] == "b" and o["up"]:
                 x["verdict_up"] = True
         news = [{"title": o["title"], "source": o["source"], "theme": o["theme"]} for o in sis[:2]]
     if not sis:
-        if news:     # JJ 2026-09-17: "그냥 오늘 주요 이슈 알아보겠습니다 하고 설명하고, 이게 오늘 시장에 어떤 영향을 줬는지"
+        if news and not ov:     # JJ 2026-09-17: "그냥 오늘 주요 이슈 알아보겠습니다 하고 설명하고, 이게 오늘 시장에 어떤 영향을 줬는지"
             pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "이번엔 오늘의 주요 이슈입니다.", "오늘 시장에 나온 이슈를 보겠습니다.", "오늘 주요 뉴스를 보겠습니다."])))
         if len(news) >= 2 and all(o.get("kw") for o in news[:2]) and not compact:
             # 두 업종 다 키워드 한 줄이면 한 문장으로 묶는다 — 'news:1' 은 예산에서 먼저 빠지는 칸이라 그대로 두면 둘째 뉴스가 사라진다
@@ -1741,6 +1831,12 @@ def _build_once(c: dict, avoid: set[str] | None, attempt: int, compact: bool) ->
     pk = NoScreenPick(Picker(d, exact, {} if compact else masked, avoid, attempt, compact=compact))
 
     hook_kind, hook_parts, s0 = nh._s0(x, pk, attempt)
+    x["ov"] = _overnight(d)
+    hm = _macro_hook(x)
+    if hm:
+        x["hook_macro"] = hm
+        hook_kind, hook_parts = "MF", hm["parts"]
+        s0 = {"kind": "MF", "mode": hm["mode"], "a": hm["a"], "b": hm["b"], "pairs": hm["pairs"]}
     _s0txt = json.dumps(s0, ensure_ascii=False) + json.dumps(hook_parts, ensure_ascii=False)
     x["s0_names_theme"] = any(tname(t) and tname(t) in _s0txt for t in (x.get("themes") or {}))
     p1, s1, q_kind = _s1(x, pk, attempt)

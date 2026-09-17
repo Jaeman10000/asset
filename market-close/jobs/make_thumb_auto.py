@@ -67,6 +67,19 @@ def spec(d: str) -> dict | None:
     an = a.get("num")
     day = int(d[6:8]) if d[:8].isdigit() else 1                 # 접미사 날짜(20260915_b1)도 받는다
     kind = h.get("kind") or ""
+    if kind == "MF":                                            # 간밤 미국 금리 ↔ 오늘 코스피(JJ 2026-09-17)
+        chg = (c.get("kospi") or {}).get("chg_pct", 0) or 0
+        tone = "down" if chg < 0 else "up"
+        yrs = str(a.get("value") or "").rsplit(" ", 1)[0] if "년" in str(a.get("value") or "") else ""   # "3년 만에"
+        act = "인상" if (a.get("num") or 0) < 0 else "인하"
+        top = [{"t": "미국 금리", "size": 0.72}, {"t": f"{yrs} {act}".strip() + ("인데" if h.get("mode") == "clash" else ""), "size": 0.92}]
+        mid = {"t": "코스피는" if h.get("mode") == "clash" else "다음 날 코스피", "size": 0.70, "gap": 26}
+        v = f"{'+' if chg > 0 else '−'}{abs(chg):.2f}%?!"
+        return {"out": f"out/{d}/kr",
+                "cands": {"A": {"bg": "city", "tone": tone, "dim": 0.45,
+                                "objects": [{"k": "glow", "x": 540, "y": 780, "r": 640, "color": "yellow", "a": 0.20}],
+                                "lines": top + [mid, {"t": v, "size": 1.18, "color": "yellow"}],
+                                "logo": True}}}
     if kind == "M2":                                            # 오후 2시 스냅 → 마감. 뒤 숫자가 더 크다
         # 네 줄로 끊는다 — 한 줄이 길면 저절로 접혀서 글자가 작아진다.
         # 앞 두 줄은 깔아 두는 숫자(흰색), 마지막 줄이 반전(노랑, 가장 큼).
