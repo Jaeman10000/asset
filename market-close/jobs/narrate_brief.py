@@ -1618,8 +1618,12 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
         fin = next((t for t in (x.get("themes") or {}) if tname(t) == "금융" or t == "금융"), None)
         fr = (x.get("themes") or {}).get(fin) or {}
         if ov["act"] == "인상" and ov.get("fin_up") and fin:
-            fnet, finst = _num(fr.get("net")) or 0, _num(fr.get("inst")) or 0
-            if fnet >= 100:
+            fnet, finst, ffor = _num(fr.get("net")) or 0, _num(fr.get("inst")) or 0, _num(fr.get("foreign")) or 0
+            if max(finst, ffor) >= 100 and min(finst, ffor) <= -100:
+                # 둘이 엇갈린 날은 합계로 뭉개지 않는다(9/17 금융: 기관 +427 · 외국인 −287 → 합 +141 을 '외국인과 기관이 샀다'로 말하면 틀린다)
+                bn, bv, sn, sv = ("기관", finst, "외국인", ffor) if finst > ffor else ("외국인", ffor, "기관", finst)
+                pairs.append(("macro_link", f"금리 인상 수혜로 꼽히는 금융에는 {subj(bn)} {obj(hwon(bv))} 샀지만, {J(sn)} {obj(hwon(abs(sv)))} 팔았습니다."))
+            elif fnet >= 100:
                 pairs.append(("macro_link", f"금리 인상 수혜로 꼽히는 금융에는 실제로 외국인과 기관이 {obj(hwon(fnet))} 샀습니다."))
             elif finst >= 100:
                 pairs.append(("macro_link", f"금리 인상 수혜로 꼽히는 금융에는 기관이 {obj(hwon(finst))} 샀습니다."))
@@ -1897,6 +1901,19 @@ def _build_once(c: dict, avoid: set[str] | None, attempt: int, compact: bool) ->
         sid, step = drops.pop(0)
         pairs, info = slots[sid]
         slots[sid] = ([p for p in pairs if p[0] != step], info)
+    # JJ 검토 반영(data/<날짜>/script_edit.json) — 장면별 (태그, 문장)을 통째로 바꾼다. 화면 데이터는 생성기 것 + hunter 덮어쓰기.
+    # 확인한 사실만 쓴다. 검사(check_brief)는 똑같이 돈다 — 통과 못 하면 폴백된다.
+    try:
+        from _common import DATA as _D, load_json as _lj
+        ed = _lj(_D / d / "script_edit.json") or {}
+    except Exception:
+        ed = {}
+    for sid, prs in (ed.get("pairs") or {}).items():
+        if sid in slots and isinstance(prs, list) and prs:
+            slots[sid] = ([(str(t), str(v)) for t, v in prs], slots[sid][1])
+    for sid, kv in (ed.get("hunter") or {}).items():
+        if sid in slots and isinstance(kv, dict):
+            slots[sid][1].update(kv)
     scenes = []
     mins = {"s0": 4.0, "s1": 2.5, "s2": 7.0, "s3a": 7.0, "s3b": 7.0, "s3c": 7.0, "s4": 7.0, "s5": 8.0, "s6": 5.0}
     for sid, (pairs, info) in slots.items():

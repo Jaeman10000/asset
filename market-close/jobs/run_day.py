@@ -66,6 +66,14 @@ def main() -> None:
             return
         if stage in ("all", "collect"):
             import collect_kiwoom, collect_flows, collect_krx, collect_us, collect_kiwoom_sum
+            # 키움 종목별 투자자·업종 수급은 15:40 까지 확정 전 값이다(9/17 15:31: 외국인 −1,022억·개인 0 → 15:44 확정 −2조 2,804억).
+            # 15:31 에 시작해도 15:40:45 까지 기다렸다 모은다 — 끝나는 시각 ≈ 15:49, 대본 ≈ 15:50.
+            _n = datetime.now()
+            if d == _n.strftime("%Y%m%d") and _n.weekday() < 5:
+                _w = (_n.replace(hour=15, minute=40, second=45, microsecond=0) - _n).total_seconds()
+                if 0 < _w <= 900:
+                    log(d, "run", f"수급 확정(15:40) 전 — {_w:.0f}초 기다렸다 수집")
+                    time.sleep(_w)
             asyncio.run(collect_kiwoom.main(d))
             kw = load_json(DATA / d / "raw" / "kiwoom.json") or {}
             if not (kw.get("kospi") or {}).get("minutes"):
@@ -83,6 +91,9 @@ def main() -> None:
             import collect_us_index
             collect_us_index.main(d)     # 간밤 나스닥(방향 연결)
         if stage in ("all", "compute", "krx"):
+            if d.isdigit() and len(d) == 8 and not (load_json(DATA / d / "raw" / "flows.json") or {}).get("ready"):
+                import collect_flows
+                asyncio.run(collect_flows.main(d))   # 15:31 수집 땐 업종 수급이 아직 저장 전 — 여기서 다시(15:40:45 이후)
             import collect_news
             if d.isdigit() and len(d) == 8:
                 collect_news.main(d, "kr")   # 마감시황 기사는 15:35~17:00에 나오므로 18:00 제작 단계에서 수집

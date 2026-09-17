@@ -157,9 +157,11 @@ def main(d: str, ed: str = "kr", extra: list[str] | None = None) -> dict:
                     log(d, tag, f"'{q}' 실패: {e}")
                     continue
                 kept = 0
+                # 업종·종목 이름 쿼리는 장중 기사(특징주·리포트)가 오른 이유다 — 그날 08:00 부터 본다(JJ 2026-09-17: 오른 종목의 뉴스 → 진짜 돈이 들어왔나)
+                q_from = w_from.replace(hour=8, minute=0) if (ed == "kr" and q in extra_q and q not in QUERIES[ed]) else w_from
                 for it in items:
                     kst = _to_kst(it["pub_raw"])
-                    if kst is None or not (w_from <= kst <= w_to):
+                    if kst is None or not (q_from <= kst <= w_to):
                         continue
                     title = _clean_title(it["title"], it["source"])
                     if not title:

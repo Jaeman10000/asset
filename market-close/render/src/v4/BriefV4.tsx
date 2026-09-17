@@ -47,7 +47,8 @@ export type Brief = {
   s4?: { doc: string; date?: string | null; stocks: Stock[]; calc?: { expr: string; result: string; lhs?: number; rhs?: number; value?: number; kind?: string; verified?: boolean } | null };
   s5?: { news?: { title: string; source?: string | null; theme?: string | null }[] | null; a: string; b: string;
          verdicts?: { theme: string; side: "a" | "b"; text?: string | null }[] | null; verdict: "a" | "b"; condition: string; limit?: string | null;
-         support?: { label: string; value: string } | null; callback?: { a: string; b?: string | null; text?: string | null } | null };
+         support?: { label: string; value: string } | null; callback?: { a: string; b?: string | null; text?: string | null } | null;
+         macro?: { chip: string; head: string; sub?: string | null; fin?: { label: string; parts: { who: string; v: number }[] } | null } | null };
 };
 const briefOf = (p: Props): Brief => ((p as unknown as { hunter?: Brief }).hunter ?? {});
 
@@ -484,9 +485,37 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
   const cbAnswer = cb ? (cb.text || cb.b || "") : "";
   const cbSize = Math.max(26, Math.min(40, Math.floor(600 / Math.max(1, cbAnswer.length))));
   const NT = 266, NH = 184, NG = 12, ABT = NT + 2 * (NH + NG), ABH = 232, CT = ABT + ABH + 20, KT = CT + 200, LT = KT + 78;
+  // 간밤 미국 금리 결정(JJ 2026-09-17) — 뉴스 카드가 뜨기 전 금리 문장 동안 빈 화면이 되지 않게 같은 자리에 카드 하나
+  const mc = h.macro ?? null;
+  const m0 = mc ? (stepAt("lead") ?? stepAt("macro") ?? stepAt("macro_2") ?? 0) : 1e9;
+  const mSub = mc ? (stepAt("macro_2") ?? stepAt("macro_1") ?? m0 + 1.5) : 1e9;
+  const mFin = mc ? (stepAt("macro_link") ?? mSub + 3) : 1e9;
   return (
     <Shell p={p} cues={cues} bg={<BgMarket tone="neutral" dim={0.5} />}>
-      <div style={{ position: "absolute", left: 64, right: 64, top: 214, ...pop(Math.min(n0, a0)), fontSize: 40, fontWeight: 800, color: SUBC, textShadow: SH }}>뉴스와 맞물렸나</div>
+      {mc && t >= m0 && t < n0 ? (
+        <div style={{ position: "absolute", left: 64, right: 64, top: 214, ...pop(m0) }}>
+          <div style={{ fontSize: 40, fontWeight: 800, color: SUBC, textShadow: SH }}>오늘 주요 이슈</div>
+          <Card color={YEL} style={{ marginTop: 18, padding: "22px 30px" }}>
+            <Chip solid size={28} style={{ padding: "4px 16px" }}>{mc.chip}</Chip>
+            <div style={{ fontSize: 76, fontWeight: 900, color: YEL, letterSpacing: "-0.03em", lineHeight: 1.15, marginTop: 12, textShadow: "0 0 26px rgba(255,216,77,0.35)", wordBreak: "keep-all" }}>{mc.head}</div>
+            {mc.sub && t >= mSub ? <div style={{ fontSize: 42, fontWeight: 800, marginTop: 10, color: "#FFFFFF", wordBreak: "keep-all", ...pop(mSub, 10) }}>{mc.sub}</div> : null}
+          </Card>
+          {mc.fin && t >= mFin ? (
+            <Card color={PALE} style={{ marginTop: 20, padding: "20px 30px", ...pop(mFin) }}>
+              <div style={{ fontSize: 34, fontWeight: 800, color: SUBC }}>{mc.fin.label}</div>
+              <div style={{ display: "flex", gap: 34, marginTop: 8 }}>
+                {mc.fin.parts.map((x) => (
+                  <div key={x.who} style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                    <span style={{ fontSize: 40, fontWeight: 800, color: "#E6E6E3" }}>{x.who}</span>
+                    <span style={{ fontSize: 60, fontWeight: 900, color: x.v >= 0 ? "#FF5A5A" : "#4D8DFF" }}>{x.v >= 0 ? "+" : "−"}{Math.abs(x.v).toLocaleString()}억</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+      <div style={{ position: "absolute", left: 64, right: 64, top: 214, ...pop(Math.min(n0, a0)), fontSize: 40, fontWeight: 800, color: SUBC, textShadow: SH, ...(mc && t < n0 ? { opacity: 0 } : {}) }}>뉴스와 맞물렸나</div>
       {news.length ? news.map((n, k) => (
         t >= nAt[k] ? (
           <div key={k} style={{ position: "absolute", left: 64, right: 64, top: NT + k * (NH + NG), ...pop(nAt[k]) }}>

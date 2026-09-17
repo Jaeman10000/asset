@@ -143,6 +143,15 @@ async def main(d: str) -> None:
     flow_store.init_flow_db()
     have = {x.replace("-", "") for x in flow_store.saved_dates()}
     if d not in have:
+        # flow_collector 는 15:40 까지(kr_session)는 오늘치를 저장하지 않는다 — 15:31 수집이 빈손으로 끝났던 일(2026-09-17)
+        import time as _t
+        from app.services.market_hours import kr_session, now_kst
+        if d == now_kst().strftime("%Y%m%d") and kr_session():
+            n = now_kst()
+            wait = (n.replace(hour=15, minute=40, second=45, microsecond=0) - n).total_seconds()
+            if 0 < wait <= 900:
+                log(d, "flows", f"장 마감 정리 시간(~15:40) — {wait:.0f}초 기다렸다 수집")
+                _t.sleep(wait)
         log(d, "flows", "아카이브에 오늘치 없음 → flow_collector.collect() 실행 (약 80초)")
         res = await flow_collector.collect(pages=1, only_missing=True)
         log(d, "flows", f"collect: {res.get('saved', res)}")

@@ -302,6 +302,11 @@ def _build_fmt(d: str, c: dict, N: dict, module, label: str) -> dict | None:
             log(d, "compute", f"⚠ {label} 검사 자체가 실패({e!r}) → 검사 생략 표시하고 통과시킴\n{traceback.format_exc()[-600:]}")
             out["qa_skipped"] = f"{type(e).__name__}: {e}"
             fails = []
+        if fails and (load_json(DATA / d / "script_edit.json") or {}).get("jj_final"):
+            # JJ가 직접 쓴 문장으로 확정한 날(script_edit.json jj_final) — 검사 결과는 경고로만 남기고 폴백하지 않는다
+            log(d, "compute", f"⚠ {label} JJ 확정 대본 — 검사 경고 {len(fails)}건(폴백 안 함): " + " | ".join(fails))
+            out["qa_jj_override"] = fails
+            return out
         if not fails:
             log(d, "compute", f"{label} 포맷 통과({attempt}회차{', 검사 생략' if out.get('qa_skipped') else ''}): "
                               f"훅 {out.get('hook_id')} · 장치 {out.get('devices')} · 다음 {out.get('next_q')}")

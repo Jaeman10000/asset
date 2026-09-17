@@ -107,8 +107,12 @@ async def main(d: str, out_path: str | Path | None = None) -> dict:
             fix = ((load_json(DATA / "events.json") or {}).get(d) or {}).get("pct_fix")
             stocks = await _fetch(d, sel["picks"], fix)
             close = {r.get("code"): r.get("close") for r in (day.get("stocks") or []) if isinstance(r, dict)}
+            ret = {r.get("code"): r.get("ret") for r in (day.get("stocks") or []) if isinstance(r, dict)}
             for s in stocks:
                 s.setdefault("close", close.get(s.get("code")))
+                # 16시 이후 ka10059 등락에는 애프터마켓 체결이 섞인다(9/17 삼성중공업 6.44 → 6.19) — 15:40 업종 아카이브의 정규장 등락을 쓴다
+                if not fix and isinstance(ret.get(s.get("code")), (int, float)):
+                    s["pct"] = round(float(ret[s["code"]]), 2)
             if stocks:
                 out = {"date": d, "theme": sel["theme"], "stocks": stocks, "fetched_at": datetime.now().isoformat(timespec="seconds")}
                 log(d, "brief", f"{sel['theme']}: " + ", ".join(f"{s['role']} {s['name']} {s['pct']:+.2f}% 외{s['foreign']:+,} 기{s['inst']:+,} 개{s['indiv']:+,} 대금{s['value']:,}" for s in stocks))
