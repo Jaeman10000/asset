@@ -42,7 +42,7 @@ export type Brief = {
   s3a?: { kosdaq?: { bars: NV[] } | null; index?: Idx[] | null; verdict?: string | null; head?: string | null;
           promise?: string | null; result?: string | null; ok?: boolean | null; num?: number | null;
           changed?: { label: string; before: string; after: string; before_label?: string | null } | null };
-  s3b?: { title?: string | null; out: OutRow[]; leaders?: { name: string; pct: number }[] | null; support?: { label: string; v: number } | null };
+  s3b?: { title?: string | null; out: OutRow[]; leaders?: { name: string; pct: number }[] | null; support?: { label: string; v: number; period?: { name: string; to: string; early?: string | null }[] | null } | null };
   s3c?: { title?: string | null; in: InRow[]; more?: NV[] | null; ratio?: { out_theme: string; out: number; in: number; text: string } | null; none?: string | null };
   s4?: { doc: string; date?: string | null; stocks: Stock[]; calc?: { expr: string; result: string; lhs?: number; rhs?: number; value?: number; kind?: string; verified?: boolean } | null };
   s5?: { news?: { title: string; source?: string | null; theme?: string | null }[] | null; a: string; b: string;
@@ -188,6 +188,9 @@ export const S3bB: React.FC<SC> = ({ p, cues }) => {
   const ldTop = chipsTop + 84;
   const supTop = ldTop + (leaders.length ? 226 : 0);
   const sv = h.support?.v ?? 0;
+  // 자사주 매입 기간(JJ 2026-09-17: 언제까지 하는지 인지시킨다) — 기간 문장(support_2, 없으면 support)에 맞춰 카드 아래에
+  const per = h.support?.period ?? [];
+  const pr0 = per.length ? stepAt("support_2") ?? su0 : 1e9;
   const sc = colOf(sv);
   const supGrow = interpolate(t, [su0, su0 + 0.6], [0, 1], { ...CLAMP, easing: ease });
   const supW = Math.max(12, Math.min(1, Math.abs(sv) / Math.max(1, Math.abs(top?.v ?? sv))) * 330) * supGrow;   // 유출 1위 대비 길이(최대 330px)
@@ -231,6 +234,18 @@ export const S3bB: React.FC<SC> = ({ p, cues }) => {
             <div style={{ flex: 1, textAlign: "right", fontSize: 50, fontWeight: 900, color: sc, whiteSpace: "nowrap", textShadow: SH }}>{sgn(sv)}{amt(sv)}</div>
             <Chip solid size={28}>정체</Chip>
           </Card>
+          {per.length && t >= pr0 ? (
+            <Card color={YEL} style={{ marginTop: 16, padding: "14px 28px", ...pop(pr0, 10) }}>
+              <div style={{ fontSize: 30, fontWeight: 800, color: SUBC }}>자사주 매입 기간</div>
+              {per.map((r) => (
+                <div key={r.name} style={{ display: "flex", alignItems: "baseline", gap: 18, marginTop: 6, whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 38, fontWeight: 900, color: "#FFFFFF", width: 230 }}>{r.name}</span>
+                  <span style={{ fontSize: 36, fontWeight: 800, color: SUBC, textDecoration: r.early ? "line-through" : undefined }}>{r.to}까지</span>
+                  {r.early ? <span style={{ fontSize: 40, fontWeight: 900, color: YEL }}>→ {r.early} 종료 분석</span> : null}
+                </div>
+              ))}
+            </Card>
+          ) : null}
         </div>
       ) : null}
     </Shell>

@@ -70,7 +70,9 @@ GLOBAL_DROP = [("s5", "news_x"), ("s3a", "verdict"), ("s3c", "issue"), ("s3b", "
                ("s2", "inst_streak"), ("s3c", "streak"),
                ("s4", "driver"), ("s6", "note"), ("s5", "limit"), ("s3b", "y"), ("s6", "intro"),
                ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s2", "week"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
-               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "size"), ("s3b", "support_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b")]
+               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "size"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "support"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b"),
+               # 마지막 수단(여기까지 와도 1,300자를 넘는 날만): 금리 금융 연결 → 자사주 조기 종료. 넘치면 검사 실패 → A+ 폴백이라 그보다 낫다
+               ("s5", "macro_link"), ("s3b", "support_2")]
 # JJ 2026-09-15 가 매일 요구한 칸은 예산에서 절대 빼지 않는다(그래서 위 목록에 없다 — BRIEF_FIX_1 §A):
 #   코스닥 개인(s3a kosdaq_2) · 종목별 개인·거래대금(s4 row:0_3 · row:1_3) — "외국인 개인 기관 이것도 샀는지 팔았는지 알려주고"
 #   둘째 유입 업종 수급(s3c t2) · 자사주 받침(s3b support) · 다음 이벤트(s6 event) — 빼면 s6 이 '…는지.'로 끝나 검사도 실패한다.
@@ -505,6 +507,27 @@ def bctx(c: dict) -> dict:
 # s1 — 훅을 듣고 사람이 실제로 떠올리는 질문 하나(JJ 2026-09-17: "나간 돈을 누가 받았느냐"는 틀린 말 —
 # 돈을 받는 게 아니라 판 주식을 누가 샀느냐다). 뒤 꼬리는 '오늘은 이것 하나만 따라가 보겠습니다' → s2 '먼저 코스피부터'로 이어진다.
 _Q1_KINDS = ["Q1", "Q2", "Q3"]
+_Q1_FIXED = "오늘은 이것 하나만 보겠습니다."     # JJ 2026-09-17: 고정. 다만 한 번씩은 다른 말("과연 누가 샀을까요?")
+_Q1_ALT = ["과연 누가 샀을까요?", "답은 수급에 있습니다.", "수급으로 하나씩 확인해 보겠습니다."]
+
+
+def _q1_tails(d: str, qs: list[str]) -> list[str]:
+    """s1 꼬리 후보. 기본은 고정 문장 하나. 최근 올라간 3편의 s1 이 모두 고정 꼬리였으면 이번엔 다른 말(질문에 이미 '누가'가 있으면 그 말은 뺀다)."""
+    try:
+        from _common import DATA, load_json
+        h = load_json(DATA / "script_history.json") or {}
+        eds = sorted([e for e in (h.get("editions") or []) if isinstance(e, dict) and str(e.get("date", ""))[:8] < d[:8] and not e.get("draft")],
+                     key=lambda e: str(e.get("date")))[-3:]
+        s1s = [" ".join(x.get("raw", "") for x in (e.get("sentences") or []) if x.get("scene") == "s1") for e in eds]
+        if len(s1s) == 3 and all(_Q1_FIXED[:-1] in t for t in s1s):
+            alt = [a for a in _Q1_ALT if not ("누가" in a and any("누가" in q for q in qs))]
+            k = sum(ord(ch) for ch in d[:8]) % len(alt)
+            return [alt[k]] + [a for a in alt if a != alt[k]]
+    except Exception:
+        pass
+    return [_Q1_FIXED]
+
+
 _Q1_TAIL = ["오늘은 이것 하나만 따라가 보겠습니다.", "오늘은 이 답 하나만 찾아보겠습니다.", "오늘은 이 질문 하나만 따라가 보겠습니다.",
             "지금부터 이 답을 하나씩 찾아보겠습니다.", "오늘은 이것 하나만 보겠습니다."]
 
@@ -659,6 +682,36 @@ def _said_yesterday(d: str, word: str) -> bool:
         return False
 
 
+def _bb_period(d: str, bb: list) -> dict:
+    """자사주 매입 기간(data/buybacks.json) — ends: '11월', early: '삼성전자는 10월 초, SK하이닉스는 10월 중순에'(기사로 확인한 조기 종료 추정이
+    오늘 이후일 때만), rows: 화면용 [{name, to, early}]. 한 문장 숫자 2개 이하가 되게 날짜는 '10월 초·중순·말'로 뭉갠다."""
+    out = {"ends": "", "early": "", "rows": []}
+    try:
+        from _common import DATA, load_json
+        progs = {pr.get("code"): pr for pr in ((load_json(DATA / "buybacks.json") or {}).get("programs") or [])}
+        today = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+        months, early = set(), []
+        for t in bb:
+            pr = progs.get(t.get("code"))
+            if not pr or not pr.get("to"):
+                continue
+            months.add(int(str(pr["to"])[5:7]))
+            ee = (pr.get("progress") or {}).get("expected_end")
+            ew = ""
+            if ee and today <= ee < str(pr["to"]):
+                dd = int(ee[8:10])
+                ew = f"{int(ee[5:7])}월 {'초' if dd <= 10 else '중순' if dd <= 20 else '말'}"
+                early.append(f"{J(pr['name'], '은', '는')} {ew}")
+            out["rows"].append({"name": pr["name"], "to": f"{int(str(pr['to'])[5:7])}월 {int(str(pr['to'])[8:10])}일", "early": ew or None})
+        out["ends"] = "·".join(f"{m}월" for m in sorted(months))
+        if early:
+            mons = {e.split()[-2] for e in early}          # '10월' — 두 회사가 같은 달이면 한 번만(길이, 숫자 2개 규칙)
+            out["early"] = (f"{mons.pop()} 안에" if len(mons) == 1 and len(early) > 1 else ", ".join(early) + "에")
+    except Exception:
+        pass
+    return out
+
+
 def _bb_end_months(bb: list) -> str:
     """진행 중 자사주 매입이 끝나는 달(data/buybacks.json) — '11월'. 두 회사가 같은 달이면 한 번만."""
     try:
@@ -685,9 +738,10 @@ def _s1(x: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]:
     elif hm and hm["mode"] == "hit":
         kind = "QM"
         qs = ["그럼 오늘 누가 팔았고, 누가 받아냈을까요?", "그럼 이 하락에 누가 팔고 누가 샀을까요?"]
-    s = pk([f"{q} {t}" for q in qs for t in _Q1_TAIL])
+    tails = _q1_tails(d, qs)
+    s = pk([f"{q} {t}" for q in qs for t in tails])
     q = next((q for q in qs if q in s), qs[0])
-    tail = next((t for t in _Q1_TAIL if t in s), _Q1_TAIL[0])
+    tail = next((t for t in tails if t in s), tails[0])
     return [("q", s)], {"q": q, "tail": tail, "text": s, "kind": kind}, kind
 
 
@@ -1153,22 +1207,30 @@ def _s3b(x: dict, pk: Picker) -> tuple[list, dict]:
                                           f"그런데 두 종목 값이 엇갈렸습니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}.",
                                           f"그런데 값은 한 방향이 아닙니다. {a['name']} {pct1_dir(a['pct'])}, {b['name']} {pct1_dir(b['pct'])}."])))
         else:
-            pairs.append(("turn", pk([f"그런데 {J(a['name'])} {pct1_dir(a['pct'])}{'에 그쳤습니다' if small else '입니다'}.", f"그런데 대장주 {a['name']}의 값은 {pct1_dir(a['pct'])}입니다.",
+            pairs.append(("turn", pk([f"그런데 {J(a['name'])} {pct1_dir(a['pct'])}{'에 그쳤습니다' if small else '입니다'}.", f"그런데 {a['name']}의 값은 {pct1_dir(a['pct'])}입니다.",
                                       f"그런데 값은 {a['name']} {pct1_dir(a['pct'])}{'뿐입니다' if small else '입니다'}."])))
         codes = _theme_codes(th) | {l.get("code") for l in leaders if l.get("code")}
         bb = [t for t in x["top_others"] if t.get("code") in codes and t.get("code") in x["act"]]
-        if bb and small:
+        rep_bb = bool(bb) and (_said_yesterday(d, "자사주") or (x.get("cont") or {}).get("top_buyer_days", 1) >= 3)
+        if bb and (small or rep_bb):          # 기타법인 얘기가 며칠째면 값이 밀린 날에도 매입 기간은 알린다(JJ 2026-09-17)
             S = hwon(sum(t["v"] for t in bb))
             support = {"label": "자사주", "v": round(sum(t["v"] for t in bb))}
             two = "두 회사" if len(bb) == 2 else bb[0]["name"]
             nm = "두 종목" if len(bb) == 2 else bb[0]["name"]
-            ends = _bb_end_months(bb)
-            pairs.append(("support", pk([f"{nm}에선 기타법인이 {obj(S)} 샀습니다.", f"{nm}을 가장 많이 산 건 기타법인, {S}입니다."])))
-            if _said_yesterday(d, "자사주") and ends:     # 어제도 자사주를 말했으면 같은 말 대신 새 사실 — 매입 기간
-                pairs.append(("support_2", f"{'두 회사 모두 ' if len(bb) == 2 else ''}{ends}까지 자사주를 사들이는 기간입니다."))
+            per = _bb_period(d, bb)
+            support["label"] = "기타법인"          # 화면도 등식 없이 — 두 종목 기타법인 순매수
+            if per["rows"]:
+                support["period"] = per["rows"]
+            if rep_bb and per["ends"]:
+                # JJ 2026-09-17: "기타법인이 샀다를 3~4일 계속 말했다 → 이제 자사주 매입 기간을 말하고 언제까지 할지를 인지시켜야 한다."
+                pairs.append(("support", pk([f"자사주 매입은 원래 {per['ends']}까지입니다.", f"자사주 매입 기간은 원래 {per['ends']}까지입니다."])))
+                if per["early"]:     # 이 문장만으로도 뜻이 서게(앞 문장은 길이 예산에서 빠질 수 있다)
+                    pairs.append(("support_2", f"{'두 회사 ' if len(bb) == 2 else ''}자사주 매입은 지금 속도면 {per['early']} 끝난다는 분석이 나왔습니다."))
             else:
+                pairs.append(("support", pk([f"{nm}에선 기타법인이 {obj(S)} 샀습니다.", f"{nm}을 가장 많이 산 건 기타법인, {S}입니다."])))
                 pairs.append(("support_2", f"{'두 회사 모두 ' if len(bb) == 2 else ''}자사주를 사들이는 기간입니다."))
-            pairs.append(("meaning", pk(["돈이 정체된 자리는 여기입니다.", "정체된 돈이 고인 곳이 여기입니다.", "값은 서 있고 돈은 나가는 자리, 정체는 여기입니다.", "돈은 나가는데 값이 안 밀리는 자리, 여기가 정체입니다."])))
+            if small:
+                pairs.append(("meaning", pk(["돈이 정체된 자리는 여기입니다.", "정체된 돈이 고인 곳이 여기입니다.", "값은 서 있고 돈은 나가는 자리, 정체는 여기입니다.", "돈은 나가는데 값이 안 밀리는 자리, 여기가 정체입니다."])))
         elif small:
             pairs.append(("meaning", pk(["돈은 나갔는데 값은 서 있는 자리입니다.", "값과 돈이 따로 노는 자리, 정체는 여기입니다.", "나간 돈만큼 값이 밀리지 않은 자리입니다."])))
     else:
@@ -1185,7 +1247,7 @@ def _s3b(x: dict, pk: Picker) -> tuple[list, dict]:
 # S3c 돈이 들어온 곳 — 이동 선언 1회 + 유입 상위 2 업종(외/기 분리, 등락, 순매수 종목 ≤4, N일째) + 유출 1위 대비 비율('16분의 1') → 질문(그 안에서 누가 샀나).
 # 대체: 유입 업종 없음 → '들어온 곳이 없었습니다. 가장 덜 빠진 곳은 …' + '전부 유출'.
 # ══════════════════════════════════════════════════════════════════════════════
-_S3C_Q = ["그럼 오늘 가장 많이 오른 종목은 누가 샀을까요?", "그럼 종목으로 들어가 보면 누가 샀을까요?", "그럼 대장주와 가장 많이 오른 종목은 누가 샀을까요?",
+_S3C_Q = ["그럼 오늘 가장 많이 오른 종목은 누가 샀을까요?", "그럼 종목으로 들어가 보면 누가 샀을까요?", "그럼 가장 많이 산 종목과 가장 많이 오른 종목은 어디였을까요?",
           "그럼 실제로 오른 종목은 누가 사들였을까요?"]
 
 
@@ -1198,7 +1260,7 @@ def _s3c_q(x: dict) -> list[str]:
     t4 = tname(th4) if th4 else ""
     if not t4:
         return list(_S3C_Q)
-    return [f"그럼 {t4} 종목은 실제로 누가 샀을까요?", f"그럼 {t4}에서 오른 종목은 누가 사들였을까요?", f"그럼 {t4} 대장주와 가장 많이 오른 종목은 누가 샀을까요?"]
+    return [f"그럼 {t4} 종목은 실제로 누가 샀을까요?", f"그럼 {t4}에서 오른 종목은 누가 사들였을까요?", f"그럼 {t4}에서 어떤 종목들을 샀을까요?"]
 
 
 def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
@@ -1245,7 +1307,7 @@ def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
     if b:
         pairs.append(("move", pk([f"있었습니다. {J(ta, '과', '와')} {tb}입니다.", f"들어온 곳은 {J(ta, '과', '와')} {tb}입니다.", f"돈이 들어간 곳은 {J(ta, '과', '와')} {tb}입니다.",
                                   f"돈이 들어온 업종은 {J(ta, '과', '와')} {tb}입니다.",
-                                  f"들어간 곳은 {J(ta, '과', '와')} {tb}였습니다."])))
+                                  f"들어간 곳은 {J(ta, '과', '와')} {tb}{'이었' if _has_batchim(tb) else '였'}습니다."])))
     else:
         pairs.append(("move", pk([f"있었습니다. {ta} 하나입니다.", f"들어온 곳은 {ta} 하나입니다.", f"돈이 들어간 업종은 {ta}뿐입니다."])))
     for tag, th, r, tn in (("t1", a, ra, ta), ("t2", b, rb, tb)):
@@ -1347,7 +1409,7 @@ def _pick_stocks(x: dict) -> tuple[list[dict], str, bool]:
     """(종목 둘, 업종, brief_stocks 에서 왔는가). §2: 유입 업종 없으면 유출 1위 대장주 + 그 업종에서 가장 덜 내린 종목."""
     bs = x["bstocks"]
     if bs:
-        lead = next((s for s in bs if s.get("role") == "대장주"), bs[0])
+        lead = next((s for s in bs if s.get("role") in ("대장주", "외국인·기관 최다", "거래대금 최대")), bs[0])
         top = next((s for s in bs if s is not lead), None)
         return [lead] + ([top] if top else []), x["btheme"] or lead.get("theme") or "", True
     th = x["in_th"] or x["out_th"]
@@ -1357,12 +1419,13 @@ def _pick_stocks(x: dict) -> tuple[list[dict], str, bool]:
     if not rows:
         return [], th, False
     leader_code = next((s.get("leader") for s in (x["flow_day"].get("sectors") or []) if s.get("theme") == th), None)
-    lead = next((r for r in rows if r.get("code") == leader_code), None) or max(rows, key=lambda r: _num(r.get("value")) or 0)
+    lead_f = next((r for r in rows if r.get("code") == leader_code), None)
+    lead = lead_f or max(rows, key=lambda r: _num(r.get("value")) or 0)
     others = [r for r in rows if r is not lead]
     top = max(others, key=lambda r: r["ret"]) if others else None
     conv = lambda r, role: {"code": r.get("code"), "name": r["name"], "role": role, "theme": th, "pct": float(r["ret"]), "foreign": r.get("foreign"), "inst": r.get("inst"),
                             "indiv": None, "value": r.get("value"), "close": r.get("close")}
-    return [conv(lead, "대장주")] + ([conv(top, "최대 상승" if x["in_th"] else "가장 덜 내림")] if top else []), th, False
+    return [conv(lead, "외국인·기관 최다" if lead_f else "거래대금 최대")] + ([conv(top, "최대 상승" if x["in_th"] else "가장 덜 내림")] if top else []), th, False
 
 
 def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
@@ -1384,7 +1447,10 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
     for i, s in enumerate(stocks):
         name, pct = s["name"], _num(s.get("pct"))
         fo, io, dv, val = _num(s.get("foreign")), _num(s.get("inst")), _num(s.get("indiv")), _num(s.get("value"))
-        role = s.get("role") or ("대장주" if i == 0 else "최대 상승")
+        role = s.get("role") or ("외국인·기관 최다" if i == 0 else "최대 상승")
+        if role == "대장주":                      # 옛 brief_stocks — collect_brief 의 대장주는 업종 아카이브 leader(외국인+기관 최다)였다
+            role = "외국인·기관 최다"
+            s["role"] = role
         P1 = f"{pct2(pct)} {'올랐' if pct > 0 else '내렸'}" if pct is not None else None
         PD = f"{pct2(pct)} {updn(pct)}" if pct is not None else ""
         # 이 종목이 오늘 이슈 종목이면 그 줄에 한 번만 표시한다(BRIEF_FIX_2 §D-2) — s3c 가 이미 이슈를 말했으면 생략
@@ -1394,9 +1460,10 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
         lim = pct is not None and pct >= 29.5
         P1b = (f"상한가 {pct2(pct)}까지 올랐" if lim else P1) if P1 else None
         if i == 0:
-            pairs.append((f"row:{i}", pk(([f"먼저 이슈 종목인 {J(name)} {P1}습니다.", f"이슈 종목 {J(name)} {P1}습니다.", f"대장주이자 이슈 종목인 {J(name)} {P1}습니다."] if iss else
-                                          [f"먼저 {tn} 대장주 {J(name)} {P1}습니다.", f"대장주부터 보면 {J(name)} {P1}습니다.", f"{tn} 대장주인 {J(name)} {P1}습니다."])) if P1 else
-                          pk([f"먼저 {tn} 대장주는 {name}입니다.", f"{tn} 대장주는 {name}입니다."])))
+            who = "외국인과 기관이 가장 많이 산" if role == "외국인·기관 최다" else "거래대금이 가장 큰"
+            pairs.append((f"row:{i}", pk(([f"먼저 이슈 종목인 {J(name)} {P1}습니다.", f"이슈 종목 {J(name)} {P1}습니다."] if iss else
+                                          [f"먼저 {tn}에서 {who} {J(name)} {P1}습니다.", f"{tn}에서 {who} 종목은 {name}, {P1}습니다."])) if P1 else
+                          pk([f"{tn}에서 {who} 종목은 {name}입니다."])))
         else:
             rl = "가장 많이 오른 종목" if role == "최대 상승" else "가장 덜 내린 종목" if role == "가장 덜 내림" else "둘째 종목"
             if iss and P1b:
@@ -1609,6 +1676,52 @@ def _side(r: dict) -> str:
 _RECAP = re.compile(r"^\[(?:거래소|코스닥|코스피|유가증권)\s?(?:기관|외국인|개인)\]|\[시가총액|\[스팟\]|\[속보\]|코스피|코스닥")
 
 
+def _has_batchim(w: str) -> bool:
+    ch = (w or " ")[-1]
+    return "가" <= ch <= "힣" and (ord(ch) - 0xAC00) % 28 != 0
+
+
+# 오른 이유로 쓸 수 있는 제목: 값이 움직였다는 말이 있어야 한다(9/17 '삼성중공업 공정위 제재에 113억원 상생안' 이 '제재 소식에 올랐다'로 뽑혔다)
+_MOVE_UP = re.compile(r"강세|상승|급등|↑|오름|올라|뛰|신고가|반등|불기둥|치솟|랠리|껑충")
+_MOVE_DN = re.compile(r"약세|하락|급락|↓|내림|떨어|추락|신저가|밀려")
+_BAD_REASON = re.compile(r"제재|과징금|벌금|소송|적발|압수수색|기소|징계|사고|화재|파업|리콜|횡령|배임")
+
+
+def _big_mover(s4: dict) -> dict | None:
+    """이슈 없는 날 — s4 종목 가운데 등락률이 가장 크게 움직인 하나(±3% 이상)를 말하고, 외국인·기관·개인 숫자로 그 뜻을 풀이한다."""
+    rows = [r for r in (s4.get("stocks") or []) if _num(r.get("pct")) is not None]
+    if not rows:
+        return None
+    r = max(rows, key=lambda r: abs(_num(r.get("pct"))))
+    pct = _num(r.get("pct"))
+    if abs(pct) < 3:
+        return None
+    name, up = r["name"], pct > 0
+    fo, io, dv, val = _num(r.get("foreign")), _num(r.get("inst")), _num(r.get("indiv")), _num(r.get("value"))
+    say = f"대신 {J(name, '이', '가')} {pct2(pct)} {'올랐' if up else '내렸'}습니다."
+    if fo is None or io is None:
+        return {"name": name, "theme": r.get("theme") or "", "side": "a", "say": say, "judge": f"{name}은 외국인·기관 숫자가 없어 누가 움직였는지 가르기 어렵습니다."}
+    fi = fo + io
+    if up:
+        if fi >= 50 and (not val or fi >= 0.05 * val):
+            side, judge = "b", f"외국인과 기관이 합쳐 {obj(hwon(fi))} 샀으니, 실제로 돈이 들어온 상승입니다."
+        elif max(fo, io) > 0 and min(fo, io) < 0:
+            bn, bv, sn, sv = ("기관", io, "외국인", fo) if io >= fo else ("외국인", fo, "기관", io)
+            side, judge = "a", f"{subj(bn)} {obj(hwon(bv))} 샀지만 {J(sn)} {obj(hwon(abs(sv)))} 팔았으니, 한쪽 돈만 들어온 상승입니다."
+        elif (dv or 0) > 0:
+            side, judge = "a", f"외국인과 기관은 {'오히려 ' + obj(hwon(abs(fi))) + ' 팔았고' if fi < 0 else obj(hwon(fi)) + '만 샀고'}, 개인이 {obj(hwon(dv))} 사서 끌어올린 상승입니다."
+        else:
+            side, judge = "a", f"외국인과 기관이 산 돈은 {hwon(fi)}뿐이라, 큰돈이 만든 상승은 아닙니다."
+    else:
+        if fi <= -50:
+            side, judge = "b", f"외국인과 기관이 합쳐 {obj(hwon(abs(fi)))} 팔아 값이 밀렸습니다."
+        elif (dv or 0) < 0:
+            side, judge = "a", f"개인이 {obj(hwon(abs(dv)))} 팔아 값이 밀렸습니다."
+        else:
+            side, judge = "a", f"외국인과 기관은 크게 팔지 않았는데 값이 밀렸습니다."
+    return {"name": name, "theme": r.get("theme") or "", "side": side, "say": say, "judge": judge}
+
+
 def _stock_issues(x: dict, s4: dict, kwl: list | None = None) -> list[dict]:
     """s4 두 종목(대장주·가장 많이 오른 종목)에 붙은 이슈 기사 → 말할 문장 + '뉴스로만 올랐나, 진짜 돈이 들어왔나' 판정.
     JJ 2026-09-17: "오늘 오른 종목들 중에 관련된 뉴스와 연관해서, 그 종목들이 오른 게 뉴스 기사로만 오른 건지
@@ -1618,9 +1731,11 @@ def _stock_issues(x: dict, s4: dict, kwl: list | None = None) -> list[dict]:
         name = r.get("name")
         if not name:
             continue
-        cands = [it for it in x["news"] if name in (it.get("title") or "") and ("특징주" in (it.get("title") or "") or not _RECAP.search(it.get("title") or ""))]
-        ev = x.get("ev") or {}
         pct = _num(r.get("pct"))
+        mv_rx = _MOVE_DN if (pct is not None and pct < 0) else _MOVE_UP
+        cands = [it for it in x["news"] if name in (it.get("title") or "") and ("특징주" in (it.get("title") or "") or not _RECAP.search(it.get("title") or ""))
+                 and mv_rx.search(it.get("title") or "") and not (pct and pct > 0 and _BAD_REASON.search(it.get("title") or ""))]
+        ev = x.get("ev") or {}
         if cands:
             cands.sort(key=lambda it: 0 if "특징주" in it["title"] else 1)
             cands = [c for c in cands if re.search(re.escape(name) + r"[,\s·…]+(.+?)(?:에|으로|로)\s", re.sub(r"^\[[^\]]*\]\s*", "", c["title"]))] or cands[:0]
@@ -1741,6 +1856,9 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
                 x["verdict_up"] = True
         news = [{"title": o["title"], "source": o["source"], "theme": o["theme"]} for o in sis[:2]]
     if not sis:
+        # 기사 제목을 그대로 읽는 뉴스('…' 소식이 있었습니다)는 쓰지 않는다(JJ 9/16 "이걸 왜 말한 거야?") — 이슈 메모·키워드로 요약된 것만.
+        # 그런 게 없으면 '큰 이슈는 없었다 + 크게 움직인 종목과 그 뜻'으로 간다(JJ 2026-09-17).
+        news = [o for o in news if o.get("kw") or o.get("source") == "이슈 메모"]
         if news and not ov:     # JJ 2026-09-17: "그냥 오늘 주요 이슈 알아보겠습니다 하고 설명하고, 이게 오늘 시장에 어떤 영향을 줬는지"
             pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "이번엔 오늘의 주요 이슈입니다.", "오늘 시장에 나온 이슈를 보겠습니다.", "오늘 주요 뉴스를 보겠습니다."])))
         if len(news) >= 2 and all(o.get("kw") for o in news[:2]) and not compact:
@@ -1772,11 +1890,18 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
                     spoken = o["spoken"]
                 pairs.append(("news_x" if o.get("extra") else f"news:{len([p for p in pairs if p[0].startswith('news:')])}", spoken))
         else:
-            pairs.append(("news:0", pk(["오늘은 시장을 흔든 큰 뉴스가 없었습니다.", "오늘은 눈에 띄는 이슈가 없었습니다.", "오늘은 특별한 뉴스 없이 사고파는 돈만 움직였습니다."])))
+            # JJ 2026-09-17: "이슈가 없는 날은 굳이 안 넣어도 돼. 오늘 큰 이슈가 없었는데 어떤 주식의 등락률이 크게 있었다고 말해 주고 어떤 의미일지 풀이."
+            pairs.append(("news:0", pk(["종목에선 따로 큰 이슈가 없었습니다."] if ov else ["오늘은 시장을 흔든 큰 뉴스가 없었습니다.", "오늘은 눈에 띄는 이슈가 없었습니다."])))
+            mv = _big_mover(s4)
+            if mv:
+                pairs.append(("mover", mv["say"]))
+                pairs.append(("verdict:0", mv["judge"]))
+                verdicts.append({"theme": mv["theme"], "name": mv["name"], "side": mv["side"], "text": mv["judge"]})
+                x["mover_said"] = True
         # '뉴스가 올린 값이면 … / 돈이 올린 값이면 …' 같은 틀 설명은 말하지 않는다 — 한 번 더 생각하게 만든다(JJ 2026-09-17).
         # 바로 '반도체 상승은 뉴스 때문만이 아니었습니다. 앞에서 본 것처럼 기관이 8,100억을 사들였습니다'처럼 영향을 말한다.
-        # 업종별 판정
-        for i, th in enumerate(themes_in[:2]):
+        # 업종별 판정(이슈 없는 날 크게 움직인 종목을 풀이했으면 업종 판정은 건너뛴다)
+        for i, th in enumerate([] if x.get("mover_said") else themes_in[:2]):
             r = x["themes"].get(th) or {}
             has_news = any(o["theme"] == th for o in news)
             net = r.get("net") or 0
@@ -2025,7 +2150,7 @@ def _build_once(c: dict, avoid: set[str] | None, attempt: int, compact: bool) ->
         tts, steps = _steps(pairs)
         info["tts"], info["steps"] = tts, steps
         scenes.append({"id": sid, "min": mins[sid], "tts": tts, "sub": "" if sid in ("s0", "s6") else tts, "steps": steps})
-    if s3b.get("support") and not any(st == "support" for st in s3b["steps"]):      # 말하지 않은 자사주 카드는 화면에도 안 띄운다
+    if s3b.get("support") and not any(st in ("support", "support_2") for st in s3b["steps"]):      # 말하지 않은 자사주 카드는 화면에도 안 띄운다
         s3b["support"] = None
     if s5.get("callback") and "callback" not in s5["steps"]:                        # 말하지 않은 S0 콜백 칩·한계 문장·어제 대비 칩도 화면에서 뺀다(말마다 화면 반응)
         s5["callback"], s5["callback_num"] = None, None

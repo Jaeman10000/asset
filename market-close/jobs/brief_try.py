@@ -206,15 +206,16 @@ def selftest() -> None:
             r["foreign"], r["inst"] = -50, -30
     c["moves"] = [c["moves"][0]]
     c["brief_stocks"] = {}
-    o = go("no_inflow", c, must={"s3c": "들어온 곳이 없었", "s4": "대장주"})
+    o = go("no_inflow", c, must={"s3c": "들어온 곳이 없었", "s4": "거래대금이 가장 큰"})
     assert o["hunter"]["s3c"]["in"] == [] and o["hunter"]["s3c"]["ratio"] is None
     # 이슈 없음 → 제목에 업종·종목 이름이 든 기사만 / 그것도 없으면 '뉴스 없이'
     c = copy.deepcopy(base)
     c["event"] = None
-    o = go("no_event_news", c, must={"s5": "이슈"})
+    o = go("no_event_news", c, must={"s5": "없었습니다"})   # 제목 그대로 읽는 뉴스는 안 쓴다 → 큰 이슈 없음 + 크게 움직인 종목(JJ 9/17)
     c["news_items"] = []
     o = go("no_event_no_news", c, must={"s5": "뉴스"})
-    assert all(v["side"] == "b" for v in o["hunter"]["s5"]["verdicts"]), o["hunter"]["s5"]["verdicts"]
+    # JJ 2026-09-17: 이슈 없는 날은 크게 움직인 종목 하나와 그 뜻(mover) — 판정 방향은 숫자대로(b 만이 아니다)
+    assert o["hunter"]["s5"]["verdicts"] and ("mover" in o["hunter"]["s5"]["steps"] or all(v["side"] == "b" for v in o["hunter"]["s5"]["verdicts"])), o["hunter"]["s5"]
     # 코스닥 수급 없음 → 지수 둘 + 코스피 판정 + 콜백
     c = copy.deepcopy(base)
     c["kosdaq"] = {}

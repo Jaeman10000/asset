@@ -58,7 +58,9 @@ def pick(fl: dict | None, day: dict | None, ev: dict | None) -> dict | None:
     cands += [{"code": s.get("code"), "name": s.get("name"), "pct": _num(s.get("pct"))} for s in (ev.get("stocks") or []) if isinstance(s, dict) and s.get("code")]
     cands = [c for c in cands if c["code"] != lead["code"] and c["pct"] is not None]
     top = max(cands, key=lambda c: c["pct"]) if cands else None
-    picks = [{"code": lead["code"], "name": lead.get("name") or CODE_NAME.get(lead["code"], lead["code"]), "role": "대장주", "theme": theme}]
+    # JJ 2026-09-17: '대장주' 대신 '외국인과 기관이 가장 많이 산' — 업종 아카이브 leader(외국인+기관 최다)면 그 이름, 아니면 거래대금 최대
+    role = "외국인·기관 최다" if (leader_code and lead.get("code") == leader_code) else "거래대금 최대"
+    picks = [{"code": lead["code"], "name": lead.get("name") or CODE_NAME.get(lead["code"], lead["code"]), "role": role, "theme": theme}]
     if top:
         picks.append({"code": top["code"], "name": top["name"], "role": "최대 상승", "theme": theme})
     return {"theme": theme, "picks": picks}

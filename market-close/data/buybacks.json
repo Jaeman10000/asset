@@ -1,9 +1,44 @@
 {
-  "_note": "진행 중인 대규모 자사주 매입. 회사가 자기 주식을 사면 투자자별 수급에서 '기타법인'으로 잡힌다. 영상은 그날 기타법인 순매수 상위 종목이 여기 있고 기간 안일 때만 연결 문장을 쓴다. 새 발표가 나오면 사람이 추가.",
+  "_note": "진행 중인 대규모 자사주 매입. 회사가 자기 주식을 사면 투자자별 수급에서 '기타법인'으로 잡힌다. 영상은 그날 기타법인 순매수 상위 종목이 여기 있고 기간 안일 때만 연결 문장을 쓴다. 새 발표가 나오면 사람이 추가. progress = 기사로 확인한 진행률·조기 종료 추정(여러 매체가 같은 날짜를 말한 것만). 대본은 '분석이 나왔다'로만 말한다.",
   "programs": [
-    {"code": "000660", "name": "SK하이닉스", "size": "약 40조", "from": "2026-08-20", "to": "2026-11-19",
-     "src": "https://www.ebn.co.kr/news/articleView.html?idxno=1722100"},
-    {"code": "005930", "name": "삼성전자", "size": "15조(장내)", "from": "2026-08-24", "to": "2026-11-21",
-     "src": "https://www.joongangenews.com/news/articleView.html?idxno=543624"}
+    {
+      "code": "000660",
+      "name": "SK하이닉스",
+      "size": "약 40조",
+      "from": "2026-08-20",
+      "to": "2026-11-19",
+      "src": "https://www.ebn.co.kr/news/articleView.html?idxno=1722100",
+      "progress": {
+        "asof": "2026-09-16",
+        "pct": 53.39,
+        "done": "22조 588억",
+        "expected_end": "2026-10-16",
+        "basis": "지금 하루 매입 속도 유지 시",
+        "src": [
+          "파이낸셜뉴스 2026-09-17 (토스증권 이영곤 리서치센터장) https://www.fnnews.com/news/202609171826415608",
+          "시사저널e 2026-09-15 https://www.sisajournal-e.com/news/articleView.html?idxno=423720"
+        ]
+      }
+    },
+    {
+      "code": "005930",
+      "name": "삼성전자",
+      "size": "15조(장내)",
+      "from": "2026-08-24",
+      "to": "2026-11-21",
+      "src": "https://www.joongangenews.com/news/articleView.html?idxno=543624",
+      "progress": {
+        "asof": "2026-09-16",
+        "pct": 67.18,
+        "done": "9조 2,792억",
+        "expected_end": "2026-10-01",
+        "basis": "지금 하루 매입 속도 유지 시",
+        "src": [
+          "파이낸셜뉴스 2026-09-17 (토스증권 이영곤 리서치센터장) https://www.fnnews.com/news/202609171826415608",
+          "시사저널e 2026-09-15 https://www.sisajournal-e.com/news/articleView.html?idxno=423720",
+          "헤럴드경제 '주가 방어 10월 초 끝' https://biz.heraldcorp.com/article/10863735"
+        ]
+      }
+    }
   ]
 }
