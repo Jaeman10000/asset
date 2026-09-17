@@ -85,10 +85,10 @@ def stage_script(kind: str, date: str, fetch: bool = True) -> dict:
     base.mkdir(parents=True, exist_ok=True)
     we = _week_end(date)
     if kind == "kr":
-        import weekly_data, narrate_weekly
+        import weekly_data, narrate_weekly2   # v2(JJ 2026-09-17): 요일별 돈의 자리 표 — 옛 판은 narrate_weekly.py 에 보관
         w = weekly_data.build(we.strftime("%Y%m%d"), date, fetch=fetch)
         news = _news(kind, base)
-        out = narrate_weekly.build_weekly(w, news)
+        out = narrate_weekly2.build_weekly(w, news)
     else:
         import us_weekly_data, narrate_us_weekly
         w = us_weekly_data.build(we.strftime("%Y-%m-%d"), date)
@@ -111,7 +111,7 @@ def stage_script(kind: str, date: str, fetch: bool = True) -> dict:
         issues["threads"] = th_bad
     script = {"kind": kind, "date": date, "week_end": we.strftime("%Y%m%d"), "scenes": out["scenes"], "title": out["title"],
               "threads": out["threads"], "threads_reply": out["threads_reply"], "hook_parts": out.get("hook_parts"),
-              "screen_news": ov.get("screen_news"), "view": ov.get("view"), "props_extra": ov.get("props_extra"), "issues": issues, "built_at": datetime.now().isoformat(timespec="seconds")}
+              "screen_news": ov.get("screen_news"), "view": ov.get("view"), "props_extra": {**(out.get("props_extra") or {}), **(ov.get("props_extra") or {})}, "issues": issues, "built_at": datetime.now().isoformat(timespec="seconds")}
     save_json(base / "script.json", script)
     od = ROOT / "out" / k["dir"] / date
     od.mkdir(parents=True, exist_ok=True)

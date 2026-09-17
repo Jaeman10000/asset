@@ -393,8 +393,196 @@ def _news(build_date: str) -> list:
     if isinstance(j, list):
         return j
     if isinstance(j, dict):
-        return j.get("items") or j.get("news") or []
+        return j.get("items") or j.get("news") or j.get("events") or []
     return []
+
+
+
+
+# ───────────────────────── 요일별 돈의 자리(v2, JJ 2026-09-17) ─────────────────────────
+# JJ: "월화수목금토일 표로 — 월~금 돈이 나간 업종(외국인·개인·기관 전부)과 들어온 업종·종목을 요일마다, 금요일에 돈이 어디 정체해 있는지,
+#      요일마다 오른 종목은 뉴스·이슈와 엮어 이벤트로 오른 건지 진짜 돈이 들어온 건지."
+# 업종·종목 외국인·기관 = 업종 아카이브(flow_store, 15:40 확정), 개인 = 키움 ka10059 종목별 이력(종목당 1콜, 100거래일) 합.
+
+def _archive_day(d: str) -> dict:
+    try:
+        from app.services import flow_store
+        return flow_store.load_day(d) or {}
+    except Exception:
+        return {}
+
+
+async def _fetch_hist(codes: list[str], week_end: str) -> dict:
+    import httpx
+
+    from _common import kiwoom_call, num
+    from app.services.kiwoom_client import KiwoomClient
+    out = {}
+    c = KiwoomClient()
+    async with httpx.AsyncClient(timeout=httpx.Timeout(15.0)) as hc:
+        tok = await c._ensure_token(hc)
+        for code in codes:
+            try:
+                dd, _, _ = await kiwoom_call(hc, tok, "stkinfo", "ka10059",
+                                             {"dt": week_end, "stk_cd": code, "amt_qty_tp": "1", "trde_tp": "0", "unit_tp": "1000"})
+            except Exception as e:  # noqa: BLE001
+                print(f"  [hist] {code} 실패: {e}", flush=True)
+                continue
+            out[code] = {r["dt"]: {"indiv": round(num(r.get("ind_invsr")) / 100), "foreign": round(num(r.get("frgnr_invsr")) / 100),
+                                   "inst": round(num(r.get("orgn")) / 100), "others": round(num(r.get("etc_corp")) / 100)}
+                         for r in dd.get("stk_invsr_orgn") or [] if r.get("dt")}
+            await asyncio.sleep(0.2)
+    return out
+
+
+def _stock_hist(days: list[str], build_date: str, fetch: bool, warn: list[str]) -> dict:
+    """{code: {d: {indiv, foreign, inst, others}}} — 그 주 아카이브 종목 전부. data/weekly/<build>/stock_hist.json 캐시(dt=주말)."""
+    codes = sorted({r["code"] for d in days for r in (_archive_day(d).get("stocks") or []) if r.get("code")})
+    cache_p = WEEKLY / build_date / "stock_hist.json"
+    cache = load_json(cache_p) or {}
+    hist = cache.get("codes") or {} if cache.get("dt") == days[-1] else {}
+    need = [c for c in codes if c not in hist or not all(d in hist[c] for d in days)]
+    if need and fetch:
+        print(f"  [hist] 종목 {len(need)}개 ka10059 (약 {len(need) * 0.4:.0f}초)", flush=True)
+        got = asyncio.run(_fetch_hist(need, days[-1]))
+        for c, v in got.items():
+            hist[c] = {d: x for d, x in v.items() if days[0] <= d <= days[-1]}
+        (WEEKLY / build_date).mkdir(parents=True, exist_ok=True)
+        save_json(cache_p, {"dt": days[-1], "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M"), "src": "키움 ka10059(억원)", "codes": hist})
+    miss = [c for c in codes if c not in hist]
+    if miss:
+        warn.append(f"종목별 개인 이력 없음 {len(miss)}개(업종 개인 합계에서 빠짐)")
+    return hist
+
+
+def _verdict(fo: float, io: float, dv: float | None, val: float | None, pct: float) -> dict:
+    """오른 종목: 진짜 돈이 들어왔나(평일편 s5 와 같은 기준)."""
+    fi = fo + io
+    if pct > 0:
+        if fi >= 50 and (not val or fi >= 0.05 * val):
+            return {"side": "money", "fi": round(fi)}
+        if max(fo, io) > 0 and min(fo, io) < 0:
+            return {"side": "half", "fi": round(fi)}
+        if (dv or 0) > 0:
+            return {"side": "indiv", "fi": round(fi)}
+        return {"side": "small", "fi": round(fi)}
+    return {"side": "down", "fi": round(fi)}
+
+
+def _days_detail(days: list[str], cks: dict, inv: dict, hist: dict, warn: list[str]) -> list[dict]:
+    out = []
+    invd = {r["d"]: r for r in inv["days"]}
+    for d in days:
+        a = _archive_day(d)
+        if not a:
+            warn.append(f"{d} 업종 아카이브 없음")
+        stocks = a.get("stocks") or []
+        by_th: dict[str, dict] = {}
+        for r in stocks:
+            th = r.get("theme")
+            if not th:
+                continue
+            t = by_th.setdefault(th, {"theme": th, "foreign": 0.0, "inst": 0.0, "indiv": 0.0, "indiv_n": 0, "n": 0, "stocks": []})
+            fo, io = float(r.get("foreign") or 0), float(r.get("inst") or 0)
+            t["foreign"] += fo
+            t["inst"] += io
+            t["n"] += 1
+            hv = (hist.get(r.get("code")) or {}).get(d)
+            if hv is not None and (abs(hv["foreign"] - fo) > max(500, 0.3 * abs(fo)) or abs(hv["inst"] - io) > max(500, 0.3 * abs(io))):
+                # 장 마감 뒤 대량매매 등으로 이력의 외국인·기관이 15:40 아카이브와 크게 다르면 그 종목 개인은 합에서 뺀다(9/17 넷마블 외국인 −2.8억 vs −3,744억)
+                warn.append(f"{d} {r.get('name')} 이력 외국인·기관이 아카이브와 다름({hv['foreign']:+,}/{hv['inst']:+,} vs {fo:+,.0f}/{io:+,.0f}) — 개인 합에서 뺌")
+                hv = None
+                t["indiv_skip"] = t.get("indiv_skip", 0) + 1
+            if hv is not None:
+                t["indiv"] += hv["indiv"]
+                t["indiv_n"] += 1
+            t["stocks"].append({"code": r.get("code"), "name": r.get("name"), "foreign": round(fo), "inst": round(io), "ret": r.get("ret"),
+                                "value": r.get("value"), "indiv": hv["indiv"] if hv else None})
+        rows = []
+        for t in by_th.values():
+            net = t["foreign"] + t["inst"]
+            rows.append({"theme": t["theme"], "net": round(net), "foreign": round(t["foreign"]), "inst": round(t["inst"]),
+                         "indiv": round(t["indiv"]) if t["n"] and t["indiv_n"] + t.get("indiv_skip", 0) == t["n"] and t["indiv_n"] else None,
+                         "ret": round(sum((s["ret"] or 0) for s in t["stocks"]) / max(len(t["stocks"]), 1), 2),
+                         "stocks": sorted(t["stocks"], key=lambda s: -((s["foreign"] or 0) + (s["inst"] or 0)))})
+        outs = sorted([r for r in rows if r["net"] < 0], key=lambda r: r["net"])[:2]
+        ins = sorted([r for r in rows if r["net"] > 0], key=lambda r: -r["net"])[:2]
+        inst_ins = []
+        if not ins:
+            inst_ins = [{"theme": r["theme"], "inst": r["inst"], "foreign": r["foreign"]} for r in sorted(rows, key=lambda r: -r["inst"]) if r["inst"] > 0 and r["theme"] not in {o["theme"] for o in outs}][:2]
+        for r in ins:
+            r["top_stocks"] = [{"name": s["name"], "fi": s["foreign"] + s["inst"], "ret": s["ret"]} for s in r["stocks"] if s["foreign"] + s["inst"] > 0][:2]
+        for r in outs + ins:
+            r.pop("stocks", None)
+        risers = []
+        for s in sorted([s for s in stocks if (s.get("ret") or 0) >= 5], key=lambda s: -(s.get("ret") or 0))[:3]:
+            hv = (hist.get(s.get("code")) or {}).get(d)
+            fo, io = float(s.get("foreign") or 0), float(s.get("inst") or 0)
+            risers.append({"code": s.get("code"), "name": s.get("name"), "theme": s.get("theme"), "ret": s.get("ret"), "foreign": round(fo), "inst": round(io),
+                           "indiv": hv["indiv"] if hv else None, "value": s.get("value"),
+                           "verdict": _verdict(fo, io, hv["indiv"] if hv else None, s.get("value"), s.get("ret") or 0)})
+        k = cks[d].get("kospi") or {}
+        q = cks[d].get("kosdaq") or {}
+        out.append({"d": d, "wd": WD[datetime.strptime(d, "%Y%m%d").weekday()], "kospi_pct": k.get("chg_pct"), "kosdaq_pct": q.get("chg_pct"),
+                    "inv": {x: invd.get(d, {}).get(x) for x in KEYS}, "outs": outs, "ins": ins, "inst_ins": inst_ins, "risers": risers})
+    return out
+
+
+def _parked(dd: list[dict]) -> dict:
+    """금요일(그 주 마지막 날) 장이 끝났을 때 돈이 머문 곳: 마지막 날 유입 1위 + 그 업종이 그 주에 돈이 들어온 날 수."""
+    if not dd or not dd[-1]["ins"]:
+        return {}
+    top = dd[-1]["ins"][0]
+    th = top["theme"]
+    days_in = sum(1 for x in dd if any(r["theme"] == th for r in x["ins"]))
+    streak = 0
+    for x in reversed(dd):
+        if any(r["theme"] == th for r in x["ins"]):
+            streak += 1
+        else:
+            break
+    return {"theme": th, "net": top["net"], "foreign": top["foreign"], "inst": top["inst"], "indiv": top.get("indiv"),
+            "top_stocks": top.get("top_stocks") or [], "days_in": days_in, "streak": streak, "last_wd": dd[-1]["wd"]}
+
+
+def _history(theme: str, before: str) -> dict:
+    """과거 기록(전망 아님, JJ 2026-09-17): 이 업종에 돈이 가장 많이 들어간 채 끝난 금요일(적으면 모든 거래일) 다음 거래일에 돈이 어디로 갔나."""
+    try:
+        from app.services import flow_store
+        dates = [x for x in flow_store.saved_dates() if x < before]
+    except Exception:
+        return {}
+    if len(dates) < 30 or not theme:
+        return {}
+
+    def topin(d: str):
+        secs = (flow_store.load_day(d) or {}).get("sectors") or []
+        nets = {s["theme"]: float(s.get("foreign") or 0) + float(s.get("inst") or 0) for s in secs if s.get("theme")}
+        pos = {k: v for k, v in nets.items() if v > 0}
+        return (max(pos, key=pos.get) if pos else None), nets
+
+    tops = {d: topin(d) for d in dates}
+
+    def stats(pred) -> dict:
+        n, cont, nxt = 0, 0, {}
+        for i, d in enumerate(dates[:-1]):
+            if not pred(d) or tops[d][0] != theme:
+                continue
+            nd = dates[i + 1]
+            t2, nets2 = tops[nd]
+            n += 1
+            cont += 1 if (nets2.get(theme) or 0) > 0 else 0
+            if t2:
+                nxt[t2] = nxt.get(t2, 0) + 1
+        return {"n": n, "cont": cont, "next_top": sorted(nxt.items(), key=lambda kv: -kv[1])[:3]}
+
+    fri = stats(lambda d: datetime.strptime(d, "%Y%m%d").weekday() == 4)
+    basis = "금요일"
+    if fri["n"] < 5:
+        fri = stats(lambda d: True)
+        basis = "거래일"
+    since = dates[0]
+    return {"theme": theme, "basis": basis, "since": since, "since_label": f"{since[:4]}년 {int(since[4:6])}월", **fri}
 
 
 # ───────────────────────── 빌드 ─────────────────────────
@@ -419,6 +607,14 @@ def build(week_end: str, build_date: str, fetch: bool = True, _diag: dict | None
         "us": _us(days[0], days[-1], build_date, diag),
         "news": _news(build_date),
     }
+    # v2: 요일별 돈의 자리 · 금요일 머문 곳 · 과거 기록
+    try:
+        hist = _stock_hist(days, build_date, fetch, warn)
+        out["days_detail"] = _days_detail(days, cks, inv, hist, warn)
+        out["parked"] = _parked(out["days_detail"])
+        out["history"] = _history((out["parked"] or {}).get("theme"), days[0])
+    except Exception as e:  # noqa: BLE001
+        warn.append(f"요일별 상세 실패: {e}")
     diag["warn"] = warn
     p = WEEKLY / build_date / "computed_weekly.json"
     p.parent.mkdir(parents=True, exist_ok=True)
