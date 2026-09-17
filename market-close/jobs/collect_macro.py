@@ -26,7 +26,22 @@ QUERIES = ["연준 기준금리 인상", "연준 기준금리 인하", "연준 �
            "한미 금리차", "금리 인상 수혜 금융주 보험주", "연준 만장일치"]
 
 
+def fomc_last_night(d: str) -> bool:
+    """간밤(한국 d 의 직전 미국 정규장, ET)이 FOMC 이틀째(발표일)였나 — collect_us.FOMC_2026 날짜표로만.
+    9/17 기사 제목 다수결만 보면, 다음 날(9/18) 아침 미국 기사에도 '금리 인상'이 3건 넘게 남아 '간밤 연준이 올렸다' 훅이 또 붙는다."""
+    try:
+        import collect_news as cn
+        from collect_us import FOMC_2026
+        us = cn._us_session_date(d).strftime("%Y-%m-%d")
+        days = {f"{x[:8]}{x.split('/')[1]}" for x in FOMC_2026}      # "2026-09-15/16" → "2026-09-16"
+        return us in days
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def fed_event(d: str) -> bool:
+    if not fomc_last_night(d):
+        return False
     n = load_json(DATA / d / "raw" / "news_us.json") or {}
     titles = [str(it.get("title") or "") for it in (n.get("items") or []) if isinstance(it, dict)]
     return any(sum(1 for t in titles if re.search(rf"금리\s?{w}", t)) >= 3 for w in ("인상", "인하", "동결"))

@@ -69,8 +69,8 @@ CAPS = {**nh.CAPS, "s3a": nh.CAPS.get("s3a", 150) + 40}
 GLOBAL_DROP = [("s5", "news_x"), ("s3a", "verdict"), ("s3c", "issue"), ("s3b", "meaning"), ("s3c", "ratio_2"), ("s3b", "others2"), ("s3a", "turn"),
                ("s2", "inst_streak"), ("s3c", "streak"),
                ("s4", "driver"), ("s6", "note"), ("s5", "limit"), ("s3b", "y"), ("s6", "intro"),
-               ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
-               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b")]
+               ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s2", "week"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
+               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "size"), ("s3b", "support_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b")]
 # JJ 2026-09-15 가 매일 요구한 칸은 예산에서 절대 빼지 않는다(그래서 위 목록에 없다 — BRIEF_FIX_1 §A):
 #   코스닥 개인(s3a kosdaq_2) · 종목별 개인·거래대금(s4 row:0_3 · row:1_3) — "외국인 개인 기관 이것도 샀는지 팔았는지 알려주고"
 #   둘째 유입 업종 수급(s3c t2) · 자사주 받침(s3b support) · 다음 이벤트(s6 event) — 빼면 s6 이 '…는지.'로 끝나 검사도 실패한다.
@@ -284,6 +284,25 @@ def _verify_watch(q: str, c: dict, pk=None) -> tuple[bool | None, str] | None:
         return ok, ch([f"{who} {word}는 오늘 끊겼습니다. {V} {_word(v)}입니다.", f"{J(who)} 오늘 방향을 바꿨습니다. {V} {_word(v)}입니다.",
                        f"{who} {word}, 오늘 멈췄습니다. {V} {_word(v)}입니다.", f"그 답은 끊김입니다. {who} {V} {_word(v)}."])
     # ④ 업종 순매수·순매도가 N일째 이어지는지 — 업종 표(flows.table_t) 의 net 부호
+    if (m := _W_TH.match(q)) and "·" in m.group(1):
+        word, themes = m.group(2), c.get("themes") or {}
+        got = []
+        for th in m.group(1).split("·"):
+            key = th if th in themes else next((t for t in themes if tname(t) == th), None)
+            net = _num((themes.get(key) or {}).get("net")) if key else None
+            if net is None:
+                return None
+            got.append((tname(key), net))
+        ok = all((n > 0) == (word == "순매수") for _, n in got)
+        both = ", ".join(f"{t} {hwon(n)}" for t, n in got)
+        if not ok:                                            # 방향이 섞였거나 끊긴 날은 숫자마다 방향을 붙인다(부호 없는 '180억'이 산 돈으로 들린다)
+            both = ", ".join(f"{t} {hwon(n)} {_word(n)}" for t, n in got)
+        if ok:
+            return ok, ch([f"{m.group(1)} {word}는 오늘도 이어졌습니다. {both}입니다.", f"{m.group(1)}에는 하루 더 들어왔습니다. {both}입니다."])
+        kept = [t for t, n in got if (n > 0) == (word == "순매수")]
+        if kept:
+            return ok, ch([f"{m.group(1)} 중 {kept[0]}만 이어졌습니다. {both}입니다.", f"{kept[0]}만 남았습니다. {both}입니다."])
+        return ok, ch([f"{m.group(1)} {word}는 하루 만에 끊겼습니다. {both}입니다.", f"{m.group(1)}는 오늘 돌아섰습니다. {both}입니다."])
     if m := _W_TH.match(q):
         th, word = m.group(1), m.group(2)
         themes = c.get("themes") or {}
@@ -511,6 +530,12 @@ def _overnight(d: str) -> dict | None:
     같은 결정(인상·인하·동결)을 말하는 제목이 3건 이상일 때만 이벤트로 본다."""
     from collections import Counter
     from _common import DATA, load_json
+    try:
+        import collect_macro
+        if not collect_macro.fomc_last_night(d):      # 간밤이 FOMC 발표일이 아니면 기사가 남아 있어도 말하지 않는다
+            return None
+    except Exception:
+        return None
     n = load_json(DATA / d / "raw" / "news_us.json") or {}
     titles = [str(it.get("title") or "") for it in (n.get("items") or []) if isinstance(it, dict)]
     mac = load_json(DATA / d / "raw" / "news_macro.json") or {}
@@ -592,6 +617,57 @@ def _macro_hook(x: dict) -> dict | None:
     a = {"label": "미국 금리", "value": (f"{ov['years']}년 만에 {ov['act']}" if ov.get("years") else ov["act"]), "num": -1 if tight else 1, "unit": ""}
     b = {"label": "코스피", "value": sgn_pct(chg), "num": chg, "unit": "%"}
     return {"kind": "MF", "mode": mode, "a": a, "b": b, "pairs": [("a", l1), ("b", l2)], "parts": [l1, l2]}
+
+
+def _prev_inv(d: str, key: str) -> float | None:
+    """직전 거래일 코스피 주체 수급(억) — 저장된 computed_kr.json 에서."""
+    from _common import DATA, load_json
+    from datetime import datetime, timedelta
+    dt = datetime.strptime(d[:8], "%Y%m%d")
+    for _ in range(6):
+        dt -= timedelta(days=1)
+        c = load_json(DATA / dt.strftime("%Y%m%d") / "computed_kr.json")
+        if c:
+            return _num(((c.get("investors") or {}).get("kospi") or {}).get(key))
+    return None
+
+
+def _week_vals(d: str, key: str) -> list[float]:
+    """이번 주 월요일~어제 코스피 주체 수급(억) — 저장된 computed_kr.json 에서. 오늘 값은 부르는 쪽이 더한다.
+    주간 누적 합은 말하지 않는다 — 토요일 주간 결산 첫 장면과 같은 얘기가 된다(9/17 밤 검토). 순위(이번 주 가장 적었/많았다)만 쓴다."""
+    from _common import DATA, load_json
+    from datetime import datetime, timedelta
+    dt = datetime.strptime(d[:8], "%Y%m%d")
+    out = []
+    for k in range(dt.weekday(), 0, -1):
+        c = load_json(DATA / (dt - timedelta(days=k)).strftime("%Y%m%d") / "computed_kr.json")
+        v = _num(((((c or {}).get("investors") or {}).get("kospi")) or {}).get(key)) if c else None
+        if v is not None:
+            out.append(v)
+    return out
+
+
+def _said_yesterday(d: str, word: str) -> bool:
+    """전 편(가장 최근에 나간 평일편) 대사에 word 가 있었나 — data/script_history.json."""
+    try:
+        from _common import DATA, load_json
+        h = load_json(DATA / "script_history.json") or {}
+        eds = [e for e in (h.get("editions") or []) if isinstance(e, dict) and str(e.get("date", ""))[:8] < d[:8]]
+        eds.sort(key=lambda e: str(e.get("date")))
+        return bool(eds) and word in json.dumps(eds[-1], ensure_ascii=False)
+    except Exception:
+        return False
+
+
+def _bb_end_months(bb: list) -> str:
+    """진행 중 자사주 매입이 끝나는 달(data/buybacks.json) — '11월'. 두 회사가 같은 달이면 한 번만."""
+    try:
+        from _common import DATA, load_json
+        progs = {p.get("code"): p for p in ((load_json(DATA / "buybacks.json") or {}).get("programs") or [])}
+        months = sorted({int(str(progs[t["code"]]["to"])[5:7]) for t in bb if t.get("code") in progs and progs[t["code"]].get("to")})
+        return "·".join(f"{mm}월" for mm in months)
+    except Exception:
+        return ""
 
 
 def _s1(x: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]:
@@ -716,6 +792,22 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
         opp.append(("기타법인", oth))
     elif o_ok:
         same.append(("기타법인", oth))
+    # 이어지는 날 새 관점(JJ·GPT 2026-09-17 "전날과 같은 사실을 새 정보 없이 반복하지 않는다") — 규모(어제 대비) → 이번 주 누적(금요일)
+    if frg is not None and st_f >= 2:
+        yf = _prev_inv(d, "foreign")
+        if yf is not None and (yf < 0) == (frg < 0) and abs(yf) >= 1000:
+            r = abs(frg) / abs(yf)
+            if r >= 1.2:
+                pairs.append(("size", pk([f"어제 {hwon(yf)}보다 {hwon(abs(frg) - abs(yf))} 더 많습니다.", f"어제보다 {hwon(abs(frg) - abs(yf))} 커졌습니다."])))
+            elif r <= 0.8:
+                pairs.append(("size", pk([f"다만 어제 {hwon(yf)}보다는 {hwon(abs(yf) - abs(frg))} 줄었습니다.", f"그래도 어제보다 {hwon(abs(yf) - abs(frg))} 작아졌습니다."])))
+        wk = _week_vals(d, "foreign")
+        if len(wk) >= 2 and all((v < 0) == (frg < 0) for v in wk):
+            allv = [abs(v) for v in wk] + [abs(frg)]
+            if abs(frg) == min(allv):
+                pairs.append(("week", pk([f"{len(allv)}일 가운데 이번 주 가장 적게 {_verb(frg)}습니다.", f"이번 주 들어 가장 적은 금액입니다."])))
+            elif abs(frg) == max(allv):
+                pairs.append(("week", pk([f"{len(allv)}일 가운데 이번 주 가장 많이 {_verb(frg)}습니다.", f"이번 주 들어 가장 큰 금액입니다."])))
     # 같은 쪽(외국인과 같은 방향) — '여기에 개인까지'
     if len(same) == 1:
         n, v = same[0]
@@ -736,14 +828,18 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
         most = " 가장 많이" if (n == "기타법인" and is_top) else ""
         pairs.append(("turn", pk([f"하지만 {subj(n)} {obj(hwon(v))}{most} {_verb(v)}습니다." if not most else f"하지만 {subj(n)} {ro(hwon(v))} 가장 많이 {_verb(v)}습니다.",
                                   f"그런데 {subj(n)} {obj(hwon(v))} {_verb(v)}습니다." if not most else f"그런데 가장 많이 {_verb(v)[:-1] + '은' if False else ''}{'산' if v > 0 else '판'} 곳은 {n}, {hwon(v)}입니다."])))
+    elif len(opp) >= 3:
+        # 산 쪽이 셋(9/17: 기관·개인·기타법인) — 한 문장에 숫자 셋은 안 되고, 셋째를 따로 떼면 길이 줄이기에서 빠진다(9/17 기관 누락 → 폴백).
+        # JJ 방송 문장 꼴: "하지만 기관이 1,600억, 개인이 4,100억을 샀습니다. 기타법인은 1조 7,000억으로 가장 많이 샀습니다." — 한 칸(turn)에 두 문장.
+        (n0, v0), (a_n, a_v), (b_n, b_v) = opp[0], opp[-2], opp[-1]
+        most = "가장 많이 " if (b_n != "기타법인" or is_top) else ""
+        pairs.append(("turn", pk([f"하지만 {subj(n0)} {hwon(v0)}, {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다. {J(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다.",
+                                  f"하지만 {subj(n0)} {hwon(v0)}, {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다. 그리고 {subj(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다."])))
     elif len(opp) >= 2:
         (a_n, a_v), (b_n, b_v) = opp[-2], opp[-1]
         most = "가장 많이 " if (b_n != "기타법인" or is_top) else ""
         pairs.append(("turn", pk([f"하지만 {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}고, {subj(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다.",
                                   f"하지만 {J(a_n)} {obj(hwon(a_v))} {_verb(a_v)}고, {J(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다."])))
-        if len(opp) >= 3:
-            n0, v0 = opp[0]
-            pairs.append(("turn_2", pk([f"{n0}도 {obj(hwon(v0))} {_verb(v0)}습니다."])))
     # 기타법인 이어짐 — 날마다 달라지는 숫자를 한 문장 안에(겹침 검사)
     if o_ok and oth > 0 and oth >= 3000:
         if is_top and cont.get("top_buyer_days", 1) >= 2:
@@ -1065,8 +1161,13 @@ def _s3b(x: dict, pk: Picker) -> tuple[list, dict]:
             S = hwon(sum(t["v"] for t in bb))
             support = {"label": "자사주", "v": round(sum(t["v"] for t in bb))}
             two = "두 회사" if len(bb) == 2 else bb[0]["name"]
-            pairs.append(("support", pk([f"그 물량은 자사주 {subj(S)} 받쳤습니다.", f"받친 돈은 {two} 자사주 {S}입니다.", f"{two} 자사주 {subj(S)} 받아 냈습니다.",
-                                         f"값을 붙든 건 {two} 자사주 {S}입니다.", f"{two} 자사주 {subj(S)} 받은 자리입니다.", f"자사주 {S}, 그 물량을 받은 돈입니다."])))
+            nm = "두 종목" if len(bb) == 2 else bb[0]["name"]
+            ends = _bb_end_months(bb)
+            pairs.append(("support", pk([f"{nm}에선 기타법인이 {obj(S)} 샀습니다.", f"{nm}을 가장 많이 산 건 기타법인, {S}입니다."])))
+            if _said_yesterday(d, "자사주") and ends:     # 어제도 자사주를 말했으면 같은 말 대신 새 사실 — 매입 기간
+                pairs.append(("support_2", f"{'두 회사 모두 ' if len(bb) == 2 else ''}{ends}까지 자사주를 사들이는 기간입니다."))
+            else:
+                pairs.append(("support_2", f"{'두 회사 모두 ' if len(bb) == 2 else ''}자사주를 사들이는 기간입니다."))
             pairs.append(("meaning", pk(["돈이 정체된 자리는 여기입니다.", "정체된 돈이 고인 곳이 여기입니다.", "값은 서 있고 돈은 나가는 자리, 정체는 여기입니다.", "돈은 나가는데 값이 안 밀리는 자리, 여기가 정체입니다."])))
         elif small:
             pairs.append(("meaning", pk(["돈은 나갔는데 값은 서 있는 자리입니다.", "값과 돈이 따로 노는 자리, 정체는 여기입니다.", "나간 돈만큼 값이 밀리지 않은 자리입니다."])))
@@ -1270,7 +1371,7 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
     day = f"{int(d[4:6])}월 {int(d[6:8])}일"
     doc = f"키움 종목별 투자자 표 · {int(d[4:6])}/{int(d[6:8])} 마감 기준"
     pairs: list[tuple[str, str]] = []
-    pairs.append(("open", pk(["종목마다 누가 사고 팔았는지 직접 확인해 봤습니다.", "종목별로 누가 샀는지 직접 확인해 봤습니다.", "종목 하나하나 누가 샀는지 직접 확인해 봤습니다.",
+    pairs.append(("open", pk(["종목마다 누가 사고 팔았는지 직접 확인해 봤습니다.", "종목으로 확인해 보면 이렇습니다.", "두 종목을 하나씩 확인해 보면 이렇습니다.", "종목별로 누가 샀는지 직접 확인해 봤습니다.", "종목 하나하나 누가 샀는지 직접 확인해 봤습니다.",
                               "종목마다 외국인, 기관, 개인이 얼마나 샀는지 직접 확인해 봤습니다."])))
     stocks, th, full = _pick_stocks(x)
     calc, kind = None, "K0"
@@ -1793,6 +1894,9 @@ def _s6(x: dict, c: dict, cont: dict, brand: str, pk: Picker, attempt: int, comp
     if in_th and (x["in_t"] or 0) >= 100:
         stk = max(int((x["themes"].get(in_th) or {}).get("streak") or 0), 1)
         q2 = f"{in_th} 순매수가 {dko(stk + 1)} 이어지는지"
+        ins = [t for t in (x.get("in_ths") or []) if t != in_th and (_num((x["themes"].get(t) or {}).get("net")) or 0) >= 100]
+        if ins and max(int((x["themes"].get(ins[0]) or {}).get("streak") or 0), 1) == stk:
+            q2 = f"{tname(in_th)}·{tname(ins[0])} 순매수가 {dko(stk + 1)} 이어지는지"     # 9/17 조선·방산 같은 날 첫 유입
         w2 = {"q": q2, "threshold": dko(stk + 1), "spoken": q2}   # 장부 문장 그대로 말한다 — 짧고, 겹침 검사 예외(BRIEF_FIX_1 §B)
     elif oth >= 3000 and ob >= 1:
         obw, _cap = _ob_word(cont, d, ob)
