@@ -228,7 +228,7 @@ def build_weekly(w: dict, news=None) -> dict:
         parts["w5"].append(("w5.park_who", f"외국인과 기관이 {obj(hwon(park['net']))} 넣었고, " + (f"{_and_names(tops)}에 가장 많이 들어갔습니다." if tops else "그 업종에 가장 많이 들어갔습니다.")))
         k = park.get("days_in") or 0
         parts["w5"].append(("w5.park_days", f"이번 주 {k}일 돈이 들어온 곳입니다." if k >= 2 else "이번 주 들어 처음 돈이 들어온 곳입니다."))
-        h = w.get("history") or {}
+        h = {}   # JJ 2026-09-17 밤: "그 주에 관한 것만, 그 주 돈의 흐름으로" — 과거 기록 문장은 쓰지 않는다
         if h.get("n"):
             yrs = max(1, round((datetime.strptime(wkey, "%Y%m%d") - datetime.strptime(h["since"], "%Y%m%d")).days / 365))
             basis = "금요일" if h.get("basis") == "금요일" else "날"
