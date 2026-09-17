@@ -70,7 +70,7 @@ GLOBAL_DROP = [("s5", "news_x"), ("s3a", "verdict"), ("s3c", "issue"), ("s3b", "
                ("s2", "inst_streak"), ("s3c", "streak"),
                ("s4", "driver"), ("s6", "note"), ("s5", "limit"), ("s3b", "y"), ("s6", "intro"),
                ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
-               ("s5", "verdict:1"), ("s5", "issue:1"), ("s5", "macro_2"), ("s4", "open_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s4", "calc"), ("s5", "b")]
+               ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "sum"), ("s1", "q_2"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b")]
 # JJ 2026-09-15 가 매일 요구한 칸은 예산에서 절대 빼지 않는다(그래서 위 목록에 없다 — BRIEF_FIX_1 §A):
 #   코스닥 개인(s3a kosdaq_2) · 종목별 개인·거래대금(s4 row:0_3 · row:1_3) — "외국인 개인 기관 이것도 샀는지 팔았는지 알려주고"
 #   둘째 유입 업종 수급(s3c t2) · 자사주 받침(s3b support) · 다음 이벤트(s6 event) — 빼면 s6 이 '…는지.'로 끝나 검사도 실패한다.
@@ -513,6 +513,8 @@ def _overnight(d: str) -> dict | None:
     from _common import DATA, load_json
     n = load_json(DATA / d / "raw" / "news_us.json") or {}
     titles = [str(it.get("title") or "") for it in (n.get("items") or []) if isinstance(it, dict)]
+    mac = load_json(DATA / d / "raw" / "news_macro.json") or {}
+    mtitles = [str(it.get("title") or "") for it in (mac.get("items") or []) if isinstance(it, dict)]
     fed = [t for t in titles if re.search(r"연준|Fed|FOMC|금리", t)]
     cnt = {"인상": sum(1 for t in fed if re.search(r"금리\s?인상", t)), "인하": sum(1 for t in fed if re.search(r"금리\s?인하", t)),
            "동결": sum(1 for t in fed if re.search(r"금리\s?동결", t))}
@@ -523,8 +525,26 @@ def _overnight(d: str) -> dict | None:
     y10s = Counter(m.group(1) for t in titles for m in [re.search(r"10년물[^0-9%]{0,10}(\d+(?:\.\d+)?)%\s?(?:돌파|넘)", t)] if m)
     cu = load_json(DATA / d / "computed_us.json") or {}
     idx = cu.get("idx") or {}
+    # 오늘 0시 이후 국내 기사(collect_macro) — 여러 매체가 같이 말한 것만(대부분 2건 이상)
+    allt = titles + mtitles
+
+    def top(rx: str, need: int = 2, grp=1):
+        c = Counter((m.group(grp) if isinstance(grp, int) else tuple(m.group(g) for g in grp))
+                    for t in allt for m in [re.search(rx, t)] if m)
+        v = c.most_common(1)
+        return v[0][0] if v and v[0][1] >= need else None
+
+    bp = top(r"(0\.25|0\.5|0\.50|0\.75)\s?%\s?(?:p|P|포인트)")
+    span = top(r"(\d+)\s?년\s?(\d+)\s?개월\s?만", 2, (1, 2))
+    gap = top(r"한미\s?금리차[^0-9]{0,12}(\d(?:\.\d+)?)\s?%\s?(?:p|P|포인트)")
+    unani = sum(1 for t in allt if "만장일치" in t) >= 2
+    quote = sum(1 for t in allt if re.search(r"인플레\S*\s?너무 높고 너무 오래", t)) >= 1
+    chair = "워시 의장" if any(re.search(r"워시\s?(?:연준\s?)?의장", t) for t in allt) else "워시"
+    fin_up = sum(1 for t in allt if re.search(r"(?:보험|은행|금융)주?\S{0,4}\s?(?:동반\s?)?(?:강세|상승|수혜)", t)) >= 1
     return {"act": act, "years": yrs.most_common(1)[0][0] if yrs else None,
-            "more": act == "인상" and sum(1 for t in fed if re.search(r"추가\s?(?:인상|긴축)", t)) >= 2,
+            "bp": bp, "span": (f"{span[0]}년 {span[1]}개월" if span else None), "gap": gap, "unani": unani, "quote": quote, "chair": chair,
+            "fin_up": fin_up,
+            "more": act == "인상" and sum(1 for t in allt if re.search(r"추가\s?(?:인상|긴축)", t)) >= 2,
             "hawk": sum(1 for t in titles if "매파" in t) >= 2,
             "y10": y10s.most_common(1)[0][0] if y10s and y10s.most_common(1)[0][1] >= 2 else None,
             "dow": _num((idx.get("DJI") or {}).get("pct")), "nasdaq": _num((idx.get("IXIC") or {}).get("pct"))}
@@ -551,7 +571,11 @@ def _macro_hook(x: dict) -> dict | None:
     if not ov or chg is None or ov["act"] == "동결":
         return None
     tight = ov["act"] == "인상"
-    l1 = f"간밤 미국 연준이 {_ov_act(ov)}습니다."
+    verb = {"인상": "올렸", "인하": "내렸"}.get(ov["act"], "")
+    if ov.get("bp") and verb:
+        l1 = f"간밤 미국 연준이 {'만장일치로 ' if ov.get('unani') else ''}금리를 {ov['bp']}%포인트 {verb}습니다."
+    else:
+        l1 = f"간밤 미국 연준이 {_ov_act(ov)}습니다."
     if tight and chg >= -0.3:
         mode = "clash"
         l2 = (f"그런데 오늘 코스피는 {pct_s(chg)} 올랐습니다." if chg > 0.05 else f"그런데 오늘 코스피는 {pct_s(chg)}{'밖에 안 내렸' if chg < 0 else ' 그대로였'}습니다.")
@@ -563,7 +587,7 @@ def _macro_hook(x: dict) -> dict | None:
         l2 = f"그런데 오늘 코스피는 {pct_s(chg)} 내렸습니다."
     else:
         return None
-    if not ov.get("years") and not re.search(r"\d", l2):
+    if not re.search(r"\d", l1) and not re.search(r"\d", l2):
         return None
     a = {"label": "미국 금리", "value": (f"{ov['years']}년 만에 {ov['act']}" if ov.get("years") else ov["act"]), "num": -1 if tight else 1, "unit": ""}
     b = {"label": "코스피", "value": sgn_pct(chg), "num": chg, "unit": "%"}
@@ -1317,7 +1341,7 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
             _n0 = s0.get("name") or ""
             pairs.append(("calc", pk([f"{J(_n0)} 거래대금 {hwon(val0)} 가운데 {r['n']}%를 {subj(dn)} 샀습니다.",
                                       f"{_n0} 거래대금 {hwon(val0)} 중 {subj(dn)} 산 게 {r['n']}%입니다.",
-                                      f"{_n0} 거래대금 {hwon(val0)}에서 {subj(dn)} 산 비중은 {r['n']}%입니다."])))
+                                      f"{_n0} 거래대금 {hwon(val0)}에서 {subj(dn)} 사들인 게 {r['n']}%입니다."])))
     if calc is None and len(stocks) == 2 and all(_num(s.get("indiv")) is not None for s in stocks):
         big = sum((_num(s.get("foreign")) or 0) + (_num(s.get("inst")) or 0) for s in stocks)
         ind = sum(_num(s.get("indiv")) or 0 for s in stocks)
@@ -1571,18 +1595,36 @@ def _s5(x: dict, s0: dict, s4: dict, pk: Picker, compact: bool = False) -> tuple
     verdicts = []
     ov = x.get("ov")
     if ov:
-        # 주간 미국 브리핑에서 자세히 다룬다 — 여기선 두 문장 안에서(JJ 2026-09-17 "간단하게")
+        # 주간 미국 브리핑에서 자세히 다룬다 — 여기선 짧게, 여러 매체가 같이 말한 것만(JJ 2026-09-17 "간단하게")
         pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "먼저 오늘의 주요 이슈입니다."])))
-        ex = _ov_extra(ov)
-        if x.get("hook_macro"):
-            bits = [ex.replace("줬습니다", "줬고").replace("나왔습니다", "나왔고") if ex else "", f"미국 10년물 금리는 {ov['y10']}%를 넘었습니다" if ov.get("y10") else ""]
-            line = ", ".join(b for b in bits if b)
-            if line:
-                pairs.append(("macro", f"간밤 연준은 {line}." if not line.endswith("다") else f"간밤 연준은 {line}."))
-        else:
-            pairs.append(("macro", f"간밤 미국 연준이 {_ov_act(ov)}고, {ex}." if ex else f"간밤 미국 연준이 {_ov_act(ov)}습니다."))
-            if ov.get("y10"):
-                pairs.append(("macro_2", f"미국 10년물 금리는 {ov['y10']}%를 넘었습니다."))
+        verb = {"인상": "올렸", "인하": "내렸"}.get(ov["act"], "")
+        head = (f"간밤 미국 연준이 {'만장일치로 ' if ov.get('unani') else ''}금리를 {ov['bp']}%포인트 {verb}습니다." if (ov.get("bp") and verb)
+                else f"간밤 미국 연준이 {_ov_act(ov)}습니다.")
+        hooked = bool(x.get("hook_macro"))
+        if not hooked:
+            pairs.append(("macro", head))
+        # 훅에서 이미 금리를 말한 날은 주어를 붙여 연다('간밤 연준은 …') — 주어 없이 '…신호도 줬습니다'로 시작하지 않는다
+        if ov.get("more"):
+            pairs.append(("macro_2", "간밤 연준은 연내 한 번 더 올릴 수 있다는 신호도 줬습니다." if hooked else "연내 한 번 더 올릴 수 있다는 신호도 줬습니다."))
+        elif ov.get("quote"):
+            pairs.append(("macro_2", f"{J(ov['chair'])} 인플레이션이 너무 높고 너무 오래 이어졌다고 했습니다."))
+        if ov.get("span") and ov["act"] != "동결":
+            pairs.append(("macro_1", f"{ov['span']} 만의 {ov['act']}이었습니다."))
+        if ov.get("gap"):
+            pairs.append(("macro_3", f"이제 한미 금리차는 {ov['gap']}%포인트로 벌어졌습니다."))
+        elif ov.get("y10"):
+            pairs.append(("macro_3", f"미국 10년물 금리는 {ov['y10']}%를 넘었습니다."))
+        # 이슈 → 돈: 금리 인상 수혜로 꼽히는 금융에 실제로 돈이 들어갔는지(우리 수급으로 확인한 것만)
+        fin = next((t for t in (x.get("themes") or {}) if tname(t) == "금융" or t == "금융"), None)
+        fr = (x.get("themes") or {}).get(fin) or {}
+        if ov["act"] == "인상" and ov.get("fin_up") and fin:
+            fnet, finst = _num(fr.get("net")) or 0, _num(fr.get("inst")) or 0
+            if fnet >= 100:
+                pairs.append(("macro_link", f"금리 인상 수혜로 꼽히는 금융에는 실제로 외국인과 기관이 {obj(hwon(fnet))} 샀습니다."))
+            elif finst >= 100:
+                pairs.append(("macro_link", f"금리 인상 수혜로 꼽히는 금융에는 기관이 {obj(hwon(finst))} 샀습니다."))
+            elif fnet <= -100:
+                pairs.append(("macro_link", f"금리 인상 수혜로 꼽히는 금융에서도 외국인과 기관은 {obj(hwon(abs(fnet)))} 팔았습니다."))
     if sis:
         if not ov:
             pairs.append(("lead", pk(["오늘 주요 이슈를 보겠습니다.", "오늘 오른 종목에 어떤 뉴스가 있었는지 보겠습니다.", "이번엔 오른 종목의 뉴스를 보겠습니다."])))

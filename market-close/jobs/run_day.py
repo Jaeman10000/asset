@@ -89,6 +89,11 @@ def main() -> None:
             else:
                 log(d, "run", "접미사 날짜(샘플 판) — 뉴스 재수집 생략, 복사해 둔 raw/news_kr.json 사용")
             try:
+                import collect_macro
+                collect_macro.main(d)            # 간밤 미국 금리 결정 확인 기사(없는 날은 빈 파일) — JJ 2026-09-17
+            except Exception as e:
+                log(d, "run", f"금리 결정 기사 수집 실패(무시): {e}")
+            try:
                 import collect_event
                 asyncio.run(collect_event.main(d))   # data/events.json에 오늘 이슈가 있으면 종목 묶음 수집
             except Exception as e:
