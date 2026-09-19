@@ -7,6 +7,7 @@ import sample from "./sample_kr.json";
 import sampleUS from "./sample_us.json";
 import { CardUS } from "./ScenesUS";
 import { Thumb } from "./Thumb";
+import { DissectThumb } from "./v4/DissectV1";
 
 const P = sample as unknown as Props;
 const PU = sampleUS as unknown as Props;
@@ -37,5 +38,7 @@ export const Root: React.FC = () => (
     <Still id="CardUS" component={CardUS as never} width={1080} height={1350} defaultProps={PU} />
     {/* 썸네일 전용(1080×1920) — props로 글자만 받는다. jobs/make_thumb.py 가 호출한다. */}
     <Still id="Thumb" component={Thumb} width={1080} height={1920} defaultProps={P} />
+    {/* 기업 해부 썸네일(JJ 2026-09-19 "기존 것과 아예 다르게") — props = computed_info.json */}
+    <Still id="DissectThumb" component={DissectThumb as never} width={1080} height={1920} defaultProps={P} />
   </>
 );

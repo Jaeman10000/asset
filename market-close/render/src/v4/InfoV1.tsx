@@ -4,9 +4,11 @@
  * 규칙은 평일편과 같다: 0초부터 글자(첫 화면이 비면 넘긴다), 질문 화면엔 질문만, 한 컷이 8초를 넘기지 않게 새로 켜진다.
  * 시청자 45세 이상이 76%(CHANNEL_REVIEW_2W) — 글자는 평일편보다 크게. */
 import React from "react";
+import { Img, staticFile, useCurrentFrame } from "remotion";
 import type { Props } from "../types";
 import type { Cue } from "../Scenes";
 import { BgChip, BgCity, BgMarket, Card, Shell, YEL, GREEN, BLUE, RED, usePop, useT } from "./ScenesV4";
+import { DISSECT_COMP } from "./DissectV1";
 
 const GREY = "#8C99AD";
 const SUBC = "#C9D2E0";
@@ -14,20 +16,34 @@ const SH = "0 4px 18px rgba(0,0,0,0.85)";
 type SC = { p: Props; sub: string; cues?: Cue[] };
 type Line = { t: string; size?: number; color?: "yellow" | "white" | "red" | "blue" | "green" };
 type CardT = {
-  kind: "hook" | "fact" | "compare" | "list" | "note";
+  kind: "hook" | "fact" | "compare" | "list" | "note" | "bars";
+  bars?: { label: string; v: number }[]; unit?: string; note?: string;
   badge?: string; lines?: Line[]; q?: Line[];
   head?: string; big?: string; sub?: string; color?: Line["color"];
   before?: { label: string; value: string }; after?: { label: string; value: string };
   items?: string[]; text?: string;
 };
-type Info = { bg?: "city" | "market" | "chip"; tone?: "up" | "down" | "neutral"; cards?: Record<string, CardT> };
+type Info = { bg?: "city" | "market" | "chip"; bg_image?: string; tone?: "up" | "down" | "neutral"; cards?: Record<string, CardT> };
 
 const COL = (c?: Line["color"]) => (c === "yellow" ? YEL : c === "red" ? RED : c === "blue" ? BLUE : c === "green" ? GREEN : "#FFFFFF");
 const infoOf = (p: Props) => ((p as unknown as { info?: Info }).info ?? {}) as Info;
 const cueAt = (cues: Cue[] | undefined, i: number, fb: number) => (cues && cues[i] ? cues[i].start : fb);
 const fit = (s: string, base: number, width = 952) => Math.max(56, Math.min(base, Math.floor((width / Math.max(1, s.length)) * 1.75)));
 
+/** AI 배경(이슈 해설편, JJ 2026-09-19) — 천천히 다가가는 한 장 + 글자가 읽히게 어둡게 */
+const AiBg: React.FC<{ src: string; dim: number }> = ({ src, dim }) => {
+  const f = useCurrentFrame();
+  const z = 1.04 + Math.min(f, 900) * 0.00008;
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#05070D" }}>
+      <Img src={staticFile(src)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${z})` }} />
+      <div style={{ position: "absolute", inset: 0, background: `rgba(3,5,10,${Math.min(0.85, 0.35 + dim)})` }} />
+    </div>
+  );
+};
+
 const Bg: React.FC<{ info: Info; dim?: number }> = ({ info, dim = 0.2 }) => {
+  if (info.bg_image) return <AiBg src={info.bg_image} dim={dim} />;
   const tone = info.tone ?? "neutral";
   if (info.bg === "market") return <BgMarket tone={tone} dim={dim} />;
   if (info.bg === "chip") return <BgChip tone={tone} dim={dim} />;
@@ -141,6 +157,35 @@ const ListCard: React.FC<SC & { c: CardT }> = ({ p, cues, c }) => {
   );
 };
 
+/** 며칠치 수급 막대(누가 샀나 장면) — 산 날 빨강, 판 날 파랑. 말하는 동안 왼쪽부터 켜진다 */
+const BarsCard: React.FC<SC & { c: CardT }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const pop = usePop();
+  const bars = (c.bars ?? []).slice(-20);
+  const mx = Math.max(1, ...bars.map((b) => Math.abs(b.v)));
+  const H = 260, W = 952, bw = Math.max(18, Math.floor(W / Math.max(1, bars.length)) - 8);
+  const grow = Math.min(1, t / 2.2);
+  return (
+    <Shell p={p} cues={cues} bg={<Bg info={infoOf(p)} dim={0.55} />}>
+      <Head s={c.head} />
+      <div style={{ position: "absolute", left: 64, width: W, top: 330, height: H * 2 + 40, ...pop(0.05, 18) }}>
+        <div style={{ position: "absolute", left: 0, right: 0, top: H, height: 3, background: "rgba(255,255,255,0.35)" }} />
+        {bars.map((b, i) => {
+          const h = (Math.abs(b.v) / mx) * H * Math.min(1, Math.max(0, grow * bars.length - i));
+          const up = b.v >= 0;
+          return (
+            <div key={i} style={{ position: "absolute", left: i * (bw + 8), width: bw, top: up ? H - h : H + 3, height: h, borderRadius: 4,
+              background: up ? RED : BLUE, boxShadow: `0 0 14px ${up ? RED : BLUE}66` }} />
+          );
+        })}
+        <div style={{ position: "absolute", left: 0, top: H * 2 + 12, fontSize: 30, fontWeight: 700, color: GREY }}>{bars[0]?.label ?? ""}</div>
+        <div style={{ position: "absolute", right: 0, top: H * 2 + 12, fontSize: 30, fontWeight: 700, color: GREY }}>{bars[bars.length - 1]?.label ?? ""}</div>
+      </div>
+      {c.note ? <div style={{ position: "absolute", left: 64, right: 64, top: 330 + H * 2 + 90, fontSize: 50, fontWeight: 800, wordBreak: "keep-all", textShadow: SH, ...pop(cueAt(cues, 1, 2.5), 16) }}>{c.note}</div> : null}
+    </Shell>
+  );
+};
+
 /** 주의 한 줄 */
 const NoteCard: React.FC<SC & { c: CardT }> = ({ p, cues, c }) => {
   const pop = usePop();
@@ -159,7 +204,7 @@ const NoteCard: React.FC<SC & { c: CardT }> = ({ p, cues, c }) => {
 const pick = (id: string): React.FC<SC> => ({ p, cues, sub }) => {
   const c = infoOf(p).cards?.[id];
   if (!c) return <Shell p={p} cues={cues} bg={<Bg info={infoOf(p)} dim={0.4} />}><></></Shell>;
-  const X = c.kind === "hook" ? HookCard : c.kind === "fact" ? FactCard : c.kind === "compare" ? CompareCard : c.kind === "list" ? ListCard : NoteCard;
+  const X = c.kind === "hook" ? HookCard : c.kind === "fact" ? FactCard : c.kind === "compare" ? CompareCard : c.kind === "list" ? ListCard : c.kind === "bars" ? BarsCard : NoteCard;
   return <X p={p} cues={cues} sub={sub} c={c} />;
 };
 
@@ -178,4 +223,11 @@ const EndCard: React.FC<SC> = ({ p, cues }) => {
   );
 };
 
-export const INFO_COMP: Record<string, React.FC<SC>> = { i0: pick("i0"), i1: pick("i1"), i2: pick("i2"), i3: pick("i3"), i4: pick("i4"), i5: pick("i5"), i6: EndCard };
+const OLD: Record<string, React.FC<SC>> = { i0: pick("i0"), i1: pick("i1"), i2: pick("i2"), i3: pick("i3"), i4: pick("i4"), i5: pick("i5"), i6: EndCard };
+/** info.style === "dissect" → 기업 해부 화면(DissectV1, 종이 바탕 + 장면마다 그림), 아니면 생활형 카드 */
+const route = (id: string): React.FC<SC> => (props) => {
+  const X = (infoOf(props.p) as Info & { style?: string }).style === "dissect" ? DISSECT_COMP[id] : OLD[id];
+  return X ? <X {...props} /> : null;
+};
+export const INFO_COMP: Record<string, React.FC<SC>> = Object.fromEntries(
+  [...Array.from({ length: 10 }, (_, i) => `i${i}`), "iz"].map((id) => [id, route(id)]));

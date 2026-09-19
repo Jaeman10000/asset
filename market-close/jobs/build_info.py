@@ -14,6 +14,7 @@ JJ: "생활형 정보가 가장 높았잖아? 그날 생활형 정보성이 짙�
                       "i3": {"kind": "list", "head": "…", "items": ["…", "…"]},
                       "i4": {"kind": "note", "head": "…", "text": "…"}}},
    "thumb": {"lines": [{"t": "…", "size": 0.9}, {"t": "…", "size": 1.1, "color": "yellow"}]},
+   "ai_images": {"bg": "영상 배경 프롬프트(영어)", "thumb": "썸네일 배경 프롬프트(영어)"},   ← 이슈 해설편: AI 배경(키 없으면 기본 배경)
    "scenes": {"i0": "…", "i1": "…", …, "i6": "누가샀나였습니다. 국장 마감은 매일 저녁 5시에 올라옵니다."}}
 화면: render/src/v4/InfoV1.tsx(i0~i5), i6 은 평일 끝 화면.
 
@@ -34,7 +35,9 @@ from pathlib import Path
 
 from _common import DATA, computed_path, date_tail, load_json, log, out_dir, save_json
 
-ORDER = ["i0", "i1", "i2", "i3", "i4", "i5", "i6"]
+ORDER = [f"i{k}" for k in range(10)] + ["iz"]      # iz = 끝 화면(기업 해부편). 생활형 카드편은 i6 이 끝 화면
+END = ("i6", "iz")
+RENDER = Path(__file__).resolve().parent.parent / "render"
 CPS = 7.35
 LIMIT, FLOOR = 172, 60        # 초. 쇼츠 3분 선 — 넘기면 쇼츠 피드에서 빠진다
 SIGN = r"누가샀나였습니다\. 국장 마감은 매일 저녁 5시에 올라옵니다\.$"
@@ -54,15 +57,45 @@ def build(d: str, n: int = 1) -> dict:
     if not spec:
         raise SystemExit(f"{spec_path(d, n)} 없음 — 대본 파일을 먼저 만든다")
     dt = datetime.strptime(d[:8], "%Y%m%d")
-    scenes = [{"id": sid, "tts": spec["scenes"][sid].strip(), "min": 2.0, "sub": spec["scenes"][sid].strip() if sid not in ("i0", "i6") else ""}
+    scenes = [{"id": sid, "tts": spec["scenes"][sid].strip(), "min": 2.0, "sub": spec["scenes"][sid].strip() if sid != "i0" and sid not in END else ""}
               for sid in ORDER if (spec.get("scenes") or {}).get(sid)]
     comp = {"date": d, "date_label": spec.get("date_label") or f"{dt.month}/{dt.day} {WD[dt.weekday()]}",
             "badge": spec.get("badge") or "증시 정보", "brand": "누가샀나", "format": "info", "visual": "info",
             "title": spec.get("title") or "", "caption": spec.get("caption") or "", "threads": spec.get("threads") or "",
             "threads_reply": spec.get("threads_reply") or "", "info": spec.get("info") or {}, "scenes": scenes,
             "kospi": {"close": None, "chg_pct": None}}
+    bgp = RENDER / "public" / "info" / f"{d}_{ed_of(n)}_bg.png"
+    if bgp.exists():
+        comp["info"] = {**comp["info"], "bg_image": f"info/{bgp.name}"}
+    old = load_json(computed_path(d, ed_of(n))) or {}
+    if old.get("total_frames") and [s["tts"] for s in old.get("scenes", [])] == [s["tts"] for s in scenes]:
+        comp = {**old, **{k: v for k, v in comp.items() if k != "scenes"}}      # 음성 뒤에 다시 부르면 장면 길이·큐는 살린다
     save_json(computed_path(d, ed_of(n)), comp)
     return comp
+
+
+def ai(d: str, n: int = 1) -> None:
+    """AI 배경·썸네일(JJ 2026-09-19). 이미 만든 파일이 있으면 다시 안 만든다(돈이 든다). 키가 없으면 기본 배경."""
+    import ai_image
+    spec = load_json(spec_path(d, n)) or {}
+    pr = spec.get("ai_images") or {}
+    ed = ed_of(n)
+    if not pr:
+        return
+    if not ai_image.available():
+        log(d, "info", "AI 이미지 키 없음(openai:api_key / gemini:api_key) → 기본 배경")
+        return
+    bgp = RENDER / "public" / "info" / f"{d}_{ed}_bg.png"
+    if pr.get("bg") and not bgp.exists():
+        log(d, "info", f"AI 배경 {'완료' if ai_image.generate(pr['bg'], bgp) else '실패'}")
+    thp = RENDER / "public" / "bg" / f"ai_{d}_{ed}.jpg"
+    if pr.get("thumb") and not thp.exists():
+        tmp = RENDER / "public" / "info" / f"{d}_{ed}_thumb.png"
+        if ai_image.generate(pr["thumb"], tmp):
+            from PIL import Image
+            Image.open(tmp).convert("RGB").save(thp, "JPEG", quality=92)
+            log(d, "info", "AI 썸네일 배경 완료")
+    build(d, n)
 
 
 def check(d: str, n: int = 1) -> list[str]:
@@ -92,7 +125,7 @@ def check(d: str, n: int = 1) -> list[str]:
         bad.append(f"질문이 {qs}개뿐 — 장면 끝 질문 → 다음 장면 답으로 이어지게")
     cards = (spec.get("info") or {}).get("cards") or {}
     for s in comp["scenes"]:
-        if s["id"] != "i6" and s["id"] not in cards:
+        if s["id"] not in END and s["id"] not in cards:
             bad.append(f"{s['id']} 화면 카드 없음 — 말만 하고 빈 화면이면 넘긴다")
     if len(spec.get("sources") or []) < 2:
         bad.append("출처 2곳 미만 — 여러 매체가 같이 말한 사실만 쓴다")
@@ -120,15 +153,31 @@ def texts(d: str, n: int = 1) -> Path:
     return od
 
 
+def thumb_dissect(d: str, n: int = 1) -> None:
+    """기업 해부 썸네일 — Remotion 스틸 DissectThumb(종이 바탕 + 맞선 두 그림 + 3줄). 국장 마감 썸네일과 한눈에 갈리게(JJ 9/19)."""
+    comp = build(d, n)
+    ed = ed_of(n)
+    props = RENDER / f"props_{ed}_thumb.json"
+    save_json(props, comp)
+    od = out_dir(d, ed)
+    npx = "npx.cmd" if sys.platform == "win32" else "npx"
+    r = subprocess.run([npx, "remotion", "still", "src/index.ts", "DissectThumb", str(od / "thumb_A.jpg"), f"--props={props}", "--log=error", "--image-format=jpeg", "--jpeg-quality=92"],
+                       cwd=str(RENDER), capture_output=True, text=True, encoding="utf-8", timeout=300)
+    log(d, "info", f"썸네일(기업 해부) {'완료' if r.returncode == 0 else '실패 ' + (r.stderr or r.stdout)[-300:]}")
+
+
 def thumb(d: str, n: int = 1) -> None:
     spec = load_json(spec_path(d, n)) or {}
+    if (spec.get("info") or {}).get("style") == "dissect":
+        return thumb_dissect(d, n)
     lines = (spec.get("thumb") or {}).get("lines")
     if not lines:
         log(d, "info", "썸네일 문구 없음(thumb.lines) → 건너뜀")
         return
     ed = ed_of(n)
     info = spec.get("info") or {}
-    t = {"out": f"out/{d}/{ed}", "cands": {"A": {"bg": info.get("bg") or "city", "tone": info.get("tone") or "neutral", "dim": 0.45,
+    ai_bg = RENDER / "public" / "bg" / f"ai_{d}_{ed}.jpg"
+    t = {"out": f"out/{d}/{ed}", "cands": {"A": {"bg": (f"ai_{d}_{ed}" if ai_bg.exists() else (info.get("bg") or "city")), "tone": info.get("tone") or "neutral", "dim": 0.45,
          "objects": [{"k": "glow", "x": 540, "y": 780, "r": 640, "color": "yellow", "a": 0.18}], "lines": lines[:3], "logo": True,
          **({"badge": spec["thumb"]["badge"]} if (spec.get("thumb") or {}).get("badge") else {})}}}
     (DATA / d / ed).mkdir(parents=True, exist_ok=True)
@@ -151,6 +200,8 @@ def main() -> None:
             print("  ✗", x)
         if bad and stage == "all":
             raise SystemExit(1)
+    if stage in ("all", "ai"):
+        ai(d, n)
     if stage in ("all", "tts"):
         import tts
         asyncio.run(tts.main(d, ed))
