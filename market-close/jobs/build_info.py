@@ -163,10 +163,13 @@ def thumb_dissect(d: str, n: int = 1) -> None:
     save_json(props, comp)
     od = out_dir(d, ed)
     npx = "npx.cmd" if sys.platform == "win32" else "npx"
-    comp_id = "HunterThumb" if (comp.get("info") or {}).get("thumb2") else "DissectThumb"   # thumb2 = 경제사냥꾼 틀(글자 세로 50%+, JJ 9/19 밤)
-    r = subprocess.run([npx, "remotion", "still", "src/index.ts", comp_id, str(od / "thumb_A.jpg"), f"--props={props}", "--log=error", "--image-format=jpeg", "--jpeg-quality=92"],
+    info = comp.get("info") or {}
+    # thumbB = BoldThumb(어두운 바탕·초대형 글자·빨간 질문 띠·SVG 그림, 정보 영상 기본 — JJ 9/19 밤 Gemini 판 대신) → thumb_B.jpg
+    # thumb2 = 경제사냥꾼 틀(글자 세로 50%+) · 없으면 DissectThumb → thumb_A.jpg
+    comp_id, name = ("BoldThumb", "thumb_B.jpg") if info.get("thumbB") else ("HunterThumb" if info.get("thumb2") else "DissectThumb", "thumb_A.jpg")
+    r = subprocess.run([npx, "remotion", "still", "src/index.ts", comp_id, str(od / name), f"--props={props}", "--log=error", "--image-format=jpeg", "--jpeg-quality=92"],
                        cwd=str(RENDER), capture_output=True, text=True, encoding="utf-8", timeout=300)
-    log(d, "info", f"썸네일(기업 해부) {'완료' if r.returncode == 0 else '실패 ' + (r.stderr or r.stdout)[-300:]}")
+    log(d, "info", f"썸네일(기업 해부 {comp_id} → {name}) {'완료' if r.returncode == 0 else '실패 ' + (r.stderr or r.stdout)[-300:]}")
 
 
 def thumb(d: str, n: int = 1) -> None:
