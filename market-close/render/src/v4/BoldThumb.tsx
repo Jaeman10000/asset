@@ -1,11 +1,12 @@
 /** 정보 영상 썸네일 — 어두운 바탕 + 초대형 글자 + 빨간 질문 띠 + 가운데 그림(JJ 9/19 밤: ChatGPT·Gemini 판 느낌, 아래 카드 없이).
  * 사진·로고 없이 SVG 로만 그린다(라이선스·가짜 로고 문제 없음). props.info.thumbB = {tag, lines:[{t,size,color}], banner, visual:"rates"|"power", stats:[{label,value,color}]} */
 import React from "react";
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, Img, staticFile } from "remotion";
 import type { Props } from "../types";
 import { FONT } from "../tokens";
+import { Mascot, type MascotKind, type Mood, type Pose } from "./Mascot";
 
-type TB = { bars?: number[]; tag?: string; lines?: { t: string; size?: number; color?: string }[]; banner?: string; visual?: "rates" | "power";
+type TB = { mascotImg?: { src: string; x: number; y: number; h: number; w: number; flip?: boolean; lens?: { cx: number; cy: number; r: number; text: string; color?: string } }; mascot?: { kind?: MascotKind; mood?: Mood; pose?: Pose; x: number; y: number; size: number; lensText?: string; lensColor?: string; lensR?: number; flip?: boolean }; bars?: number[]; tag?: string; lines?: { t: string; size?: number; color?: string }[]; banner?: string; visual?: "rates" | "power";
   stats?: { label: string; value: string; color?: string }[]; chip?: string; series?: number[] };
 const YEL = "#FFD43B", RED = "#E8342C", BLUE = "#2F6BFF";
 const col = (c?: string) => (c === "yellow" ? YEL : c === "red" ? "#FF5A4E" : c === "blue" ? "#5B8CFF" : "#FFFFFF");
@@ -85,14 +86,14 @@ export const BoldThumb: React.FC<Props> = (p) => {
               </div>
             ))}
           </div>
-          <div style={{ position: "absolute", left: 90, right: 90, top: 1130, height: 330, display: "flex", gap: 22, alignItems: "flex-start" }}>
+          <div style={{ position: "absolute", left: th.mascot || th.mascotImg ? 710 : 90, right: th.mascot || th.mascotImg ? 50 : 90, top: 1130, height: 330, display: "flex", gap: th.mascot ? 14 : 22, alignItems: "flex-start" }}>
             {(th.bars ?? []).map((v, i, arr) => {
               const mx = Math.max(1e-9, ...arr.map((x) => Math.abs(x)));
               const hh = (Math.abs(v) / mx) * 300;
               return <div key={i} style={{ flex: 1, height: hh, background: v < 0 ? BLUE : RED, borderRadius: "0 0 10px 10px", boxShadow: `0 0 20px ${v < 0 ? BLUE : RED}99` }} />;
             })}
           </div>
-          <div style={{ position: "absolute", left: 90, right: 90, top: 1126, height: 5, background: "rgba(255,255,255,0.7)" }} />
+          <div style={{ position: "absolute", left: th.mascot || th.mascotImg ? 710 : 90, right: th.mascot || th.mascotImg ? 50 : 90, top: 1126, height: 5, background: "rgba(255,255,255,0.7)" }} />
         </>
       ) : null}
       {th.visual === "power" ? (
@@ -115,7 +116,15 @@ export const BoldThumb: React.FC<Props> = (p) => {
           ))}
         </div>
       ) : null}
-      {th.chip ? <div style={{ position: "absolute", left: 60, right: 60, top: 1500, textAlign: "center" }}><span style={{ fontSize: 58, fontWeight: 900, color: "#FFFFFF", background: "rgba(232,52,44,0.9)", padding: "10px 28px", borderRadius: 12 }}>{th.chip}</span></div> : null}
+      {th.chip ? <div style={{ position: "absolute", left: th.mascot || th.mascotImg ? 660 : 60, right: th.mascot || th.mascotImg ? 20 : 60, top: 1500, textAlign: "center" }}><span style={{ fontSize: th.mascot || th.mascotImg ? 38 : 58, whiteSpace: "nowrap", fontWeight: 900, color: "#FFFFFF", background: "rgba(232,52,44,0.9)", padding: "10px 28px", borderRadius: 12 }}>{th.chip}</span></div> : null}
+      {th.mascotImg ? (() => { const m = th.mascotImg; const L = m.lens; return (
+        <div style={{ position: "absolute", left: m.x, top: m.y, width: m.w, height: m.h, transform: m.flip ? "scaleX(-1)" : undefined, filter: "drop-shadow(0 14px 24px rgba(0,0,0,0.55))" }}>
+          <Img src={staticFile(m.src)} style={{ width: m.w, height: m.h }} />
+          {L ? <div style={{ position: "absolute", left: (L.cx - L.r * 0.86) * m.w, top: L.cy * m.h - L.r * 0.86 * m.w, width: L.r * 1.72 * m.w, height: L.r * 1.72 * m.w, borderRadius: "50%", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", transform: m.flip ? "scaleX(-1)" : undefined }}>
+            <span style={{ fontSize: L.r * m.w * 0.62, fontWeight: 900, color: L.color === "blue" ? BLUE : L.color === "red" ? RED : "#14161C", letterSpacing: "-0.05em", whiteSpace: "nowrap" }}>{L.text}</span>
+          </div> : null}
+        </div>); })() : null}
+      {th.mascot ? <div style={{ position: "absolute", left: th.mascot.x, top: th.mascot.y }}><Mascot kind={th.mascot.kind} mood={th.mascot.mood} pose={th.mascot.pose} size={th.mascot.size} lensText={th.mascot.lensText} lensColor={th.mascot.lensColor} lensR={th.mascot.lensR} flip={th.mascot.flip} /></div> : null}
     </AbsoluteFill>
   );
 };
