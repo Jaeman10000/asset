@@ -70,7 +70,10 @@ const Shell: React.FC<{ p: Props; cues?: Cue[]; bg?: string; hideSub?: boolean; 
         <div style={{ fontSize: 44 }}>{md(w.week_start)}–{md(w.week_end)}</div>
       </div>
       {children}
-      {c ? <div style={{ position: "absolute", left: 64, right: 64, bottom: 128, fontSize: 40, fontWeight: 600, lineHeight: 1.42, color: "#F2F2F0", wordBreak: "keep-all", textShadow: "0 2px 8px rgba(0,0,0,0.95)" }}>{c.text}</div> : null}
+      {c ? (<div style={{ position: "absolute", left: 40, right: 40, bottom: 240, display: "flex", justifyContent: "center" }}>
+          <div style={{ background: "rgba(8,10,16,0.9)", border: "2px solid rgba(255,255,255,0.12)", color: "#FFFFFF", fontSize: 42, fontWeight: 700, lineHeight: 1.38, padding: "16px 28px", borderRadius: 18,
+            wordBreak: "keep-all", textAlign: "center", boxShadow: "0 10px 28px rgba(0,0,0,0.45)" }}>{c.text}</div>
+        </div>) : null}
       <div style={{ position: "absolute", left: 64, right: 64, bottom: 52, fontSize: 26, color: "rgba(230,230,227,0.55)" }}>{FOOTER}</div>
     </AbsoluteFill>
   );

@@ -25,7 +25,10 @@ type SC = { p: Props; sub: string; cues?: Cue[] };
 type Pt = { label?: string; v: number; vlabel?: string; est?: boolean; hl?: boolean; color?: "red" | "blue" | "ink" | "grey"; at?: number };
 type Mark = { i: number; label: string; at?: number; color?: "red" | "blue" | "ink"; pos?: "top" | "bottom" };
 export type DCard = {
-  kind: "hook" | "line" | "bars" | "vs" | "hbars" | "picto" | "stack" | "big" | "check" | "split" | "q";
+  kind: "hook" | "hook2" | "line" | "bars" | "vs" | "hbars" | "picto" | "stack" | "big" | "check" | "split" | "q" | "duo" | "score" | "steps";
+  // hook2(9/20 JJ "첫 장면 세련되게"): 제목 + 한 줄 + 숫자 칩 + 넓은 차트 카드 한 장
+  sub2?: string; chips?: { label: string; value: string; tone?: "red" | "blue" | "ink"; note?: string }[];
+  chart?: { kind: "linebars" | "negbars"; title?: string; series?: number[]; bars?: number[]; rows?: Pt[]; startLabel?: string; endLabel?: string; barLabel?: string; legend?: [string, string] };
   head?: string; note?: string; note_at?: number; unit?: string;
   // hook
   tag?: string; name?: string; a?: { label: string; value: string; series: number[] }; b?: { label: string; value: string; bars: number[]; labels?: string[] }; q?: QLine[];
@@ -82,7 +85,7 @@ export const PaperShell: React.FC<{ p: Props; cues?: Cue[]; hideSub?: boolean; h
       {children}
       {sub ? (
         <div style={{ position: "absolute", left: 40, right: 40, bottom: 300, display: "flex", justifyContent: "center" }}>
-          <div style={{ background: "rgba(20,20,20,0.93)", color: "#FFFFFF", fontSize: 42, fontWeight: 700, lineHeight: 1.38, padding: "16px 28px", borderRadius: 18, wordBreak: "keep-all", textAlign: "center" }}>{sub}</div>
+          <div style={{ background: "rgba(20,20,20,0.93)", color: "#FFFFFF", fontSize: 42, fontWeight: 700, lineHeight: 1.38, padding: "16px 28px", borderRadius: 18, wordBreak: "keep-all", textAlign: "center", boxShadow: "0 10px 28px rgba(0,0,0,0.25)" }}>{sub}</div>
         </div>
       ) : null}
       <div style={{ position: "absolute", left: 64, right: 64, bottom: 52, fontSize: 26, color: "rgba(20,20,20,0.45)" }}>{FOOT}</div>
@@ -175,14 +178,14 @@ const Hook: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         <div style={{ fontSize: 150, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.05, marginTop: 14 }}>{c.name}</div>
       </div>
       <div style={{ position: "absolute", left: 64, width: W, top: 560, height: 860, display: "flex", gap: 36 }}>
-        <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", position: "relative" }}>
+        <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", position: "relative" }}>
           <div style={{ fontSize: 46, fontWeight: 900, color: SUB }}>{a.label}</div>
           <div style={{ fontSize: a.value.length > 7 ? 70 : 108, fontWeight: 900, color: PBLUE, letterSpacing: "-0.04em", lineHeight: 1.1, whiteSpace: "nowrap" }}>{a.value}</div>
           <svg width={402} height={520} style={{ position: "absolute", left: 28, bottom: 30, overflow: "visible" }}>
             <SvgLine series={a.series} w={402} h={520} color={PBLUE} k={k} area />
           </svg>
         </div>
-        <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", position: "relative" }}>
+        <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", position: "relative" }}>
           <div style={{ fontSize: 46, fontWeight: 900, color: SUB }}>{b.label}</div>
           <div style={{ fontSize: b.value.length > 7 ? 70 : 108, fontWeight: 900, color: PRED, letterSpacing: "-0.04em", lineHeight: 1.1, whiteSpace: "nowrap" }}>{b.value}</div>
           <div style={{ position: "absolute", left: 28, right: 28, bottom: 30, height: 520, display: "flex", alignItems: "flex-end", gap: b.bars.length > 12 ? 3 : 16 }}>
@@ -194,6 +197,84 @@ const Hook: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           </div>
         </div>
       </div>
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
+
+/** 첫 장면 v2 — 0초부터 제목·한 줄·숫자 칩이 서 있고, 아래 넓은 카드에 차트가 그려진다. 질문 문장이면 질문만 */
+const Hook2: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const k = Math.min(1, 0.3 + t / 1.4);
+  const chips = c.chips ?? [];
+  const ch = c.chart;
+  const CW = W - 64, CH = 520;
+  return (
+    <PaperShell p={p} cues={cues} hideSub>
+      <div style={{ position: "absolute", left: 64, right: 64, top: 186 }}>
+        {c.tag ? <div style={{ display: "inline-block", fontSize: 38, fontWeight: 900, background: HL, padding: "6px 18px", borderRadius: 8 }}>{c.tag}</div> : null}
+        <div style={{ fontSize: 150, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.04, marginTop: 12 }}>{c.name}</div>
+        {c.sub2 ? <div style={{ fontSize: 54, fontWeight: 900, color: SUB, marginTop: 10, letterSpacing: "-0.02em", wordBreak: "keep-all" }}>{c.sub2}</div> : null}
+      </div>
+      <div style={{ position: "absolute", left: 64, width: W, top: 560, display: "flex", gap: 20 }}>
+        {chips.map((x, i) => {
+          const col = C(x.tone);
+          return (
+            <div key={i} style={{ flex: 1, background: "#FFFFFF", borderRadius: 24, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", padding: "22px 24px 20px", borderTop: `10px solid ${col}` }}>
+              <div style={{ fontSize: chips.length > 2 ? 34 : 38, fontWeight: 900, color: SUB }}>{x.label}</div>
+              <div style={{ fontSize: chips.length > 2 ? (x.value.length > 5 ? 58 : 76) : x.value.length > 7 ? 74 : 96, fontWeight: 900, color: col, letterSpacing: "-0.04em", lineHeight: 1.08, whiteSpace: "nowrap" }}>{x.value}</div>
+              {x.note ? <div style={{ fontSize: 30, fontWeight: 800, color: SUB, marginTop: 4, wordBreak: "keep-all" }}>{x.note}</div> : null}
+            </div>
+          );
+        })}
+      </div>
+      {ch ? (
+        <div style={{ position: "absolute", left: 64, width: W, top: 850, height: 700, background: "#FFFFFF", borderRadius: 32, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 18px 44px rgba(20,20,20,0.12)" }}>
+          {ch.title ? <div style={{ position: "absolute", left: 34, top: 26, fontSize: 38, fontWeight: 900, color: SUB }}>{ch.title}</div> : null}
+          <svg width={CW} height={CH} style={{ position: "absolute", left: 32, top: 96, overflow: "visible" }}>
+            {[0.25, 0.5, 0.75].map((g) => <line key={g} x1={0} x2={CW} y1={CH * g} y2={CH * g} stroke="rgba(20,20,20,0.08)" strokeWidth={2} />)}
+            {ch.kind === "linebars" ? (
+              <>
+                {(ch.bars ?? []).map((v, i, arr) => {
+                  const mb = Math.max(1e-9, ...arr);
+                  const bw = CW / arr.length;
+                  const h = (v / mb) * CH * 0.62 * Math.min(1, Math.max(0, k * arr.length - i + 0.5));
+                  return <rect key={i} x={i * bw + 1} y={CH - h} width={Math.max(2, bw - 3)} height={h} fill={i === arr.length - 1 ? PRED : "rgba(224,49,43,0.32)"} />;
+                })}
+                <SvgLine series={ch.series ?? []} w={CW} h={CH * 0.9} color={PBLUE} k={k} stroke={9} area />
+                {ch.startLabel ? <text x={4} y={30} fontSize={40} fontWeight={900} fill={PBLUE} stroke="#FFFFFF" strokeWidth={10} paintOrder="stroke" fontFamily={FONT}>{ch.startLabel}</text> : null}
+                {ch.endLabel && k > 0.95 ? <text x={CW} y={CH * 0.62} textAnchor="end" fontSize={44} fontWeight={900} fill={PBLUE} stroke="#FFFFFF" strokeWidth={10} paintOrder="stroke" fontFamily={FONT}>{ch.endLabel}</text> : null}
+                {ch.barLabel && k > 0.95 ? <text x={CW} y={CH - (CH * 0.62) - 14} textAnchor="end" fontSize={40} fontWeight={900} fill={PRED} stroke="#FFFFFF" strokeWidth={10} paintOrder="stroke" fontFamily={FONT}>{ch.barLabel}</text> : null}
+              </>
+            ) : (
+              <>
+                <line x1={0} x2={CW} y1={CH * 0.3} y2={CH * 0.3} stroke={INK} strokeWidth={3} />
+                {(ch.rows ?? []).map((r, i, arr) => {
+                  const mx = Math.max(1e-9, ...arr.map((x) => Math.abs(x.v)));
+                  const gap = 14, bw = (CW - gap * (arr.length - 1)) / arr.length;
+                  const g = Math.min(1, Math.max(0, k * arr.length - i + 0.5));
+                  const h = (Math.abs(r.v) / mx) * (r.v < 0 ? CH * 0.6 : CH * 0.26) * g;
+                  const x = i * (bw + gap), down = r.v < 0;
+                  const col = down ? PBLUE : PRED;
+                  return (
+                    <g key={i}>
+                      <rect x={x} y={down ? CH * 0.3 : CH * 0.3 - h} width={bw} height={h} rx={8} fill={col} opacity={r.hl ? 1 : 0.85} />
+                      <text x={x + bw / 2} y={down ? CH * 0.3 + h + 36 : CH * 0.3 - h - 12} textAnchor="middle" fontSize={30} fontWeight={900} fill={col} opacity={g} fontFamily={FONT}>{r.vlabel}</text>
+                      <text x={x + bw / 2} y={CH + 44} textAnchor="middle" fontSize={30} fontWeight={800} fill={SUB} fontFamily={FONT}>{r.label}</text>
+                    </g>
+                  );
+                })}
+              </>
+            )}
+          </svg>
+          {ch.legend ? (
+            <div style={{ position: "absolute", left: 34, right: 34, bottom: 22, display: "flex", justifyContent: "space-between", fontSize: 34, fontWeight: 900 }}>
+              <span style={{ color: PBLUE }}>━ {ch.legend[0]}</span><span style={{ color: PRED }}>■ {ch.legend[1]}</span>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
@@ -306,7 +387,7 @@ const Vs: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
     const y0 = d.dir === "up" ? lo : hi, y1 = d.dir === "up" ? hi : lo;
     const xe = x0 + (x1 - x0) * k, ye = y0 + (y1 - y0) * k;
     return (
-      <div style={{ position: "absolute", left: 64, width: W, top, height: 470, background: "#FFFFFF", borderRadius: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", opacity: Math.min(1, 0.25 + k * 1.5) }}>
+      <div style={{ position: "absolute", left: 64, width: W, top, height: 470, background: "#FFFFFF", borderRadius: 28, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", opacity: Math.min(1, 0.25 + k * 1.5) }}>
         <div style={{ position: "absolute", left: 34, top: 26, fontSize: 44, fontWeight: 900, color: SUB, wordBreak: "keep-all", maxWidth: 560 }}>{d.label}</div>
         <div style={{ position: "absolute", right: 34, top: 14, display: "flex", alignItems: "center", gap: 8, opacity: k }}>
           <Arrow dir={d.dir} color={col} size={84} />
@@ -388,7 +469,7 @@ const Picto: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         {groups.map((g, gi) => {
           const at = cueAt(cues, g.at, 0.1 + gi * 1.6);
           return (
-            <div key={gi} style={{ background: "#FFFFFF", borderRadius: 28, padding: "26px 30px", boxShadow: "0 8px 30px rgba(0,0,0,0.08)", opacity: t >= at - 0.05 ? 1 : 0.25 }}>
+            <div key={gi} style={{ background: "#FFFFFF", borderRadius: 28, padding: "26px 30px", border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", opacity: t >= at - 0.05 ? 1 : 0.25 }}>
               <div style={{ fontSize: 48, fontWeight: 900, color: gi === groups.length - 1 ? PRED : SUB }}>{g.label}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 16 }}>
                 {Array.from({ length: g.n }).map((_, i) => {
@@ -482,8 +563,8 @@ const Check: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           const cur = on && t < next;
           const k = prog(t, at, 0.4);
           return (
-            <div key={i} style={{ display: "flex", gap: 26, alignItems: "flex-start", background: "#FFFFFF", borderRadius: 24, padding: "28px 30px", boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
-              opacity: on ? 1 : 0.3, border: cur ? `5px solid ${PRED}` : "5px solid transparent" }}>
+            <div key={i} style={{ display: "flex", gap: 26, alignItems: "flex-start", background: "#FFFFFF", borderRadius: 24, padding: "28px 30px", boxShadow: "0 14px 36px rgba(20,20,20,0.10)",
+              opacity: on ? 1 : 0.3, border: cur ? `5px solid ${PRED}` : "5px solid rgba(20,20,20,0.06)" }}>
               <svg width={78} height={78} viewBox="0 0 100 100" style={{ flex: "0 0 auto" }}>
                 <rect x={6} y={6} width={88} height={88} rx={18} fill="none" stroke={INK} strokeWidth={9} />
                 <path d="M24 52 L44 72 L80 30" fill="none" stroke={PRED} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={100} strokeDashoffset={100 - 100 * k} />
@@ -508,7 +589,7 @@ const Split: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
     const k = prog(t, at, 0.5);
     const col = dir === "up" ? PRED : PBLUE;
     return (
-      <div style={{ position: "absolute", left: 64, width: W, top, background: "#FFFFFF", borderRadius: 28, padding: "30px 34px", boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+      <div style={{ position: "absolute", left: 64, width: W, top, background: "#FFFFFF", borderRadius: 28, padding: "30px 34px", border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)",
         borderLeft: `18px solid ${col}`, opacity: Math.min(1, 0.2 + k * 2), display: "flex", gap: 26, alignItems: "center" }}>
         <div style={{ flex: "0 0 auto" }}><Arrow dir={dir} color={col} size={120} /></div>
         <div>
@@ -527,10 +608,140 @@ const Split: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   );
 };
 
+
+/* ───────── 9/20 JJ "삼성전기 편만큼 꽉 차게" — 빈 화면 카드(big·split) 대신 쓰는 그림 ───────── */
+type DuoPanel = { title: string; bars: Pt[]; at?: number; note?: string };
+type ScoreRow = { label: string; value: string; good: boolean; note?: string; at?: number };
+type StepPt = { label: string; v: number | null; vlabel: string };
+
+/** 막대 두 묶음(위·아래) — 오를 때 vs 내릴 때, 주가 vs 장부 가치 + 도매가격 */
+const Duo: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const panels = ((c as unknown as { duo?: DuoPanel[] }).duo ?? []).slice(0, 2);
+  const PH = 470, top0 = 440;
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      {panels.map((pn, pi) => {
+        const at = cueAt(cues, pn.at, 0.1 + pi * 1.5);
+        const g0 = prog(t, at, 0.7);
+        const on = t >= at - 0.05;
+        const bars = pn.bars;
+        const neg = bars.some((b) => b.v < 0);
+        const mx = Math.max(1e-9, ...bars.map((b) => Math.abs(b.v)));
+        const CW = W - 68, CH = 300, gap = 40, bw = Math.min(260, (CW - gap * (bars.length - 1)) / bars.length);
+        const x0 = (CW - (bw * bars.length + gap * (bars.length - 1))) / 2;
+        const base = neg ? CH * 0.5 : CH;
+        const span = neg ? CH * 0.44 : CH * 0.82;
+        return (
+          <div key={pi} style={{ position: "absolute", left: 64, width: W, top: top0 + pi * (PH + 28), height: PH, background: "#FFFFFF", borderRadius: 28,
+            border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", opacity: on ? 1 : 0.32 }}>
+            <div style={{ position: "absolute", left: 34, top: 22, fontSize: 42, fontWeight: 900, color: INK }}>{pn.title}</div>
+            <svg width={CW} height={CH + 60} style={{ position: "absolute", left: 34, top: 96, overflow: "visible" }}>
+              <line x1={0} x2={CW} y1={base} y2={base} stroke={INK} strokeWidth={3} />
+              {bars.map((b, i) => {
+                const h = (Math.abs(b.v) / mx) * span * g0;
+                const x = x0 + i * (bw + gap), down = b.v < 0;
+                const col = b.color ? C(b.color) : down ? PBLUE : PRED;
+                return (
+                  <g key={i}>
+                    <rect x={x} y={down ? base : base - h} width={bw} height={h} rx={12} fill={col} />
+                    <text x={x + bw / 2} y={down ? base + h + 44 : base - h - 14} textAnchor="middle" fontSize={44} fontWeight={900} fill={col} opacity={g0} fontFamily={FONT}>{b.vlabel}</text>
+                    <text x={x + bw / 2} y={neg ? (down ? base - 16 : base + 44) : CH + 48} textAnchor="middle" fontSize={38} fontWeight={900} fill={SUB} fontFamily={FONT}>{b.label}</text>
+                  </g>
+                );
+              })}
+            </svg>
+            {pn.note ? <div style={{ position: "absolute", right: 34, top: 28, fontSize: 32, fontWeight: 800, color: SUB }}>{pn.note}</div> : null}
+          </div>
+        );
+      })}
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
+/** 점수표 — 버핏 기준: 싸 보이는 숫자(✓) / 걸리는 숫자(✗). 말하는 줄이 켜진다 */
+const Score: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const rows = (c as unknown as { score?: ScoreRow[] }).score ?? [];
+  const RH = 176;
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      <div style={{ position: "absolute", left: 64, width: W, top: 440, background: "#FFFFFF", borderRadius: 30, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 18px 44px rgba(20,20,20,0.12)", overflow: "hidden" }}>
+        {rows.map((r, i) => {
+          const at = r.at === undefined ? -1 : cueAt(cues, r.at, 0.3 + i * 1.2);
+          const on = t >= at - 0.05;
+          const nextAt = rows.slice(i + 1).map((x) => (x.at === undefined ? -1 : cueAt(cues, x.at, 99))).find((x) => x > at) ?? 1e9;
+          const cur = on && r.at !== undefined && t < nextAt;
+          const col = r.good ? PRED : PBLUE;
+          return (
+            <div key={i} style={{ height: RH, display: "flex", alignItems: "center", gap: 22, padding: "0 30px", borderTop: i ? "2px solid rgba(20,20,20,0.07)" : "none",
+              background: cur ? "rgba(255,212,59,0.22)" : "transparent", opacity: on ? 1 : 0.28 }}>
+              <div style={{ width: 88, height: 88, borderRadius: 44, background: on ? col : "#D8D2C7", color: "#FFFFFF", fontSize: 54, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>{r.good ? "✓" : "✗"}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 46, fontWeight: 900, lineHeight: 1.1 }}>{r.label}</div>
+                {r.note ? <div style={{ fontSize: 30, fontWeight: 800, color: SUB, marginTop: 6, wordBreak: "keep-all" }}>{r.note}</div> : null}
+              </div>
+              <div style={{ fontSize: 64, fontWeight: 900, color: col, letterSpacing: "-0.03em", whiteSpace: "nowrap" }}>{r.value}</div>
+            </div>
+          );
+        })}
+      </div>
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
+/** 계단 — 기준금리 인상 흐름(마지막 칸은 다음 결정 '?') */
+const Steps: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const pts = (c as unknown as { steps?: StepPt[] }).steps ?? [];
+  const vals = pts.map((x) => x.v).filter((v): v is number => v != null);
+  const lo = Math.min(...vals) - 0.25, hi = Math.max(...vals) + 0.35;
+  const CW = W - 60, CH = 640, n = pts.length, sw = CW / n;
+  const Y = (v: number) => CH - ((v - lo) / (hi - lo)) * CH;
+  const k = prog(t, 0.1, 1.8);
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      <div style={{ position: "absolute", left: 64, width: W, top: 450, height: 860, background: "#FFFFFF", borderRadius: 30, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 18px 44px rgba(20,20,20,0.12)" }}>
+        <svg width={CW} height={CH + 90} style={{ position: "absolute", left: 30, top: 70, overflow: "visible" }}>
+          {pts.map((x, i) => {
+            const show = k * n >= i + 0.2;
+            const xs = i * sw;
+            if (x.v == null) return (
+              <g key={i} opacity={show ? 1 : 0}>
+                <rect x={xs + 10} y={Y(vals[vals.length - 1]) - 150} width={sw - 20} height={150} rx={14} fill="url(#hatchS)" stroke={PRED} strokeWidth={4} strokeDasharray="12 10" />
+                <text x={xs + sw / 2} y={Y(vals[vals.length - 1]) - 170} textAnchor="middle" fontSize={84} fontWeight={900} fill={PRED} fontFamily={FONT}>?</text>
+                <text x={xs + sw / 2} y={CH + 60} textAnchor="middle" fontSize={36} fontWeight={900} fill={PRED} fontFamily={FONT}>{x.label}</text>
+              </g>
+            );
+            const y = Y(x.v);
+            return (
+              <g key={i} opacity={show ? 1 : 0}>
+                <rect x={xs + 10} y={y} width={sw - 20} height={CH - y} rx={14} fill={i === vals.length - 1 ? PRED : "rgba(224,49,43,0.35)"} />
+                <text x={xs + sw / 2} y={y - 18} textAnchor="middle" fontSize={50} fontWeight={900} fill={i === vals.length - 1 ? PRED : INK} fontFamily={FONT}>{x.vlabel}</text>
+                <text x={xs + sw / 2} y={CH + 60} textAnchor="middle" fontSize={36} fontWeight={900} fill={SUB} fontFamily={FONT}>{x.label}</text>
+              </g>
+            );
+          })}
+          <defs>
+            <pattern id="hatchS" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="18" height="18" fill="rgba(224,49,43,0.10)" /><line x1="0" y1="0" x2="0" y2="18" stroke={PRED} strokeWidth="6" />
+            </pattern>
+          </defs>
+          <line x1={0} x2={CW} y1={CH} y2={CH} stroke={INK} strokeWidth={3} />
+        </svg>
+      </div>
+      {c.note ? <Note c={c} cues={cues} top={1340} /> : null}
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
 const pickD = (id: string): React.FC<SC> => ({ p, cues, sub }) => {
   const c = infoOf(p).cards?.[id];
   if (!c) return <PaperShell p={p} cues={cues}><></></PaperShell>;
-  const M: Record<string, React.FC<SC & { c: DCard }>> = { hook: Hook, line: Line, bars: Bars, vs: Vs, hbars: HBars, picto: Picto, stack: Stack, big: Big, check: Check, split: Split };
+  const M: Record<string, React.FC<SC & { c: DCard }>> = { duo: Duo, score: Score, steps: Steps, hook: Hook, hook2: Hook2, line: Line, bars: Bars, vs: Vs, hbars: HBars, picto: Picto, stack: Stack, big: Big, check: Check, split: Split };
   const X = M[c.kind] ?? Check;
   return <X p={p} cues={cues} sub={sub} c={c} />;
 };

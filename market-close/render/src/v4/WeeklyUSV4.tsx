@@ -211,8 +211,10 @@ const UShell: React.FC<{ p: Props; bg: React.ReactNode; cues?: Cue[]; hideSub?: 
       </div>
       {children}
       {sub ? (
-        <div style={{ position: "absolute", left: 64, right: 64, bottom: 128, fontSize: 40, fontWeight: 600, lineHeight: 1.42, color: "#F2F2F0", wordBreak: "keep-all",
-          textShadow: "0 2px 8px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)" }}>{sub}</div>
+        <div style={{ position: "absolute", left: 40, right: 40, bottom: 300, display: "flex", justifyContent: "center" }}>
+          <div style={{ background: "rgba(8,10,16,0.9)", border: "2px solid rgba(255,255,255,0.12)", color: "#FFFFFF", fontSize: 42, fontWeight: 700, lineHeight: 1.38, padding: "16px 28px", borderRadius: 18,
+            wordBreak: "keep-all", textAlign: "center", boxShadow: "0 10px 28px rgba(0,0,0,0.45)" }}>{sub}</div>
+        </div>
       ) : null}
       <div style={{ position: "absolute", left: 64, right: 64, bottom: 52, fontSize: 26, color: "rgba(230,230,227,0.55)", letterSpacing: "0.02em" }}>{FOOTER}</div>
     </AbsoluteFill>
@@ -1117,5 +1119,205 @@ export const UW6: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, sub,
   );
 };
 
+/* ═════════ 문장마다 바뀌는 화면(beats) — JJ 9/19 "말과 화면 불일치·20초 정지 = 대탈주" ═════════
+ * props.beats = { uw1: [{m:"문장 속 낱말", kind, ...}], ... } — 그 낱말이 나오는 자막 줄이 시작될 때 그 조각으로 바뀐다(이전 조각은 사라진다). */
+type BeatV = { label: string; value: string; sub?: string; tone?: "up" | "down" | "neutral" };
+type Beat = { m: string; kind: "event" | "big" | "pair" | "flow" | "bars" | "cond" | "list" | "q" | "end"; day?: string; title?: string; text?: string;
+  label?: string; value?: string; sub?: string; tone?: "up" | "down" | "neutral"; a?: BeatV; b?: BeatV;
+  from?: { label: string; value: string }[]; to?: { label: string; value: string }; rows?: { label: string; v: number; vlabel: string }[];
+  cond?: string; then?: string; items?: string[] };
+const BG_OF: Record<string, "wallst" | "fed" | "macro"> = { uw1: "wallst", uw2: "fed", uw3: "macro", uw4: "macro", uw5: "wallst", uw6: "wallst" };
+const beatTimes = (beats: Beat[], list: Cue[]) => {
+  let from = 0, last = 0;
+  return beats.map((b, k) => {
+    let i = -1;
+    for (let j = from; j < list.length; j++) if (list[j].text.includes(b.m)) { i = j; break; }
+    const at = i >= 0 ? list[i].start : k === 0 ? 0 : last + 2.2;
+    if (i >= 0) from = i;
+    last = at;
+    return at;
+  });
+};
+const toneCol = (t?: string) => (t === "up" ? RED : t === "down" ? BLUE : "#E6E6E3");
+const BeatBig: React.FC<{ v: BeatV; fs: number }> = ({ v, fs }) => (
+  <Card color={toneCol(v.tone)} strong style={{ padding: "26px 34px" }}>
+    <div style={{ fontSize: 42, fontWeight: 800, color: "#CFD6E4" }}>{v.label}</div>
+    <div style={{ fontSize: fs, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.04, marginTop: 4, whiteSpace: "nowrap" }}><Grad tone={(v.tone ?? "neutral") as Tone}>{v.value}</Grad></div>
+    {v.sub ? <div style={{ fontSize: 40, fontWeight: 800, color: "#E6E6E3", marginTop: 8, wordBreak: "keep-all" }}>{v.sub}</div> : null}
+  </Card>
+);
+const DayChip: React.FC<{ d?: string; mb?: number }> = ({ d, mb = 0 }) => (d ? <div style={{ display: "inline-block", fontSize: 44, fontWeight: 900, color: "#0B0E16", background: YEL, borderRadius: 12, padding: "6px 22px", marginBottom: mb }}>{d}</div> : null);
+const BeatView: React.FC<{ b: Beat; at: number }> = ({ b, at }) => {
+  const pop = usePop();
+  const wrap: React.CSSProperties = { position: "absolute", left: 64, right: 64, top: 300, ...pop(at, 26) };
+  if (b.kind === "event") return (
+    <div style={wrap}>
+      <DayChip d={b.day} />
+      <div style={{ fontSize: 92, fontWeight: 900, lineHeight: 1.12, letterSpacing: "-0.04em", marginTop: 26, textShadow: SH_BIG, wordBreak: "keep-all" }}>{b.title}</div>
+      {b.text ? <div style={{ fontSize: 76, fontWeight: 900, lineHeight: 1.15, color: YEL, marginTop: 14, textShadow: SH_BIG, wordBreak: "keep-all" }}>{b.text}</div> : null}
+    </div>
+  );
+  if (b.kind === "big") return (
+    <div style={wrap}>
+      <DayChip d={b.day} mb={22} />
+      <BeatBig v={{ label: b.label ?? "", value: b.value ?? "", sub: b.sub, tone: b.tone }} fs={230} />
+    </div>
+  );
+  if (b.kind === "pair") return (
+    <div style={{ ...wrap, display: "flex", flexDirection: "column", gap: 26 }}>
+      {b.day ? <div style={{ alignSelf: "flex-start" }}><DayChip d={b.day} /></div> : null}
+      {b.a ? <BeatBig v={b.a} fs={150} /> : null}
+      {b.b ? <div style={pop(at + 0.5, 20)}><BeatBig v={b.b} fs={150} /></div> : null}
+    </div>
+  );
+  if (b.kind === "flow") return (
+    <div style={wrap}>
+      {b.title ? <div style={{ fontSize: 62, fontWeight: 900, textShadow: SH_BIG, marginBottom: 26, wordBreak: "keep-all" }}>{b.title}</div> : null}
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {(b.from ?? []).map((x, i) => (
+          <Card key={i} color={BLUE} style={{ padding: "18px 30px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 60, fontWeight: 900 }}>{x.label}</div><div style={{ fontSize: 72, fontWeight: 900 }}><Grad tone="down">{x.value}</Grad></div>
+          </Card>
+        ))}
+      </div>
+      <div style={{ textAlign: "center", fontSize: 120, fontWeight: 900, color: YEL, lineHeight: 1.1, textShadow: SH_BIG, ...pop(at + 0.4, 16) }}>↓</div>
+      {b.to ? (
+        <div style={pop(at + 0.6, 20)}>
+          <Card color={RED} strong style={{ padding: "22px 30px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 72, fontWeight: 900 }}>{b.to.label}</div><div style={{ fontSize: 76, fontWeight: 900 }}><Grad tone="up">{b.to.value}</Grad></div>
+          </Card>
+        </div>
+      ) : null}
+    </div>
+  );
+  if (b.kind === "bars") {
+    const rows = b.rows ?? [];
+    const mx = Math.max(1e-9, ...rows.map((r) => Math.abs(r.v)));
+    const W0 = 900, H0 = 520, gap = 18, bw = (W0 - gap * (rows.length - 1)) / Math.max(1, rows.length), base = H0 * 0.3;
+    return (
+      <div style={wrap}>
+        {b.title ? <div style={{ fontSize: 58, fontWeight: 900, textShadow: SH_BIG, marginBottom: 20, wordBreak: "keep-all" }}>{b.title}</div> : null}
+        <Card color="#CFD6E4" style={{ padding: "26px 26px 18px" }}>
+          <svg width={W0} height={H0 + 70} style={{ overflow: "visible" }}>
+            <line x1={0} x2={W0} y1={base} y2={base} stroke="rgba(255,255,255,0.55)" strokeWidth={3} />
+            {rows.map((r, i) => {
+              const down = r.v < 0, h = (Math.abs(r.v) / mx) * (down ? H0 * 0.6 : H0 * 0.26);
+              const x = i * (bw + gap), col = down ? BLUE : RED;
+              return (
+                <g key={i}>
+                  <rect x={x} y={down ? base : base - h} width={bw} height={h} rx={8} fill={col} />
+                  <text x={x + bw / 2} y={down ? base + h + 40 : base - h - 12} textAnchor="middle" fontSize={36} fontWeight={900} fill={col} fontFamily={FONT}>{r.vlabel}</text>
+                  <text x={x + bw / 2} y={H0 + 56} textAnchor="middle" fontSize={34} fontWeight={800} fill="#CFD6E4" fontFamily={FONT}>{r.label}</text>
+                </g>
+              );
+            })}
+          </svg>
+        </Card>
+      </div>
+    );
+  }
+  if (b.kind === "cond") return (
+    <div style={wrap}>
+      <Card color={toneCol(b.tone)} strong style={{ padding: "30px 34px" }}>
+        <div style={{ fontSize: 46, fontWeight: 900, color: YEL }}>만약</div>
+        <div style={{ fontSize: 86, fontWeight: 900, lineHeight: 1.12, letterSpacing: "-0.03em", marginTop: 6, wordBreak: "keep-all" }}>{b.cond}</div>
+        <div style={{ fontSize: 120, fontWeight: 900, lineHeight: 1, color: YEL, margin: "14px 0" }}>→</div>
+        <div style={{ fontSize: 70, fontWeight: 900, lineHeight: 1.18, wordBreak: "keep-all" }}><Grad tone={(b.tone ?? "neutral") as Tone}>{b.then}</Grad></div>
+      </Card>
+    </div>
+  );
+  if (b.kind === "list") return (
+    <div style={wrap}>
+      {b.title ? <div style={{ fontSize: 66, fontWeight: 900, textShadow: SH_BIG, marginBottom: 26, wordBreak: "keep-all" }}>{b.title}</div> : null}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {(b.items ?? []).map((x, i) => (
+          <div key={i} style={pop(at + 0.2 + i * 0.35, 18)}>
+            <Card color={YEL} strong={i === 0} style={{ padding: "24px 30px", display: "flex", gap: 22, alignItems: "center" }}>
+              <div style={{ fontSize: 60, fontWeight: 900, color: YEL }}>✓</div>
+              <div style={{ fontSize: 58, fontWeight: 900, lineHeight: 1.2, wordBreak: "keep-all" }}>{x}</div>
+            </Card>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  if (b.kind === "end") return (
+    <div style={{ position: "absolute", left: 64, right: 64, top: 600, ...pop(at, 24) }}>
+      <Logo scale={2.4} />
+      <div style={{ fontSize: 62, fontWeight: 800, marginTop: 190, color: "#CFD6E4" }}>평일 국장 마감은 매일</div>
+      <div style={{ fontSize: 110, fontWeight: 900, color: YEL, textShadow: "0 0 30px rgba(255,216,77,0.4)" }}>저녁 5시</div>
+    </div>
+  );
+  return null;
+};
+const UBeats = (id: string): React.FC<{ p: Props; sub: string; cues?: Cue[] }> => ({ p, cues }) => {
+  const w = uw(p) as UW & { beats?: Record<string, Beat[]> };
+  const { t } = useT();
+  const beats = w.beats?.[id] ?? [];
+  const list = cues ?? [];
+  const ats = beatTimes(beats, list);
+  let k = 0;
+  for (let j = 0; j < ats.length; j++) if (t >= ats[j] - 0.05) k = j;
+  const b = beats[k];
+  const hide = b?.kind === "q" || b?.kind === "end";
+  const qText = b?.kind === "q" ? (list.find((c) => c.text.includes(b.m))?.text ?? b.title ?? "") : "";
+  return (
+    <UShell p={p} cues={cues} hideSub={hide} bg={<UBg name={BG_OF[id] ?? "wallst"} tone={b?.tone === "down" ? "down" : b?.tone === "up" ? "up" : "neutral"} dim={0.5} />}>
+      {b?.kind === "q" ? <QBig text={qText} at={ats[k]} /> : b ? <BeatView key={k} b={b} at={ats[k]} /> : null}
+    </UShell>
+  );
+};
+
+/* ═════════ uw0 사건 대비 훅(9/20) — 0초부터 '금리 ▲ 인상 / 그런데 / AI 반도체 +6%' + 요일 막대 ═════════ */
+type HookC = { top: { label: string; value: string; sub: string }; mid: string; bottom: { label: string; value: string; sub: string }; days: { d: string; v: number }[] };
+const UW0C: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues }) => {
+  const w = uw(p) as UW & { hook_contrast?: HookC };
+  const h = w.hook_contrast!;
+  const { t } = useT();
+  const list = cues ?? [];
+  const qNow = [...list].reverse().find((c) => isQ(c.text) && t >= c.start);
+  if (qNow) return (
+    <UShell p={p} cues={cues} hideSub bg={<UBg name="wallst" tone="up" dim={0.3} />}>
+      <QBig text={qNow.text} at={qNow.start} />
+    </UShell>
+  );
+  const mx = Math.max(1e-9, ...h.days.map((d) => Math.abs(d.v)));
+  return (
+    <UShell p={p} cues={cues} hideSub bg={<UBg name="wallst" tone="up" dim={0.35} />}>
+      <div style={{ position: "absolute", left: 64, right: 64, top: 230 }}>
+        <div style={{ fontSize: 46, fontWeight: 800, color: "#CFD6E4", textShadow: SH }}>{h.top.label}</div>
+        <div style={{ fontSize: 190, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.02, textShadow: SH_BIG, whiteSpace: "nowrap" }}><Grad tone="up">{h.top.value}</Grad></div>
+        <div style={{ fontSize: 46, fontWeight: 800, color: "#E6E6E3", textShadow: SH }}>{h.top.sub}</div>
+        <div style={{ fontSize: 110, fontWeight: 900, color: YEL, margin: "24px 0 8px", textShadow: SH_BIG }}>{h.mid}</div>
+        <div style={{ fontSize: 46, fontWeight: 800, color: "#CFD6E4", textShadow: SH }}>{h.bottom.label}</div>
+        <div style={{ fontSize: 240, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.0, textShadow: SH_BIG, whiteSpace: "nowrap" }}><Grad tone="up">{h.bottom.value}</Grad></div>
+        <div style={{ fontSize: 46, fontWeight: 800, color: "#E6E6E3", textShadow: SH }}>{h.bottom.sub}</div>
+      </div>
+      <div style={{ position: "absolute", left: 64, right: 64, top: 1250, height: 300, display: "flex", gap: 18 }}>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 150, height: 3, background: "rgba(255,255,255,0.5)" }} />
+        {h.days.map((d, i) => {
+          const hh = (Math.abs(d.v) / mx) * 130 * Math.min(1, Math.max(0, (t + 0.4) * 3 - i));
+          return (
+            <div key={i} style={{ flex: 1, height: 300, position: "relative" }}>
+              <div style={{ position: "absolute", left: 6, right: 6, top: d.v >= 0 ? 150 - hh : 150, height: hh, background: d.v >= 0 ? RED : BLUE, borderRadius: 8, boxShadow: `0 0 18px ${d.v >= 0 ? RED : BLUE}88` }} />
+              <div style={{ position: "absolute", left: 0, right: 0, top: d.v >= 0 ? 150 - hh - 44 : 150 + hh + 6, textAlign: "center", fontSize: 32, fontWeight: 900, color: d.v >= 0 ? RED : BLUE }}>{d.v > 0 ? "+" : "−"}{Math.abs(d.v).toFixed(1)}%</div>
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: -10, textAlign: "center", fontSize: 32, fontWeight: 800, color: "#CFD6E4" }}>{d.d}</div>
+            </div>
+          );
+        })}
+      </div>
+    </UShell>
+  );
+};
+
 /** 장면 id → 미국 주간 화면. Video.tsx가 uw0~uw6에 이것을 쓴다(오케스트레이터가 연결). */
-export const USW_COMP: Record<string, React.FC<{ p: Props; sub: string; cues?: Cue[] }>> = { uw0: UW0, uw1: UW1, uw2: UW2, uw3: UW3, uw4: UW4, uw5: UW5, uw6: UW6 };
+const USW_BASE: Record<string, React.FC<{ p: Props; sub: string; cues?: Cue[] }>> = { uw0: UW0, uw1: UW1, uw2: UW2, uw3: UW3, uw4: UW4, uw5: UW5, uw6: UW6 };
+/** beats·hook_contrast 가 있으면 그 화면(문장마다 바뀜), 없으면 예전 화면 */
+const usRoute = (id: string): React.FC<{ p: Props; sub: string; cues?: Cue[] }> => (props) => {
+  const w = uw(props.p) as UW & { beats?: Record<string, Beat[]>; hook_contrast?: HookC };
+  if (id === "uw0" && w.hook_contrast) return <UW0C {...props} />;
+  if (w.beats?.[id]?.length) { const B = UBeats(id); return <B {...props} />; }
+  const X = USW_BASE[id];
+  return <X {...props} />;
+};
+export const USW_COMP: Record<string, React.FC<{ p: Props; sub: string; cues?: Cue[] }>> = Object.fromEntries(Object.keys(USW_BASE).map((id) => [id, usRoute(id)]));

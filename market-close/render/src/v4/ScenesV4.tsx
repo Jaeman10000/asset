@@ -105,8 +105,10 @@ export const Shell: React.FC<{ p: Props; bg: React.ReactNode; cues?: Cue[]; hide
       </div>
       {children}
       {sub ? (
-        <div style={{ position: "absolute", left: 64, right: 64, bottom: 128, fontSize: 40, fontWeight: 600, lineHeight: 1.42, color: "#F2F2F0", wordBreak: "keep-all",
-          textShadow: "0 2px 8px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)" }}>{sub}</div>
+        <div style={{ position: "absolute", left: 40, right: 40, bottom: 240, display: "flex", justifyContent: "center" }}>
+          <div style={{ background: "rgba(8,10,16,0.9)", border: "2px solid rgba(255,255,255,0.12)", color: "#FFFFFF", fontSize: 42, fontWeight: 700, lineHeight: 1.38, padding: "16px 28px", borderRadius: 18,
+            wordBreak: "keep-all", textAlign: "center", boxShadow: "0 10px 28px rgba(0,0,0,0.45)" }}>{sub}</div>
+        </div>
       ) : null}
       <div style={{ position: "absolute", left: 64, right: 64, bottom: 52, fontSize: 26, color: "rgba(230,230,227,0.55)", letterSpacing: "0.02em" }}>{FOOTER}</div>
     </AbsoluteFill>
