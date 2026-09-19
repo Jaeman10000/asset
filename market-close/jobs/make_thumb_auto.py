@@ -104,6 +104,15 @@ def spec(d: str) -> dict | None:
                                           {"t": "그런데 마감엔", "size": 0.70, "gap": 26},
                                           {"t": f"{n2}?!", "size": 1.18, "color": "yellow"}],
                                 "logo": True}}}
+    import re as _re
+    if not _re.search(r"\d", str(a.get("value") or "")):     # 숫자 아닌 훅(9/18 '금리 인상') — 틀 문장('빠졌는데 …만 올랐다')이 틀리게 붙었다
+        tone = "down" if (c.get("kospi") or {}).get("chg_pct", 0) < 0 else "up"
+        return {"out": f"out/{d}/kr",
+                "cands": {"A": {"bg": "city", "tone": tone, "dim": 0.45,
+                                "objects": [{"k": "glow", "x": 540, "y": 780, "r": 640, "color": "yellow", "a": 0.20}],
+                                "lines": [{"t": str(a.get("label") or "")[:12], "size": 0.72}, {"t": str(a["value"])[:10], "size": 1.0},
+                                          {"t": f"그런데 {str(b.get('label') or '').replace('그런데', '').strip()} {b['value']}?".replace("  ", " ")[:14], "size": 1.1, "color": "yellow"}],
+                                "logo": True}}}
     line1 = f"{k1} {a['value']}".strip()
     mid = (MID_OUT if (isinstance(an, (int, float)) and an < 0) else MID_IN)[day % 3]
     v2 = str(b["value"]).lstrip("+")
