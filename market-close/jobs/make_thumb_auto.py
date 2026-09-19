@@ -67,6 +67,16 @@ def spec(d: str) -> dict | None:
     an = a.get("num")
     day = int(d[6:8]) if d[:8].isdigit() else 1                 # 접미사 날짜(20260915_b1)도 받는다
     kind = h.get("kind") or ""
+    if kind == "MB":                                            # v7 대형주 훅 — 외국인 · SK하이닉스 샀다 / 삼성전자는 팔았다?
+        buy = str(a.get("label") or "").split("·")[-1].strip()
+        sell = str(b.get("label") or "").split("·")[-1].strip()
+        import narrate as _na
+        return {"out": f"out/{d}/kr",
+                "cands": {"A": {"bg": "chip", "tone": "up", "dim": 0.45,
+                                "objects": [{"k": "glow", "x": 540, "y": 780, "r": 640, "color": "yellow", "a": 0.20}],
+                                "lines": [{"t": "외국인", "size": 0.8}, {"t": f"{buy} 샀는데", "size": 0.95},
+                                          {"t": f"{_na.josa(sell) if hasattr(_na, 'josa') else sell} 팔았다?", "size": 1.1, "color": "yellow"}],
+                                "logo": True}}}
     if kind == "MF":                                            # 간밤 미국 금리 ↔ 오늘 코스피(JJ 2026-09-17)
         chg = (c.get("kospi") or {}).get("chg_pct", 0) or 0
         tone = "down" if chg < 0 else "up"

@@ -86,6 +86,9 @@ async def _fetch(d: str, picks: list[dict], fix: dict | None) -> list[dict]:
     return out
 
 
+BIGCAPS = [("000660", "SK하이닉스"), ("005930", "삼성전자")]   # v7(JJ 2026-09-19): 시청자 45세+ 76% — 가진 종목부터 말한다
+
+
 async def main(d: str, out_path: str | Path | None = None) -> dict:
     """raw/brief_stocks.json(또는 out_path) 을 쓴다. 어떤 실패에도 예외를 내지 않고 {} 를 저장한다."""
     raw = DATA / d / "raw"
@@ -115,8 +118,15 @@ async def main(d: str, out_path: str | Path | None = None) -> dict:
                 # 16시 이후 ka10059 등락에는 애프터마켓 체결이 섞인다(9/17 삼성중공업 6.44 → 6.19) — 15:40 업종 아카이브의 정규장 등락을 쓴다
                 if not fix and isinstance(ret.get(s.get("code")), (int, float)):
                     s["pct"] = round(float(ret[s["code"]]), 2)
+            have = {s.get("code") for s in stocks}
+            big = await _fetch(d, [{"code": c_, "name": n_, "role": "대형주", "theme": "반도체"} for c_, n_ in BIGCAPS if c_ not in have], fix)
+            big += [dict(s) for s in stocks if s.get("code") in {c_ for c_, _ in BIGCAPS}]
+            for s in big:
+                s.setdefault("close", close.get(s.get("code")))
+                if not fix and isinstance(ret.get(s.get("code")), (int, float)):
+                    s["pct"] = round(float(ret[s["code"]]), 2)
             if stocks:
-                out = {"date": d, "theme": sel["theme"], "stocks": stocks, "fetched_at": datetime.now().isoformat(timespec="seconds")}
+                out = {"date": d, "theme": sel["theme"], "stocks": stocks, "bigcaps": big, "fetched_at": datetime.now().isoformat(timespec="seconds")}
                 log(d, "brief", f"{sel['theme']}: " + ", ".join(f"{s['role']} {s['name']} {s['pct']:+.2f}% 외{s['foreign']:+,} 기{s['inst']:+,} 개{s['indiv']:+,} 대금{s['value']:,}" for s in stocks))
             else:
                 log(d, "brief", f"{sel['theme']}: 종목 행 없음(휴장?) → {{}}")

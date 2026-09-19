@@ -502,7 +502,7 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
                      _first_with(sents["s4"], lambda x: bool(num_tokens(x)) and not S4_OPEN.search(x), sents["s4"][-1]))
 
     # s5 뉴스와 맞물렸나 — '뉴스' 한 마디는 뉴스가 없는 날("뉴스 없이 수급만 움직인 날")에도 있다
-    if sents.get("s5") and not re.search(r"뉴스|이슈|소식", txt["s5"]):      # 브리핑은 '오늘 주요 이슈를 보겠습니다' 로 연다(JJ 2026-09-17)
+    if sents.get("s5") and not re.search(r"뉴스|이슈|소식|간밤 미국|미국 반도체지수", txt["s5"]):      # 브리핑은 '오늘 주요 이슈를 보겠습니다' 로 연다(JJ 2026-09-17)
         fail("s5", "뉴스 없음 — 뉴스와 맞물렸는지 말해야 한다(없으면 '뉴스 없이 수급만 움직인 날')", sents["s5"][0])
 
     # s6 시그니처 고정문 + 애프터마켓 문장(임계값 숫자는 헌터 ⑩)

@@ -90,14 +90,23 @@ def hshort(v: float | None) -> str:
     return hwon(a)
 
 
+def spoken_pct(v: float) -> str:
+    """말하는 등락률 — 소수 첫째 자리까지 버림(JJ 2026-09-18 "2.66% → 2.6%, 0.00 여기까지 말할 필요 없어"). 0.1 미만은 두 자리(0.04%)."""
+    a = abs(v)
+    if a < 0.1:
+        return f"{a:.2f}".rstrip("0").rstrip(".") + "%"
+    t = int(a * 10 + 1e-9) / 10
+    return f"{t:.1f}".rstrip("0").rstrip(".") + "%"
+
+
 def pct_s(v: float | None) -> str:
-    """지수 등락(코스피·코스닥)은 소수 2자리 — 화면 카드와 같은 숫자."""
-    return "미확정" if v is None else f"{abs(v):.2f}%"
+    """지수 등락(코스피·코스닥) — 말은 소수 첫째 자리(화면 카드는 원자료 두 자리)."""
+    return "미확정" if v is None else spoken_pct(v)
 
 
 def pct1(v: float | None) -> str:
-    """종목·업종·이슈 등락은 소수 1자리(A12)."""
-    return "미확정" if v is None else f"{abs(v):.1f}%"
+    """종목·업종·이슈 등락 — 소수 첫째 자리(버림)."""
+    return "미확정" if v is None else spoken_pct(v)
 
 
 def updn(v: float) -> str:

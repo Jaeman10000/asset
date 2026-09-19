@@ -51,10 +51,10 @@ def inputs_for(d: str, out_dir: Path | None = None) -> tuple[dict, dict]:
                                  inv_q=invs.get("kosdaq"), inv_src=invs.get("src"), inv_streak=c0.get("inv_streak") or {},
                                  intraday=c0.get("intraday"), moves=c0.get("moves") or [], event=c0.get("event"),
                                  callback=c0.get("callback"), stocks=c0.get("stocks") or [], schedule=c0.get("schedule") or [])
-    if not (c.get("brief_stocks") or {}).get("stocks"):
+    if not (c.get("brief_stocks") or {}).get("stocks") or "bigcaps" not in (c.get("brief_stocks") or {}):   # v7: 대형주 줄이 없던 옛 파일이면 다시 받는다
         sp = (out_dir or SCRATCH) / d / "brief_stocks.json"
         bs = load_json(sp) if sp.exists() else None
-        if not bs:
+        if not bs or "bigcaps" not in bs:
             import collect_brief
             sp.parent.mkdir(parents=True, exist_ok=True)
             bs = asyncio.run(collect_brief.main(d, out_path=sp))
@@ -219,7 +219,7 @@ def selftest() -> None:
     # 코스닥 수급 없음 → 지수 둘 + 코스피 판정 + 콜백
     c = copy.deepcopy(base)
     c["kosdaq"] = {}
-    o = go("no_kosdaq", c, must={"s3a": "0.70%"}, must_not={"s3a": "코스닥은 외국인"})
+    o = go("no_kosdaq", c, must={"s3a": "0.7%"}, must_not={"s3a": "코스닥은 외국인"})
     assert o["hunter"]["s3a"]["kosdaq"] is None
     # 어제 약속 없음 → 콜백 문장 생략, 외국인 연속일 사실
     c = copy.deepcopy(base)
@@ -262,7 +262,7 @@ def main() -> None:
     if args[0] == "--selftest":
         selftest()
         return
-    dates = [a for a in args if a.isdigit() and len(a) == 8]
+    dates = [a for a in args if a[:8].isdigit() and (len(a) == 8 or a[8:9] == "_")]   # 접미사 날짜(20260918_v7) 도 받는다
     avoid = {args[i + 1] for i, a in enumerate(args) if a == "--avoid" and i + 1 < len(args)}
     out_dir = next((Path(args[i + 1]) for i, a in enumerate(args) if a == "--out" and i + 1 < len(args)), None)
     attempt = next((int(args[i + 1]) for i, a in enumerate(args) if a == "--attempt" and i + 1 < len(args) and args[i + 1].isdigit()), 0)
