@@ -4,7 +4,7 @@
  * 말과 맞추기: 그림 조각은 그 장면의 i번째 문장이 시작할 때 켜진다(at = 문장 번호). 질문 문장에선 질문만 크게.
  * 데이터는 대본 파일(data/<날짜>/info_script.json → info.cards)에서 받는다 — 여기서 숫자를 만들지 않는다. */
 import React from "react";
-import { AbsoluteFill, Easing, interpolate } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile } from "remotion";
 import type { Props } from "../types";
 import type { Cue } from "../Scenes";
 import { FONT } from "../tokens";
@@ -619,6 +619,42 @@ export const HunterThumb: React.FC<Props> = (p) => {
           <div key={i} style={{ fontSize: l.size ?? 180, fontWeight: 900, lineHeight: 1.04, letterSpacing: "-0.04em", color: col(l.color), whiteSpace: "nowrap",
             WebkitTextStroke: `${Math.round((l.size ?? 180) / 14)}px #000`, paintOrder: "stroke fill", textShadow: "0 10px 30px rgba(0,0,0,0.8)" }}>{l.t}</div>
         ))}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+/* ───────── 썸네일 v3: 받은 그림(ChatGPT 등) 위에 글자만 다시 얹기 (JJ 2026-09-19 밤 "썸네일은 chatgpt한테 부탁할게") ─────────
+ * props.info.thumb3 = {src:"thumbsrc/…", srcW, srcH, blur:[{x,y,w,h}] (원본 좌표, 로고·가짜 간판 가리기), top(글자 시작 y, 1920 기준),
+ *                      lines:[{t, size, color:"white"|"yellow"}], tag?, brand?}
+ * 글자는 세로 50% 이상, 아래 약 16%(쇼츠 제목·버튼 자리)는 비운다. 숫자는 대본과 같은 것만. */
+export const OverlayThumb: React.FC<Props> = (p) => {
+  const info = infoOf(p) as Info & { thumb3?: { src: string; srcW: number; srcH: number; blur?: { x: number; y: number; w: number; h: number }[]; top?: number;
+    lines?: { t: string; size?: number; color?: string }[]; tag?: string; brand?: boolean; cover?: number } };
+  const th = info.thumb3;
+  if (!th) return <AbsoluteFill style={{ background: "#000" }} />;
+  const k = 1080 / th.srcW;
+  const Y = (c?: string) => (c === "yellow" ? "#FFE033" : "#FFFFFF");
+  return (
+    <AbsoluteFill style={{ background: "#05070C", fontFamily: FONT }}>
+      <Img src={staticFile(th.src)} style={{ position: "absolute", left: 0, top: 0, width: 1080, height: th.srcH * k }} />
+      {(th.blur ?? []).map((b, i) => (
+        <div key={i} style={{ position: "absolute", left: b.x * k, top: b.y * k, width: b.w * k, height: b.h * k, backdropFilter: "blur(44px) brightness(0.72)",
+          WebkitBackdropFilter: "blur(44px) brightness(0.72)", maskImage: "radial-gradient(ellipse closest-side at center, #000 55%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse closest-side at center, #000 55%, transparent 100%)" }} />
+      ))}
+      {/* 받은 그림에 박힌 원래 글자(아래쪽)는 완전히 덮는다 — cover 부터 불투명 */}
+      <AbsoluteFill style={{ background: `linear-gradient(180deg, rgba(5,7,12,0) ${(th.cover ?? 900) / 19.2 - 12}%, rgba(5,7,12,0.9) ${(th.cover ?? 900) / 19.2 - 3}%, #05070C ${(th.cover ?? 900) / 19.2}%, #05070C 100%)` }} />
+      {th.brand ? <div style={{ position: "absolute", right: 44, top: 46, fontSize: 48, fontWeight: 900, color: "#FFFFFF", textShadow: "0 4px 18px rgba(0,0,0,0.9)" }}>누가샀나<span style={{ color: PRED }}>.</span></div> : null}
+      <div style={{ position: "absolute", left: 30, right: 30, top: th.top ?? 560, textAlign: "center" }}>
+        {(th.lines ?? []).map((l, i) => {
+          const sz = l.size ?? 200;
+          return (
+            <div key={i} style={{ fontSize: sz, fontWeight: 900, lineHeight: 1.0, letterSpacing: "-0.045em", color: Y(l.color), whiteSpace: "nowrap",
+              WebkitTextStroke: `${Math.round(sz / 11)}px #000`, paintOrder: "stroke fill",
+              textShadow: l.color === "yellow" ? "0 0 40px rgba(255,170,0,0.75), 0 10px 26px rgba(0,0,0,0.9)" : "0 10px 26px rgba(0,0,0,0.9)" }}>{l.t}</div>
+          );
+        })}
+        {th.tag ? <div style={{ display: "inline-block", marginTop: 18, fontSize: 50, fontWeight: 900, color: "#0B0E14", background: "#FFE033", padding: "8px 26px", borderRadius: 12 }}>{th.tag}</div> : null}
       </div>
     </AbsoluteFill>
   );

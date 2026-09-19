@@ -7,7 +7,7 @@ import sample from "./sample_kr.json";
 import sampleUS from "./sample_us.json";
 import { CardUS } from "./ScenesUS";
 import { Thumb } from "./Thumb";
-import { DissectThumb, HunterThumb } from "./v4/DissectV1";
+import { DissectThumb, HunterThumb, OverlayThumb } from "./v4/DissectV1";
 
 const P = sample as unknown as Props;
 const PU = sampleUS as unknown as Props;
@@ -42,5 +42,7 @@ export const Root: React.FC = () => (
     <Still id="DissectThumb" component={DissectThumb as never} width={1080} height={1920} defaultProps={P} />
     {/* 기업 해부 썸네일 v2 — 경제사냥꾼 틀(글자 세로 50% 이상, JJ 9/19 밤) */}
     <Still id="HunterThumb" component={HunterThumb as never} width={1080} height={1920} defaultProps={P} />
+    {/* 받은 그림(ChatGPT) 위에 글자만 다시 — 로고 가리기·전망 표시·글자 세로 50%+ */}
+    <Still id="OverlayThumb" component={OverlayThumb as never} width={1080} height={1920} defaultProps={P} />
   </>
 );
