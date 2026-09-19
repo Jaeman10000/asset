@@ -53,6 +53,8 @@ const Bgm: React.FC<{ file: string; volume: number; total: number }> = ({ file, 
   return <Audio src={staticFile(file)} volume={v} loop />;
 };
 
+import { MascotLayer, type MascotBeat } from "./v4/MascotLayer";
+
 export const Video: React.FC<Props> = (p) => {
   useFonts();
   const fps = p.fps ?? 30;
@@ -87,6 +89,7 @@ export const Video: React.FC<Props> = (p) => {
           </Sequence>
         );
       })}
+      <MascotLayer beats={(p as unknown as { mascot_beats?: MascotBeat[] }).mascot_beats} />
     </AbsoluteFill>
   );
 };

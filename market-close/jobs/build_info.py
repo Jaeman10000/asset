@@ -63,7 +63,7 @@ def build(d: str, n: int = 1) -> dict:
             "badge": spec.get("badge") or "증시 정보", "brand": "누가샀나", "format": "info", "visual": "info",
             "title": spec.get("title") or "", "caption": spec.get("caption") or "", "threads": spec.get("threads") or "",
             "threads_reply": spec.get("threads_reply") or "", "info": spec.get("info") or {}, "scenes": scenes,
-            "kospi": {"close": None, "chg_pct": None}}
+            "kospi": {"close": None, "chg_pct": None}, "mascot_beats": spec.get("mascot_beats") or []}   # 주사위 탐정 출연(JJ 9/20)
     bgp = RENDER / "public" / "info" / f"{d}_{ed_of(n)}_bg.png"
     if bgp.exists():
         comp["info"] = {**comp["info"], "bg_image": f"info/{bgp.name}"}
