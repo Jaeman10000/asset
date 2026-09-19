@@ -30,6 +30,60 @@ def _wait_for_us_close(d: str, margin_min: int = 35) -> None:
         time.sleep(wait)
 
 
+def _lock_path(d: str, ed: str):
+    from _common import DATA
+    return DATA / d / f".produce_{ed}.lock"
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        import psutil
+        return psutil.pid_exists(pid)
+    except ImportError:
+        import os
+        try:
+            os.kill(pid, 0)
+            return True
+        except OSError:
+            return False
+
+
+def _produce_lock(d: str, ed: str) -> bool:
+    """음성·렌더 잠금을 잡는다. 이미 다른 살아 있는 프로세스가 잡고 있으면 False.
+    주인이 죽었거나 30분이 넘은 잠금은 버려진 것으로 보고 넘겨받는다."""
+    import os
+    p = _lock_path(d, ed)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(2):
+        try:
+            fd = os.open(str(p), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(fd, f"{os.getpid()} {datetime.now():%H:%M:%S}".encode())
+            os.close(fd)
+            return True
+        except FileExistsError:
+            try:
+                pid = int(p.read_text().split()[0])
+            except (OSError, ValueError, IndexError):
+                pid = -1
+            stale = time.time() - p.stat().st_mtime > 30 * 60
+            if pid == os.getpid():
+                return True
+            if pid > 0 and _pid_alive(pid) and not stale:
+                return False
+            p.unlink(missing_ok=True)
+    return False
+
+
+def _produce_unlock(d: str, ed: str) -> None:
+    import os
+    p = _lock_path(d, ed)
+    try:
+        if p.exists() and int(p.read_text().split()[0]) == os.getpid():
+            p.unlink()
+    except (OSError, ValueError, IndexError):
+        pass
+
+
 def main() -> None:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     d = args[0] if args else datetime.now().strftime("%Y%m%d")
@@ -144,12 +198,21 @@ def main() -> None:
         log(d, "run", "대본 확인 대기(HOLD) — 음성·렌더·리뷰·게시 보류")
         log(d, "run", f"끝 {time.time() - t0:.0f}s")
         return
-    if stage in ("all", "tts", "krx"):
-        import tts
-        asyncio.run(tts.main(d, ed))
-    if stage in ("all", "render", "krx"):
-        import render
-        render.run(d, "all", ed)
+    # 제작 잠금(9/18 사고): 15:55 자동 제작(tasks/evening_build.ps1)이 APPROVED 를 보고 도는 동안 세션이 손으로도 돌려
+    # 렌더 셋이 video.mp4 하나에 겹쳐 썼다(16:24·16:24·16:31 시작). 음성·렌더는 한 번에 하나만 돈다.
+    if stage in ("all", "tts", "render", "krx") and not _produce_lock(d, ed):
+        log(d, "run", f"다른 제작이 도는 중(data/{d}/.produce_{ed}.lock) → 이 실행은 음성·렌더를 건너뜀")
+        log(d, "run", f"끝 {time.time() - t0:.0f}s")
+        return
+    try:
+        if stage in ("all", "tts", "krx"):
+            import tts
+            asyncio.run(tts.main(d, ed))
+        if stage in ("all", "render", "krx"):
+            import render
+            render.run(d, "all", ed)
+    finally:
+        _produce_unlock(d, ed)
     if stage in ("all", "review", "krx"):
         import review
         review.write(d, ed)

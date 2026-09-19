@@ -415,6 +415,9 @@ export const S4B: React.FC<SC> = ({ p, cues }) => {
     return key === "pct" ? fmtPct2(v) : fmtRaw(v);
   };
   const cellCol = (s: Stock, key: ColKey) => (key === "value" ? "#E6E6E3" : colOf(s[key] ?? 0));
+  // 9/18: 1조 넘는 종목(+13,272)이 들어오면 38px 로는 칸이 겹친다 — 가장 긴 칸 글자 수로 크기를 줄인다
+  const maxLen = Math.max(0, ...stocks.flatMap((s) => COLS.map((c) => cellText(s, c.key).length)));
+  const cellFs = maxLen >= 7 ? 29 : maxLen >= 6 ? 33 : 38;
   return (
     <Shell p={p} cues={cues} badge="1차 자료" bg={<BgChip tone="neutral" dim={0.62} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 214, ...pop(d0) }}>
@@ -446,7 +449,7 @@ export const S4B: React.FC<SC> = ({ p, cues }) => {
                   return (
                     <div key={c.key} style={{ width: c.w, textAlign: "right", padding: "4px 8px", boxSizing: "border-box", borderRadius: 8,
                       boxShadow: lit ? `0 0 0 3px ${YEL}, 0 0 22px rgba(255,216,77,0.45)` : "none", background: lit ? "rgba(255,216,77,0.12)" : "transparent" }}>
-                      <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1.1, color: lit ? cellCol(s, c.key) : on ? cellCol(s, c.key) : SUBC, whiteSpace: "nowrap" }}>{cellText(s, c.key)}</div>
+                      <div style={{ fontSize: cellFs, fontWeight: 900, lineHeight: 1.1, color: lit ? cellCol(s, c.key) : on ? cellCol(s, c.key) : SUBC, whiteSpace: "nowrap" }}>{cellText(s, c.key)}</div>
                       {/* 강조 칸 아래 '= 말한 숫자': 원본 413 과 말의 '410억' 을 잇는다(100억 미만은 말과 같아 생략) */}
                       <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1, marginTop: 2, color: GREY, whiteSpace: "nowrap", height: 24 }}>{lit && c.key !== "pct" && v != null && Math.abs(v) >= 100 ? `= ${spoken(v)}` : ""}</div>
                     </div>
@@ -481,7 +484,7 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
   const news = (h.news ?? []).slice(0, 2);
   const nAt = news.map((n, k) => stepAt(`news:${k}`) ?? (n.theme ? say(n.theme) : undefined) ?? k * 3.5);
   const n0 = news.length ? Math.min(...nAt) : at("news", 0, 0);
-  const verdicts = (h.verdicts ?? []).slice(0, 2);
+  const verdicts = (h.verdicts ?? []).slice(0, 4);   // 9/18: 양쪽 칸에 종목 칩 둘씩(외국인이 산 곳 / 판 곳)
   // 양면 프레임 문장(a·b)이 길이 예산으로 빠진 날: 두 칸은 늦어도 첫 판정 문장 직전에 다 서 있어야 한다(판정 칩이 빈 칸에 붙지 않게)
   const vSteps = verdicts.map((_, k) => stepAt(`verdict:${k}`)).filter((x): x is number => x != null);
   const vCap = vSteps.length ? Math.min(...vSteps) - 0.3 : 1e9;
@@ -496,7 +499,7 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
   const decided = t >= v0;
   const glow = interpolate(t, [v0, v0 + 0.5], [0, 1], { ...CLAMP, easing: ease });
   const cards: { k: "a" | "b"; text: string; sub: string; at: number }[] = [
-    { k: "a", text: h.a, sub: "큰손 돈은 작다", at: a0 }, { k: "b", text: h.b, sub: "외국인·기관이 같이 산다", at: b0 }];
+    { k: "a", text: h.a, sub: h.a_sub ?? "큰손 돈은 작다", at: a0 }, { k: "b", text: h.b, sub: h.b_sub ?? "외국인·기관이 같이 산다", at: b0 }];
   const cbAnswer = cb ? (cb.text || cb.b || "") : "";
   const cbSize = Math.max(26, Math.min(40, Math.floor(600 / Math.max(1, cbAnswer.length))));
   const NT = 266, NH = 184, NG = 12, ABT = NT + 2 * (NH + NG), ABH = 232, CT = ABT + ABH + 20, KT = CT + 200, LT = KT + 78;
@@ -567,7 +570,7 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
           );
         })}
       </div>
-      {t >= c0 ? (
+      {h.condition && t >= c0 ? (
         <div style={{ position: "absolute", left: 64, right: 64, top: CT }}>
           <Card color={YEL} style={{ ...pop(c0), padding: "18px 30px" }}>
             <div style={{ fontSize: 32, fontWeight: 800, color: YEL }}>이 판정이 뒤집히는 조건</div>

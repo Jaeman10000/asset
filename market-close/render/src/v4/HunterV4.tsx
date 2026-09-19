@@ -249,6 +249,10 @@ export const S0H: React.FC<SC> = ({ p, cues }) => {
   const a0 = at("a", 0, 0);
   const b0 = at("b", 1, a0 + 3);
   const c0 = at("card", 2, b0 + 1.2);
+  // 첫 프레임(0.0초)부터 훅 글자가 서 있어야 한다(9/19 진단: 9/14~9/18 모두 0초 화면이 배경뿐, 글자는 0.45~0.75초에 떠올랐다).
+  // 쇼츠 피드는 넘길지 말지를 첫 1초 안에 정한다 — 영상 맨 앞 A 는 튀어나오는 효과 없이 처음부터 보인다.
+  const atStart = a0 <= 0.3;
+  const popA = (sec: number, dy?: number) => (atStart ? {} : pop(sec, dy));
   const ta = toneOf(h.a.num), tb = toneOf(h.b.num);
   const chg = p.kospi.chg_pct ?? 0;
   // 지수 카드는 코스피가 말에 나오는 훅(M1·M3·M5, 또는 라벨에 '코스피')에서만(C9). M6(두 주체 크기 비교)은 대신 비율 칩 '≈ 2배'
@@ -269,8 +273,8 @@ export const S0H: React.FC<SC> = ({ p, cues }) => {
     <Shell p={p} cues={cues} hideSub bg={<BgCity tone={ta} dim={0.15} />}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 240 }}>
         <div style={{ transform: `translateX(${shake}px)` }}>
-          <div style={{ fontSize: 50, fontWeight: 800, color: SUBC, textShadow: SH, ...pop(a0) }}>{h.a.label}</div>
-          <div style={{ fontSize: 184, fontWeight: 900, lineHeight: 1.02, letterSpacing: "-0.05em", whiteSpace: "nowrap", ...pop(a0 + 0.3, 30) }}><Grad tone={ta}>{h.a.value}</Grad></div>
+          <div style={{ fontSize: 50, fontWeight: 800, color: SUBC, textShadow: SH, ...popA(a0) }}>{h.a.label}</div>
+          <div style={{ fontSize: 184, fontWeight: 900, lineHeight: 1.02, letterSpacing: "-0.05em", whiteSpace: "nowrap", ...popA(a0 + 0.3, 30) }}><Grad tone={ta}>{h.a.value}</Grad></div>
         </div>
         <div style={{ position: "relative", height: 90, margin: "18px 0 6px" }}>
           {hit ? <div style={{ position: "absolute", left: 476 - ring / 2, top: 45 - ring / 2, width: ring, height: ring, borderRadius: "50%", border: `6px solid ${YEL}`, boxShadow: `0 0 40px ${YEL}`, opacity: (1 - burst) * 0.9 }} /> : null}
