@@ -202,7 +202,9 @@ def _texts(kind: str, script: dict, w: dict, od, rng: str) -> None:
         hashtags = "#미국주식 #나스닥 #유가 #금리 #환율 #FOMC #미장 #주간증시 #누가샀나"
     desc = (f"{script['title']}\n누가샀나 {k['label']} — {rng} 한 주 동안 돈이 어디서 빠져 어디로 갔는지, 그 주 뉴스와 함께 정리합니다. "
             f"평일엔 매일 저녁 5시에 국장 마감이 올라옵니다.\n\n{body}\n\n{DISCLAIMER}\n\n{hashtags}")
-    (od / "youtube_title.txt").write_text(script["title"], encoding="utf-8")
+    from _common import date_tail
+    yt_title = date_tail(script["title"], f"{rng} {'주간 결산' if kind == 'kr' else '미장 주간'}")   # 날짜는 제목 끝(JJ 2026-09-19)
+    (od / "youtube_title.txt").write_text(yt_title, encoding="utf-8")
     (od / "youtube_description.txt").write_text(desc[:5000], encoding="utf-8")
     (od / "youtube_tags.txt").write_text(", ".join(tags), encoding="utf-8")
     th = script["threads"].rstrip()
@@ -210,7 +212,7 @@ def _texts(kind: str, script: dict, w: dict, od, rng: str) -> None:
         th += "\n" + k["tag"]
     (od / "threads.txt").write_text(th, encoding="utf-8")
     (od / "threads_reply.txt").write_text(script["threads_reply"], encoding="utf-8")
-    (od / "UPLOAD.md").write_text(f"# {k['label']} {rng}\n\n제목: {script['title']}\n\n태그: {', '.join(tags)}\n\n쓰레드:\n{th}\n\n첫 답글:\n{script['threads_reply']}\n", encoding="utf-8")
+    (od / "UPLOAD.md").write_text(f"# {k['label']} {rng}\n\n제목: {yt_title}\n\n태그: {', '.join(tags)}\n\n쓰레드:\n{th}\n\n첫 답글:\n{script['threads_reply']}\n", encoding="utf-8")
     _log(f"업로드 문구 저장 → {od}")
 
 

@@ -114,3 +114,18 @@ def prev_trading_day(d: str) -> str:
     while dt.weekday() >= 5:
         dt -= timedelta(days=1)
     return dt.strftime("%Y%m%d")
+
+
+# 제목 끝 날짜(JJ 2026-09-19 "내일부터"): 날짜는 제목 맨 뒤에 붙인다 — 쇼츠 피드는 앞 40자만 보이니 훅이 먼저, 날짜는 검색용.
+# 앞에 붙은 날짜("9월 18일 …")는 떼어 뒤로 옮기고, 이미 뒤에 날짜가 있으면 그대로 둔다.
+_DATE_RE = r"(\d{1,2}월\s*\d{1,2}일|\d{1,2}/\d{1,2})"
+
+
+def date_tail(title: str, tail: str) -> str:
+    import re
+    t = (title or "").strip()
+    t = re.sub(r"^\s*" + _DATE_RE + r"\s*", "", t).strip()
+    t = re.sub(r"\s*#\d{2,4}(?=\s|$)", "", t).strip()          # 회차 번호(#010)는 넣지 않는다(SCRIPT_GUIDE §8)
+    if re.search(r"\|\s*[^|]*" + _DATE_RE + r"[^|]*$", t):
+        return t[:100]
+    return f"{t} | {tail}"[:100]

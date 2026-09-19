@@ -138,6 +138,10 @@ def texts(comp: dict, ed: str) -> dict:
         moves = [m for m in (comp.get("moves") or []) if (m.get("t") or 0) > 0]
         lead = max(moves, key=lambda m: m["t"])["theme"] if moves else None
         title = kr_title(comp, tr)
+        from _common import date_tail
+        _d = str(comp.get("date") or "")
+        if len(_d) == 8:
+            title = date_tail(title, f"{int(_d[4:6])}/{int(_d[6:8])} 국장 마감")
         label = "국내장 마감"
     else:
         ix = (comp.get("idx") or {}).get("IXIC") or (comp.get("index") or {}).get("QQQ") or {}
