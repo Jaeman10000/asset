@@ -1125,7 +1125,7 @@ type BeatV = { label: string; value: string; sub?: string; tone?: "up" | "down" 
 type Beat = { m: string; kind: "event" | "big" | "pair" | "flow" | "bars" | "cond" | "list" | "q" | "end"; day?: string; title?: string; text?: string;
   label?: string; value?: string; sub?: string; tone?: "up" | "down" | "neutral"; a?: BeatV; b?: BeatV;
   from?: { label: string; value: string }[]; to?: { label: string; value: string }; rows?: { label: string; v: number; vlabel: string }[];
-  cond?: string; then?: string; items?: string[] };
+  cond?: string; then?: string; items?: string[]; fs?: number };
 const BG_OF: Record<string, "wallst" | "fed" | "macro"> = { uw1: "wallst", uw2: "fed", uw3: "macro", uw4: "macro", uw5: "wallst", uw6: "wallst" };
 const beatTimes = (beats: Beat[], list: Cue[]) => {
   let from = 0, last = 0;
@@ -1160,7 +1160,7 @@ const BeatView: React.FC<{ b: Beat; at: number }> = ({ b, at }) => {
   if (b.kind === "big") return (
     <div style={wrap}>
       <DayChip d={b.day} mb={22} />
-      <BeatBig v={{ label: b.label ?? "", value: b.value ?? "", sub: b.sub, tone: b.tone }} fs={230} />
+      <BeatBig v={{ label: b.label ?? "", value: b.value ?? "", sub: b.sub, tone: b.tone }} fs={b.fs ?? 230} />
     </div>
   );
   if (b.kind === "pair") return (
