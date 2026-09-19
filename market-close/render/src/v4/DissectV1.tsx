@@ -28,7 +28,7 @@ export type DCard = {
   kind: "hook" | "line" | "bars" | "vs" | "hbars" | "picto" | "stack" | "big" | "check" | "split" | "q";
   head?: string; note?: string; note_at?: number; unit?: string;
   // hook
-  tag?: string; name?: string; a?: { label: string; value: string; series: number[] }; b?: { label: string; value: string; bars: number[] }; q?: string[];
+  tag?: string; name?: string; a?: { label: string; value: string; series: number[] }; b?: { label: string; value: string; bars: number[] }; q?: QLine[];
   // line
   series?: number[]; xlabels?: [string, string]; marks?: Mark[]; min?: number; max?: number;
   // bars / hbars
@@ -91,18 +91,26 @@ export const PaperShell: React.FC<{ p: Props; cues?: Cue[]; hideSub?: boolean; h
 };
 
 /** 질문 문장이 시작되면 그림을 흐리게 깔고 질문만 크게 */
-const QOverlay: React.FC<{ cues?: Cue[]; lines?: string[] }> = ({ cues, lines }) => {
+type QLine = string | { t: string; at?: number };
+const QOverlay: React.FC<{ cues?: Cue[]; lines?: QLine[] }> = ({ cues, lines }) => {
   const { t } = useT();
   const q = qCue(cues);
-  if (!q || t < q.start) return null;
-  const k = prog(t, q.start, 0.35);
-  const text = lines && lines.length ? lines : [q.text.trim()];
+  const L = (lines ?? []).map((l) => (typeof l === "string" ? { t: l, at: undefined as number | undefined } : l));
+  // 줄마다 at(문장 번호)이 있으면 그 문장에서 켜진다 — 선택지 두 개를 하나씩(JJ 9/19 "과연 …? 아니면 …?")
+  const start = L.length && L[0].at !== undefined ? cueAt(cues, L[0].at, 0) : q ? q.start : Infinity;
+  if (t < start) return null;
+  const k = prog(t, start, 0.35);
+  const text = L.length ? L : [{ t: (q?.text ?? "").trim(), at: undefined }];
   return (
-    <AbsoluteFill style={{ background: `rgba(243,239,231,${0.9 * k})` }}>
-      <div style={{ position: "absolute", left: 64, right: 64, top: 640, opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}>
-        {text.map((l, i) => (
-          <div key={i} style={{ fontSize: 104, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.045em", wordBreak: "keep-all", color: i === text.length - 1 ? PRED : INK }}>{l}</div>
-        ))}
+    <AbsoluteFill style={{ background: `rgba(243,239,231,${0.96 * k})` }}>
+      <div style={{ position: "absolute", left: 64, right: 64, top: 600, opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}>
+        {text.map((l, i) => {
+          const on = l.at === undefined || t >= cueAt(cues, l.at, 0);
+          return (
+            <div key={i} style={{ fontSize: 104, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.045em", wordBreak: "keep-all", color: i === text.length - 1 ? PRED : INK,
+              opacity: on ? 1 : 0, marginTop: i > 0 && L.some((x) => x.at !== undefined) ? 24 : 0 }}>{l.t}</div>
+          );
+        })}
       </div>
     </AbsoluteFill>
   );
@@ -169,14 +177,14 @@ const Hook: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
       <div style={{ position: "absolute", left: 64, width: W, top: 560, height: 860, display: "flex", gap: 36 }}>
         <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", position: "relative" }}>
           <div style={{ fontSize: 46, fontWeight: 900, color: SUB }}>{a.label}</div>
-          <div style={{ fontSize: 108, fontWeight: 900, color: PBLUE, letterSpacing: "-0.04em", lineHeight: 1.1 }}>{a.value}</div>
+          <div style={{ fontSize: a.value.length > 7 ? 70 : 108, fontWeight: 900, color: PBLUE, letterSpacing: "-0.04em", lineHeight: 1.1, whiteSpace: "nowrap" }}>{a.value}</div>
           <svg width={402} height={520} style={{ position: "absolute", left: 28, bottom: 30, overflow: "visible" }}>
             <SvgLine series={a.series} w={402} h={520} color={PBLUE} k={k} area />
           </svg>
         </div>
         <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", position: "relative" }}>
           <div style={{ fontSize: 46, fontWeight: 900, color: SUB }}>{b.label}</div>
-          <div style={{ fontSize: 108, fontWeight: 900, color: PRED, letterSpacing: "-0.04em", lineHeight: 1.1 }}>{b.value}</div>
+          <div style={{ fontSize: b.value.length > 7 ? 70 : 108, fontWeight: 900, color: PRED, letterSpacing: "-0.04em", lineHeight: 1.1, whiteSpace: "nowrap" }}>{b.value}</div>
           <div style={{ position: "absolute", left: 28, right: 28, bottom: 30, height: 520, display: "flex", alignItems: "flex-end", gap: 16 }}>
             {b.bars.map((v, i) => (
               <div key={i} style={{ flex: 1, height: `${(v / mb) * 100 * Math.min(1, Math.max(0, k * b.bars.length - i + 0.6))}%`, background: i === b.bars.length - 1 ? PRED : "rgba(224,49,43,0.45)", borderRadius: "10px 10px 0 0" }} />
@@ -225,7 +233,7 @@ const Line: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         ) : null}
       </svg>
       {c.note ? <Note c={c} cues={cues} top={top + H + 90} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -274,7 +282,7 @@ const Bars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         })}
       </svg>
       {c.note ? <Note c={c} cues={cues} top={top + H + 110} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -313,7 +321,7 @@ const Vs: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
     <PaperShell p={p} cues={cues} head={c.head}>
       {c.left ? <Panel d={c.left} top={460} fb={0.1} /> : null}
       {c.right ? <Panel d={c.right} top={960} fb={2.4} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -350,7 +358,7 @@ const HBars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         })}
       </div>
       {c.note ? <Note c={c} cues={cues} top={top + rh * rows.length + 30} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -378,7 +386,7 @@ const Picto: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         })}
       </div>
       {c.note ? <Note c={c} cues={cues} top={1340} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -412,7 +420,7 @@ const Stack: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         })}
       </div>
       {c.note ? <Note c={c} cues={cues} top={1340} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -440,7 +448,7 @@ const Big: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         </div>
       ) : null}
       {c.note ? <Note c={c} cues={cues} top={1340} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -472,7 +480,7 @@ const Check: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           );
         })}
       </div>
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -499,7 +507,7 @@ const Split: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
     <PaperShell p={p} cues={cues} head={c.head}>
       {c.up ? <Box d={c.up} dir="up" top={480} fb={0.2} /> : null}
       {c.down ? <Box d={c.down} dir="down" top={900} fb={2.6} /> : null}
-      <QOverlay cues={cues} />
+      <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
 };
@@ -533,9 +541,9 @@ export const DISSECT_COMP: Record<string, React.FC<SC>> = Object.fromEntries([
 ]);
 
 /* ───────── 썸네일(1080×1920 스틸) — 종이 바탕 + 맞선 두 그림 + 3줄 ─────────
- * props.info.thumb = {name, lines:[{t, color?}] (3줄까지), a:{series}, b:{bars}} — a·b 가 없으면 cards.i0 의 것을 쓴다. */
+ * props.info.thumb = {name, lines:[{t, color?}] (3줄까지), a:{series}, b:{bars, label?(범례, 기본 "분기 영업이익")}} — a·b 가 없으면 cards.i0 의 것을 쓴다. */
 export const DissectThumb: React.FC<Props> = (p) => {
-  const info = infoOf(p) as Info & { thumb?: { lines?: { t: string; color?: string }[]; a?: { series: number[] }; b?: { bars: number[] } } };
+  const info = infoOf(p) as Info & { thumb?: { lines?: { t: string; color?: string; size?: number }[]; a?: { series: number[] }; b?: { bars: number[]; label?: string }; legend?: [string, string] } };
   const th = info.thumb ?? {};
   const h0 = info.cards?.i0;
   const series = th.a?.series ?? h0?.a?.series ?? [];
@@ -550,12 +558,12 @@ export const DissectThumb: React.FC<Props> = (p) => {
       <div style={{ position: "absolute", right: 64, top: 48, fontSize: 52, fontWeight: 900, color: "#FFFFFF" }}>누가샀나<span style={{ color: PRED }}>.</span></div>
       <div style={{ position: "absolute", left: 64, right: 64, top: 230 }}>
         {lines.map((l, i) => (
-          <div key={i} style={{ fontSize: i === 0 ? 150 : 132, fontWeight: 900, lineHeight: 1.12, letterSpacing: "-0.05em", color: C(l.color), wordBreak: "keep-all" }}>{l.t}</div>
+          <div key={i} style={{ fontSize: (i === 0 ? 150 : 132) * (l.size ?? 1), fontWeight: 900, lineHeight: 1.12, letterSpacing: "-0.05em", color: C(l.color), wordBreak: "keep-all" }}>{l.t}</div>
         ))}
       </div>
       <div style={{ position: "absolute", left: 64, width: W, top: 800, height: 860, background: "#FFFFFF", borderRadius: 36, boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}>
         <div style={{ position: "absolute", left: 40, right: 40, bottom: 26, display: "flex", justifyContent: "space-between", fontSize: 40, fontWeight: 900 }}>
-          <span style={{ color: PBLUE }}>━ 주가</span><span style={{ color: PRED }}>■ 분기 영업이익</span>
+          <span style={{ color: PBLUE }}>━ 주가</span><span style={{ color: PRED }}>■ {th.b?.label ?? "분기 영업이익"}</span>
         </div>
         <div style={{ position: "absolute", left: 40, right: 40, bottom: 100, height: 600, display: "flex", alignItems: "flex-end", gap: 22 }}>
           {bars.map((v, i) => <div key={i} style={{ flex: 1, height: `${(v / mb) * 100}%`, background: i === bars.length - 1 ? PRED : "rgba(224,49,43,0.35)", borderRadius: "14px 14px 0 0" }} />)}
@@ -563,6 +571,54 @@ export const DissectThumb: React.FC<Props> = (p) => {
         <svg width={W - 80} height={600} style={{ position: "absolute", left: 40, top: 60, overflow: "visible" }}>
           <SvgLine series={series} w={W - 80} h={600} color={PBLUE} k={1} stroke={16} />
         </svg>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+/* ───────── 썸네일 v2(경제사냥꾼 틀, JJ 2026-09-19 밤) ─────────
+ * "글씨가 세로로 50% 이상 차지해서 그 글에 눈이 가게." 위쪽은 그림(인물 사진 자리 — 라이선스 확인된 사진이 없으면 우리가 그린 그림),
+ * 아래쪽 절반 이상은 검은 테두리 흰·노랑 초대형 글자. props.info.thumb2 = {lines:[{t, size(px), color:"yellow"|"white"|"red"}], tag} */
+const Knife: React.FC<{ x: number; y: number; s: number; rot: number }> = ({ x, y, s, rot }) => (
+  <g transform={`translate(${x},${y}) rotate(${rot}) scale(${s})`}>
+    <path d="M-18 -170 L18 -170 L22 60 Q0 150 -22 60 Z" fill="#E6EAF0" stroke="#0B0E14" strokeWidth={6} />
+    <path d="M-4 -165 L4 -165 L6 50 L-6 50 Z" fill="#FFFFFF" opacity={0.7} />
+    <rect x={-30} y={-178} width={60} height={16} rx={6} fill="#9AA3AF" stroke="#0B0E14" strokeWidth={5} />
+    <rect x={-20} y={-300} width={40} height={124} rx={12} fill="#2A2F3A" stroke="#0B0E14" strokeWidth={5} />
+    {[-40, 0, 40].map((dx) => <line key={dx} x1={dx} y1={-330} x2={dx} y2={-420} stroke="#FFFFFF" strokeWidth={8} strokeLinecap="round" opacity={0.55} />)}
+  </g>
+);
+
+export const HunterThumb: React.FC<Props> = (p) => {
+  const info = infoOf(p) as Info & { thumb2?: { lines?: { t: string; size?: number; color?: string }[]; tag?: string } };
+  const th = info.thumb2 ?? {};
+  const h0 = info.cards?.i0;
+  const series = h0?.a?.series ?? [];
+  const bars = h0?.b?.bars ?? [];
+  const mb = Math.max(1e-9, ...bars);
+  const col = (c?: string) => (c === "yellow" ? "#FFE14D" : c === "red" ? "#FF4A3D" : "#FFFFFF");
+  return (
+    <AbsoluteFill style={{ background: "#0B0E14", fontFamily: FONT }}>
+      <AbsoluteFill style={{ background: "radial-gradient(ellipse at 50% 22%, #1E2A44 0%, #0B0E14 70%)" }} />
+      {/* 위 그림: 개인 누적 매수 막대(빨강) 위로 무너지는 주가 선(파랑), 떨어지는 칼날 */}
+      <div style={{ position: "absolute", left: 60, right: 60, top: 250, height: 560, display: "flex", alignItems: "flex-end", gap: 18, opacity: 0.9 }}>
+        {bars.map((v, i) => <div key={i} style={{ flex: 1, height: `${(v / mb) * 100}%`, background: i === bars.length - 1 ? "#FF4A3D" : "rgba(255,74,61,0.45)", borderRadius: "12px 12px 0 0" }} />)}
+      </div>
+      <svg width={1080} height={900} style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}>
+        <g transform="translate(60,230)"><SvgLine series={series} w={960} h={560} color="#3D8BFF" k={1} stroke={18} /></g>
+        <Knife x={820} y={420} s={1.05} rot={18} />
+      </svg>
+      <div style={{ position: "absolute", left: 40, top: 40, display: "flex", gap: 14, alignItems: "center" }}>
+        <div style={{ fontSize: 46, fontWeight: 900, color: "#0B0E14", background: "#FFE14D", padding: "8px 20px", borderRadius: 10 }}>{th.tag ?? "기업 해부"}</div>
+        <div style={{ fontSize: 46, fontWeight: 900, color: "#FFFFFF" }}>누가샀나<span style={{ color: "#FF4A3D" }}>.</span></div>
+      </div>
+      {/* 아래 글자: 세로 50% 이상 */}
+      <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(11,14,20,0) 40%, rgba(11,14,20,0.85) 52%, #0B0E14 62%)" }} />
+      <div style={{ position: "absolute", left: 30, right: 30, bottom: 60, textAlign: "center" }}>
+        {(th.lines ?? []).map((l, i) => (
+          <div key={i} style={{ fontSize: l.size ?? 180, fontWeight: 900, lineHeight: 1.04, letterSpacing: "-0.04em", color: col(l.color), whiteSpace: "nowrap",
+            WebkitTextStroke: `${Math.round((l.size ?? 180) / 14)}px #000`, paintOrder: "stroke fill", textShadow: "0 10px 30px rgba(0,0,0,0.8)" }}>{l.t}</div>
+        ))}
       </div>
     </AbsoluteFill>
   );

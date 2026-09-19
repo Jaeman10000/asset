@@ -161,7 +161,8 @@ def thumb_dissect(d: str, n: int = 1) -> None:
     save_json(props, comp)
     od = out_dir(d, ed)
     npx = "npx.cmd" if sys.platform == "win32" else "npx"
-    r = subprocess.run([npx, "remotion", "still", "src/index.ts", "DissectThumb", str(od / "thumb_A.jpg"), f"--props={props}", "--log=error", "--image-format=jpeg", "--jpeg-quality=92"],
+    comp_id = "HunterThumb" if (comp.get("info") or {}).get("thumb2") else "DissectThumb"   # thumb2 = 경제사냥꾼 틀(글자 세로 50%+, JJ 9/19 밤)
+    r = subprocess.run([npx, "remotion", "still", "src/index.ts", comp_id, str(od / "thumb_A.jpg"), f"--props={props}", "--log=error", "--image-format=jpeg", "--jpeg-quality=92"],
                        cwd=str(RENDER), capture_output=True, text=True, encoding="utf-8", timeout=300)
     log(d, "info", f"썸네일(기업 해부) {'완료' if r.returncode == 0 else '실패 ' + (r.stderr or r.stdout)[-300:]}")
 
