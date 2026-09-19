@@ -101,11 +101,18 @@ def stage_script(kind: str, date: str, fetch: bool = True) -> dict:
             sc["tts"] = ov["scenes"][sc["id"]]
             if sc.get("sub") is not None and sc["id"] not in ("w0", "uw0"):
                 sc["sub"] = sc["tts"]
-    for key in ("title", "threads", "threads_reply"):
+    for key in ("title", "threads", "threads_reply", "hook_parts"):
         if ov.get(key):
             out[key] = ov[key]
+    if ov.get("order"):   # 장면 순서 바꾸기(9/20: 답을 끝에 — 금리 장면 uw2 를 뒤로). 화면은 장면 id 를 따른다
+        rank = {sid: i for i, sid in enumerate(ov["order"])}
+        out["scenes"] = sorted(out["scenes"], key=lambda sc: rank.get(sc["id"], 99))
     from checks import forbidden
     issues = {sc["id"]: forbidden.find(sc["tts"]) for sc in out["scenes"] if forbidden.find(sc["tts"])}
+    from _common import pct_speech_issues
+    for sc in out["scenes"]:
+        if pb := pct_speech_issues(sc["tts"]):
+            issues.setdefault(sc["id"], []).extend([f"말하는 % {x}" for x in pb])
     th_bad = _check_threads(out["threads"], out["threads_reply"], k["tag"])   # override로 덮어써도 검사는 돈다
     if th_bad:
         issues["threads"] = th_bad

@@ -1,6 +1,8 @@
 """공통: 경로, 백엔드 임포트, 숫자 파싱, 키움 호출 래퍼."""
 from __future__ import annotations
 
+import re
+
 import json
 import os
 import sys
@@ -129,3 +131,15 @@ def date_tail(title: str, tail: str) -> str:
     if re.search(r"\|\s*[^|]*" + _DATE_RE + r"[^|]*$", t):
         return t[:100]
     return f"{t} | {tail}"[:100]
+
+
+def pct_speech_issues(text: str) -> list[str]:
+    """말하는 %는 소수 첫째 자리까지, .0 은 뗀다(JJ 9/18 '2.66% → 2.6%', 9/19 '5.01% → 5%').
+    기준금리 수준(일본 1.25%, 3.75에서 4%)만 허용 — 시장 금리(10년물 5.01%)는 말할 땐 5%."""
+    bad = []
+    for sent in re.split(r"(?<=[.?!])\s+", text):
+        for m in re.finditer(r"(\d+\.\d{2,}|\d+\.0)%", sent):
+            if re.search(r"기준금리|정책금리|금리를\s*\S*\s*(올려|내려)", sent) and not m.group(1).endswith(".0"):
+                continue
+            bad.append(m.group(0))
+    return bad

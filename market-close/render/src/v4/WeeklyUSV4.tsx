@@ -45,7 +45,7 @@ type UW = {
   sectors?: Sector[]; megacaps?: Mega[]; calendar_next?: Cal[]; news?: News[];
   releases?: Release[]; data_releases?: Release[]; macro?: Release[];
   holidays?: { d: string; name_ko?: string }[];
-  hook_us?: { key?: string; name: string; v: number; unit?: "%" | "bp" } | null;
+  hook_us?: { key?: string; name: string; v: number; unit?: "%" | "bp"; val_text?: string; word?: string; qcard?: "SOX" | "SPX" | "IXIC" } | null;   // val_text·word·qcard = 사건 훅(9/20 "금리 인상")
   view_us?: string | { text?: string } | null; view?: string | { text?: string } | null;
   kr_watch?: Watch | Watch[] | null; monday_watch?: Watch | Watch[] | null;
   fomc_odds?: { before?: number | null; after?: number | null; label?: string; src?: string } | null;
@@ -283,19 +283,22 @@ export const UW0: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues
   const sess = sessionsOf(w);
   const qc = list.find((c) => isQ(c.text));
   if (qc && t >= qc.start) {
-    // 질문에 반도체가 나오면 반도체 지수 카드, 아니면 S&P500 카드
-    const qSox = /반도체/.test(qc.text) && w.idx?.SOX?.week_pct != null;
+    // 질문이 둘이면(과연 …? 아니면 …?) 지금 말하는 질문을 띄운다
+    const qNow = [...list].reverse().find((c) => isQ(c.text) && t >= c.start) ?? qc;
+    // 질문에 반도체가 나오거나 훅이 반도체 카드를 고르면 반도체 지수 카드, 아니면 S&P500 카드
+    const qSox = (w.hook_us?.qcard === "SOX" || /반도체/.test(qc.text)) && w.idx?.SOX?.week_pct != null;
+    const onlyPlus = ["SPX", "IXIC", "DJI"].every((k) => ((w.idx as Record<string, Ser | undefined> | undefined)?.[k]?.week_pct ?? 0) <= 0);
     const qs = qSox ? w.idx!.SOX : spx;
     const qChg = qs?.week_pct ?? null, qLast = lastClose(qs);
     return (
       <UShell p={p} cues={cues} hideSub bg={<UBg name="wallst" tone={toneOf(chg)} dim={0.22} />}>
-        <QBig text={qc.text} at={qc.start} />
+        <QBig text={qNow.text} at={qNow.start} />
         {qLast != null ? (
           <div style={{ position: "absolute", left: 64, right: 64, top: 1010, ...pop(qc.start + 0.25) }}>
             <Card color={colOf(qChg)} strong={qSox} style={{ display: "inline-block", minWidth: 660 }}>
               <div style={{ fontSize: 40, fontWeight: 800, color: "#CFD6E4" }}>{qSox ? "필라델피아 반도체" : "S&P500"} <span style={{ color: SUBC, fontWeight: 700 }}>· 이번 주</span></div>
               <div style={{ fontSize: 118, fontWeight: 800, lineHeight: 1.05, marginTop: 6 }}>{numTxt(qLast)}</div>
-              <div style={{ fontSize: 64, fontWeight: 800, color: colOf(qChg), marginTop: 6 }}>{arrow(qChg) || "−"} {Math.abs(qChg ?? 0).toFixed(2)}%{qSox ? <span style={{ fontSize: 34, color: SUBC, fontWeight: 700, marginLeft: 14 }}>지수 중 유일한 플러스</span> : null}</div>
+              <div style={{ fontSize: 64, fontWeight: 800, color: colOf(qChg), marginTop: 6 }}>{arrow(qChg) || "−"} {Math.abs(qChg ?? 0).toFixed(2)}%{qSox && onlyPlus ? <span style={{ fontSize: 34, color: SUBC, fontWeight: 700, marginLeft: 14 }}>지수 중 유일한 플러스</span> : null}</div>
               {qs?.prev_close != null ? <div style={{ fontSize: 34, fontWeight: 700, color: SUBC, marginTop: 10 }}>지난주 마감 {numTxt(qs.prev_close)}에서</div> : null}
               {pendingDays(w).length ? <div style={{ marginTop: 16 }}><Pending w={w} /></div> : null}
             </Card>
@@ -310,7 +313,7 @@ export const UW0: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues
   let runStart = lastIdx - 1;
   const dir = runStart >= 0 && pcts[runStart].v != null ? Math.sign(pcts[runStart].v!) : 0;
   while (dir !== 0 && runStart > 0 && pcts[runStart - 1].v != null && Math.sign(pcts[runStart - 1].v!) === dir) runStart--;
-  const run = dir !== 0 ? pcts.slice(runStart, lastIdx) : [];
+  const run = !w.hook_us?.val_text && dir !== 0 ? pcts.slice(runStart, lastIdx) : [];   // 사건 훅이면 연속 하락 칸 대신 사건
   const lastDay = pcts[lastIdx];
   const flipped = !!lastDay && lastDay.v != null && dir !== 0 && Math.sign(lastDay.v) === -dir;
   const turnIdx = findIdx(list, (s) => /되돌|반등|돌아섰|회복|올랐/.test(s), 1);
@@ -318,8 +321,8 @@ export const UW0: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues
   const stage2 = flipped && t >= turnAt;
   const hero = pickHero(w);
   const heroTone = toneOf(hero?.v);
-  const heroVal = hero ? (hero.unit === "bp" ? bpTxt(hero.v) : pctTxt(hero.v)) : "";
-  const word = hero ? (hero.v > 0 ? "올랐다" : hero.v < 0 ? "내렸다" : "제자리") : "";
+  const heroVal = w.hook_us?.val_text ?? (hero ? (hero.unit === "bp" ? bpTxt(hero.v) : pctTxt(hero.v)) : "");
+  const word = w.hook_us?.word ?? (hero ? (hero.v > 0 ? "올랐다" : hero.v < 0 ? "내렸다" : "제자리") : "");
   const dayBox = (x: { d: string; v: number | null }, at: number, strong = false): React.CSSProperties & { key?: string } => ({
     ...pop(at, 16), flex: 1, borderRadius: 20, padding: "16px 10px", textAlign: "center", border: `${strong ? 3 : 2.5}px solid ${colOf(x.v)}`,
     background: "rgba(6,9,18,0.8)", boxShadow: `0 0 ${strong ? 34 : 22}px ${colOf(x.v)}${strong ? "AA" : "66"}`,
@@ -715,13 +718,13 @@ export const UW2: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues
                 <Card key={r.label} color={colOf(r.v)} strong={on} dim={sayRate && !on ? 0.55 : 0}
                   style={{ ...pop(rateAt + 0.15 + k * 0.3, 20), flex: 1, padding: "24px 30px", transform: on ? "scale(1.05)" : "none", transformOrigin: "center top", zIndex: on ? 2 : 1 }}>
                   <div style={{ fontSize: 38, fontWeight: 800, color: "#CFD6E4" }}>미국 {r.label} <span style={{ fontSize: 26, color: SUBC, fontWeight: 700 }}>{r.label === "2년물" ? "· 당장의 정책" : "· 먼 앞날의 경기"}</span></div>
-                  <div style={{ fontSize: 132, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.02, marginTop: 4 }}><Grad tone={toneOf(r.v)}>{bpTxt(r.v)}</Grad></div>
+                  <div style={{ fontSize: 92, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.1, marginTop: 8, whiteSpace: "nowrap" }}><Grad tone={toneOf(r.v)}>{sgn(r.v ?? 0)}{(Math.abs(r.v ?? 0) / 100).toFixed(2)}%p</Grad></div>
                   {prev != null && lastV != null ? <div style={{ fontSize: 36, fontWeight: 900, marginTop: 6 }}>{prev.toFixed(2)}% <span style={{ color: SUBC }}>→</span> {lastV.toFixed(2)}%</div> : null}
                 </Card>
               );
             })}
           </div>
-          {t >= interpAt ? (
+          {t >= interpAt && (w as unknown as { rates_interp?: boolean }).rates_interp !== false ? (   /* 대사와 다른 자동 해석이면 끈다(9/20) */
             <Card color={YEL} style={{ ...pop(interpAt, 20), marginTop: 30, padding: "26px 34px" }}>
               <div style={{ fontSize: 46, fontWeight: 900, lineHeight: 1.25, wordBreak: "keep-all" }}>9월 한 번은 <span style={{ color: YEL }}>받아들임</span> · 계속 올린다고는 <span style={{ color: YEL }}>안 봄</span></div>
               <div style={{ fontSize: 26, fontWeight: 700, color: SUBC, marginTop: 10 }}>2년물(당장 정책)이 10년물(먼 앞날)보다 더 올랐다 · 숫자로 본 해석, 추천 아님</div>
@@ -897,6 +900,8 @@ export const UW4: React.FC<{ p: Props; sub: string; cues?: Cue[] }> = ({ p, cues
   });
   // 순서가 뒤집히지 않게(뒤 카드가 앞 카드보다 먼저 뜨지 않게)
   for (let k = 1; k < reveal.length; k++) if (reveal[k].at < reveal[k - 1].at) reveal[k] = { ...reveal[k], at: reveal[k - 1].at + 0.3 };
+  // 대사가 카드 날짜를 차례로 부르지 않는 편(9/20)은 처음부터 다 띄운다 — 빈 화면 3초 금지
+  if ((w as unknown as { news_reveal?: string }).news_reveal === "all") reveal.forEach((r, k) => { reveal[k] = { at: 0.15 + k * 0.25, idx: -1 }; });
   if (cur && isQ(cur.text) && !reveal.some((r) => r.idx === ci)) {
     return (
       <UShell p={p} cues={cues} hideSub bg={<UBg name="macro" tone="neutral" dim={0.36} />}>

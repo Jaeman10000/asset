@@ -28,7 +28,7 @@ export type DCard = {
   kind: "hook" | "line" | "bars" | "vs" | "hbars" | "picto" | "stack" | "big" | "check" | "split" | "q";
   head?: string; note?: string; note_at?: number; unit?: string;
   // hook
-  tag?: string; name?: string; a?: { label: string; value: string; series: number[] }; b?: { label: string; value: string; bars: number[] }; q?: QLine[];
+  tag?: string; name?: string; a?: { label: string; value: string; series: number[] }; b?: { label: string; value: string; bars: number[]; labels?: string[] }; q?: QLine[];
   // line
   series?: number[]; xlabels?: [string, string]; marks?: Mark[]; min?: number; max?: number;
   // bars / hbars
@@ -73,7 +73,7 @@ export const PaperShell: React.FC<{ p: Props; cues?: Cue[]; hideSub?: boolean; h
         <div style={{ height: 8, width: 176, background: PRED, borderRadius: 4, marginTop: 8 }} />
       </div>
       <div style={{ position: "absolute", right: 64, top: 62, display: "flex", gap: 14, alignItems: "center" }}>
-        <div style={{ fontSize: 34, fontWeight: 900, color: "#FFFFFF", background: INK, padding: "10px 22px", borderRadius: 12 }}>기업 해부</div>
+        <div style={{ fontSize: 34, fontWeight: 900, color: "#FFFFFF", background: INK, padding: "10px 22px", borderRadius: 12 }}>{(p as unknown as { badge?: string }).badge ?? "기업 해부"}</div>
         <div style={{ fontSize: 38, fontWeight: 800, color: SUB }}>{md}</div>
       </div>
       {head ? (
@@ -185,9 +185,11 @@ const Hook: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
         <div style={{ flex: 1, background: "#FFFFFF", borderRadius: 28, padding: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", position: "relative" }}>
           <div style={{ fontSize: 46, fontWeight: 900, color: SUB }}>{b.label}</div>
           <div style={{ fontSize: b.value.length > 7 ? 70 : 108, fontWeight: 900, color: PRED, letterSpacing: "-0.04em", lineHeight: 1.1, whiteSpace: "nowrap" }}>{b.value}</div>
-          <div style={{ position: "absolute", left: 28, right: 28, bottom: 30, height: 520, display: "flex", alignItems: "flex-end", gap: 16 }}>
+          <div style={{ position: "absolute", left: 28, right: 28, bottom: 30, height: 520, display: "flex", alignItems: "flex-end", gap: b.bars.length > 12 ? 3 : 16 }}>
             {b.bars.map((v, i) => (
-              <div key={i} style={{ flex: 1, height: `${(v / mb) * 100 * Math.min(1, Math.max(0, k * b.bars.length - i + 0.6))}%`, background: i === b.bars.length - 1 ? PRED : "rgba(224,49,43,0.45)", borderRadius: "10px 10px 0 0" }} />
+              <div key={i} style={{ flex: 1, height: `${(v / mb) * 100 * Math.min(1, Math.max(0, k * b.bars.length - i + 0.6))}%`, background: b.labels ? PRED : i === b.bars.length - 1 ? PRED : "rgba(224,49,43,0.45)", borderRadius: "10px 10px 0 0", position: "relative" }}>
+                {b.labels?.[i] ? <div style={{ position: "absolute", left: 0, right: 0, bottom: 10, textAlign: "center", fontSize: 30, fontWeight: 900, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "pre-line" }}>{b.labels[i]}</div> : null}
+              </div>
             ))}
           </div>
         </div>
@@ -248,13 +250,16 @@ const Note: React.FC<{ c: DCard; cues?: Cue[]; top: number }> = ({ c, cues, top 
   );
 };
 
-/** 세로 막대 — 분기 이익 등. est=전망(빗금), hl=강조 */
+/** 세로 막대 — 분기 이익 등. est=전망(빗금), hl=강조. 음수가 있으면 0선을 가운데 두고 아래로(파랑) */
 const Bars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   const { t } = useT();
   const bars = c.bars ?? [];
   const H = 700, top = 520;
+  const neg = bars.some((b) => b.v < 0);
   const mx = Math.max(1e-9, ...bars.map((b) => Math.abs(b.v)));
-  const n = bars.length, gap = 22, bw = (W - gap * (n - 1)) / n;
+  const n = bars.length, gap = n > 8 ? 12 : 22, bw = (W - gap * (n - 1)) / n;
+  const base = neg ? H * 0.5 : H;
+  const span = neg ? H * 0.42 : H * 0.86;
   return (
     <PaperShell p={p} cues={cues} head={c.head}>
       <svg width={W} height={H + 90} style={{ position: "absolute", left: 64, top, overflow: "visible" }}>
@@ -264,18 +269,21 @@ const Bars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
             <line x1="0" y1="0" x2="0" y2="18" stroke={PRED} strokeWidth="8" />
           </pattern>
         </defs>
-        <line x1={0} x2={W} y1={H} y2={H} stroke={INK} strokeWidth={3} />
+        <line x1={0} x2={W} y1={base} y2={base} stroke={INK} strokeWidth={3} />
         {bars.map((b, i) => {
           const at = cueAt(cues, b.at, 0.1 + i * 0.25);
           const g = prog(t, at, 0.7);
-          const h = (Math.abs(b.v) / mx) * H * 0.86 * g;
+          const h = (Math.abs(b.v) / mx) * span * g;
           const x = i * (bw + gap);
-          const col = b.color ? C(b.color) : b.hl || b.est ? PRED : "#B9B2A7";
+          const down = b.v < 0;
+          const col = b.color ? C(b.color) : neg ? (down ? PBLUE : PRED) : b.hl || b.est ? PRED : "#B9B2A7";
+          const y = down ? base : base - h;
+          const fs = bw > 150 ? 46 : bw > 70 ? 38 : 30;
           return (
             <g key={i}>
-              <rect x={x} y={H - h} width={bw} height={h} rx={10} fill={b.est ? "url(#hatch)" : col} stroke={b.est ? PRED : "none"} strokeWidth={b.est ? 5 : 0} />
-              <text x={x + bw / 2} y={H - h - 18} textAnchor="middle" fontSize={bw > 150 ? 46 : 38} fontWeight={900} fill={b.hl || b.est ? PRED : INK} opacity={g} fontFamily={FONT}>{b.vlabel ?? b.v}</text>
-              <text x={x + bw / 2} y={H + 50} textAnchor="middle" fontSize={bw > 150 ? 38 : 32} fontWeight={800} fill={SUB} fontFamily={FONT}>{b.label}</text>
+              <rect x={x} y={y} width={bw} height={h} rx={bw > 40 ? 10 : 5} fill={b.est ? "url(#hatch)" : col} stroke={b.est ? PRED : "none"} strokeWidth={b.est ? 5 : 0} opacity={b.hl || !neg ? 1 : 0.85} />
+              {b.vlabel || !neg ? <text x={x + bw / 2} y={down ? y + h + fs + 4 : y - 16} textAnchor="middle" fontSize={fs} fontWeight={900} fill={neg ? col : b.hl || b.est ? PRED : INK} opacity={g} fontFamily={FONT}>{b.vlabel ?? b.v}</text> : null}
+              {b.label ? <text x={x + bw / 2} y={neg ? H + 50 : H + 50} textAnchor="middle" fontSize={bw > 150 ? 38 : bw > 70 ? 32 : 26} fontWeight={800} fill={SUB} fontFamily={FONT}>{b.label}</text> : null}
               {b.est ? <text x={x + bw / 2} y={H + 86} textAnchor="middle" fontSize={30} fontWeight={900} fill={PRED} fontFamily={FONT}>추정</text> : null}
             </g>
           );
@@ -335,6 +343,13 @@ const HBars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   const top = 470, rh = Math.min(190, 880 / Math.max(1, rows.length));
   const zero = mixed ? W / 2 : 0;
   const span = (mixed ? W / 2 : W) - 12;
+  // 이름+값 글자 폭 어림(한글 1em, 숫자·기호 0.6em) — 섞인 막대는 반쪽에 들어가야 한다
+  const shrink = (r: Pt) => {
+    const em = (x: string) => [...x].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === " " ? 0.3 : 0.62), 0);
+    const need = em(r.label ?? "") * 42 + em(String(r.vlabel ?? r.v)) * 50 + 30;
+    const room = (mixed ? W / 2 : W) - 20;
+    return Math.min(1, room / need);
+  };
   return (
     <PaperShell p={p} cues={cues} head={c.head}>
       <div style={{ position: "absolute", left: 64, width: W, top, height: rh * rows.length }}>
@@ -348,9 +363,9 @@ const HBars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           const side = mixed ? (r.v >= 0 ? { left: zero + 16 } : { right: W - zero + 16 }) : { left: 0 };
           return (
             <div key={i} style={{ position: "absolute", left: 0, top: i * rh, width: W, height: rh, opacity: Math.min(1, 0.2 + g * 2) }}>
-              <div style={{ position: "absolute", top: 0, display: "flex", alignItems: "baseline", gap: 18, whiteSpace: "nowrap", ...side }}>
-                <span style={{ fontSize: r.hl ? 46 : 40, fontWeight: 900, background: r.hl ? `linear-gradient(transparent 55%, ${HL} 55%)` : "none" }}>{r.label}</span>
-                <span style={{ fontSize: 50, fontWeight: 900, color: col }}>{r.vlabel ?? r.v}</span>
+              <div style={{ position: "absolute", top: 0, display: "flex", alignItems: "baseline", gap: 14, whiteSpace: "nowrap", ...side }}>
+                <span style={{ fontSize: (r.hl ? 46 : 40) * shrink(r), fontWeight: 900, background: r.hl ? `linear-gradient(transparent 55%, ${HL} 55%)` : "none" }}>{r.label}</span>
+                <span style={{ fontSize: 50 * shrink(r), fontWeight: 900, color: col }}>{r.vlabel ?? r.v}</span>
               </div>
               <div style={{ position: "absolute", top: bt, height: bh, left: mixed && r.v < 0 ? zero - w : zero, width: w, background: col, borderRadius: 10, opacity: r.hl ? 1 : 0.8 }} />
             </div>

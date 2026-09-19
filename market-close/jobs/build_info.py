@@ -33,7 +33,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from _common import DATA, computed_path, date_tail, load_json, log, out_dir, save_json
+from _common import DATA, computed_path, date_tail, load_json, log, out_dir, pct_speech_issues, save_json
 
 ORDER = [f"i{k}" for k in range(10)] + ["iz"]      # iz = 끝 화면(기업 해부편). 생활형 카드편은 i6 이 끝 화면
 END = ("i6", "iz")
@@ -114,6 +114,8 @@ def check(d: str, n: int = 1) -> list[str]:
     for s in comp["scenes"]:
         if hits := forbidden.find(_tts.speakable(s["tts"])):
             bad.append(f"{s['id']} 금지어 {hits}")
+        if pb := pct_speech_issues(s["tts"]):
+            bad.append(f"{s['id']} 말하는 % {pb} — 소수 첫째 자리까지, .0 은 뗀다(5.01% → 5%)")
         if re.search(r"구독|좋아요|알림 설정", s["tts"]):
             bad.append(f"{s['id']} 부탁 문장 — 끝 부탁은 곡선이 −12~16 빠진다(v7)")
     if not comp["scenes"] or comp["scenes"][0]["id"] != "i0" or "?" not in comp["scenes"][0]["tts"]:
