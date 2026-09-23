@@ -556,9 +556,12 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
                 continue
             _s1 = _sm2.sentences(s.get("tts") or "")
             st1 = s.get("steps")
-            hit = next((i for i, x in enumerate(_s1) if _q1 in x), -1)
-            if hit < 0:
-                fail("s1", f"화면에 띄울 질문이 대사에 없다 — hunter.s1.q 와 대사를 맞춘다", _q1[:40])
+            # q 가 두 문장일 수 있다("… 갈렸습니다. 그럼 … 갔을까요?").
+            # 화면은 q 를 **통째로** 그리므로 기준은 q 가 **시작하는** 문장이다(끝 문장이 아니다).
+            _qf = ([y for y in _sm2.sentences(_q1) if y.strip()] or [""])[0]
+            hit = next((i for i, x in enumerate(_s1) if _qf and _qf in x), -1)
+            if hit < 0 and _q1 not in " ".join(_s1):
+                fail("s1", "화면에 띄울 질문이 대사에 없다 — hunter.s1.q 와 대사를 맞춘다", _q1[:40])
             elif isinstance(st1, list) and len(st1) == len(_s1):
                 qk = next((i for i, n in enumerate(st1) if str(n) == "q"), -1)
                 if qk >= 0 and qk != hit:
@@ -578,7 +581,9 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
             if str(s.get("id")) != "s2":
                 continue
             first = (_sm2.sentences(s.get("tts") or "") or [""])[0].strip()
-            if first and first not in _opens:
+            # 여는 말이 아예 빠진 날(길이 때문에 open 을 뺀 날)은 검사하지 않는다 — 첫 문장이 수급 문장이면 통과
+            looks_open = bool(first) and "코스피" in first and ("보겠습니다" in first or "봅니다" in first or "본다" in first)
+            if looks_open and first not in _opens:
                 fail("s2", "여는 말이 목록에 없다 — 지어내지 말고 narrate_brief.S2_OPENS 에 "
                            "자연스러운 한국말을 더해서 쓴다(2026-09-23 '코스피 넷부터 봅니다' 사고)", first)
 

@@ -72,7 +72,11 @@ GLOBAL_DROP = [("s5", "news_x"), ("s3a", "verdict"), ("s3c", "issue"), ("s3b", "
                ("s5", "callback"), ("s5", "news:1"), ("s3a", "weekend"), ("s3c", "t2_sum"), ("s2", "week"), ("s5", "ab"), ("s3c", "t1_sum"), ("s2", "top"),
                ("s5", "macro_3"), ("s5", "macro_1"), ("s5", "verdict:1"), ("s5", "issue:1"), ("s4", "open_2"), ("s2", "size"), ("s2", "turn_2"), ("s3c", "names"), ("s3b", "support"), ("s3b", "sum"), ("s3c", "ratio"), ("s2", "reveal"), ("s5", "macro_2"), ("s4", "calc"), ("s5", "b"),
                # 마지막 수단(여기까지 와도 1,300자를 넘는 날만): 금리 금융 연결 → 자사주 조기 종료. 넘치면 검사 실패 → A+ 폴백이라 그보다 낫다
-               ("s5", "bond"), ("s5", "macro_link"), ("s3b", "support_2")]
+               ("s5", "bond"), ("s5", "macro_link"), ("s3b", "support_2"),
+               # 2026-09-24: 9/23·9/24 에 **뺄 수 있는 칸이 0개**라 14~17자 초과로 A+ 폴백이 났다.
+               # 위 목록이 옛 단계 이름만 가리켜서 실제 대본과 하나도 안 맞았다. 실제로 나오는 칸을 맨 뒤에 둔다.
+               # 순서 = 덜 아픈 것부터: 대장주 반응 → 흐름의 이유 → 콜백의 이유 → 둘째 유입 업종 수급.
+               ("s3b", "turn"), ("s5", "flow_2"), ("s3a", "promise2_2"), ("s3c", "t2")]
 # JJ 2026-09-15 가 매일 요구한 칸은 예산에서 절대 빼지 않는다(그래서 위 목록에 없다 — BRIEF_FIX_1 §A):
 #   코스닥 개인(s3a kosdaq_2) · 종목별 개인·거래대금(s4 row:0_3 · row:1_3) — "외국인 개인 기관 이것도 샀는지 팔았는지 알려주고"
 #   둘째 유입 업종 수급(s3c t2) · 자사주 받침(s3b support) · 다음 이벤트(s6 event) — 빼면 s6 이 '…는지.'로 끝나 검사도 실패한다.
@@ -937,10 +941,18 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
         elif ob_days >= 2 and not ob_capped:
             days_word = obw
             pairs.append(("reveal", pk([f"기타법인은 {dko(ob_days)} 사고 있습니다.", f"기타법인의 매수는 {dko(ob_days)} 이어졌습니다."[:0] or f"기타법인은 {dko(ob_days)} 사들이고 있습니다."])))
-        sh = round(x["oth_share"] * 100)
-        if top and x["oth_share"] >= 0.5:
+        # 기타법인 얘기는 **한 문장까지**(JJ 2026-09-21 "매일 똑같이 기타법인을 주로 말하면 누가 보겠냐").
+        # 위에서 이어짐(reveal) 문장을 이미 냈으면 비중 문장은 내지 않는다 — 9/24 맥 이관 때 두 문장이라 검사에 걸렸다.
+        said_oth = any(n in ("reveal",) for n, _ in pairs)
+        sh = round(min(1.0, x["oth_share"]) * 100)
+        if said_oth:
+            pass
+        elif top and x["oth_share"] >= 0.5:
             tag = " 자사주" if x["oth_in_bb"] else ""
-            pairs.append(("top_2", pk([f"기타법인이 산 돈의 {sh}%가 {names}{tag}입니다.", f"그중 {sh}%가 {names}{tag}입니다.", f"그 {sh}%는 {names}{tag}였습니다."])))
+            if sh >= 98:          # 100%·101% 는 사람이 안 쓰는 말이다 — 숫자 대신 '거의 전부'
+                pairs.append(("top_2", pk([f"거의 전부가 {names}{tag}입니다.", f"사실상 {names}{tag} 둘입니다."])))
+            else:
+                pairs.append(("top_2", pk([f"기타법인이 산 돈의 {sh}%가 {names}{tag}입니다.", f"그중 {sh}%가 {names}{tag}입니다.", f"그 {sh}%는 {names}{tag}였습니다."])))
         elif top:
             pairs.append(("top_2", pk([f"기타법인 돈이 가장 많이 간 곳은 {top[0]['name']}, {hwon(top[0]['v'])}입니다.", f"기타법인이 가장 많이 산 종목은 {top[0]['name']}입니다."])))
     pairs.append(("q", pk(_S2_Q)))

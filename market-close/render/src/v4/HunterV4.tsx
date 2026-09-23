@@ -378,7 +378,9 @@ export const S1H: React.FC<SC> = ({ p, cues }) => {
   // 9/23: 손으로 앞에 문장을 하나 끼워 넣었더니 steps 는 ["q","q_2","q_3"] 그대로라
   // indexOf("q")=0 → 질문이 4.45초 **먼저** 떴고, S1H 는 hideSub 라 그동안 자막도 없었다.
   // 이제 h.q 가 실제로 들어 있는 문장을 먼저 찾고, 못 찾으면 옛 방식.
-  const qIdx = h.q ? list.findIndex((b) => (b.text ?? "").includes(h.q)) : -1;
+  // q 가 두 문장이면 통째로는 한 문장에 안 들어간다 — **첫 조각**으로 찾는다(화면은 q 를 통째로 그린다).
+  const qHead = h.q ? h.q.split(/(?<=[.?!])\s+/)[0] : "";
+  const qIdx = qHead ? list.findIndex((b) => (b.text ?? "").includes(qHead)) : -1;
   const q0 = qIdx >= 0 ? list[qIdx].start : at("q", 0, 0);
   // 꼬리('오늘은 이것 하나만 보겠습니다')도 **그 말을 하는 문장**에. 타이머 q0+0.8 을 쓰면
   // 렌더된 7편 전부 실제 발화보다 4~6초 빨리 떴다(2026-09-24 감사).

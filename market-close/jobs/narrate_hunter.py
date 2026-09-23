@@ -369,7 +369,9 @@ def _ctx(c: dict) -> dict:
     oth = vals.get("기타법인") or 0
     top_others = [x for x in (c.get("top_others") or []) if isinstance(x, dict) and (x.get("v") or 0) > 0][:2]
     act = na._active_buybacks(d, c.get("buybacks") or [])
-    oth_share = (sum(x["v"] for x in top_others) / oth) if (oth > 0 and top_others) else 0.0
+    # 상위 2종목 합이 기타법인 합계를 넘을 수 있다(종목별 합산과 전체 합산이 상계 때문에 다르다).
+    # 9/23: 11,405 + 4,959 = 16,364 > 16,328 → 100.2% → 대본에 "101%" 가 나가 검사에 걸렸다.
+    oth_share = min(1.0, (sum(x["v"] for x in top_others) / oth)) if (oth > 0 and top_others) else 0.0
     oth_in_bb = [x for x in top_others if x.get("code") in act]
     prev_inv = c.get("prev_inv") or {}
     y_vals = {n: prev_inv.get(key) for n, key in NAME_KEY.items() if isinstance(prev_inv.get(key), (int, float))}

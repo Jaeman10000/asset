@@ -220,6 +220,7 @@ def venv_bin(name: str) -> Path | None:
 
 def scratch_dir(sub: str = "") -> Path:
     """임시 작업 폴더 — 세션 스크래치가 있으면 그걸, 없으면 OS 임시 폴더."""
+    import os as _os
     import tempfile as _tf
     base = _os.environ.get("CLAUDE_SCRATCHPAD") or _tf.gettempdir()
     p = Path(base) / "nugasatna" / sub if sub else Path(base) / "nugasatna"
