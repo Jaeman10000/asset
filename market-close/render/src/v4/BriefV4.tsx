@@ -15,7 +15,7 @@ import { fmtIdx } from "../tokens";
 import type { Props } from "../types";
 import type { Cue } from "../Scenes";
 import { BgCity, BgChip, BgMarket, Card, Shell, YEL, GREEN, BLUE, RED, usePop, useT } from "./ScenesV4";
-import { S0H, S1H, S2H, S6H, VBars, HBars, useSteps, spoken, fmtPctS, amt, sgn, colOf, toneOf, fmtRaw, QOnly, Empty, DKO } from "./HunterV4";
+import { S0H, S1H, S2H, S6H, VBars, HBars, useSteps, spoken, fmtPctS, amt, sgn, colOf, toneOf, fmtRaw, QOnly, Empty, DKO, pct1 } from "./HunterV4";
 import type { NV } from "./HunterV4";
 
 type SC = { p: Props; sub: string; cues?: Cue[] };
@@ -111,7 +111,7 @@ export const S3aB: React.FC<SC> = ({ p, cues }) => {
             <Card color={colOf(x.chg_pct)} style={{ padding: "18px 22px" }}>
               <div style={{ fontSize: 32, fontWeight: 800, color: SUBC, letterSpacing: "0.02em" }}>{x.name}</div>
               <div style={{ fontSize: 56, fontWeight: 900, lineHeight: 1.1, marginTop: 4, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{fmtIdx(x.close)}</div>
-              <div style={{ fontSize: 44, fontWeight: 900, color: colOf(x.chg_pct), marginTop: 4, whiteSpace: "nowrap" }}>{x.chg_pct > 0 ? "▲" : x.chg_pct < 0 ? "▼" : "−"} {Math.abs(x.chg_pct).toFixed(2)}%</div>
+              <div style={{ fontSize: 44, fontWeight: 900, color: colOf(x.chg_pct), marginTop: 4, whiteSpace: "nowrap" }}>{x.chg_pct > 0 ? "▲" : x.chg_pct < 0 ? "▼" : "−"} {pct1(x.chg_pct)}%</div>
             </Card>
           </div>
         ))}

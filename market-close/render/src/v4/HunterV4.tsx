@@ -271,6 +271,11 @@ export const HBars: React.FC<{ rows: NV[]; at: number[]; hiName?: string; subs?:
 };
 
 /* ───────── s0: 모순 후킹 — 숫자 A → 숫자 B 가 부딪힌다 → 지수 카드 ───────── */
+/** 화면 퍼센트는 **말과 같은 자릿수**로 — 소수 첫째 자리(JJ 2026-09-18).
+ *  9/18 편이 대사 "2.6% 올랐습니다" 인데 카드는 "▲ 2.66%" 로 나갔다(2026-09-24 감사에서 프레임 확인).
+ *  narrate 쪽 반올림(내림 아님)과 같게 맞춘다. */
+export const pct1 = (v: number) => (Math.round(Math.abs(v) * 10) / 10).toFixed(1);
+
 export const S0H: React.FC<SC> = ({ p, cues }) => {
   const h = hunterOf(p).s0;
   const { t, at } = useSteps(p, "s0", cues);
@@ -325,7 +330,7 @@ export const S0H: React.FC<SC> = ({ p, cues }) => {
           <Card color={colOf(chg)} style={{ display: "inline-block", minWidth: 640 }}>
             <div style={{ fontSize: 40, fontWeight: 800, color: SUBC, letterSpacing: "0.04em" }}>KOSPI</div>
             <div style={{ fontSize: 118, fontWeight: 800, lineHeight: 1.05, marginTop: 6 }}>{fmtIdx(p.kospi.close)}</div>
-            <div style={{ fontSize: 64, fontWeight: 800, color: colOf(chg), marginTop: 6 }}>{chg > 0 ? "▲" : chg < 0 ? "▼" : "−"} {Math.abs(chg).toFixed(2)}%</div>
+            <div style={{ fontSize: 64, fontWeight: 800, color: colOf(chg), marginTop: 6 }}>{chg > 0 ? "▲" : chg < 0 ? "▼" : "−"} {pct1(chg)}%</div>
           </Card>
         </div>
       ) : null}
@@ -353,7 +358,7 @@ export const IdxSpark: React.FC<{ p: Props; at: number; top: number }> = ({ p, a
     <div style={{ position: "absolute", left: 64, right: 64, top, ...pop(at, 20) }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 18, marginBottom: 10 }}>
         <div style={{ fontSize: 40, fontWeight: 800, color: SUBC, textShadow: SH }}>코스피 오늘</div>
-        <div style={{ fontSize: 64, fontWeight: 900, color: col, textShadow: SH }}>{`${chg >= 0 ? "+" : "−"}${Math.abs(chg).toFixed(2)}%`}</div>
+        <div style={{ fontSize: 64, fontWeight: 900, color: col, textShadow: SH }}>{`${chg >= 0 ? "+" : "−"}${pct1(chg)}%`}</div>
       </div>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
         <line x1={0} x2={W} y1={Y(0)} y2={Y(0)} stroke="rgba(255,255,255,0.35)" strokeWidth={3} strokeDasharray="10 10" />

@@ -20,7 +20,8 @@ JJ: *"이제부터 집에서 맥미니를 안 끄고 계속 돌릴 거고 핸드
 
 | 순서 | 할 것 | 확인 |
 |---|---|---|
-| 1 | Xcode CLT · Homebrew · git | `git --version` |
+| 1 | Xcode CLT · Homebrew · git + **깃허브 자격증명**(`git push` 용, JJ가 직접) | `git --version` · 빈 커밋 push 테스트 |
+| 1b | `gh auth login` — **PR 패널 쓸 때만**. 지금은 master 직접 푸시라 없어도 된다(JJ가 직접) | `gh auth status` |
 | 2 | Python 3.12+ → `backend/.venv` 만들고 requirements 설치 | `python -c "import httpx, PIL"` |
 | 3 | Node 20+ → `market-close/render` 에서 `npm ci` | `@remotion/compositor-darwin-arm64` 가 깔린다 |
 | 4 | **한글 폰트** | `_common.korean_font()` 가 애플고딕을 찾는다. 없으면 나눔고딕 설치 |
