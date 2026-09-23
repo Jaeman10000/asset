@@ -154,6 +154,10 @@ def check(d: str, n: int = 1) -> list[str]:
     bad += blank_card_issues(comp["scenes"], cards)
     bad += upload_date_issues(spec)
     bad += weapon_issues(comp["scenes"])
+    bad += rel_date_issues(comp["scenes"], d, spec)
+    bad += craft_word_issues(comp["scenes"])
+    bad += same_number_issues(comp["scenes"])
+    bad += conj_issues(comp["scenes"])
     bad += kind_mix_issues(d, cards)
     bad += number_sync_issues(comp["scenes"], cards)
     bad += jargon_issues(comp["scenes"], cards)
@@ -580,6 +584,59 @@ def dup_head_issues(scenes: list[dict], cards: dict) -> list[str]:
     return out
 
 
+# 정보형은 **날짜를 안 붙여서 언제든 옮길 수 있는 것**이 장점이다(JJ 2026-09-21).
+# 그런데 대사가 "어제까지"·"오늘 아침 9시" 처럼 **달력 위의 한 점**에 매이면,
+# 날짜를 옮기는 순간 틀린 말이 된다. 2026-09-23: 41년 편 i1 "1985년부터 어제까지"(올릴 날은 10/6, 자료는 9/22까지),
+# i17 "지금까지 열 번 적었습니다"(10/6이면 스무 건이 넘는다).
+#
+# 다만 **"오늘 가져가실 건 하나입니다"·"가장 이른 날은 오늘입니다"** 처럼 시청자의 오늘을 가리키는 말은 막으면 안 된다
+# (19편을 훑어 보니 걸린 8편 중 다섯 편이 이런 오탐이었다). 그래서 **뒤에 달력·사건이 붙을 때만** 잡는다.
+REL_WORD = ("어제", "오늘", "내일", "이번 주", "지난주", "다음 주", "이번 달", "지난달", "다음 달")
+REL_ANCHOR = r"(아침|오전|오후|저녁|밤|새벽|\d+\s?시|[월화수목금토일]요일|국정감사|국감|발표|잠정실적|실적|수출|공시|만기|까지|기준)"
+COUNT_WORD = r"(\d+|한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|스무|서른)\s?(번|건|개|일|편)"
+REL_FRESH_DAYS = 10      # fresh_until 이 이만큼 안이면 사건형으로 보고 넘어간다
+
+
+def rel_date_issues(scenes: list[dict], d: str = "", spec: dict | None = None) -> list[str]:
+    """정보형 대사가 달력 위의 한 점에 매이면 안 된다 — 올리는 날을 옮기면 틀린 말이 된다.
+
+    단 **사건형**(fresh_until 이 코앞인 편)은 애초에 못 옮기니 실패시키지 않고 알리기만 한다.
+    구조형·수치형(오래 가는 편)은 언제 올려도 참이어야 하므로 실패다.
+    """
+    soon = False
+    fu = (spec or {}).get("fresh_until")
+    if fu and d:
+        try:
+            a = datetime.strptime(d, "%Y%m%d").date()
+            b = datetime.strptime(fu, "%Y-%m-%d").date()
+            soon = (b - a).days <= REL_FRESH_DAYS
+        except Exception:
+            soon = False
+    out: list[str] = []
+    for s in scenes:
+        t = s["tts"]
+        hit = None
+        for w in REL_WORD:
+            for m in re.finditer(re.escape(w), t):
+                if re.match(r".{0,4}?" + REL_ANCHOR, t[m.end(): m.end() + 12]):
+                    hit = t[max(0, m.start() - 6): m.end() + 12]
+                    break
+            if hit:
+                break
+        if not hit:
+            for m in re.finditer("지금까지", t):          # '지금까지 열 번' 처럼 세어 둔 수가 붙으면 늘어난다
+                if re.match(r".{0,3}?" + COUNT_WORD, t[m.end(): m.end() + 10]):
+                    hit = t[m.start(): m.end() + 10]
+                    break
+        if hit:
+            if soon:      # 사건형 — 며칠 뒤면 못 쓰는 편이라 날짜에 매이는 게 정상이다
+                log(d, "info", f"{s['id']} 날짜에 매인 말('{hit.strip()}') — 사건형이라 넘어간다(fresh_until {fu})")
+                continue
+            out.append(f"{s['id']} 대사가 올리는 날에 매였다 — '{hit.strip()}'. 정보형은 날짜를 옮기니 "
+                       f"기간은 못 박은 말로('9월 8일부터 21일까지'), 값은 지나간 사실로 쓴다(JJ 2026-09-21)")
+    return out
+
+
 def weapon_issues(scenes: list[dict]) -> list[str]:
     """수급 숫자를 '어디서 보는지' 알려주지 않는다(JJ 2026-09-21 — 우린 비즈니스다)."""
     out: list[str] = []
@@ -609,6 +666,63 @@ def subtitle_pick_issues() -> list[str]:
             out.append(f"{rel} 가 자막을 find 로 고른다 — 0.5초 꼬리 때문에 앞 자막이 잡혀 화면보다 늦는다. "
                        f"filter 로 바꿔 시작한 것 중 나중 것을 쓴다")
     return out
+
+
+# ── JJ 2026-09-23 밤(41년 장기투자 편 1차 대본) ─────────────────────────────
+CRAFT = re.compile(r"구간이|구간은|구간을|구간 \d|표본|케이스|데이터셋|집계했습니다|산출|계산했습니다|세었습니다|뽑아냈습니다")
+_HAN1 = {"두": 2, "세": 3, "네": 4, "다섯": 5, "여섯": 6, "일곱": 7, "여덟": 8, "아홉": 9, "열": 10}
+
+
+def craft_word_issues(scenes: list[dict]) -> list[str]:
+    """작업 용어를 대사에 넣지 않는다 — '구간이 1만 개 넘게 나왔습니다'는 내 계산 과정을 자랑한 것이다.
+    시청자는 '구간'이라는 말을 쓰지 않고, 그 숫자를 뒤 문장이 쓰지도 않는다. 방법은 설명란(sources)에만."""
+    out = []
+    for s in scenes:
+        for x in sm_sentences(s["tts"]):
+            if CRAFT.search(x):
+                out.append(f"{s['id']} 작업 용어가 대사에 있다 — 계산 방법·표본 크기는 설명란에만 쓴다 :: {x}")
+    return out
+
+
+def same_number_issues(scenes: list[dict]) -> list[str]:
+    """같은 숫자를 단위만 바꿔 되풀이하지 않는다 — '83%입니다. 여섯 번에 한 번은 손해였습니다'는
+    100-83=17 ≈ 1/6 로 같은 말이다. 새 정보가 0이면서 새 정보처럼 들린다(JJ "뭔 개소리야")."""
+    out = []
+    for s in scenes:
+        ss = sm_sentences(s["tts"])
+        pcts = [float(m.group(1)) for x in ss for m in re.finditer(r"(\d{1,3})\s?%", x)]
+        for x in ss:
+            m = re.search(r"(두|세|네|다섯|여섯|일곱|여덟|아홉|열|\d+)\s?번에\s?한\s?번", x)
+            if not m:
+                continue
+            g = m.group(1)
+            n = _HAN1.get(g) or (int(g) if g.isdigit() else 0)
+            if not n:
+                continue
+            share = 100.0 / n
+            for p0 in pcts:
+                if abs(p0 - share) <= 3 or abs((100 - p0) - share) <= 3:
+                    out.append(f"{s['id']} {p0:.0f}% 와 '{g} 번에 한 번'이 같은 숫자다 — 단위만 바꿔 되풀이하지 말고 다른 축의 사실로 :: {x}")
+                    break
+    return out
+
+
+NEG = re.compile(r"손해|내렸|빠졌|줄었|팔았|못|아니|없|마이너스|하락|떨어")
+
+
+def conj_issues(scenes: list[dict]) -> list[str]:
+    """'그래도'는 앞 문장이 부정일 때 쓰는 말이다. 긍정 뒤에 쓰면 한국어가 틀린다(JJ "한국어 모르냐")."""
+    out = []
+    for s in scenes:
+        ss = sm_sentences(s["tts"])
+        for i, x in enumerate(ss):
+            if i and re.match(r"^\s*(그래도|그런데도)", x) and not NEG.search(ss[i - 1]):
+                out.append(f"{s['id']} 앞 문장이 긍정인데 '{x[:4]}' 로 받았다 — '그러나'·'하지만' 을 쓴다 :: {ss[i-1]} / {x}")
+    return out
+
+
+def sm_sentences(text: str) -> list[str]:
+    return [x.strip() for x in re.split(r"(?<=[.!?])\s+", (text or "").strip()) if x.strip()]
 
 
 def dead_screen_issues(scenes: list[dict], cards: dict, gap: float = 6.0, has_thumb: bool = False) -> list[str]:
@@ -900,6 +1014,29 @@ def thumb(d: str, n: int = 1) -> None:
     log(d, "info", f"썸네일 {'완료' if r.returncode == 0 else '실패 ' + (r.stderr or r.stdout)[-200:]}")
 
 
+def stale_guard(d: str, ed: str) -> None:
+    """렌더 직전 — computed 가 spec 보다 낡았으면 멈춘다.
+
+    왜 있나 (2026-09-23): `mascot_beats.py` 는 `info_script.json`(spec)에만 쓰는데
+    `--stage=render` 는 `build()` 를 부르지 않아 `computed_info.json` 을 그대로 읽는다.
+    그래서 beats 를 새로 잡고 바로 렌더하면 **옛 자리에 탐정이 나온다**(41년 편에서 실제로 났다).
+    고치는 법은 하나 — 사이에 `--stage=script` 를 한 번 더 돌린다.
+    """
+    sp = DATA / d / (f"{ed}_script.json" if ed != "info" else "info_script.json")
+    cp = DATA / d / f"computed_{ed}.json"
+    if not (sp.exists() and cp.exists()):
+        return
+    spec, comp = load_json(sp), load_json(cp)
+    for key in ("mascot_beats",):
+        a = [round(float(x.get("t", 0)), 2) for x in (spec.get(key) or [])]
+        b = [round(float(x.get("t", 0)), 2) for x in (comp.get(key) or [])]
+        if a != b:
+            raise SystemExit(
+                f"멈춤 — {key} 가 어긋났다.\n"
+                f"  {sp.name}: {a}\n  {cp.name}: {b}\n"
+                f"  `--stage=script` 를 먼저 돌려 굳힌 뒤 렌더한다.")
+
+
 def main() -> None:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     d = args[0] if args else datetime.now().strftime("%Y%m%d")
@@ -919,6 +1056,7 @@ def main() -> None:
         import tts
         asyncio.run(tts.main(d, ed))
     if stage in ("all", "render"):
+        stale_guard(d, ed)
         import render
         render.run(d, "video", ed)
     if stage in ("all", "texts"):

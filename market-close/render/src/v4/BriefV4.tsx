@@ -386,7 +386,13 @@ export const S4B: React.FC<SC> = ({ p, cues }) => {
   const { stepAt, sayAfter } = mkFind(st);
   const pop = usePop();
   if (!h) return <Empty p={p} sub="" cues={cues} />;
-  const stocks = h.stocks.slice(0, 2);
+  // 말한 종목만 그린다 — 다만 **대사가 말하는 수만큼**이다(2026-09-23: 대사는 이오테크닉스까지 셋인데
+  // 표는 둘이라, 셋째를 말하는 11초 동안 강조가 SK하이닉스 줄에 남아 숫자가 전혀 다른 칸을 가리켰다).
+  // steps 의 row:N 중 가장 큰 N + 1 만큼 그리고, 없으면 예전처럼 둘.
+  const nRow = Math.max(2, ...(st.steps ?? []).map((s) => {
+    const m = /^row:(\d+)/.exec(String(s)); return m ? Number(m[1]) + 1 : 0;
+  }));
+  const stocks = h.stocks.slice(0, Math.min(nRow, h.stocks.length));
   const d0 = at(["doc", "open"], 0, 0);
   const rowAt = stocks.map((s, k) => stepAt(`row:${k}`) ?? say(s.name) ?? d0 + 1.5 + k * 4);
   const drvAt = stocks.map((s, k) => (s.driver ? stepAt(`driver:${k}`) ?? sayAfter(/밀어|주도|큰손/, rowAt[k]) ?? rowAt[k] + 2.5 : 1e9));

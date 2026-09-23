@@ -18,9 +18,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import DATA, load_json  # noqa: E402
+from _common import DATA, load_json, scratch_dir  # noqa: E402
 
-SCRATCH = Path(r"C:/Users/Jeff/AppData/Local/Temp/claude/C--Users-Jeff-Documents-GitHub-asset/ed61fea3-c63d-4ffd-8a2a-78666bf42e10/scratchpad/hunter")
+SCRATCH = scratch_dir("hunter")
 CPS = 8.0
 
 

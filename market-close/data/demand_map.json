@@ -1,0 +1,2045 @@
+{
+ "at": "20260923",
+ "seeds": [
+  "주식",
+  "코스피",
+  "삼성전자",
+  "sk하이닉스",
+  "배당",
+  "공매도",
+  "외국인",
+  "기관",
+  "수급",
+  "etf",
+  "연금저축",
+  "irp",
+  "실적발표",
+  "목표주가",
+  "환율",
+  "금리",
+  "주식 세금",
+  "시가총액",
+  "옵션만기",
+  "자사주",
+  "코스닥",
+  "주식 초보"
+ ],
+ "rows": [
+  {
+   "q": "주식아가방",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식전망",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식애소리",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식장인",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식단테",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식또바기",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식시황",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 라이브",
+   "n": 14,
+   "seed": "주식",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피 5000",
+   "n": 14,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피 전망",
+   "n": 14,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피200 etf",
+   "n": 14,
+   "seed": "코스피",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스피 4000",
+   "n": 14,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피200",
+   "n": 14,
+   "seed": "코스피",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성전자 주가 전망",
+   "n": 14,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 주가",
+   "n": 14,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 배당금",
+   "n": 14,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자우",
+   "n": 14,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성전자 주식",
+   "n": 14,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 배당",
+   "n": 14,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 주가전망",
+   "n": 14,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스 삼성전자",
+   "n": 14,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 주가",
+   "n": 14,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 생산직",
+   "n": 14,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당주",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당주 etf",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당소득 분리과세",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당 etf",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "배당금",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당투자",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당주 투자",
+   "n": 14,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "외국인 한국여행",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 불닭볶음면",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 반응",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 한국음식 반응",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인의 고백",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "외국인 먹방",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 여자친구",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 한식",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 한국어",
+   "n": 14,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "기관사",
+   "n": 14,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관총",
+   "n": 14,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관지염",
+   "n": 14,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관지확장증",
+   "n": 14,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관지협착증 강아지",
+   "n": 14,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급단타왕",
+   "n": 14,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급자",
+   "n": 14,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 배당주",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 투자방법",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 추천",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 사는법",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 배당금",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf베이커리",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf s&p 500",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 투자",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf란",
+   "n": 14,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축펀드",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축계좌",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축펀드 etf",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축계좌 개설",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축 irp",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축 etf 추천",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축펀드 추천",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축 etf",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축 포트폴리오",
+   "n": 14,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 계좌",
+   "n": 14,
+   "seed": "irp",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "irp 연금저축",
+   "n": 14,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 퇴직연금",
+   "n": 14,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp isa",
+   "n": 14,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "환율전망",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "환율 오르는 이유",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율 1500원",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율 mbc",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율이 오르면",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "환율 이재명",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율 부동산",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율조작",
+   "n": 14,
+   "seed": "환율",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인하",
+   "n": 14,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인상",
+   "n": 14,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인하 발표",
+   "n": 14,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리 부동산",
+   "n": 14,
+   "seed": "금리",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "금리형 etf",
+   "n": 14,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리발표",
+   "n": 14,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액 순위",
+   "n": 14,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일",
+   "n": 14,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주소각",
+   "n": 14,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주매입",
+   "n": 14,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 3000",
+   "n": 14,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 etf",
+   "n": 14,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥150",
+   "n": 14,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당의만장",
+   "n": 13,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관삽관",
+   "n": 13,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관사 브이로그",
+   "n": 12,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 계좌 개설 방법",
+   "n": 12,
+   "seed": "irp",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "irp etf 추천",
+   "n": 12,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 시간",
+   "n": 12,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 실시간",
+   "n": 12,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "환율 국민연금",
+   "n": 12,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "금리전망",
+   "n": 12,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인하 주식",
+   "n": 12,
+   "seed": "금리",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스닥 150 etf",
+   "n": 12,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 시작하는법",
+   "n": 11,
+   "seed": "주식",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 실시간",
+   "n": 11,
+   "seed": "주식",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피 인버스",
+   "n": 11,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "수급비",
+   "n": 11,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf아는형",
+   "n": 11,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축계좌 etf",
+   "n": 11,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 운용 방법",
+   "n": 11,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 라이브",
+   "n": 11,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 하이닉스",
+   "n": 11,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "환율 급락",
+   "n": 11,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "금리인하 코인",
+   "n": 11,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 전망",
+   "n": 11,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스피 하락",
+   "n": 10,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "수급매매",
+   "n": 10,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf 추천 종목",
+   "n": 10,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 활성화",
+   "n": 10,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식명사수",
+   "n": 9,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 주가",
+   "n": 9,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스닥 대장주",
+   "n": 9,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식강의 기초",
+   "n": 8,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스 스타주식",
+   "n": 8,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당주 추천 종목",
+   "n": 8,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급돌고래",
+   "n": 8,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축펀드 가입방법",
+   "n": 8,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥150레버리지",
+   "n": 8,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 바이오",
+   "n": 8,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식실시간방송",
+   "n": 7,
+   "seed": "주식",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스피 오르는 이유",
+   "n": 7,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "배당주 투자 방법",
+   "n": 7,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 확인 방법",
+   "n": 7,
+   "seed": "공매도",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "기관별찬양대회",
+   "n": 7,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급자 지원금",
+   "n": 7,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 후 주가",
+   "n": 7,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스피 실시간",
+   "n": 6,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 특별배당금",
+   "n": 6,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 해커톤",
+   "n": 6,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관지에 좋은 음식",
+   "n": 6,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관총소리",
+   "n": 6,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 계좌 추천",
+   "n": 6,
+   "seed": "irp",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "실적발표 일정",
+   "n": 6,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주 소각 의무화",
+   "n": 6,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주처분",
+   "n": 6,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스피 야간선물 실시간",
+   "n": 5,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 주가 전망 실시간",
+   "n": 5,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 해고",
+   "n": 5,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스 성과급",
+   "n": 5,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스 성공하는 주식뉴스",
+   "n": 5,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도란",
+   "n": 5,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 하는법",
+   "n": 5,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도과열",
+   "n": 5,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급내길",
+   "n": 5,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "연금저축 irp 차이",
+   "n": 5,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 추천상품",
+   "n": 5,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp isa 차이",
+   "n": 5,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 전 주가",
+   "n": 5,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율 개념",
+   "n": 5,
+   "seed": "환율",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율전망 2026",
+   "n": 5,
+   "seed": "환율",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리란",
+   "n": 5,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 세금 2000만원",
+   "n": 5,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 건보료",
+   "n": 5,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "시가총액 수식",
+   "n": 5,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주소각이란",
+   "n": 5,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥150 etf 키움",
+   "n": 5,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스피 야간선물",
+   "n": 4,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 노조",
+   "n": 4,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 채용",
+   "n": 4,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당금으로 먹고살기",
+   "n": 4,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 뜻",
+   "n": 4,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 숏커버링",
+   "n": 4,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 대차잔고",
+   "n": 4,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 슈카",
+   "n": 4,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 세력",
+   "n": 4,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "외국인 2인조",
+   "n": 4,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "연금저축펀드 증권사 추천",
+   "n": 4,
+   "seed": "연금저축",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 안전자산 etf 추천",
+   "n": 4,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 증권사 추천",
+   "n": 4,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 보는법",
+   "n": 4,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 매매",
+   "n": 4,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 일정 보는법",
+   "n": 4,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "뉴로핏 목표주가",
+   "n": 4,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "더핑크퐁컴퍼니 목표주가",
+   "n": 4,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인하 수혜주",
+   "n": 4,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 세금 내는법",
+   "n": 4,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 계산",
+   "n": 4,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "시가총액 뜻",
+   "n": 4,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액 보는법",
+   "n": 4,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액 거래대금",
+   "n": 4,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액 독일",
+   "n": 4,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일 주가",
+   "n": 4,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "옵션만기 코인",
+   "n": 4,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주소각수혜주",
+   "n": 4,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주많은기업",
+   "n": 4,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주 소각 관련주",
+   "n": 4,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주 매입 배당주",
+   "n": 4,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주 소각 효과",
+   "n": 4,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주 소각 이유",
+   "n": 4,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 종목 추천",
+   "n": 4,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 증권사 추천",
+   "n": 4,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 공부",
+   "n": 4,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피200 야간선물",
+   "n": 3,
+   "seed": "코스피",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스 입사",
+   "n": 3,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스세력버스",
+   "n": 3,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당아저씨",
+   "n": 3,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "배당생활",
+   "n": 3,
+   "seed": "배당",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관지염 빨리 낫는법",
+   "n": 3,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급대장",
+   "n": 3,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급자 추석 명절 위로금",
+   "n": 3,
+   "seed": "수급",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "수급단타왕 무료강의",
+   "n": 3,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf란 무엇인가",
+   "n": 3,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "irp 연금저축 차이",
+   "n": 3,
+   "seed": "irp",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "목표주가란",
+   "n": 3,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "목표주가 구하기",
+   "n": 3,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성전자 목표주가",
+   "n": 3,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "환율전망 오늘",
+   "n": 3,
+   "seed": "환율",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인상 부동산",
+   "n": 3,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "금리인상 부동산전망",
+   "n": 3,
+   "seed": "금리",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 세금 신고 안하면",
+   "n": 3,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 5000만원",
+   "n": 3,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 총정리",
+   "n": 3,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 폭탄",
+   "n": 3,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "시가총액 검색식",
+   "n": 3,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액이란",
+   "n": 3,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액 계산",
+   "n": 3,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일 주가 하락 이유",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "옵션만기일 포지션",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일 다음날",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일 청산",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일 전략",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기란",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기결제",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일 삼성전자",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "옵션만기일 동시호가",
+   "n": 3,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 승강제",
+   "n": 3,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 초보 책",
+   "n": 3,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 강의",
+   "n": 3,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 etf",
+   "n": 3,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 용어",
+   "n": 3,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보자 가이드",
+   "n": 3,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "코스피 코스닥 설명",
+   "n": 2,
+   "seed": "코스피",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자 우선주 주가 전망",
+   "n": 2,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "sk하이닉스 종목추적 25시",
+   "n": 2,
+   "seed": "sk하이닉스",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "외국인 차량 강도",
+   "n": 2,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "외국인 습격",
+   "n": 2,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "수급자자격조건",
+   "n": 2,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급자통장잔액한도",
+   "n": 2,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "etf읽어주는남자",
+   "n": 2,
+   "seed": "etf",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표일 보는법",
+   "n": 2,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "실적발표 ppt",
+   "n": 2,
+   "seed": "실적발표",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성중공업 목표주가",
+   "n": 2,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성sdi 목표주가",
+   "n": 2,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "현대차 목표주가",
+   "n": 2,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "테슬라 목표주가",
+   "n": 2,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "sk하이닉스 목표주가",
+   "n": 2,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "네이버 목표주가",
+   "n": 2,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 세금 정리",
+   "n": 2,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 신고 방법",
+   "n": 2,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금 절세",
+   "n": 2,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 세금신고",
+   "n": 2,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "시가총액 순위 변화",
+   "n": 2,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "시가총액 낮은 주식",
+   "n": 2,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "옵션만기일이란",
+   "n": 2,
+   "seed": "옵션만기",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주 매입 소각",
+   "n": 2,
+   "seed": "자사주",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "자사주처분 주가",
+   "n": 2,
+   "seed": "자사주",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보자 강의",
+   "n": 2,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 어플",
+   "n": 2,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "삼성전자주식전망",
+   "n": 1,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성전자배당금지급일",
+   "n": 1,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "삼성전자우 주가 전망",
+   "n": 1,
+   "seed": "삼성전자",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "공매도 원리",
+   "n": 1,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 과열종목 지정",
+   "n": 1,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 잔고 보는법",
+   "n": 1,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "공매도 상환기간",
+   "n": 1,
+   "seed": "공매도",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "외국인 2인조 강도",
+   "n": 1,
+   "seed": "외국인",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "기관내흡인 핵심술기",
+   "n": 1,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관절개관 관리 핵심술기",
+   "n": 1,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "기관지확장증치료방법",
+   "n": 1,
+   "seed": "기관",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급자대출",
+   "n": 1,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "수급자기초연금",
+   "n": 1,
+   "seed": "수급",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "목표주가 계산",
+   "n": 1,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "엔비디아 목표주가",
+   "n": 1,
+   "seed": "목표주가",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "주식 세금 수수료",
+   "n": 1,
+   "seed": "주식 세금",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "시가총액 주가 관계",
+   "n": 1,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "시가총액 1위 투자",
+   "n": 1,
+   "seed": "시가총액",
+   "depth": 1,
+   "made": false
+  },
+  {
+   "q": "코스닥 코스피 차이",
+   "n": 1,
+   "seed": "코스닥",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보가 공부하는 방법 5가지",
+   "n": 1,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 투자 하는 법",
+   "n": 1,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 책 추천",
+   "n": 1,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  },
+  {
+   "q": "주식 초보 차트 보는 법",
+   "n": 1,
+   "seed": "주식 초보",
+   "depth": 1,
+   "made": true
+  }
+ ]
+}

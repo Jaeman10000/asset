@@ -175,6 +175,23 @@
     "sign": 1,
     "n": 2
    },
+   "result": {
+    "date": "20260923",
+    "ok": false,
+    "t": -5048,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260923",
+   "q": "개인 순매도가 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "indiv",
+    "name": "개인",
+    "sign": -1,
+    "n": null
+   },
    "result": null
   }
  ]

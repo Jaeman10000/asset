@@ -164,3 +164,62 @@ def pct_speech_issues(text: str) -> list[str]:
                 continue
             bad.append(m.group(0))
     return bad
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# OS 무관 경로 — 맥미니(darwin-arm64)로 옮겨도 그대로 돌게 (2026-09-24)
+# 윈도우에만 있던 것: remotion ffmpeg(.exe), 맑은 고딕, .venv/Scripts, 세션별 스크래치.
+# ══════════════════════════════════════════════════════════════════════════════
+def ffmpeg_path() -> Path | None:
+    """remotion 이 깔아 둔 ffmpeg — 플랫폼 패키지 이름이 OS마다 다르다.
+
+    win32-x64-msvc / darwin-arm64 / darwin-x64 / linux-x64-gnu … 무엇이든 찾는다.
+    """
+    base = ROOT / "render" / "node_modules" / "@remotion"
+    for pat in ("compositor-*/ffmpeg.exe", "compositor-*/ffmpeg"):
+        for p in sorted(base.glob(pat)):
+            if p.is_file():
+                return p
+    import shutil as _sh
+    w = _sh.which("ffmpeg")
+    return Path(w) if w else None
+
+
+_FONT_CANDS = (
+    "C:/Windows/Fonts/malgunbd.ttf", "C:/Windows/Fonts/malgun.ttf",                 # 윈도우
+    "/System/Library/Fonts/AppleSDGothicNeo.ttc",                                   # macOS 기본 한글
+    "/System/Library/Fonts/Supplemental/AppleGothic.ttf",
+    "/Library/Fonts/NanumGothicBold.ttf", "/Library/Fonts/NanumGothic.ttf",
+    "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",                          # 리눅스
+)
+
+
+def korean_font() -> Path | None:
+    """자막을 그릴 한글 폰트 — 없으면 None(부르는 쪽이 글자 없이 진행한다)."""
+    for c in _FONT_CANDS:
+        p = Path(c)
+        if p.exists():
+            return p
+    return None
+
+
+def venv_bin(name: str) -> Path | None:
+    """가상환경 실행파일 — 윈도우는 .venv/Scripts/<name>.exe, 그 외는 .venv/bin/<name>."""
+    base = ROOT.parent / "backend" / ".venv"
+    for rel in (f"Scripts/{name}.exe", f"bin/{name}"):
+        p = base / rel
+        if p.exists():
+            return p
+    import shutil as _sh
+    w = _sh.which(name)
+    return Path(w) if w else None
+
+
+def scratch_dir(sub: str = "") -> Path:
+    """임시 작업 폴더 — 세션 스크래치가 있으면 그걸, 없으면 OS 임시 폴더."""
+    import os as _os
+    import tempfile as _tf
+    base = _os.environ.get("CLAUDE_SCRATCHPAD") or _tf.gettempdir()
+    p = Path(base) / "nugasatna" / sub if sub else Path(base) / "nugasatna"
+    p.mkdir(parents=True, exist_ok=True)
+    return p

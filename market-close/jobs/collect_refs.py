@@ -23,10 +23,11 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from _common import venv_bin
 
 ROOT = Path(__file__).resolve().parent.parent
 REFS = ROOT / "data" / "refs"
-YTDLP = Path(r"C:/Users/Jeff/Documents/GitHub/asset/backend/.venv/Scripts/yt-dlp.exe")
+YTDLP = venv_bin("yt-dlp")
 
 
 def _run(args: list[str], timeout: int = 900) -> subprocess.CompletedProcess:

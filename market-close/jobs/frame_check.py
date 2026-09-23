@@ -29,13 +29,14 @@ import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
+from _common import ffmpeg_path, korean_font
 
 MC = Path(__file__).resolve().parent.parent
-FFMPEG = MC / "render" / "node_modules" / "@remotion" / "compositor-win32-x64-msvc" / "ffmpeg.exe"
+FFMPEG = ffmpeg_path()          # OS 무관(2026-09-24): win32-x64-msvc / darwin-arm64 … 무엇이든 찾는다
 LEAD = 0.6          # 문장 시작 뒤 이만큼 — 그 문장에 붙은 조각이 다 뜬 시점
 W, H = 430, 764     # 컷 한 장 크기(세로 9:16)
 CAP = 46            # 자막 줄 높이
-FONT = next((p for p in (Path(r"C:/Windows/Fonts/malgunbd.ttf"), Path(r"C:/Windows/Fonts/malgun.ttf")) if p.exists()), None)
+FONT = korean_font()            # 윈도우 맑은고딕 / macOS 애플고딕 / 리눅스 나눔
 
 
 def _f(size: int):

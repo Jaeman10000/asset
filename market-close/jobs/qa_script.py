@@ -35,9 +35,10 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from _common import ffmpeg_path
 
 ROOT = Path(__file__).resolve().parent.parent
-FF = Path(r"C:/Users/Jeff/Documents/GitHub/asset/market-close/render/node_modules/@remotion/compositor-win32-x64-msvc/ffmpeg.exe")
+FF = ffmpeg_path()
 CPS = 8.1                                   # 타입캐스트 무열 tempo 1.1 실측 초당 글자수
 LIMIT = {"day": 172, "kr": 172, "us": 172}  # 초 상한 = 쇼츠 한계 180초 - 여유 8초.
 # 180초를 넘기면 쇼츠가 아니라 일반 영상으로 분류돼 쇼츠 피드에서 빠진다 — 우리 조회수의 96~97%가 거기서 온다.
@@ -544,6 +545,81 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
                 (warn.append(msg) if warn is not None else print(msg, file=sys.stderr))
 
     import script_memory as _sm2
+    # ── s1: 큰 질문이 **그 질문을 말하는 문장**에 뜨는가 ──────────────────────
+    # 2026-09-24(감사): 9/23 에 손으로 s1 앞에 문장을 끼워 넣었더니 steps 는 ["q","q_2","q_3"] 그대로라
+    # 렌더러 at("q",0,0) 이 0번 문장을 집어 **질문이 4.45초 먼저** 떴다. S1H 는 hideSub 라 그동안 자막도 없었다.
+    _h1 = (_hunter_comp(comp) or {}).get("s1") or {}
+    _q1 = (_h1.get("q") or "").strip()
+    if _q1:
+        for s in scenes:
+            if str(s.get("id")) != "s1":
+                continue
+            _s1 = _sm2.sentences(s.get("tts") or "")
+            st1 = s.get("steps")
+            hit = next((i for i, x in enumerate(_s1) if _q1 in x), -1)
+            if hit < 0:
+                fail("s1", f"화면에 띄울 질문이 대사에 없다 — hunter.s1.q 와 대사를 맞춘다", _q1[:40])
+            elif isinstance(st1, list) and len(st1) == len(_s1):
+                qk = next((i for i, n in enumerate(st1) if str(n) == "q"), -1)
+                if qk >= 0 and qk != hit:
+                    fail("s1", f"질문 화면이 {qk}번 문장에 걸렸는데 질문은 {hit}번 문장이다 "
+                               f"— 'q' 단계를 질문 문장에 놓는다(2026-09-23 4.45초 조기 노출)", _s1[qk])
+
+    # ── s2 여는 말은 **승인된 목록**에서만 ─────────────────────────────────────
+    # 2026-09-23: 전 편과 겹친다는 검사에 걸리자 손으로 "코스피 넷부터 봅니다" 를 지어냈다.
+    # 사람이 안 쓰는 말이고 JJ가 바로 잡아냈다. 겹치면 지어내지 말고 narrate_brief.S2_OPENS 에 자연스러운 말을 **더한다**.
+    try:
+        import narrate_brief as _nb
+        _opens = set(getattr(_nb, "S2_OPENS", []))
+    except Exception:
+        _opens = set()
+    if _opens:
+        for s in scenes:
+            if str(s.get("id")) != "s2":
+                continue
+            first = (_sm2.sentences(s.get("tts") or "") or [""])[0].strip()
+            if first and first not in _opens:
+                fail("s2", "여는 말이 목록에 없다 — 지어내지 말고 narrate_brief.S2_OPENS 에 "
+                           "자연스러운 한국말을 더해서 쓴다(2026-09-23 '코스피 넷부터 봅니다' 사고)", first)
+
+    # ── s2 막대가 **그 문장에서 말하는 주체**를 켜는가 ────────────────────────────
+    # 2026-09-23 사고: bars 는 [외국인, 기관, 개인] 고정인데 step 은 말하는 순서로 bar:0·bar:1 이 붙었다.
+    # 그날 대사가 외국인 → 개인 → 기관 이어서 **개인을 말할 때 기관 막대**가 서고,
+    # **기관을 말할 때 기타법인 막대**가 섰다(JJ: "말과 영상이 다르잖아").
+    # 고친 방식: step 이름이 주체를 들고 온다(bar:개인, 한 문장에 둘이면 bar:기관·개인).
+    # 여기서 막는 것 ① 이름이 붙은 단계인데 그 문장에 그 주체가 안 나온다 ② 말한 주체인데 막대 단계가 없다.
+    import re as _re2
+    SUBJ = ("외국인", "기관", "개인", "기타법인")
+    for s in scenes:
+        if str(s.get("id")) != "s2":
+            continue
+        st = s.get("steps")
+        _ss = _sm2.sentences(s.get("tts") or "")
+        if not isinstance(st, list) or len(st) != len(_ss):
+            continue                      # 개수 불일치는 위 규칙이 이미 잡는다
+        said = set()
+        for i, nm in enumerate(st):
+            m = _re2.match(r"^bar:(.+?)(?:_\d+)?$", str(nm))
+            if not m:
+                continue
+            if m.group(1).isdigit():
+                # 번호로 이으면 bars 배열 순서(외국인·기관·개인)와 말하는 순서가 다른 날 뒤바뀐다.
+                fail("s2", f"막대 단계가 번호다('{nm}') — 이름으로 적는다(bar:외국인·bar:개인, "
+                           f"한 문장에 둘이면 bar:기관·개인). 2026-09-23 에 이 때문에 말과 막대가 어긋났다", _ss[i])
+                continue
+            for who in m.group(1).split("·"):
+                said.add(who)
+                if who not in _ss[i]:
+                    fail("s2", f"화면은 '{who}' 막대를 켜는데 그 문장은 '{who}' 을(를) 말하지 않는다 "
+                               f"— 막대는 말하는 주체에 선다(2026-09-23)", _ss[i])
+        if said:                          # 이름 방식으로 만든 편만 본다(옛 편은 bar:0 이라 건너뛴다)
+            for i, x in enumerate(_ss):
+                for who in SUBJ:
+                    if who in x and who not in said and _re2.search(r"[\d,]+\s*(억|조)", x):
+                        fail("s2", f"'{who}' 의 숫자를 말하는데 막대 단계(bar:{who})가 없다 "
+                                   f"— 그 문장에서 막대가 안 선다", x)
+                        break
+
     for s in scenes:
         st = s.get("steps")
         if not isinstance(st, list) or not st:

@@ -369,7 +369,18 @@ export const S1H: React.FC<SC> = ({ p, cues }) => {
   const { at, list, steps, endSec } = useSteps(p, "s1", cues);
   const pop = usePop();
   if (!h) return <Empty p={p} sub="" cues={cues} />;
-  const q0 = at("q", 0, 0);
+  // 큰 질문은 **그 질문을 말하는 문장**에 뜬다(2026-09-24).
+  // 9/23: 손으로 앞에 문장을 하나 끼워 넣었더니 steps 는 ["q","q_2","q_3"] 그대로라
+  // indexOf("q")=0 → 질문이 4.45초 **먼저** 떴고, S1H 는 hideSub 라 그동안 자막도 없었다.
+  // 이제 h.q 가 실제로 들어 있는 문장을 먼저 찾고, 못 찾으면 옛 방식.
+  const qIdx = h.q ? list.findIndex((b) => (b.text ?? "").includes(h.q)) : -1;
+  const q0 = qIdx >= 0 ? list[qIdx].start : at("q", 0, 0);
+  // 꼬리('오늘은 이것 하나만 보겠습니다')도 **그 말을 하는 문장**에. 타이머 q0+0.8 을 쓰면
+  // 렌더된 7편 전부 실제 발화보다 4~6초 빨리 떴다(2026-09-24 감사).
+  const tailAt = (s: string): number => {
+    const i = s ? list.findIndex((b) => (b.text ?? "").includes(s)) : -1;
+    return i >= 0 ? list[i].start : q0 + 0.8;
+  };
   // 꼬리: narrate 가 s1.tail 을 주면 그것, 없으면 큐 문장에서 질문 뒤의 말('… 하나만 봅니다')을 잘라 쓴다(C8 — 문장 전체를 화면에)
   let tail = h.tail ?? "";
   if (!tail) {
@@ -384,7 +395,7 @@ export const S1H: React.FC<SC> = ({ p, cues }) => {
         <div style={{ fontSize: 36, fontWeight: 800, color: SUBC, letterSpacing: "0.06em", textShadow: SH, marginBottom: 18 }}>오늘의 질문</div>
         <div style={{ width: 120, height: 8, borderRadius: 4, background: YEL, boxShadow: "0 0 22px rgba(255,216,77,0.6)", marginBottom: 34 }} />
         <div style={{ fontSize: 112, fontWeight: 900, lineHeight: 1.18, letterSpacing: "-0.04em", color: YEL, wordBreak: "keep-all", textShadow: SH_Q }}>{h.q}</div>
-        {tail ? <div style={{ fontSize: 56, fontWeight: 800, color: "#FFFFFF", marginTop: 40, textShadow: SH, wordBreak: "keep-all", ...pop(q0 + 0.8) }}>{tail}</div> : null}
+        {tail ? <div style={{ fontSize: 56, fontWeight: 800, color: "#FFFFFF", marginTop: 40, textShadow: SH, wordBreak: "keep-all", ...pop(tailAt(tail)) }}>{tail}</div> : null}
       </div>
       {/* 글씨만 3초를 넘기지 않게 — 장면이 3초보다 길면 2.4초에 장중 흐름 그림을 올린다 */}
       {endSec - q0 > TEXT_ONLY_MAX ? <IdxSpark p={p} at={q0 + 2.4} top={1180} /> : null}
@@ -409,7 +420,13 @@ export const S2H: React.FC<SC> = ({ p, cues }) => {
   const n1 = at("admit", 1, n0 + 1.5);
   const n2 = at("turn", 2, find(/^그런데/) ?? n1 + 3);
   // 네 번째 막대(기타법인)는 그 이름이 처음 나오는 문장 또는 '그런데' 중 이른 쪽에 — 뻔한 답이 기타법인 자체인 날(N6)은 첫 문장부터 서 있어야 한다
-  const nb = rv ? Math.min(n2, say(rv.name) ?? n2) : n2;
+  // 네 번째 막대(기타법인)는 **그 이름이 붙은 단계**에 선다. 'turn' 은 기관 문장일 수 있어서
+  // 어제(9/23) 기관을 말할 때 기타법인 막대가 서는 사고가 났다.
+  const rvStep = rv && steps
+    ? (() => { const i = steps.findIndex((s) => { const m = /^bar:(.+?)(?:_\d+)?$/.exec(String(s)); return !!m && m[1].split("·").some((x) => x === rv.name); });
+               return i >= 0 && list[i] ? list[i].start : undefined; })()
+    : undefined;
+  const nb = rv ? (rvStep ?? Math.min(n2, say(rv.name) ?? n2)) : n2;
   const dk = rv && (rv.days ?? 0) >= 2 ? (find(new RegExp(`(?:${DKO[rv.days ?? 0] || "\\u0000"}|${rv.days}일)째`)) ?? undefined) : undefined;
   const n3 = dk ?? at("reveal", 3, nb + 0.5);
   // 종목 카드: 뻔한 답의 주체가 곧 공개 주체인 날(N6, 네 번째 막대가 처음부터 서 있음)은 '그런데 막대 밑을 보세요' 순간에 바로(C3); 아니면 top 단계(브리핑은 자사주 문장) → 첫 종목 이름을 말할 때
@@ -426,9 +443,23 @@ export const S2H: React.FC<SC> = ({ p, cues }) => {
   const rk = h.bars.length;   // 네 번째(공개) 막대의 자리
   // 막대가 서는 시각: bar:k 단계가 있으면(브리핑) 그 주체를 말하는 문장에, 없으면(헌터) 첫 문장에 셋이 같이
   // 브리핑에서 bar:k 단계가 없는 주체(기관·개인을 한 문장에 말한 날의 개인)는 바로 앞 막대와 같이 선다 — 안 말한 막대가 먼저 뜨지 않게
+  // 막대는 **이름**으로 잇는다(2026-09-23 사고). bars 배열은 [외국인, 기관, 개인] 고정인데
+  // 생성기는 말하는 순서대로 bar:0·bar:1 을 붙였다 — 그날 대사가 외국인 → 개인 → 기관 이어서
+  // bar:1(개인 문장)이 bars[1]=기관 막대를 켰고, 기관 문장에선 기타법인 막대가 섰다.
+  // 이제 step 이름이 'bar:개인' 처럼 주체를 들고 오고, 한 문장에 둘이면 'bar:기관·개인' 으로 붙는다.
+  // 옛 편(bar:0·bar:1)은 번호로 그대로 동작한다.
+  const barStepAt = (nm: string, k: number): number | undefined => {
+    if (!steps) return undefined;
+    const i = steps.findIndex((s) => {
+      const m = /^bar:(.+?)(?:_\d+)?$/.exec(String(s));
+      return !!m && m[1].split("·").some((x) => x === nm);
+    });
+    if (i >= 0 && list[i]) return list[i].start;
+    return stepAt(`bar:${k}`);
+  };
   const barAt: number[] = [];
-  bars.forEach((_, k) => {
-    const own = rv && k === rk ? nb : hasBarSteps ? stepAt(`bar:${k}`) : undefined;
+  bars.forEach((b, k) => {
+    const own = rv && k === rk ? nb : hasBarSteps ? barStepAt(b.name, k) : undefined;
     barAt.push(own ?? (hasBarSteps && k > 0 && !(rv && k === rk) ? barAt[k - 1] : n0 + 0.35 + k * 0.2));
   });
   const slide = bars.map((_, k) => !!rv && k === rk && nb > n0 + 0.3);

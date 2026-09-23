@@ -758,6 +758,25 @@ def _s1(x: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]:
 # S2 대변→차단 + 코스피 수급 나열 — 뻔한 답(N1 개인이 받았다 / N2 기관이 받았다 / N3 외국인이 돌아왔다 / N4 지수 올랐으니 돈이 들어왔다 / N6 새 돈)
 # → 외국인(연속일) → 기관·개인, 넷 다 숫자 → '그런데 [화면 지시어] 네 번째 막대' → 기타법인 + 상위 두 종목·자사주 비중 + '9월 들어 매일/N일째'
 # → 질문(코스닥은 어땠나). 대체: 기타법인 <3,000억이면 자사주 문장 생략, '기타법인 N억' 한 마디.
+# s2 여는 말 — **이 목록에서만 고른다.** 2026-09-23 에 전 편과 겹친다는 검사에 걸리자
+# 손으로 "코스피 넷부터 봅니다" 를 지어냈고 JJ가 "이게 뭔 개소리야" 라고 했다. 사람이 안 쓰는 말이었다.
+# 겹치면 지어내지 말고 여기에 **자연스러운 한국말**을 더한다(qa_script.S2_OPENS 가 같은 목록을 본다).
+S2_OPENS = [
+    "먼저 코스피부터 보겠습니다.",
+    "코스피부터 하나씩 보겠습니다.",
+    "먼저 코스피에서 누가 사고 팔았는지 보겠습니다.",
+    "답을 찾으러 코스피부터 보겠습니다.",
+    "코스피 수급부터 보겠습니다.",
+    "코스피부터 봅니다.",
+    "오늘 코스피에선 누가 사고 팔았는지 보겠습니다.",
+    "코스피 네 주체부터 보겠습니다.",
+    "먼저 코스피 수급을 보겠습니다.",
+    "코스피에 들어온 돈부터 보겠습니다.",
+    "코스피부터 차례로 보겠습니다.",
+    "오늘 코스피 수급부터 보겠습니다.",
+]
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 _S2_Q = ["그럼 코스닥은 어땠을까요?", "그럼 코스닥 쪽은 어땠을까요?", "그럼 코스닥도 같은 그림일까요?", "그럼 코스닥에선 누가 샀을까요?",
          "그럼 코스닥 막대는 어느 쪽일까요?", "그럼 코스닥은 어느 쪽일까요?"]
@@ -812,8 +831,7 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
                                    "답은 한 손이라고 생각하기 쉽습니다.", "받은 쪽이 하나로 보이기 쉽습니다.", "한 손이 다 받은 날로 보이기 쉽습니다."])))
     # 브리핑은 대변 문장('…보이기 쉽습니다')을 말하지 않는다 — s1 질문 바로 뒤에 뜬금없이 끼어든다(JJ 2026-09-17).
     # 대신 '먼저 코스피부터 보겠습니다'로 질문에 답하러 들어간다. 화면 머리글도 중립 문구로.
-    pairs = [("open", pk(["먼저 코스피부터 보겠습니다.", "코스피부터 하나씩 보겠습니다.", "먼저 코스피에서 누가 사고 팔았는지 보겠습니다.",
-                          "답을 찾으러 코스피부터 보겠습니다.", "코스피 수급부터 보겠습니다."]))]
+    pairs = [("open", pk(S2_OPENS))]
     naive, naive_name = "코스피 누가 샀나", ""
     # ── 코스피 수급: 외국인(어제 약속의 답) → 같은 쪽 → '하지만' 반대쪽(가장 큰 쪽을 마지막에) ──
     # JJ 2026-09-17: "순매도 2개, 순매수 1개 아니냐? 그리고 기타법인 1개." — 판 쪽끼리, 산 쪽끼리 묶어서 논리대로.
@@ -836,20 +854,20 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
             x["cb_said"] = True
             # v7(JJ 2026-09-19): 시청자 99.9%가 어제 영상을 안 봤다 — '어제 보자고 한' 대신 처음 보는 사람에게도 사건인 말로.
             if bool(cb["ok"]):
-                pairs.append(("bar:0", pk([f"외국인은 오늘도 {obj(F)} {act}습니다. {dko(st_f)} {ing} 있습니다.",
+                pairs.append(("bar:외국인", pk([f"외국인은 오늘도 {obj(F)} {act}습니다. {dko(st_f)} {ing} 있습니다.",
                                            f"외국인이 {dko(st_f)} {ing} 있습니다. 오늘만 {obj(F)} {act}습니다.",
                                            f"외국인은 오늘도 {act}습니다. {dko(st_f)}, 오늘만 {F}입니다."])))
             else:
                 prev = abs(int(((cont.get("yesterday") or {}).get("foreign_streak")) or 0))
                 was = "팔기만" if frg > 0 else "사기만"
-                pairs.append(("bar:0", pk(([f"{prev}일 동안 {was} 하던 외국인이 오늘은 {obj(F)} {act}습니다.",
+                pairs.append(("bar:외국인", pk(([f"{prev}일 동안 {was} 하던 외국인이 오늘은 {obj(F)} {act}습니다.",
                                             f"{prev}일 내내 {was} 하던 외국인이 오늘은 방향을 바꿔 {obj(F)} {act}습니다."] if prev >= 2 else
                                            [f"외국인은 오늘 방향을 바꿔 {obj(F)} {act}습니다."]))))
         elif st_f >= 2:
-            pairs.append(("bar:0", pk([f"외국인은 오늘도 {obj(F)} {act}습니다. {dko(st_f)} {ing} 있습니다.",
+            pairs.append(("bar:외국인", pk([f"외국인은 오늘도 {obj(F)} {act}습니다. {dko(st_f)} {ing} 있습니다.",
                                        f"외국인은 {dko(st_f)} {ing} 있고, 오늘은 {obj(F)} {act}습니다."])))
         else:
-            pairs.append(("bar:0", pk([f"외국인은 오늘 {obj(F)} {act}습니다. 방향이 바뀐 첫날입니다.", f"외국인은 방향을 바꿔 오늘 {obj(F)} {act}습니다."])))
+            pairs.append(("bar:외국인", pk([f"외국인은 오늘 {obj(F)} {act}습니다. 방향이 바뀐 첫날입니다.", f"외국인은 방향을 바꿔 오늘 {obj(F)} {act}습니다."])))
     others = [(n, v) for n, v in (("개인", ind), ("기관", inst)) if isinstance(v, (int, float)) and abs(v) >= 0.5]
     same = [(n, v) for n, v in others if (v < 0) == sold_f]
     opp = [(n, v) for n, v in others if (v < 0) != sold_f]
@@ -877,14 +895,14 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
     # 같은 쪽(외국인과 같은 방향) — '여기에 개인까지'
     if len(same) == 1:
         n, v = same[0]
-        pairs.append(("bar:1", pk([f"여기에 {n}까지 {obj(hwon(v))} {_verb(v)}습니다.", f"{n}도 {obj(hwon(v))} {_verb(v)}습니다."])))
+        pairs.append((f"bar:{n}", pk([f"여기에 {n}까지 {obj(hwon(v))} {_verb(v)}습니다.", f"{n}도 {obj(hwon(v))} {_verb(v)}습니다."])))
     elif len(same) >= 2:
         (n1, v1), (n2, v2) = same[0], same[1]
-        pairs.append(("bar:1", pk([f"여기에 {J(n1, '과', '와')} {n2}까지 각각 {hwon(v1)}, {obj(hwon(v2))} {_verb(v2)}습니다.",
+        pairs.append((f"bar:{n1}·{n2}", pk([f"여기에 {J(n1, '과', '와')} {n2}까지 각각 {hwon(v1)}, {obj(hwon(v2))} {_verb(v2)}습니다.",
                                    f"{J(n1, '과', '와')} {n2}도 각각 {hwon(v1)}, {obj(hwon(v2))} {_verb(v2)}습니다."])))
         if len(same) >= 3:
             n3, v3 = same[2]
-            pairs.append(("bar:2", pk([f"{n3}도 {obj(hwon(v3))} {_verb(v3)}습니다."])))
+            pairs.append((f"bar:{n3}", pk([f"{n3}도 {obj(hwon(v3))} {_verb(v3)}습니다."])))
     if st_i >= 2 and isinstance(inst, (int, float)) and inst < 0 and any(n == "기관" for n, _ in same):
         pairs.append(("inst_streak", pk([f"기관은 {dko(st_i)} 팔고 있습니다.", f"기관도 {dko(st_i)} 파는 중입니다."])))
     # 반대쪽 — '하지만 기관이 …을 샀고, 기타법인이 …으로 가장 많이 샀습니다' (가장 큰 쪽을 마지막에)
@@ -892,20 +910,25 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
     if len(opp) == 1:
         n, v = opp[0]
         most = " 가장 많이" if (n == "기타법인" and is_top) else ""
-        pairs.append(("turn", pk([f"하지만 {subj(n)} {obj(hwon(v))}{most} {_verb(v)}습니다." if not most else f"하지만 {subj(n)} {ro(hwon(v))} 가장 많이 {_verb(v)}습니다.",
+        pairs.append((f"bar:{n}", pk([f"하지만 {subj(n)} {obj(hwon(v))}{most} {_verb(v)}습니다." if not most else f"하지만 {subj(n)} {ro(hwon(v))} 가장 많이 {_verb(v)}습니다.",
                                   f"그런데 {subj(n)} {obj(hwon(v))} {_verb(v)}습니다." if not most else f"그런데 가장 많이 {_verb(v)[:-1] + '은' if False else ''}{'산' if v > 0 else '판'} 곳은 {n}, {hwon(v)}입니다."])))
     elif len(opp) >= 3:
         # 산 쪽이 셋(9/17: 기관·개인·기타법인) — 한 문장에 숫자 셋은 안 되고, 셋째를 따로 떼면 길이 줄이기에서 빠진다(9/17 기관 누락 → 폴백).
         # JJ 방송 문장 꼴: "하지만 기관이 1,600억, 개인이 4,100억을 샀습니다. 기타법인은 1조 7,000억으로 가장 많이 샀습니다." — 한 칸(turn)에 두 문장.
         (n0, v0), (a_n, a_v), (b_n, b_v) = opp[0], opp[-2], opp[-1]
         most = "가장 많이 " if (b_n != "기타법인" or is_top) else ""
-        pairs.append(("turn", pk([f"하지만 {subj(n0)} {hwon(v0)}, {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다. {J(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다.",
+        pairs.append((f"bar:{n0}·{a_n}·{b_n}", pk([f"하지만 {subj(n0)} {hwon(v0)}, {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다. {J(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다.",
                                   f"하지만 {subj(n0)} {hwon(v0)}, {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다. 그리고 {subj(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다."])))
     elif len(opp) >= 2:
+        # 2026-09-23: 둘을 한 문장에 넣으면 49자가 되어 s2 기타법인 45자 규칙에 걸리고, 세 번 다 같은 문장이 나와
+        #             브리핑 포맷이 A+ 로 폴백했다(그날 영상이 684자 다섯 장면으로 떨어졌다).
+        #             >=3 갈래처럼 **두 문장으로 나눈다** — 두 번째가 기타법인 막대('top')를 켠다.
         (a_n, a_v), (b_n, b_v) = opp[-2], opp[-1]
         most = "가장 많이 " if (b_n != "기타법인" or is_top) else ""
-        pairs.append(("turn", pk([f"하지만 {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}고, {subj(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다.",
-                                  f"하지만 {J(a_n)} {obj(hwon(a_v))} {_verb(a_v)}고, {J(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다."])))
+        pairs.append((f"bar:{a_n}", pk([f"하지만 {subj(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다.",
+                                  f"그런데 {J(a_n)} {obj(hwon(a_v))} {_verb(a_v)}습니다."])))
+        pairs.append((f"bar:{b_n}", pk([f"{J(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다.",
+                                 f"{subj(b_n)} {ro(hwon(b_v))} {most}{_verb(b_v)}습니다."])))
     # 기타법인 이어짐 — 날마다 달라지는 숫자를 한 문장 안에(겹침 검사)
     if o_ok and oth > 0 and oth >= 3000:
         if is_top and cont.get("top_buyer_days", 1) >= 2:
@@ -917,16 +940,16 @@ def _s2(x: dict, cont: dict, pk: Picker, attempt: int) -> tuple[list, dict, str]
         sh = round(x["oth_share"] * 100)
         if top and x["oth_share"] >= 0.5:
             tag = " 자사주" if x["oth_in_bb"] else ""
-            pairs.append(("top", pk([f"기타법인이 산 돈의 {sh}%가 {names}{tag}입니다.", f"그중 {sh}%가 {names}{tag}입니다.", f"그 {sh}%는 {names}{tag}였습니다."])))
+            pairs.append(("top_2", pk([f"기타법인이 산 돈의 {sh}%가 {names}{tag}입니다.", f"그중 {sh}%가 {names}{tag}입니다.", f"그 {sh}%는 {names}{tag}였습니다."])))
         elif top:
-            pairs.append(("top", pk([f"기타법인 돈이 가장 많이 간 곳은 {top[0]['name']}, {hwon(top[0]['v'])}입니다.", f"기타법인이 가장 많이 산 종목은 {top[0]['name']}입니다."])))
+            pairs.append(("top_2", pk([f"기타법인 돈이 가장 많이 간 곳은 {top[0]['name']}, {hwon(top[0]['v'])}입니다.", f"기타법인이 가장 많이 산 종목은 {top[0]['name']}입니다."])))
     pairs.append(("q", pk(_S2_Q)))
     bars = [{"name": n, "v": vals.get(n), "days": (st_f if n == "외국인" else st_i if n == "기관" else None) or None}
             for n in ("외국인", "기관", "개인") if vals.get(n) is not None]
     s2 = {"naive": naive, "naive_name": naive_name, "naive_v": vals.get(naive_name) if naive_name != "코스피" else x["chg"], "kind": kind, "bars": bars,
           "reveal": {"name": "기타법인", "v": oth, "days": (0 if ob_capped else ob_days), "days_word": days_word, "top": top, "share": round(x["oth_share"] * 100),
                      "kind": "buyback" if x["oth_in_bb"] else "party"},
-          "said_share": any(n == "top" and "%" in t for n, t in pairs), "pairs": pairs}
+          "said_share": any(n.startswith("top") and "%" in t for n, t in pairs), "pairs": pairs}
     return pairs, s2, kind
 
 
