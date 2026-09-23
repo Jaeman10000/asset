@@ -20,15 +20,22 @@ const GRID = "rgba(20,20,20,0.055)";
 const FOOT = "자동 생성 · AI 음성 · 종목·매매 추천 아님";
 const ease = Easing.bezier(0.2, 0.8, 0.2, 1);
 const W = 952;
+// 한글은 라틴보다 넓다 — 글자 수가 아니라 '폭'으로 재야 겹치지도, 잘리지도 않는다.
+// (막대 이름 9/23, 큰 숫자 "25조 7,800억" 이 "억" 만 다음 줄로 넘어간 2026-09-22)
+const wUnit = (s: string) =>
+  [...s].reduce((a, ch) => a + (/[가-힣ㄱ-ㅎ]/.test(ch) ? 1.0 : /[0-9A-Za-z]/.test(ch) ? 0.58 : 0.4), 0);
+/** 폭 max 에 맞춰 글자 크기를 줄인다(늘리지는 않는다). */
+const fitFont = (s: string, max: number, want: number, min = 70) =>
+  Math.max(min, Math.min(want, Math.floor((max - 8) / Math.max(0.5, wUnit(s) * 0.95))));
 
 type SC = { p: Props; sub: string; cues?: Cue[] };
 type Pt = { label?: string; v: number; vlabel?: string; est?: boolean; hl?: boolean; color?: "red" | "blue" | "ink" | "grey"; at?: number };
 type Mark = { i: number; label: string; at?: number; color?: "red" | "blue" | "ink"; pos?: "top" | "bottom" };
 export type DCard = {
-  kind: "hook" | "hook2" | "line" | "bars" | "vs" | "hbars" | "picto" | "stack" | "big" | "check" | "split" | "q" | "duo" | "score" | "steps";
+  kind: "hook" | "hook2" | "line" | "bars" | "vs" | "hbars" | "picto" | "stack" | "big" | "check" | "split" | "q" | "duo" | "score" | "steps" | "cal" | "timeline" | "art" | "sides";
   // hook2(9/20 JJ "첫 장면 세련되게"): 제목 + 한 줄 + 숫자 칩 + 넓은 차트 카드 한 장
-  sub2?: string; chips?: { label: string; value: string; tone?: "red" | "blue" | "ink"; note?: string }[];
-  chart?: { kind: "linebars" | "negbars"; title?: string; series?: number[]; bars?: number[]; rows?: Pt[]; startLabel?: string; endLabel?: string; barLabel?: string; legend?: [string, string] };
+  sub2?: string; chips?: { label: string; value: string; tone?: "red" | "blue" | "ink"; note?: string; at?: number }[];
+  chart?: { kind: "linebars" | "negbars"; title?: string; base?: number; series?: number[]; bars?: number[]; rows?: Pt[]; startLabel?: string; endLabel?: string; barLabel?: string; legend?: [string, string] };
   head?: string; note?: string; note_at?: number; unit?: string;
   // hook
   tag?: string; name?: string; a?: { label: string; value: string; series: number[] }; b?: { label: string; value: string; bars: number[]; labels?: string[] }; q?: QLine[];
@@ -44,40 +51,50 @@ export type DCard = {
   // stack
   parts?: { label: string; v: number; sub?: string }[];
   // big
-  big?: string; big_sub?: string; ratio?: { label: string; v: number; of: string };
+  big?: string; big_sub?: string; ratio?: { label: string; v: number; of: string; at?: number };
   // check / split
   items?: { t: string; at?: number }[];
   up?: { title: string; t: string; at?: number }; down?: { title: string; t: string; at?: number };
 };
-type Info = { style?: string; cards?: Record<string, DCard> };
+type Info = { style?: string; theme?: string; cards?: Record<string, DCard> };
 
-const C = (c?: string) => (c === "red" ? PRED : c === "blue" ? PBLUE : c === "grey" ? "#9A948B" : INK);
+const C = (c?: string) => (c === "red" ? PRED : c === "blue" ? PBLUE : c === "grey" ? "#3C5A8A" : INK);   // grey 도 남색으로 — 회색 막대 금지
 const infoOf = (p: Props) => ((p as unknown as { info?: Info }).info ?? {}) as Info;
 const cueAt = (cues: Cue[] | undefined, i: number | undefined, fb: number) => (i === undefined ? fb : cues && cues[i] ? cues[i].start : fb + i * 2.4);
 const prog = (t: number, a: number, d = 1.0) => interpolate(t, [a, a + d], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: ease });
 const fitHead = (s: string) => (s.length <= 14 ? 76 : s.length <= 22 ? 66 : 58);
-const qCue = (cues?: Cue[]) => (cues ?? []).find((x) => /\?$/.test(x.text.trim()));
+// 대사 질문을 자동으로 크게 띄우는 건 **장면의 마지막 문장이 ? 로 끝날 때만**(장면 끝 질문 — 채널 원칙).
+// 훅 장면(i0)처럼 질문이 첫 문장이면 썸네일(OpenHook)이 이미 그 질문을 크게 던진 뒤라, 여기서 또
+// 다른 문장으로 크게 깔면 첫 글자가 1~2초 만에 바뀌어 깨져 보인다(JJ 2026-09-22 "이걸 왜 이딴식으로, 그냥 첫화면 그대로 두면될껄").
+const qCue = (cues?: Cue[]) => {
+  const a = cues ?? [];
+  const last = a[a.length - 1];
+  return last && /\?$/.test(last.text.trim()) ? last : undefined;
+};
 
 /* ───────── 틀: 종이 바탕 · 머리 · 자막 상자 ───────── */
 export const PaperShell: React.FC<{ p: Props; cues?: Cue[]; hideSub?: boolean; head?: string; children: React.ReactNode }> = ({ p, cues, hideSub, head, children }) => {
   const { t } = useT();
   const pop = usePop();
-  const md = p.date_label.split(" ")[0];
   let sub = "";
   if (!hideSub && cues && cues.length) {
-    const c = cues.find((x) => t >= x.start && t < x.end + 0.5);
+    // 자막 꼬리(0.5초) 때문에 두 자막의 창이 겹친다 — find 는 늘 '앞' 것을 집어서
+    // 다음 문장이 시작됐는데도 이전 자막이 남는다(JJ 2026-09-21 "말과 보여지는 장면이 차이가 난다").
+    // 시작한 것 중 **가장 나중** 것을 쓴다.
+    const on = cues.filter((x) => t >= x.start && t < x.end + 0.5);
+    const c = on.length ? on[on.length - 1] : undefined;
     sub = c ? c.text : "";
   }
   return (
     <AbsoluteFill style={{ background: PAPER, fontFamily: FONT, color: INK, fontVariantNumeric: "tabular-nums" }}>
       <AbsoluteFill style={{ backgroundImage: `linear-gradient(${GRID} 2px, transparent 2px), linear-gradient(90deg, ${GRID} 2px, transparent 2px)`, backgroundSize: "54px 54px" }} />
+      {infoOf(p).theme === "chuseok" ? <Chuseok /> : null}
       <div style={{ position: "absolute", left: 64, top: 64 }}>
         <div style={{ fontSize: 50, fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1 }}>누가샀나</div>
         <div style={{ height: 8, width: 176, background: PRED, borderRadius: 4, marginTop: 8 }} />
       </div>
       <div style={{ position: "absolute", right: 64, top: 62, display: "flex", gap: 14, alignItems: "center" }}>
         <div style={{ fontSize: 34, fontWeight: 900, color: "#FFFFFF", background: INK, padding: "10px 22px", borderRadius: 12 }}>{(p as unknown as { badge?: string }).badge ?? "기업 해부"}</div>
-        <div style={{ fontSize: 38, fontWeight: 800, color: SUB }}>{md}</div>
       </div>
       {head ? (
         <div style={{ position: "absolute", left: 64, right: 64, top: 196, fontSize: fitHead(head), fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.035em", wordBreak: "keep-all", ...pop(0, 14) }}>{head}</div>
@@ -95,7 +112,7 @@ export const PaperShell: React.FC<{ p: Props; cues?: Cue[]; hideSub?: boolean; h
 
 /** 질문 문장이 시작되면 그림을 흐리게 깔고 질문만 크게 */
 type QLine = string | { t: string; at?: number };
-const QOverlay: React.FC<{ cues?: Cue[]; lines?: QLine[] }> = ({ cues, lines }) => {
+const QOverlay: React.FC<{ cues?: Cue[]; lines?: QLine[]; onArt?: boolean }> = ({ cues, lines, onArt }) => {
   const { t } = useT();
   const q = qCue(cues);
   const L = (lines ?? []).map((l) => (typeof l === "string" ? { t: l, at: undefined as number | undefined } : l));
@@ -104,13 +121,23 @@ const QOverlay: React.FC<{ cues?: Cue[]; lines?: QLine[] }> = ({ cues, lines }) 
   if (t < start) return null;
   const k = prog(t, start, 0.35);
   const text = L.length ? L : [{ t: (q?.text ?? "").trim(), at: undefined }];
+  // 그림 장면에서는 크림색 판으로 덮으면 **그림이 통째로 사라진다**(JJ 2026-09-22 "왜 3개씩만 썼냐").
+  // 그림 위에서는 어둡게만 깔고 흰 글자를 얹어 사진이 계속 보이게 한다.
+  // 아래쪽(자막 상자 자리)까지 덮으면 자막이 회색으로 죽는다 — 72% 아래로는 걷어 낸다.
+  const bg = onArt
+    ? `linear-gradient(180deg, rgba(10,12,18,${0.2 * k}) 0%, rgba(10,12,18,${0.74 * k}) 26%, `
+      + `rgba(10,12,18,${0.78 * k}) 56%, rgba(10,12,18,${0.18 * k}) 74%, rgba(10,12,18,0) 84%)`
+    : `rgba(243,239,231,${0.96 * k})`;
   return (
-    <AbsoluteFill style={{ background: `rgba(243,239,231,${0.96 * k})` }}>
+    <AbsoluteFill style={{ background: bg }}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 600, opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}>
         {text.map((l, i) => {
           const on = l.at === undefined || t >= cueAt(cues, l.at, 0);
+          const last = i === text.length - 1;
           return (
-            <div key={i} style={{ fontSize: 104, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.045em", wordBreak: "keep-all", color: i === text.length - 1 ? PRED : INK,
+            <div key={i} style={{ fontSize: 104, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.045em", wordBreak: "keep-all",
+              color: onArt ? (last ? HL : "#FFFFFF") : (last ? PRED : INK),
+              textShadow: onArt ? "0 5px 24px rgba(0,0,0,0.85)" : undefined,
               opacity: on ? 1 : 0, marginTop: i > 0 && L.some((x) => x.at !== undefined) ? 24 : 0 }}>{l.t}</div>
           );
         })}
@@ -211,20 +238,22 @@ const Hook2: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   const ch = c.chart;
   const CW = W - 64, CH = 520;
   return (
-    <PaperShell p={p} cues={cues} hideSub>
+    <PaperShell p={p} cues={cues}>
       <div style={{ position: "absolute", left: 64, right: 64, top: 186 }}>
         {c.tag ? <div style={{ display: "inline-block", fontSize: 38, fontWeight: 900, background: HL, padding: "6px 18px", borderRadius: 8 }}>{c.tag}</div> : null}
         <div style={{ fontSize: 150, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.04, marginTop: 12 }}>{c.name}</div>
         {c.sub2 ? <div style={{ fontSize: 54, fontWeight: 900, color: SUB, marginTop: 10, letterSpacing: "-0.02em", wordBreak: "keep-all" }}>{c.sub2}</div> : null}
       </div>
-      <div style={{ position: "absolute", left: 64, width: W, top: 560, display: "flex", gap: 20 }}>
+      <div style={{ position: "absolute", left: 64, width: W, top: 560, display: "flex", gap: 20, height: ch ? undefined : 700, alignItems: "stretch" }}>
         {chips.map((x, i) => {
           const col = C(x.tone);
+          const gc = x.at !== undefined ? prog(t, cueAt(cues, x.at, 0.2), 0.45) : 1;
           return (
-            <div key={i} style={{ flex: 1, background: "#FFFFFF", borderRadius: 24, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", padding: "22px 24px 20px", borderTop: `10px solid ${col}` }}>
+            <div key={i} style={{ flex: 1, background: "#FFFFFF", borderRadius: 24, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 14px 36px rgba(20,20,20,0.10)", padding: ch ? "22px 24px 20px" : "40px 26px 34px", borderTop: `10px solid ${col}`,
+              opacity: gc, transform: `translateY(${(1 - gc) * 22}px)`, display: "flex", flexDirection: "column", justifyContent: ch ? "flex-start" : "center", gap: ch ? 0 : 14 }}>
               <div style={{ fontSize: chips.length > 2 ? 34 : 38, fontWeight: 900, color: SUB }}>{x.label}</div>
-              <div style={{ fontSize: chips.length > 2 ? (x.value.length > 5 ? 58 : 76) : x.value.length > 7 ? 74 : 96, fontWeight: 900, color: col, letterSpacing: "-0.04em", lineHeight: 1.08, whiteSpace: "nowrap" }}>{x.value}</div>
-              {x.note ? <div style={{ fontSize: 30, fontWeight: 800, color: SUB, marginTop: 4, wordBreak: "keep-all" }}>{x.note}</div> : null}
+              <div style={{ fontSize: (ch ? 1 : 1.25) * (chips.length > 2 ? (x.value.length > 5 ? 58 : 76) : x.value.length > 7 ? 74 : 96), fontWeight: 900, color: col, letterSpacing: "-0.04em", lineHeight: 1.08, whiteSpace: "nowrap" }}>{x.value}</div>
+              {x.note ? <div style={{ fontSize: ch ? 30 : 36, fontWeight: 800, color: SUB, marginTop: 4, wordBreak: "keep-all" }}>{x.note}</div> : null}
             </div>
           );
         })}
@@ -249,18 +278,23 @@ const Hook2: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
               </>
             ) : (
               <>
-                <line x1={0} x2={CW} y1={CH * 0.3} y2={CH * 0.3} stroke={INK} strokeWidth={3} />
+                <line x1={0} x2={CW} y1={(ch.rows ?? []).some((r) => r.v < 0) ? CH * 0.3 : CH * 0.62} y2={(ch.rows ?? []).some((r) => r.v < 0) ? CH * 0.3 : CH * 0.62} stroke={INK} strokeWidth={3} />
                 {(ch.rows ?? []).map((r, i, arr) => {
-                  const mx = Math.max(1e-9, ...arr.map((x) => Math.abs(x.v)));
+                  const base = ch.base ?? 0;                                   // 축을 잘라 차이를 보이게(28조 -> 32조처럼 밑이 두꺼운 숫자)
+                  const mx = Math.max(1e-9, ...arr.map((x) => Math.abs(x.v) - base));
                   const gap = 14, bw = (CW - gap * (arr.length - 1)) / arr.length;
-                  const g = Math.min(1, Math.max(0, k * arr.length - i + 0.5));
-                  const h = (Math.abs(r.v) / mx) * (r.v < 0 ? CH * 0.6 : CH * 0.26) * g;
+                  // 막대에 at(문장 번호)이 있으면 그 문장에서 자란다 - 말보다 먼저 서 있으면 대사와 따로 논다(JJ 9/20)
+                  const g = r.at !== undefined ? prog(t, cueAt(cues, r.at, 0.2), 0.5) : Math.min(1, Math.max(0, k * arr.length - i + 0.5));
+                  const yy0 = arr.some((z) => z.v < 0) ? CH * 0.3 : CH * 0.62;
+                  const room = r.v < 0 ? CH - yy0 - 56 : yy0 - 58;            // 라벨 자리까지 빼고 카드 안에 가둔다
+                  const h = Math.min(room, ((Math.abs(r.v) - base) / mx) * (r.v < 0 ? CH * 0.6 : CH * 0.56)) * g;
                   const x = i * (bw + gap), down = r.v < 0;
+                  const y0 = arr.some((z) => z.v < 0) ? CH * 0.3 : CH * 0.62;
                   const col = down ? PBLUE : PRED;
                   return (
                     <g key={i}>
-                      <rect x={x} y={down ? CH * 0.3 : CH * 0.3 - h} width={bw} height={h} rx={8} fill={col} opacity={r.hl ? 1 : 0.85} />
-                      <text x={x + bw / 2} y={down ? CH * 0.3 + h + 36 : CH * 0.3 - h - 12} textAnchor="middle" fontSize={30} fontWeight={900} fill={col} opacity={g} fontFamily={FONT}>{r.vlabel}</text>
+                      <rect x={x} y={down ? y0 : y0 - h} width={bw} height={h} rx={8} fill={col} opacity={r.hl ? 1 : 0.85} />
+                      <text x={x + bw / 2} y={down ? y0 + h + 36 : y0 - h - 12} textAnchor="middle" fontSize={34} fontWeight={900} fill={col} opacity={g} fontFamily={FONT}>{r.vlabel}</text>
                       <text x={x + bw / 2} y={CH + 44} textAnchor="middle" fontSize={30} fontWeight={800} fill={SUB} fontFamily={FONT}>{r.label}</text>
                     </g>
                   );
@@ -335,12 +369,55 @@ const Note: React.FC<{ c: DCard; cues?: Cue[]; top: number }> = ({ c, cues, top 
 const Bars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   const { t } = useT();
   const bars = c.bars ?? [];
-  const H = 700, top = 520;
   const neg = bars.some((b) => b.v < 0);
+  // 전부 내린 값이면 0선을 가운데 두지 않는다 - 위 절반이 통째로 비어 막대가 다 비슷해 보인다(JJ 2026-09-20)
+  const allNeg = bars.length > 0 && bars.every((b) => b.v < 0);
+  // 막대가 화면을 다 먹지 않게 — 617 vs 714 처럼 값이 비슷하면 큰 덩어리 두 개만 남는다(JJ 2026-09-21 "성의없이 만드네")
+  const H = 620, top = allNeg ? 430 : 520;
   const mx = Math.max(1e-9, ...bars.map((b) => Math.abs(b.v)));
-  const n = bars.length, gap = n > 8 ? 12 : 22, bw = (W - gap * (n - 1)) / n;
-  const base = neg ? H * 0.5 : H;
-  const span = neg ? H * 0.42 : H * 0.86;
+  const n = bars.length, gap = n > 8 ? 12 : 22;
+  const bwRaw = (W - gap * (n - 1)) / n;
+  const bw = n <= 2 ? Math.min(bwRaw, 290) : n <= 4 ? Math.min(bwRaw, 215) : bwRaw;
+  const groupW = bw * n + gap * (n - 1);
+  const x0 = (W - groupW) / 2;                  // 막대 묶음을 가운데로
+  const maxLabel = Math.max(1, ...bars.map((b) => wUnit(b.label ?? "")));
+  const lfs = Math.min(bw > 150 ? 38 : bw > 70 ? 32 : 26, Math.max(20, Math.floor((bw - 10) / maxLabel)));
+  const base = allNeg ? H * 0.1 : neg ? H * 0.5 : H;
+  const span = allNeg ? H * 0.74 : neg ? H * 0.42 : H * 0.86;
+  // 증감 알약은 막대를 그린 **뒤** 얹는다 — 먼저 그리면 오른쪽 자리가 좁을 때 막대가 '9%' 를 덮는다
+  // (JJ 2026-09-22 캡처: '%포인트' 만 보였다). 바탕은 종이색으로 채워 막대 위에서도 읽힌다.
+  const deltaPill = (() => {
+            // 막대 둘이 거의 같은 높이면 눈으로 차이를 못 읽는다(113조 9천억 vs 111조 7천억 = 2%).
+            // 높이로 못 보여 주는 건 억지로 그리지 말고, 옆에 증감을 크게 적어 준다(JJ 2026-09-21 "성의없이 만드네").
+            const dl = (c as { delta?: string }).delta;
+            if (n !== 2 || neg || !dl) return null;
+            const hs = bars.map((b2) => (Math.abs(b2.v) / mx) * span);
+            const lo = Math.min(...hs), hi = Math.max(...hs);
+            const gg = prog(t, cueAt(cues, bars[n - 1].at, 0.6), 0.7);
+            const down = hs[1] < hs[0];
+            // 아랫말은 '어제→오늘' 을 전제한 말이다. 두 집단을 견주는 판(자사주 구간 vs 아무 날)에서는
+            // 'delta_sub' 로 직접 적는다 — 66% vs 57% 인데 "내렸다" 가 떴다(JJ 2026-09-22 캡처).
+            const dsub = (c as { delta_sub?: string }).delta_sub ?? (down ? "내렸다" : "늘었다");
+            // 알약은 **높은 막대 옆 빈자리**에 둔다. 위로 올리면 값 라벨(67배)과 겹쳐서 둘 다 못 읽는다
+            // (JJ 2026-09-22 캡처). 글자 폭만큼 넓히고, 화면 밖으로 나가지 않게 좌우로만 당긴다.
+            const dfs = 54;
+            const pw = Math.max(172, Math.round(wUnit(dl) * dfs * 0.95) + 56);
+            const cx = Math.min(Math.max(x0 + groupW + pw / 2 + 12, pw / 2), W - pw / 2);
+            const cy = base - hi * 0.55;
+            return (
+              <g opacity={gg}>
+                {/* 낮은 쪽 높이에 점선 — '차이는 이만큼' 이 눈에 잡히게 */}
+                <line x1={x0 - 14} x2={x0 + groupW + 14} y1={base - lo} y2={base - lo}
+                      stroke={INK} strokeWidth={3} strokeDasharray="14 10" opacity={0.45} />
+                <rect x={cx - pw / 2} y={cy - 46} width={pw} height={92} rx={46}
+                      fill="#F4EFE7" stroke={down ? PBLUE : PRED} strokeWidth={3} opacity={0.97} />
+                <text x={cx} y={cy - 2} textAnchor="middle" fontSize={dfs} fontWeight={900}
+                      fill={down ? PBLUE : PRED} fontFamily={FONT}>{dl}</text>
+                <text x={cx} y={cy + 38} textAnchor="middle" fontSize={30} fontWeight={800}
+                      fill={SUB} fontFamily={FONT}>{dsub}</text>
+              </g>
+            );
+  })();
   return (
     <PaperShell p={p} cues={cues} head={c.head}>
       <svg width={W} height={H + 90} style={{ position: "absolute", left: 64, top, overflow: "visible" }}>
@@ -355,7 +432,7 @@ const Bars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           const at = cueAt(cues, b.at, 0.1 + i * 0.25);
           const g = prog(t, at, 0.7);
           const h = (Math.abs(b.v) / mx) * span * g;
-          const x = i * (bw + gap);
+          const x = x0 + i * (bw + gap);
           const down = b.v < 0;
           const col = b.color ? C(b.color) : neg ? (down ? PBLUE : PRED) : b.hl || b.est ? PRED : "#B9B2A7";
           const y = down ? base : base - h;
@@ -364,11 +441,12 @@ const Bars: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
             <g key={i}>
               <rect x={x} y={y} width={bw} height={h} rx={bw > 40 ? 10 : 5} fill={b.est ? "url(#hatch)" : col} stroke={b.est ? PRED : "none"} strokeWidth={b.est ? 5 : 0} opacity={b.hl || !neg ? 1 : 0.85} />
               {b.vlabel || !neg ? <text x={x + bw / 2} y={down ? y + h + fs + 4 : y - 16} textAnchor="middle" fontSize={fs} fontWeight={900} fill={neg ? col : b.hl || b.est ? PRED : INK} opacity={g} fontFamily={FONT}>{b.vlabel ?? b.v}</text> : null}
-              {b.label ? <text x={x + bw / 2} y={neg ? H + 50 : H + 50} textAnchor="middle" fontSize={bw > 150 ? 38 : bw > 70 ? 32 : 26} fontWeight={800} fill={SUB} fontFamily={FONT}>{b.label}</text> : null}
+              {b.label ? <text x={x + bw / 2} y={neg ? H + 50 : H + 50} textAnchor="middle" fontSize={lfs} fontWeight={800} fill={SUB} fontFamily={FONT}>{b.label}</text> : null}
               {b.est ? <text x={x + bw / 2} y={H + 86} textAnchor="middle" fontSize={30} fontWeight={900} fill={PRED} fontFamily={FONT}>추정</text> : null}
             </g>
           );
         })}
+        {deltaPill}
       </svg>
       {c.note ? <Note c={c} cues={cues} top={top + H + 110} /> : null}
       <QOverlay cues={cues} lines={c.q} />
@@ -398,8 +476,8 @@ const Vs: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           <line x1={x0} y1={y0} x2={xe} y2={ye} stroke={col} strokeWidth={12} strokeLinecap="round" />
           <circle cx={x0} cy={y0} r={16} fill="#9A948B" />
           <circle cx={xe} cy={ye} r={20} fill={col} />
-          <text x={x0 + 26} y={y0 + 60} fontSize={46} fontWeight={900} fill={INK} fontFamily={FONT}>{d.from}</text>
-          <text x={x1 + 32} y={y1 + 16} fontSize={50} fontWeight={900} fill={col} opacity={k} fontFamily={FONT}>{d.to}</text>
+          <text x={x0 + 26} y={d.dir === "up" ? y0 + 62 : y0 - 24} fontSize={46} fontWeight={900} fill={INK} stroke="#FFFFFF" strokeWidth={12} paintOrder="stroke" fontFamily={FONT}>{d.from}</text>
+          <text x={x1 + 32} y={y1 + 16} fontSize={50} fontWeight={900} fill={col} opacity={k} stroke="#FFFFFF" strokeWidth={12} paintOrder="stroke" fontFamily={FONT}>{d.to}</text>
           <text x={x0} y={lo + 124} fontSize={32} fontWeight={800} fill={SUB} fontFamily={FONT}>{d.fromLabel}</text>
           <text x={x1} y={lo + 124} textAnchor="middle" fontSize={32} fontWeight={800} fill={SUB} opacity={k} fontFamily={FONT}>{d.toLabel}</text>
         </svg>
@@ -474,7 +552,8 @@ const Picto: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 16 }}>
                 {Array.from({ length: g.n }).map((_, i) => {
                   const k = prog(t, at + i * 0.12, 0.3);
-                  return <div key={i} style={{ transform: `scale(${0.4 + 0.6 * k})`, opacity: k }}><Chip size={150} color={gi === groups.length - 1 ? PRED : "#9A948B"} /></div>;
+                  const sz = g.n > 18 ? 84 : g.n > 10 ? 110 : 150;
+                  return <div key={i} style={{ transform: `scale(${0.4 + 0.6 * k})`, opacity: k }}><Chip size={sz} color={gi === groups.length - 1 ? PRED : "#9A948B"} /></div>;
                 })}
               </div>
             </div>
@@ -526,16 +605,19 @@ const Big: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   const { t } = useT();
   const pop = usePop();
   const r = c.ratio;
-  const at = cueAt(cues, 1, 2.4);
-  const k = prog(t, at, 1.0);
+  // 큰 숫자는 그 숫자를 '말할 때' 뜬다 — big_at 이 없으면 옛날처럼 장면 시작(JJ 2026-09-21 '글자 하나 띄우고 말만')
+  const bigAt = cueAt(cues, (c as { big_at?: number }).big_at ?? 0, 0.05);
+  const k = prog(t, cueAt(cues, (r as { at?: number } | undefined)?.at ?? 1, 2.4), 1.0);
   return (
     <PaperShell p={p} cues={cues} head={c.head}>
-      <div style={{ position: "absolute", left: 64, right: 64, top: 520, ...pop(0.05, 20) }}>
-        <div style={{ fontSize: 170, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: PRED }}>{c.big}</div>
-        {c.big_sub ? <div style={{ fontSize: 50, fontWeight: 800, color: SUB, marginTop: 20, wordBreak: "keep-all" }}>{c.big_sub}</div> : null}
+      <div style={{ position: "absolute", left: 64, right: 64, top: 520 }}>
+        <div style={{ fontSize: fitFont(String(c.big ?? ""), W, 170), fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, whiteSpace: "nowrap", color: PRED, ...pop(bigAt, 20) }}>{c.big}</div>
+        {/* big_sub 는 제 문장에서 따로 뜬다(big_sub_at) — SCHD 말할 때 SCHD, 배당률 말할 때 그 밑에 배당률 3.1%(JJ 2026-09-22) */}
+        {c.big_sub ? <div style={{ fontSize: 50, fontWeight: 800, color: SUB, marginTop: 20, wordBreak: "keep-all",
+          ...pop(cueAt(cues, (c as { big_sub_at?: number }).big_sub_at ?? (c as { big_at?: number }).big_at ?? 0, 0.05), 14) }}>{c.big_sub}</div> : null}
       </div>
       {r ? (
-        <div style={{ position: "absolute", left: 64, width: W, top: 930, opacity: Math.min(1, 0.2 + k * 2) }}>
+        <div style={{ position: "absolute", left: 64, width: W, top: 930, opacity: Math.min(1, k * 2.5) }}>
           <div style={{ fontSize: 42, fontWeight: 800, color: SUB, marginBottom: 14 }}>{r.of}</div>
           <div style={{ height: 110, borderRadius: 20, background: "#E3DDD2", overflow: "hidden", position: "relative" }}>
             <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.min(100, r.v) * k}%`, background: PRED }} />
@@ -553,9 +635,10 @@ const Big: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
 const Check: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
   const { t } = useT();
   const items = c.items ?? [];
+  const few = items.length <= 3;                       // 항목이 적으면 위에 붙이지 말고 가운데로(빈 종이 금지)
   return (
     <PaperShell p={p} cues={cues} head={c.head}>
-      <div style={{ position: "absolute", left: 64, width: W, top: 500, display: "flex", flexDirection: "column", gap: 30 }}>
+      <div style={{ position: "absolute", left: 64, width: W, top: few ? 620 : 500, display: "flex", flexDirection: "column", gap: few ? 42 : 30 }}>
         {items.map((it, i) => {
           const at = cueAt(cues, it.at, 0.2 + i * 2.2);
           const next = i + 1 < items.length ? cueAt(cues, items[i + 1].at, at + 2.2) : 1e9;
@@ -569,13 +652,22 @@ const Check: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
                 <rect x={6} y={6} width={88} height={88} rx={18} fill="none" stroke={INK} strokeWidth={9} />
                 <path d="M24 52 L44 72 L80 30" fill="none" stroke={PRED} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={100} strokeDashoffset={100 - 100 * k} />
               </svg>
-              <div style={{ fontSize: 54, fontWeight: 900, lineHeight: 1.28, wordBreak: "keep-all" }}>
-                <span style={{ background: cur ? `linear-gradient(transparent 58%, ${HL} 58%)` : "none" }}>{it.t}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: few ? 58 : 52, fontWeight: 900, lineHeight: 1.26, wordBreak: "keep-all" }}>
+                  <span style={{ background: cur ? `linear-gradient(transparent 58%, ${HL} 58%)` : "none" }}>{it.t}</span>
+                </div>
+                {/* 기준점 — '봐라'만 하고 끝나면 "그래서 어쩌라는 거야"가 된다(JJ 2026-09-21).
+                    무엇과 견주는지, 위아래면 무슨 뜻인지를 한 줄로 붙인다. */}
+                {(it as { sub?: string }).sub ? (
+                  <div style={{ fontSize: few ? 40 : 36, fontWeight: 800, color: SUB, lineHeight: 1.34,
+                                marginTop: 14, wordBreak: "keep-all" }}>{(it as { sub?: string }).sub}</div>
+                ) : null}
               </div>
             </div>
           );
         })}
       </div>
+      {c.note ? <Note c={c} cues={cues} top={few ? 1180 : 1340} /> : null}
       <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
@@ -603,6 +695,7 @@ const Split: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
     <PaperShell p={p} cues={cues} head={c.head}>
       {c.up ? <Box d={c.up} dir="up" top={480} fb={0.2} /> : null}
       {c.down ? <Box d={c.down} dir="down" top={900} fb={2.6} /> : null}
+      {c.note ? <Note c={c} cues={cues} top={1330} /> : null}
       <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
@@ -610,6 +703,322 @@ const Split: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
 
 
 /* ───────── 9/20 JJ "삼성전기 편만큼 꽉 차게" — 빈 화면 카드(big·split) 대신 쓰는 그림 ───────── */
+
+/** 추석 장식(JJ 9/20 "추석 느낌이 나게") — 종이 바탕 위에 보름달·구름·송편, 글자를 가리지 않게 옅게 */
+const Chuseok: React.FC = () => (
+  <AbsoluteFill style={{ pointerEvents: "none" }}>
+    <div style={{ position: "absolute", right: -70, top: 150, width: 430, height: 430, borderRadius: 215,
+      background: "radial-gradient(circle at 38% 34%, #FFF4CE 0%, #FBE6A6 55%, #F2D67E 100%)", opacity: 0.42 }} />
+    <svg width={260} height={140} style={{ position: "absolute", right: 44, bottom: 96, opacity: 0.22 }}>
+      {[0, 1, 2].map((i) => (
+        <g key={i} transform={`translate(${i * 80},${i === 1 ? -12 : 0})`}>
+          <path d="M14 84 A38 38 0 0 1 90 84 Z" fill="#CFE3C8" stroke="#9BBE93" strokeWidth={3} />
+          <path d="M26 84 A26 26 0 0 1 78 84" fill="none" stroke="#9BBE93" strokeWidth={3} />
+        </g>
+      ))}
+    </svg>
+  </AbsoluteFill>
+);
+
+type CalMark = { d: number; k?: "x" | "ring" | "down" | "star"; t?: string; at?: number; color?: "red" | "blue" | "ink" };
+type CalDef = { month: number; start: number; days: number; marks: CalMark[]; from?: number; to?: number };
+
+/** 달력 — 날짜를 말할 때 그 칸이 켜진다(JJ 9/20 "달력을 보여주고 그 위에서 풀이해라").
+ *  cal.from~to 를 주면 그 날짜만 한 줄 띠로(훅 화면), 없으면 한 달 전체 + 아래 범례. */
+const Cal: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const cal = (c as unknown as { cal?: CalDef }).cal;
+  if (!cal) return null;
+  const WD = ["일", "월", "화", "수", "목", "금", "토"];
+  const mark = (d: number) => cal.marks.find((m) => m.d === d);
+  const on = (m?: CalMark) => (m ? t >= cueAt(cues, m.at, 0.2) - 0.05 : false);
+  const colOf = (m?: CalMark) => (m?.color ? C(m.color) : m?.k === "x" ? PBLUE : PRED);
+  const strip = cal.from !== undefined && cal.to !== undefined;
+  const chips = c.chips ?? [];
+
+  const Cell: React.FC<{ d: number; size: number; wd: number }> = ({ d, size, wd }) => {
+    const m = mark(d), lit = on(m), col = colOf(m);
+    const r = size * 0.78;
+    return (
+      <div style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+        {m && lit && m.k === "ring" ? <div style={{ position: "absolute", width: r, height: r, borderRadius: r / 2, border: `${Math.max(6, size * 0.07)}px solid ${col}` }} /> : null}
+        {m && lit && m.k === "x" ? (
+          <svg width={r} height={r} style={{ position: "absolute" }}>
+            <line x1={r * 0.2} y1={r * 0.2} x2={r * 0.8} y2={r * 0.8} stroke={col} strokeWidth={size * 0.08} strokeLinecap="round" />
+            <line x1={r * 0.8} y1={r * 0.2} x2={r * 0.2} y2={r * 0.8} stroke={col} strokeWidth={size * 0.08} strokeLinecap="round" />
+          </svg>
+        ) : null}
+        {m && lit && (m.k === "down" || m.k === "star") ? <div style={{ position: "absolute", width: r, height: r, borderRadius: size * 0.2, background: m.k === "down" ? "rgba(31,91,216,0.16)" : "rgba(255,212,59,0.5)" }} /> : null}
+        <div style={{ fontSize: size * 0.42, fontWeight: m && lit ? 900 : 800, opacity: m && lit ? 1 : 0.8,
+          color: m && lit && m.k === "x" ? "rgba(20,20,20,0.4)" : wd === 0 ? "rgba(224,49,43,0.75)" : wd === 6 ? "rgba(31,91,216,0.75)" : INK }}>{d}</div>
+      </div>
+    );
+  };
+
+  if (strip) {
+    const days = Array.from({ length: cal.to! - cal.from! + 1 }, (_, i) => cal.from! + i);
+    const size = Math.min(150, (W - 60) / days.length);
+    const legend = cal.marks.filter((m) => m.t);
+    return (
+      <PaperShell p={p} cues={cues} head={c.head}>
+        {chips.length ? (
+          <div style={{ position: "absolute", left: 64, width: W, top: 420, display: "flex", gap: 18 }}>
+            {chips.map((ch, i) => (
+              <div key={i} style={{ flex: 1, background: "#FFFFFF", borderRadius: 22, padding: "18px 20px", borderTop: `8px solid ${C(ch.tone)}`, boxShadow: "0 12px 30px rgba(20,20,20,0.10)" }}>
+                <div style={{ fontSize: 30, fontWeight: 800, color: SUB }}>{ch.label}</div>
+                <div style={{ fontSize: 58, fontWeight: 900, color: C(ch.tone), letterSpacing: "-0.03em", lineHeight: 1.1, whiteSpace: "nowrap" }}>{ch.value}</div>
+                {ch.note ? <div style={{ fontSize: 26, fontWeight: 800, color: SUB, marginTop: 4 }}>{ch.note}</div> : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <div style={{ position: "absolute", left: 64, width: W, top: chips.length ? 660 : 470, height: size + 108, background: "#FFFFFF", borderRadius: 26,
+          border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 16px 40px rgba(20,20,20,0.12)" }}>
+          <div style={{ position: "absolute", left: 24, top: 18, fontSize: 34, fontWeight: 900, color: SUB }}>{cal.month}월</div>
+          <div style={{ position: "absolute", left: (W - size * days.length) / 2, top: 66, display: "flex" }}>
+            {days.map((d) => <div key={d} style={{ width: size, textAlign: "center", fontSize: 26, fontWeight: 900, color: SUB }}>{WD[(cal.start + d - 1) % 7]}</div>)}
+          </div>
+          <div style={{ position: "absolute", left: (W - size * days.length) / 2, top: 100, display: "flex" }}>
+            {days.map((d) => <Cell key={d} d={d} size={size} wd={(cal.start + d - 1) % 7} />)}
+          </div>
+        </div>
+        <div style={{ position: "absolute", left: 64, width: W, top: (chips.length ? 660 : 470) + size + 150, display: "flex", flexDirection: "column", gap: 16 }}>
+          {legend.map((m, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 18, opacity: on(m) ? 1 : 0.25 }}>
+              <div style={{ width: 58, height: 58, borderRadius: 14, background: colOf(m), color: "#FFF", fontSize: 30, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>{m.d}</div>
+              <div style={{ fontSize: 42, fontWeight: 900, wordBreak: "keep-all" }}>{m.t}</div>
+            </div>
+          ))}
+        </div>
+        {c.note ? <Note c={c} cues={cues} top={1360} /> : null}
+        <QOverlay cues={cues} lines={c.q} />
+      </PaperShell>
+    );
+  }
+
+  const CW = W - 56, size = Math.floor(CW / 7) - 1, rows = Math.ceil((cal.start + cal.days) / 7);   // 7칸이 딱 맞으면 반올림으로 6칸씩 접힌다
+  const gridTop = 136, cardH = gridTop + rows * size + 26;
+  const legend = cal.marks.filter((m) => m.t);
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      <div style={{ position: "absolute", left: 64, width: W, top: 420, height: cardH, background: "#FFFFFF", borderRadius: 30,
+        border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 18px 44px rgba(20,20,20,0.12)" }}>
+        <div style={{ position: "absolute", left: 28, top: 22, fontSize: 44, fontWeight: 900 }}>{cal.month}월</div>
+        <div style={{ position: "absolute", left: 28, right: 28, top: 88, display: "flex" }}>
+          {WD.map((w, i) => <div key={w} style={{ width: size, textAlign: "center", fontSize: 30, fontWeight: 900, color: i === 0 ? PRED : i === 6 ? PBLUE : SUB }}>{w}</div>)}
+        </div>
+        <div style={{ position: "absolute", left: 28, right: 28, top: gridTop, display: "flex", flexWrap: "wrap" }}>
+          {Array.from({ length: cal.start + cal.days }).map((_, i) => {
+            const d = i - cal.start + 1;
+            if (d < 1) return <div key={i} style={{ width: size, height: size }} />;
+            return <Cell key={i} d={d} size={size} wd={i % 7} />;
+          })}
+        </div>
+      </div>
+      <div style={{ position: "absolute", left: 64, width: W, top: 420 + cardH + 40, display: "flex", flexDirection: "column", gap: 16 }}>
+        {legend.map((m, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 18, opacity: on(m) ? 1 : 0.25 }}>
+            <div style={{ width: 58, height: 58, borderRadius: 14, background: colOf(m), color: "#FFF", fontSize: 30, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>{m.d}</div>
+            <div style={{ fontSize: 42, fontWeight: 900, wordBreak: "keep-all" }}>{m.t}</div>
+          </div>
+        ))}
+      </div>
+      {c.note ? <Note c={c} cues={cues} top={1600} /> : null}
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
+
+
+type Pill = { t: string; v?: string; at?: number };
+type SideDef = { title: string; color?: "red" | "blue"; pills: Pill[] };
+
+/** 두 칸 비교 — 왼쪽/오른쪽으로 갈라 종목을 알약으로 깐다(JJ 2026-09-20 "글씨로만 나열하지 마라").
+ *  c.sides = [{title, color, pills:[{t, v, at}]}, {...}] */
+const Sides: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const sides = ((c as unknown as { sides?: SideDef[] }).sides ?? []).slice(0, 2);
+  const CW = (W - 24) / 2;
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      {sides.map((sd, si) => {
+        const col = sd.color === "blue" ? PBLUE : PRED;
+        return (
+          <div key={si} style={{ position: "absolute", left: 64 + si * (CW + 24), top: 440, width: CW, minHeight: 900,
+            background: "#FFFFFF", borderRadius: 28, border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 16px 40px rgba(20,20,20,0.10)", padding: "24px 20px" }}>
+            <div style={{ fontSize: 46, fontWeight: 900, color: col, textAlign: "center", marginBottom: 18 }}>{sd.title}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {sd.pills.map((pl, i) => {
+                const at = cueAt(cues, pl.at, 0.3 + i * 0.6);
+                const on = t >= at - 0.05;
+                const k = prog(t, at, 0.35);
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                    background: on ? (sd.color === "blue" ? "rgba(31,91,216,0.10)" : "rgba(224,49,43,0.10)") : "rgba(20,20,20,0.04)",
+                    border: `3px solid ${on ? col : "rgba(20,20,20,0.08)"}`, borderRadius: 999, padding: "14px 20px",
+                    opacity: on ? 1 : 0.3, transform: `translateY(${(1 - k) * 12}px)` }}>
+                    <span style={{ fontSize: 38, fontWeight: 900, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pl.t}</span>
+                    {pl.v ? <span style={{ fontSize: 38, fontWeight: 900, color: col, whiteSpace: "nowrap" }}>{pl.v}</span> : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+      {c.note ? <Note c={c} cues={cues} top={1390} /> : null}
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
+type TLStep = { t: string; sub?: string; at?: number };
+
+/** 세로 흐름 - 단계가 말에 맞춰 하나씩 채워진다(check 와 다른 모양, JJ 9/20 "패턴 좀 바꿔") */
+const Timeline: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t } = useT();
+  const steps = ((c as unknown as { timeline?: TLStep[] }).timeline ?? []).slice(0, 5);
+  const top = 470, gap = 210;
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      <div style={{ position: "absolute", left: 128, top: top + 30, width: 8, height: (steps.length - 1) * gap, background: "rgba(20,20,20,0.12)", borderRadius: 4 }} />
+      {steps.map((s, i) => {
+        const at = cueAt(cues, s.at, 0.3 + i * 1.6);
+        const on = t >= at - 0.05;
+        const nextAt = steps.slice(i + 1).map((x) => cueAt(cues, x.at, 1e9)).find((x) => x > at) ?? 1e9;
+        const cur = on && t < nextAt;
+        return (
+          <div key={i} style={{ position: "absolute", left: 64, right: 64, top: top + i * gap, display: "flex", gap: 30, alignItems: "flex-start" }}>
+            <div style={{ width: 136, height: 136, borderRadius: 68, background: on ? PRED : "#E4DED3", color: "#FFFFFF", fontSize: 62, fontWeight: 900,
+              display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", boxShadow: cur ? "0 0 0 14px rgba(224,49,43,0.16)" : "none" }}>{i + 1}</div>
+            <div style={{ paddingTop: 16, opacity: on ? 1 : 0.3 }}>
+              <div style={{ fontSize: 58, fontWeight: 900, lineHeight: 1.2, wordBreak: "keep-all" }}>
+                <span style={{ background: cur ? `linear-gradient(transparent 62%, ${HL} 62%)` : "none" }}>{s.t}</span>
+              </div>
+              {s.sub ? <div style={{ fontSize: 36, fontWeight: 800, color: SUB, marginTop: 8, wordBreak: "keep-all" }}>{s.sub}</div> : null}
+            </div>
+          </div>
+        );
+      })}
+      {c.note ? <Note c={c} cues={cues} top={1420} /> : null}
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
+type ArtDef = { src: string; caption?: string; at?: number; portrait?: boolean; full?: boolean };
+
+/** 그림 한 장 - Gemini 로 만든 장면(추석 등)을 카드처럼 넣는다. 글자는 우리가 얹는다 */
+const Art: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
+  const { t, f } = useT();
+  const a = (c as unknown as { art?: ArtDef }).art;
+  const items = c.items ?? [];
+  if (!a) return null;
+  const k = prog(t, cueAt(cues, a.at, 0.1), 0.8);
+  const IH = Math.round(W * 0.62);
+  if (a.full) {
+    // 9:16 그림을 화면 가득 깔고, 아래 45% 를 어둡게 해서 그 위에 글자 — 종이 카드 대신 쓰는 장면
+    return (
+      <AbsoluteFill style={{ fontFamily: FONT, background: "#0A0C12", color: "#FFFFFF", overflow: "hidden" }}>
+        {/* 배경만 아주 천천히 커진다 — 글자는 고정, 정지 화면 느낌을 없애려고(JJ 2026-09-20) */}
+        <Img src={staticFile(a.src)} style={{ position: "absolute", left: 0, top: 0, width: 1080, height: 1920, objectFit: "cover",
+          transform: `scale(${1.04 + 0.03 * k + f * 0.00035}) translateY(${-f * 0.02}px)`, transformOrigin: "50% 42%" }} />
+        <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(10,12,18,0.55) 0%, rgba(10,12,18,0) 26%, rgba(10,12,18,0.15) 46%, rgba(10,12,18,0.86) 64%, #0A0C12 82%)" }} />
+        <div style={{ position: "absolute", left: 56, top: 56 }}>
+          <div style={{ fontSize: 48, fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1, textShadow: "0 3px 14px rgba(0,0,0,0.7)" }}>누가샀나</div>
+          <div style={{ height: 8, width: 168, background: PRED, borderRadius: 4, marginTop: 8 }} />
+        </div>
+        {c.head ? (
+          <div style={{ position: "absolute", left: 56, right: 56, top: 168, fontSize: 68, fontWeight: 900, lineHeight: 1.16, letterSpacing: "-0.035em", wordBreak: "keep-all", textShadow: "0 4px 18px rgba(0,0,0,0.75)" }}>{c.head}</div>
+        ) : null}
+        {c.big ? (
+          // 배경 장면은 자막이 이미 문장을 말한다 — 여기선 숫자·낱말 하나만 크게(JJ "굳이 왜 또 쓰냐")
+          <div style={{ position: "absolute", left: 56, right: 56, top: 1120, opacity: prog(t, cueAt(cues, c.note_at, 0.3), 0.5) }}>
+            <div style={{ fontSize: 148, fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1.05, color: HL, wordBreak: "keep-all", textShadow: "0 6px 26px rgba(0,0,0,0.85)" }}>{c.big}</div>
+            {c.big_sub ? <div style={{ fontSize: 52, fontWeight: 900, color: "#FFFFFF", marginTop: 14, textShadow: "0 3px 16px rgba(0,0,0,0.8)" }}>{c.big_sub}</div> : null}
+          </div>
+        ) : (
+        <div style={{ position: "absolute", left: 56, right: 56, top: 1130, display: "flex", flexDirection: "column", gap: 24 }}>
+          {items.map((it, i) => {
+            const at = cueAt(cues, it.at, 0.4 + i * 1.8);
+            const on = t >= at - 0.05;
+            const nextAt = items.slice(i + 1).map((x) => cueAt(cues, x.at, 1e9)).find((x) => x > at) ?? 1e9;
+            const cur = on && t < nextAt;
+            return (
+              <div key={i} style={{ fontSize: 56, fontWeight: 900, lineHeight: 1.24, wordBreak: "keep-all",
+                color: cur ? HL : "#FFFFFF", opacity: on ? 1 : 0.22, textShadow: "0 3px 16px rgba(0,0,0,0.8)" }}>{it.t}</div>
+            );
+          })}
+        </div>)}
+        {(() => {
+          const _on = (cues ?? []).filter((x) => t >= x.start && t < x.end + 0.5);
+          const cue = _on.length ? _on[_on.length - 1] : undefined;   // 겹치면 나중 것(위와 같은 이유)
+          return cue ? (
+            <div style={{ position: "absolute", left: 40, right: 40, bottom: 300, display: "flex", justifyContent: "center" }}>
+              <div style={{ background: "rgba(20,20,20,0.93)", color: "#FFFFFF", fontSize: 42, fontWeight: 700, lineHeight: 1.38, padding: "16px 28px", borderRadius: 18, wordBreak: "keep-all", textAlign: "center" }}>{cue.text}</div>
+            </div>
+          ) : null;
+        })()}
+        <div style={{ position: "absolute", left: 56, right: 56, bottom: 52, fontSize: 26, color: "rgba(255,255,255,0.45)" }}>{FOOT}</div>
+        <QOverlay cues={cues} lines={c.q} onArt />
+      </AbsoluteFill>
+    );
+  }
+  if (a.portrait) {
+    const PW = 430, PH = 900, PT = 430;
+    return (
+      <PaperShell p={p} cues={cues} head={c.head}>
+        <div style={{ position: "absolute", left: 64, top: PT, width: PW, height: PH, borderRadius: 28, overflow: "hidden",
+          border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 18px 44px rgba(20,20,20,0.16)", opacity: Math.min(1, 0.25 + k), transform: `scale(${0.98 + 0.02 * k})` }}>
+          <Img src={staticFile(a.src)} style={{ width: PW, height: PH, objectFit: "cover" }} />
+        </div>
+        <div style={{ position: "absolute", left: 64 + PW + 34, right: 56, top: PT + 20, display: "flex", flexDirection: "column", gap: 26 }}>
+          {items.map((it, i) => {
+            const at = cueAt(cues, it.at, 0.4 + i * 1.8);
+            const on = t >= at - 0.05;
+            const nextAt = items.slice(i + 1).map((x) => cueAt(cues, x.at, 1e9)).find((x) => x > at) ?? 1e9;
+            const cur = on && t < nextAt;
+            return (
+              <div key={i} style={{ fontSize: 50, fontWeight: 900, lineHeight: 1.26, opacity: on ? 1 : 0.26, wordBreak: "keep-all" }}>
+                <span style={{ background: cur ? `linear-gradient(transparent 62%, ${HL} 62%)` : "none" }}>{it.t}</span>
+              </div>
+            );
+          })}
+        </div>
+        {c.note ? <Note c={c} cues={cues} top={1380} /> : null}
+        <QOverlay cues={cues} lines={c.q} />
+      </PaperShell>
+    );
+  }
+  return (
+    <PaperShell p={p} cues={cues} head={c.head}>
+      <div style={{ position: "absolute", left: 64, width: W, top: 440, height: IH, borderRadius: 30, overflow: "hidden",
+        border: "2px solid rgba(20,20,20,0.07)", boxShadow: "0 18px 44px rgba(20,20,20,0.14)", opacity: Math.min(1, 0.2 + k), transform: `scale(${0.98 + 0.02 * k})` }}>
+        <Img src={staticFile(a.src)} style={{ width: W, height: IH, objectFit: "cover" }} />
+        {a.caption ? (
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "70px 28px 22px", fontSize: 40, fontWeight: 900, color: "#FFFFFF",
+            background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.72) 60%)" }}>{a.caption}</div>
+        ) : null}
+      </div>
+      <div style={{ position: "absolute", left: 64, width: W, top: 440 + IH + 40, display: "flex", flexDirection: "column", gap: 20 }}>
+        {items.map((it, i) => {
+          const at = cueAt(cues, it.at, 0.4 + i * 1.8);
+          const on = t >= at - 0.05;
+          const nextAt = items.slice(i + 1).map((x) => cueAt(cues, x.at, 1e9)).find((x) => x > at) ?? 1e9;
+          const cur = on && t < nextAt;
+          return (
+            <div key={i} style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.25, opacity: on ? 1 : 0.28, wordBreak: "keep-all" }}>
+              <span style={{ background: cur ? `linear-gradient(transparent 62%, ${HL} 62%)` : "none" }}>{it.t}</span>
+            </div>
+          );
+        })}
+      </div>
+      <QOverlay cues={cues} lines={c.q} />
+    </PaperShell>
+  );
+};
+
 type DuoPanel = { title: string; bars: Pt[]; at?: number; note?: string };
 type ScoreRow = { label: string; value: string; good: boolean; note?: string; at?: number };
 type StepPt = { label: string; v: number | null; vlabel: string };
@@ -655,6 +1064,7 @@ const Duo: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
           </div>
         );
       })}
+      {c.note ? <Note c={c} cues={cues} top={334} /> : null}
       <QOverlay cues={cues} lines={c.q} />
     </PaperShell>
   );
@@ -741,7 +1151,7 @@ const Steps: React.FC<SC & { c: DCard }> = ({ p, cues, c }) => {
 const pickD = (id: string): React.FC<SC> => ({ p, cues, sub }) => {
   const c = infoOf(p).cards?.[id];
   if (!c) return <PaperShell p={p} cues={cues}><></></PaperShell>;
-  const M: Record<string, React.FC<SC & { c: DCard }>> = { duo: Duo, score: Score, steps: Steps, hook: Hook, hook2: Hook2, line: Line, bars: Bars, vs: Vs, hbars: HBars, picto: Picto, stack: Stack, big: Big, check: Check, split: Split };
+  const M: Record<string, React.FC<SC & { c: DCard }>> = { sides: Sides, timeline: Timeline, art: Art, cal: Cal, duo: Duo, score: Score, steps: Steps, hook: Hook, hook2: Hook2, line: Line, bars: Bars, vs: Vs, hbars: HBars, picto: Picto, stack: Stack, big: Big, check: Check, split: Split };
   const X = M[c.kind] ?? Check;
   return <X p={p} cues={cues} sub={sub} c={c} />;
 };
@@ -762,7 +1172,9 @@ const EndD: React.FC<SC> = ({ p, cues }) => {
 };
 
 export const DISSECT_COMP: Record<string, React.FC<SC>> = Object.fromEntries([
-  ...Array.from({ length: 10 }, (_, i) => [`i${i}`, pickD(`i${i}`)] as const),
+  // 장면 수는 20까지 — 10까지만 만들어 두면 i10 부터 컴포넌트가 없어 **검정 화면**이 된다
+  // (JJ 2026-09-21 "10월1일 영상 2분부터 검정색 화면이 나와 8초동안"). build_info.ORDER 와 길이를 맞춘다.
+  ...Array.from({ length: 20 }, (_, i) => [`i${i}`, pickD(`i${i}`)] as const),
   ["iz", EndD] as const,
 ]);
 

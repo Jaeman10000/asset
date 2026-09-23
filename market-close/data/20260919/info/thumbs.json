@@ -1,0 +1,36 @@
+{
+ "out": "out/20260919/info",
+ "cands": {
+  "A": {
+   "bg": "chip",
+   "tone": "up",
+   "dim": 0.45,
+   "objects": [
+    {
+     "k": "glow",
+     "x": 540,
+     "y": 780,
+     "r": 640,
+     "color": "yellow",
+     "a": 0.18
+    }
+   ],
+   "lines": [
+    {
+     "t": "삼성전기",
+     "size": 0.9
+    },
+    {
+     "t": "주가 −38%",
+     "size": 0.9
+    },
+    {
+     "t": "이익 +150%?",
+     "size": 0.9,
+     "color": "yellow"
+    }
+   ],
+   "logo": true
+  }
+ }
+}

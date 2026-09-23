@@ -90,6 +90,91 @@
     "sign": -1,
     "n": 6
    },
+   "result": {
+    "date": "20260916",
+    "ok": true,
+    "t": -16809,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260916",
+   "q": "외국인 순매도가 이레째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": -1,
+    "n": 7
+   },
+   "result": {
+    "date": "20260917",
+    "ok": true,
+    "t": -22804,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260917",
+   "q": "외국인 순매도가 8일째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": -1,
+    "n": 8
+   },
+   "result": {
+    "date": "20260918",
+    "ok": false,
+    "t": 4362,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260918",
+   "q": "외국인 순매수가 2일째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": 1,
+    "n": 2
+   },
+   "result": {
+    "date": "20260921",
+    "ok": false,
+    "t": -1603,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260921",
+   "q": "외국인 순매도가 2일째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": -1,
+    "n": 2
+   },
+   "result": {
+    "date": "20260922",
+    "ok": false,
+    "t": 851,
+    "streak": null
+   }
+  },
+  {
+   "date": "20260922",
+   "q": "외국인 순매수가 2일째 이어지는지",
+   "check": {
+    "kind": "inv_continue",
+    "key": "foreign",
+    "name": "외국인",
+    "sign": 1,
+    "n": 2
+   },
    "result": null
   }
  ]

@@ -197,7 +197,9 @@ const UShell: React.FC<{ p: Props; bg: React.ReactNode; cues?: Cue[]; hideSub?: 
   const rg = rangeLabel(uw(p)) || (p.date_label ?? "").split(" ")[0];
   let sub = "";
   if (!hideSub && cues && cues.length) {
-    const c = cues.find((x) => t >= x.start && t < x.end + 0.5);
+    // 겹치면 나중 것 — 0.5초 꼬리 때문에 find 가 앞 자막을 집으면 화면보다 늦는다(JJ 2026-09-21)
+    const _on = cues.filter((x) => t >= x.start && t < x.end + 0.5);
+    const c = _on.length ? _on[_on.length - 1] : undefined;
     sub = c ? c.text : "";
   }
   return (

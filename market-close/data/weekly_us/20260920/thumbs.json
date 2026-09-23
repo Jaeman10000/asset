@@ -1,0 +1,37 @@
+{
+ "out": "out/weekly_us/20260920",
+ "cands": {
+  "A": {
+   "bg": "chip",
+   "tone": "up",
+   "dim": 0.45,
+   "badge": "미장 주간 결산 9/14~9/18",
+   "objects": [
+    {
+     "k": "glow",
+     "x": 540,
+     "y": 780,
+     "r": 640,
+     "color": "yellow",
+     "a": 0.18
+    }
+   ],
+   "lines": [
+    {
+     "t": "미국 금리 올렸는데",
+     "size": 0.72
+    },
+    {
+     "t": "돈은 AI 칩으로",
+     "size": 0.86
+    },
+    {
+     "t": "몰렸다?",
+     "size": 1.1,
+     "color": "yellow"
+    }
+   ],
+   "logo": true
+  }
+ }
+}

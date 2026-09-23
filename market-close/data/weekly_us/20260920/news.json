@@ -1,0 +1,1374 @@
+{
+  "week_start": "2026-09-14",
+  "week_end": "2026-09-18",
+  "build_date": "20260920",
+  "generated_at": "2026-09-19T20:20:00+09:00",
+  "status": "complete",
+  "sessions_covered": [
+    "2026-09-14",
+    "2026-09-15",
+    "2026-09-16",
+    "2026-09-17",
+    "2026-09-18"
+  ],
+  "sessions_pending": [],
+  "rerun_with": "jobs/us_weekly_research_prompt.md",
+  "events": [
+    {
+      "d": "2026-09-13",
+      "session": "2026-09-14",
+      "kind": "company",
+      "importance": 3,
+      "title": "앤트로픽 CEO 'AI 개발 속도 늦추자' 에세이…월요일 반도체지수 −5.86%",
+      "what": "다리오 아모데이 앤트로픽 CEO가 토요일(9/13) 에세이에서 AI 기업들이 모델 성능을 끌어올리는 속도를 늦춰야 한다고 주장했고, 샘 올트먼 오픈AI CEO도 같은 취지에 동의했습니다(포춘·24/7월스트리트·모틀리풀). 24/7월스트리트는 아모데이가 학습 중단은 명시적으로 배제했고 올트먼도 '멈추자는 뜻은 아니다'라고 선을 그었다고 전했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Fortune",
+          "title": "Wall Street's AI doomsday trade is here: chipmakers sink while hyperscalers gain",
+          "url": "https://fortune.com/2026/09/14/ai-slowdown-stocks-nvidia-meta/",
+          "published": "2026-09-14 11:26 ET"
+        },
+        {
+          "outlet": "24/7 Wall St.",
+          "title": "Chip Stocks Tumble as AI Pacing Call Reaches Beyond Memory: Intel Drops 7%, AMD Sinks 6%, NVIDIA Pulls Back",
+          "url": "https://247wallst.com/investing/2026/09/14/chip-stocks-tumble-as-ai-pacing-call-reaches-beyond-memory-intel-drops-7-amd-sinks-6-nvidia-pulls-back/",
+          "published": "2026-09-14 09:23 ET"
+        },
+        {
+          "outlet": "The Motley Fool",
+          "title": "Market Indexes Drop as Chip Stocks Take the Weekend's News Badly",
+          "url": "https://www.fool.com/investing/2026/09/14/market-indexes-drop-as-chip-stocks-take-the-weeken/",
+          "published": "2026-09-14 12:57 ET"
+        },
+        {
+          "outlet": "TradingKey",
+          "title": "Today's Market Recap: AI Chip Stocks Plunge as Nvidia, Micron, Broadcom Tumble; Gold Drops below $4,300",
+          "url": "https://www.tradingkey.com/analysis/stocks/us-stocks/262167442-ai-chip-stocks-plummet-nvda-mu-avgo-fall-gold-prices-drop-4300-tradingkey",
+          "published": "2026-09-15 00:33 (TradingKey 표기)"
+        },
+        {
+          "outlet": "글로벌이코노믹",
+          "title": "[뉴욕증시] AI 속도조절론에 반도체주 직격탄…나스닥 0.56%↓",
+          "url": "https://www.g-enews.com/article/Securities/2026/09/202609150538009804e250e8e188_1",
+          "published": "2026-09-15 05:38 KST"
+        }
+      ],
+      "market_link": "14일 필라델피아 반도체지수는 5.86% 내렸고 3대 지수도 모두 약세였습니다(S&P500 −0.48%, 나스닥 −0.56%, 다우 −0.29%). 트레이딩키는 AI 경영진의 개발 속도 조절 요구가 AI 설비투자와 칩 수요 전망을 다시 따져보게 만든 것으로 짚었고, 글로벌이코노믹도 'AI 속도조절론'을 반도체 약세의 배경으로 꼽았습니다. 트레이딩키 기준 엔비디아 −3.36%, 마이크론 5% 이상, 브로드컴·AMD 4% 이상 하락. 포춘은 같은 날 알파벳(+2%)·마이크로소프트(+1.6%)·메타(+1.4%) 같은 하이퍼스케일러는 올랐다고 전했습니다. SK하이닉스 미국 상장주는 모틀리풀 장중 기준 −7.4%였습니다.",
+      "assets": [
+        "SOX",
+        "IXIC",
+        "NVDA",
+        "AMD",
+        "MU",
+        "AVGO",
+        "INTC"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-14",
+      "session": "2026-09-14",
+      "kind": "politics",
+      "importance": 1,
+      "title": "트럼프, AI 속도조절 요구에 '사악한 음모'라며 반박",
+      "what": "트럼프 대통령은 14일 트루스소셜에 AI와 데이터센터를 겨냥한 'SICK conspiracy'가 있고 이를 반기는 건 중국뿐이라고 썼습니다. AI에 필요한 통제는 '강하고 똑똑한 대통령'뿐이라는 문장도 올렸습니다(알자지라·야후파이낸스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Al Jazeera",
+          "title": "Trump says calls for more control on AI are a 'SICK conspiracy'",
+          "url": "https://www.aljazeera.com/news/2026/9/14/trump-says-calls-for-more-control-on-ai-are-a-sick-conspiracy",
+          "published": "2026-09-14"
+        },
+        {
+          "outlet": "Yahoo Finance",
+          "title": "Trump dismisses calls to slow AI development, blames 'conspiracy' against AI and data centers",
+          "url": "https://finance.yahoo.com/technology/article/trump-dismisses-calls-to-slow-ai-development-blames-conspiracy-against-ai-and-data-centers-153021111.html",
+          "published": "2026-09-14 11:30 ET"
+        }
+      ],
+      "market_link": "알자지라는 같은 기사에서 월요일 오전 나스닥100 −1.7%, 반도체지수 −6%를 함께 전했지만, 트럼프 글과 주가를 직접 연결한 보도는 확인되지 않았습니다.",
+      "assets": [
+        "SOX"
+      ],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-14",
+      "session": "2026-09-14",
+      "kind": "company",
+      "importance": 1,
+      "title": "뱅크오브아메리카, CEO의 투자은행 수수료 감소 전망에 5%대 하락",
+      "what": "브라이언 모이니핸 뱅크오브아메리카 CEO가 14일 바클레이스 금융 콘퍼런스에서 3분기 투자은행 수수료를 16억~18억 달러, 1년 전보다 10~20% 적을 것으로 제시했습니다(야후파이낸스 라이브·모틀리풀). 뱅크오브아메리카 주가는 5.14% 내렸고 JP모건 −1.71%, 웰스파고 −1.75%였습니다(모틀리풀).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow, S&P 500, Nasdaq slip as chip stocks fall on AI warning",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-14-dow-sp-500-nasdaq-080559558.html",
+          "published": "2026-09-14"
+        },
+        {
+          "outlet": "The Motley Fool",
+          "title": "Stock Market Today, Sept. 14: Bank of America Slides on Investment Banking Fee Surprise",
+          "url": "https://www.fool.com/coverage/stock-market-today/2026/09/14/stock-market-today-sept-14-bank-of-america-slides-on-investment-banking-fee-surprise/",
+          "published": "2026-09-14 16:57 ET"
+        },
+        {
+          "outlet": "Yahoo Finance (Canada)",
+          "title": "Bank of America leads financial services stocks lower on weak Wall Street fee forecast",
+          "url": "https://ca.finance.yahoo.com/news/bank-of-america-leads-financial-services-stocks-lower-on-weak-wall-street-fee-forecast-202601947.html",
+          "published": "2026-09-14 16:26 ET"
+        }
+      ],
+      "market_link": "야후파이낸스는 뱅크오브아메리카가 금융주 하락을 이끌었다고 전했고(골드만삭스 약 −4%, 모건스탠리 약 −3%), 모틀리풀은 자본시장 수익에 대한 업종 전반의 경계로 JP모건·웰스파고도 내렸다고 적었습니다. 금융 업종(XLF)은 주간 −2.43%로 11개 업종 중 두 번째로 약했습니다(computed). 16일 연준 인상 뒤에도 은행주는 한 번 더 밀렸습니다(연준 기자회견 이벤트 참조).",
+      "assets": [
+        "BAC",
+        "JPM",
+        "WFC",
+        "GS",
+        "XLF"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-14",
+      "session": "2026-09-14",
+      "kind": "company",
+      "importance": 1,
+      "title": "키옥시아, 최소 100억 달러 규모 미국 ADR 상장 검토 보도",
+      "what": "블룸버그는 14일 일본 메모리 업체 키옥시아가 최소 100억 달러 규모의 미국 주식예탁증서(ADR) 발행을 2027년(브리프스: 이르면 2027년 봄)을 목표로 검토하고, 뱅크오브아메리카·골드만삭스·JP모건과 논의했다고 보도했습니다(인베스팅닷컴의 블룸버그 인용·브리프스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Investing.com",
+          "title": "Kioxia explores $10 billion ADR listing for next year - Bloomberg",
+          "url": "https://www.investing.com/news/stock-market-news/kioxia-explores-10-billion-adr-listing-for-next-year--bloomberg-93CH-4899297",
+          "published": "2026-09-14 07:32"
+        },
+        {
+          "outlet": "Briefs.co",
+          "title": "Kioxia Eyes At Least $10 Billion via U.S. ADRs as AI Fever Meets Market Jitters",
+          "url": "https://www.briefs.co/news/kioxia-eyes-at-least-10-billion-via-u-s-adrs-as-ai-fever-mee/",
+          "published": "2026-09-14"
+        }
+      ],
+      "market_link": "직접 연결한 미국 증시 반응 보도는 확인되지 않음. 한국 매체(EBN·매일경제)도 같은 소식을 다뤄 한국 메모리주와 비교 소재로 쓸 수 있음.",
+      "assets": [],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-15",
+      "session": "2026-09-15",
+      "kind": "rates",
+      "importance": 3,
+      "title": "미 10년물 금리 5% 돌파…장중 5.041%, 2007년 7월 이후 최고",
+      "what": "10년물 국채금리는 14일 장중 5%를 잠시 넘었고(모틀리풀: 2023년 10월 이후 최고, 글로벌이코노믹: 4.987% 마감), 15일에는 장중 5.041%까지 올라 2007년 7월 이후 최고를 기록한 뒤 5.00% 안팎에서 마감했습니다(이투데이·서울경제 5.006%). 이날 3대 지수는 다우 −0.63%, S&P500 −0.45%, 나스닥 −0.78%로 이틀째 내렸습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "이투데이",
+          "title": "유가 급등ㆍ美 국채금리 19년 만에 최고⋯뉴욕증시 일제히 하락[종합]",
+          "url": "https://www.etoday.co.kr/news/view/2625979",
+          "published": "2026-09-16 KST"
+        },
+        {
+          "outlet": "서울경제",
+          "title": "뉴욕 증시, 유가 급등에 하락...美국채 10년물 금리 19년만에 최고 [데일리국제금융]",
+          "url": "https://www.sedaily.com/article/20091391",
+          "published": "2026-09-16 KST"
+        },
+        {
+          "outlet": "TheStreet (Yahoo Finance)",
+          "title": "Stock Market Today (Sept. 15, 2026): Stocks sink as Fed meeting begins, Treasury yields hit 19-year highs",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-today-sept-15-133221036.html",
+          "published": "2026-09-15 09:32 ET"
+        },
+        {
+          "outlet": "The Motley Fool",
+          "title": "Market Indexes Drop as Chip Stocks Take the Weekend's News Badly",
+          "url": "https://www.fool.com/investing/2026/09/14/market-indexes-drop-as-chip-stocks-take-the-weeken/",
+          "published": "2026-09-14 12:57 ET"
+        }
+      ],
+      "market_link": "이투데이는 고유가가 인플레이션 우려를 키우고 연준 인상 기대와 겹쳐 주식 매도로 이어진 것으로 풀이했습니다. TheStreet는 캐피털닷컴 애널리스트의 말을 빌려 100달러가 넘는 유가, 높은 채권금리, AI 거래를 둘러싼 의문이 겹친 어려운 배경이라고 전했습니다. 서울경제는 CME 페드워치 기준 FOMC 0.25%p 인상 확률을 94.5%로 전했습니다.",
+      "assets": [
+        "US10Y",
+        "SPX",
+        "IXIC",
+        "DJI"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-15",
+      "session": "2026-09-15",
+      "kind": "oil",
+      "importance": 3,
+      "title": "WTI 105.83달러(+4.4%)…사우디 얀부 선적 중단·리비아 유전 중단, 5월 이후 최고",
+      "what": "15일 WTI는 4.38% 오른 105.83달러, 브렌트는 2.9% 오른 108.75달러로 마감해 둘 다 5월 19일 이후 최고였습니다(로이터·서울경제). 로이터와 이투데이는 사우디 홍해 수출항 얀부의 선적이 멈추고 유럽행 사우디 화물 일부가 취소됐으며, 리비아 국영석유회사가 유전 3곳 가동을 멈췄다고 전했습니다. 사우디 동서 송유관은 9/10~11 드론 공격 뒤 예방 차원에서 닫혀 있었고, 호르무즈를 우회하는 핵심 경로입니다(알자지라). 13일에는 오만이 14일로 잡혀 있던 이란·걸프국 호르무즈 해운 회담을 연기했습니다(아랍뉴스).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Reuters (Yahoo Finance)",
+          "title": "Oil settles $3 higher on Yanbu disruption, Saudi cargo cancellations",
+          "url": "https://finance.yahoo.com/news/oil-prices-rise-saudi-pipeline-003617502.html",
+          "published": "2026-09-15 15:33 ET"
+        },
+        {
+          "outlet": "Rigzone",
+          "title": "Oil Jumps on Saudi and Libya Outages",
+          "url": "https://www.rigzone.com/news/oil_jumps_on_saudi_and_libya_outages-15-sep-2026-184624-article",
+          "published": "2026-09-15 15:44 ET"
+        },
+        {
+          "outlet": "이투데이",
+          "title": "유가 급등ㆍ美 국채금리 19년 만에 최고⋯뉴욕증시 일제히 하락[종합]",
+          "url": "https://www.etoday.co.kr/news/view/2625979",
+          "published": "2026-09-16 KST"
+        },
+        {
+          "outlet": "서울경제",
+          "title": "뉴욕 증시, 유가 급등에 하락...美국채 10년물 금리 19년만에 최고 [데일리국제금융]",
+          "url": "https://www.sedaily.com/article/20091391",
+          "published": "2026-09-16 KST"
+        },
+        {
+          "outlet": "Al Jazeera",
+          "title": "Saudi Arabia shuts critical oil pipeline after drone attack: What it means",
+          "url": "https://www.aljazeera.com/news/2026/9/12/saudi-arabia-shuts-critical-oil-pipeline-after-drone-attack-what-happened",
+          "published": "2026-09-12"
+        },
+        {
+          "outlet": "Arab News",
+          "title": "Oman says Hormuz talks with Iran, Gulf states postponed",
+          "url": "https://www.arabnews.com/middle-east/oman-says-hormuz-talks-with-iran-gulf-states-postponed-3001574",
+          "published": "2026-09-13 17:27 UTC"
+        }
+      ],
+      "market_link": "이투데이는 유가 급등이 인플레이션 우려를 키우고 연준 인상 기대와 겹쳐 주식 매도로 이어진 것으로 풀이했고, 서울경제도 고유가와 국채금리 급등을 이날 하락의 배경으로 꼽았습니다. 로이터·리그존은 디젤(초저유황 경유) 선물이 사상 최고 종가를 기록했다고 전했습니다. 에너지 업종(XLE)은 주간 −1.27%로 유가 정점 뒤 되밀렸습니다(computed).",
+      "assets": [
+        "WTI",
+        "US10Y",
+        "XLE"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-15",
+      "session": "2026-09-15",
+      "kind": "data",
+      "importance": 1,
+      "title": "9월 뉴욕 연은 제조업지수 7.6…예상(14.75~15.0) 밑돌고 가격지표는 상승",
+      "what": "뉴욕 연은 엠파이어스테이트 제조업지수는 9월 7.6으로 8월 20.6에서 13포인트 떨어졌습니다. 신규주문은 2.0(전월 17.3)으로 약해졌고, 지불가격 지수는 63.1(전월 58.6)로 올랐습니다(트레이딩이코노믹스·인베스트레이드).",
+      "actual_vs_expected": "7.6 (예상 14.75 — 트레이딩이코노믹스 / 15.0 — 인베스트레이드·인베스팅라이브·바차트) / 전월 20.6. 지불가격 63.1(전월 58.6), 신규주문 2.0(전월 17.3).",
+      "sources": [
+        {
+          "outlet": "Trading Economics",
+          "title": "United States NY Empire State Manufacturing Index",
+          "url": "https://tradingeconomics.com/united-states/ny-empire-state-manufacturing-index",
+          "published": "2026-09-15"
+        },
+        {
+          "outlet": "Investrade",
+          "title": "Market Review: September 15, 2026",
+          "url": "https://investrade.com/market-review-september-15-2026/",
+          "published": "2026-09-15"
+        },
+        {
+          "outlet": "Barchart (Yahoo Finance)",
+          "title": "Dollar Rises on Surging Crude Prices and T-Note Yields",
+          "url": "https://finance.yahoo.com/markets/currencies/articles/dollar-rises-surging-crude-prices-193655740.html",
+          "published": "2026-09-15 15:36 ET"
+        }
+      ],
+      "market_link": "바차트는 지표가 예상에 못 미친 직후 달러가 고점에서 밀렸지만 유가 급등 속에 결국 +0.14%로 마감했다고 전했습니다. 이날 금리·주가의 큰 흐름은 유가 쪽으로 설명됐고, 이 지표를 직접 원인으로 든 보도는 없습니다.",
+      "assets": [
+        "DXY"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-15",
+      "session": "2026-09-15",
+      "kind": "geopolitics",
+      "importance": 1,
+      "title": "우크라이나, 러시아 시즈란 정유공장 타격…미 하원은 러시아 제재법 통과",
+      "what": "우크라이나군은 15일 새벽 러시아 사마라주 시즈란 정유공장(로스네프트)을 드론으로 타격했고, 공장 전체 처리능력의 약 71%인 주 원유 정제설비가 손상돼 가동이 멈췄습니다(키이우인디펜던트·블룸버그 전재). 미 하원은 16일 러시아 에너지·방산·'그림자 선단'을 겨냥한 제재 법안을 통과시켜 트럼프 대통령에게 넘겼고, 크렘린 페스코프 대변인은 17일 평화 해법 찾기를 '분명히 복잡하게 만들 것'이라고 했습니다(비즈니스리코더·데일리매버릭, 로이터 기사).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "The Kyiv Independent",
+          "title": "Ukrainian forces strike Russia's Syzran Oil Refinery, drone production facility in Taganrog, military confirms",
+          "url": "https://kyivindependent.com/ukrainian-forces-reportedly-strike-russias-syzran-oil-refinery/",
+          "published": "2026-09-15 05:43"
+        },
+        {
+          "outlet": "The Spokesman-Review (Bloomberg)",
+          "title": "Russia refinery hit as Kyiv and Moscow see no Trump energy truce",
+          "url": "https://www.spokesman.com/stories/2026/sep/15/russia-refinery-hit-as-kyiv-and-moscow-see-no-trum/",
+          "published": "2026-09-15"
+        },
+        {
+          "outlet": "Business Recorder (Reuters)",
+          "title": "Russia says new US sanctions, if signed by Trump, would make Ukraine peace deal harder",
+          "url": "https://www.brecorder.com/news/40439956/russia-says-new-us-sanctions-if-signed-by-trump-would-make-ukraine-peace-deal-harder",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "Daily Maverick (Reuters)",
+          "title": "Russia says new US sanctions, if signed by Trump, would make Ukraine peace deal harder",
+          "url": "https://www.dailymaverick.co.za/article/2026-09-17-russia-says-new-us-sanctions-if-signed-by-trump-would-make-ukraine-peace-deal-harder/",
+          "published": "2026-09-17"
+        }
+      ],
+      "market_link": "로이터(야후 전재)는 15일 유가 기사에서 러시아·우크라이나 간 에너지 시설 공격이 디젤 선물을 사상 최고로 끌어올린 배경 중 하나라고 적었습니다. 증시와 직접 연결한 보도는 확인되지 않았습니다.",
+      "assets": [
+        "WTI"
+      ],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "policy",
+      "importance": 3,
+      "title": "연준, 기준금리 0.25%p 인상(3.75~4.00%)…2023년 7월 이후 첫 인상, 12대 0",
+      "what": "연준은 16일 오후 2시(미 동부, 한국 17일 새벽 3시) 성명에서 연방기금금리 목표 범위를 0.25%p 올린 3.75~4.00%로 정했고 표결은 12대 0 만장일치였습니다(연준 성명). 직전 범위는 3.50~3.75%로, 2023년 7월 이후 첫 인상입니다(야후파이낸스·한국일보). 성명은 '인플레이션이 여전히 높다'며 이번 조치가 2% 목표로 더 제때 돌아가는 것을 돕는다고 적었고, 불확실성은 지정학적 전개 등으로 높은 상태라고 했습니다.",
+      "actual_vs_expected": "0.25%p 인상(3.50~3.75% → 3.75~4.00%), 만장일치. 발표 전 CME 페드워치 인상 확률: 86~88.5%(9/14, 야후 라이브) · 94.5%(9/15, 서울경제) · 95%(9/15, 인베스토피디아) — 인상 자체는 시장 예상대로.",
+      "sources": [
+        {
+          "outlet": "Federal Reserve",
+          "title": "Federal Reserve issues FOMC statement",
+          "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm",
+          "published": "2026-09-16 14:00 ET"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Fed meeting live updates: Fed hikes interest rates by 25 basis points as Warsh vows 'timelier return' to 2% inflation",
+          "url": "https://finance.yahoo.com/economy/policy/live/federal-reserve-meeting-live-updates-chairman-kevin-warsh-143452661.html",
+          "published": "2026-09-16~17"
+        },
+        {
+          "outlet": "한국일보",
+          "title": "美기준금리 0.25% 인상…연내 추가 인상 시사",
+          "url": "https://www.hankookilbo.com/news/article/A2026091705360002360",
+          "published": "2026-09-17 KST"
+        }
+      ],
+      "market_link": "야후파이낸스와 뉴스핌은 발표 직후 오르던 지수가 워시 의장 기자회견 도중 하락으로 돌아섰다고 전했습니다(다음 이벤트). 한국일보는 이번 인상으로 한미 기준금리 차가 1.00%p(미국 상단 4.00%, 한국 3.00%)로 벌어졌다고 짚었습니다.",
+      "assets": [
+        "US2Y",
+        "US10Y",
+        "DXY",
+        "SPX",
+        "DJI"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "policy",
+      "importance": 3,
+      "title": "점도표: 올해 말 금리 중간값 4.1%…18명 중 16명이 연내 추가 인상 전망",
+      "what": "함께 나온 경제전망(SEP) 중간값은 2026년 말 연방기금금리 4.1%(6월 전망 3.8%), 2027년 말 4.1%(6월 3.6%), 장기 3.2%(6월 3.1%)였습니다. 2026년 점은 4.375%에 4명, 4.125%에 12명, 3.875%에 2명으로 18명 중 16명이 올해 한 번 이상 더 올리는 쪽이었습니다. 2026년 PCE 물가 전망은 3.7%(6월 3.6%), 근원 3.4%(6월 3.3%), 실업률 4.1%(6월 4.3%), 성장률 2.3%(6월 2.2%)입니다(연준 전망표).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Federal Reserve",
+          "title": "Summary of Economic Projections, September 16, 2026 (Table 1, Figure 2)",
+          "url": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260916.htm",
+          "published": "2026-09-16 14:00 ET"
+        },
+        {
+          "outlet": "Federal Reserve",
+          "title": "Summary of Economic Projections, June 17, 2026",
+          "url": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260617.htm",
+          "published": "2026-06-17"
+        },
+        {
+          "outlet": "Yahoo Finance",
+          "title": "Fed keeps the door open for more rate hikes as Schmid warns there's 'work to do'",
+          "url": "https://finance.yahoo.com/economy/policy/article/fed-keeps-the-door-open-for-more-rate-hikes-as-schmid-warns-theres-work-to-do-182214817.html",
+          "published": "2026-09-18 14:22 ET"
+        },
+        {
+          "outlet": "Barchart (Yahoo Finance)",
+          "title": "Dollar Soars as Fed Hikes Rates and Signals More to Come",
+          "url": "https://finance.yahoo.com/markets/currencies/articles/dollar-soars-fed-hikes-rates-193939474.html",
+          "published": "2026-09-16 15:39 ET"
+        }
+      ],
+      "market_link": "바차트는 추가 인상 신호에 달러인덱스가 0.64% 올라 한 달 반 만의 최고를 기록했다고 전했고, FX스트리트·로이터(GBAF 전재)도 추가 인상 신호를 달러 강세 배경으로 꼽았습니다. 야후 라이브는 CME 페드워치 10월 추가 인상 확률이 50.9%(전날 43.5%, 1주 전 17.6%)로 올랐다고 전했고, 바차트는 57%로 적었습니다. 2년물 금리는 이날 4.74%로 7bp 올랐습니다(computed).",
+      "assets": [
+        "US2Y",
+        "DXY",
+        "USDJPY"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "policy",
+      "importance": 3,
+      "title": "워시 '인플레이션 너무 높고 너무 오래'…기자회견 중 증시 반락, 다우 −1.21%",
+      "what": "케빈 워시 연준 의장은 기자회견에서 인플레이션이 '너무 높고 너무 오래 이어졌다', 물가 안정이 지금 가장 우선이라고 말했습니다(야후파이낸스·뉴스핌·한국일보). 발표 직후 0.3~0.7% 오르던 지수는 기자회견 도중 하락으로 돌아섰고, 다우는 631.21포인트(1.21%) 내린 51,461.90, S&P500은 −0.45%, 나스닥은 −0.01%로 마감했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow sinks 600 points, S&P 500 and Nasdaq fall as Fed hikes rates, bond yields rise",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-september-16-dow-sp-500-nasdaq-fed-meeting-decision-080356525.html",
+          "published": "2026-09-16"
+        },
+        {
+          "outlet": "뉴스핌",
+          "title": "뉴욕증시, 연준 추가 긴축 시사에 하락…다우 1.21%↓",
+          "url": "https://www.newspim.com/news/view/20260917000030",
+          "published": "2026-09-17 KST"
+        },
+        {
+          "outlet": "The Motley Fool",
+          "title": "Stock Market Today, Sept. 16: Stocks Slip as Fed Raises Rates",
+          "url": "https://www.fool.com/coverage/stock-market-today/2026/09/16/stock-market-today-sept-16-stocks-slip-as-fed-raises-rates/",
+          "published": "2026-09-16 17:15 ET"
+        },
+        {
+          "outlet": "초이스경제",
+          "title": "美 금리 '추가인상'?...뉴욕증시 '하락', 다우지수·은행주 '뚝'",
+          "url": "http://www.choicenews.co.kr/news/articleView.html?idxno=171399",
+          "published": "2026-09-17 KST"
+        }
+      ],
+      "market_link": "야후파이낸스는 시장이 워시의 발언을 인플레이션에 더 매파적인 신호로 받아들였다고 전했고, 뉴스핌도 기자회견 뒤 방향이 바뀌었다고 짚었습니다. 뉴스핌은 10년물 금리가 다시 5%를 넘으면서 금리에 민감한 은행주가 약세를 주도했다고 썼고, 초이스경제 집계로 골드만삭스 −3.96%, 웰스파고·뱅크오브아메리카·씨티 −2.36~−2.98%, JP모건 −1.01%였습니다. 모틀리풀은 에너지·금융이 약했다고 전했습니다.",
+      "assets": [
+        "DJI",
+        "SPX",
+        "IXIC",
+        "XLF",
+        "GS",
+        "BAC",
+        "WFC",
+        "C",
+        "JPM"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "data",
+      "importance": 2,
+      "title": "8월 소매판매 +1.2%…예상(0.7~0.9%) 웃돌아",
+      "what": "미 인구조사국이 16일 발표한 8월 소매판매는 전월보다 1.2% 늘어난 7,739억 달러, 전년보다 6.0% 늘었습니다. 7월은 −0.6%에서 −0.5%로 고쳐졌습니다(인구조사국). 같은 날 8월 수입물가는 전월비 +0.7%(예상 +0.4%, 로이터 조사), 전년비 +7.0%로 2022년 8월 이후 가장 크게 올랐습니다(노동통계국).",
+      "actual_vs_expected": "소매판매 전월비 +1.2% (예상 +0.8% — 트레이딩이코노믹스·KPMG·바차트 / +0.7% — AP·팩트셋 / +0.9% — 야후 라이브) / 전년비 +6.0% / 7월 수정 −0.5%. 수입물가 전월비 +0.7% (예상 +0.4%, 로이터 조사) / 전년비 +7.0%.",
+      "sources": [
+        {
+          "outlet": "U.S. Census Bureau",
+          "title": "Monthly Retail Trade — Advance Report, August 2026 (페이지 설명형 제목)",
+          "url": "https://www.census.gov/retail/sales.html",
+          "published": "2026-09-16 08:30 ET"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow sinks 600 points, S&P 500 and Nasdaq fall as Fed hikes rates, bond yields rise",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-september-16-dow-sp-500-nasdaq-fed-meeting-decision-080356525.html",
+          "published": "2026-09-16"
+        },
+        {
+          "outlet": "Barchart (Yahoo Finance)",
+          "title": "Dollar Posts Modest Gains Ahead of Expected Fed Rate Hike",
+          "url": "https://finance.yahoo.com/markets/currencies/articles/dollar-posts-modest-gains-ahead-143354252.html",
+          "published": "2026-09-16 10:33 ET"
+        },
+        {
+          "outlet": "BLS",
+          "title": "U.S. Import and Export Price Indexes News Release - 2026 M08 Results",
+          "url": "https://www.bls.gov/news.release/archives/ximpim_09162026.htm",
+          "published": "2026-09-16 08:30 ET"
+        }
+      ],
+      "market_link": "바차트는 강한 소매판매가 오전 달러를 받쳤다(달러인덱스 +0.09%, 2주 최고)고 전했지만, 같은 시각 국채금리는 오히려 내렸다고 적었습니다. 이날 금리·달러의 큰 움직임은 오후 연준 발표 뒤에 나왔고, 지표와 시장을 직접 연결한 보도는 바차트 한 곳뿐입니다.",
+      "assets": [
+        "DXY",
+        "US2Y"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "politics",
+      "importance": 2,
+      "title": "트럼프 '금리는 1% 이하여야'…워시에게 '이사회와 같이 투표하라' 말했다고 밝혀",
+      "what": "트럼프 대통령은 연준 발표 뒤인 16일 오후 트루스소셜에 '미국 금리는 1% 이하여야 한다'고 쓰고, 금리를 빨리 내리라고 요구했습니다(기즈모도). 기자들에게는 워시 의장에게 '어차피 달라지지 않으니 이사회와 같이 투표하라'고 말했다고 밝혔고, 여전히 워시를 신뢰한다고 했습니다(야후파이낸스). 백악관 쿠시 데사이 수석부대변인은 폭스뉴스에서 '다소 유감스러운 결정'이라고 했습니다(야후 라이브).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Gizmodo",
+          "title": "Trump Flips Out on Truth Social as Fed Hikes Interest Rates",
+          "url": "https://gizmodo.com/trump-flips-out-on-truth-social-as-fed-hikes-interest-rates-2000812756",
+          "published": "2026-09-16 17:09 ET"
+        },
+        {
+          "outlet": "Yahoo Finance",
+          "title": "Trump slams the Fed rate hike, says he told Warsh 'you might as well vote with the board'",
+          "url": "https://finance.yahoo.com/economy/policy/article/trump-slams-the-fed-rate-hike-says-he-told-warsh-you-might-as-well-vote-with-the-board-205145796.html",
+          "published": "2026-09-16 19:41 ET"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Fed meeting live updates: Fed hikes interest rates by 25 basis points as Warsh vows 'timelier return' to 2% inflation",
+          "url": "https://finance.yahoo.com/economy/policy/live/federal-reserve-meeting-live-updates-chairman-kevin-warsh-143452661.html",
+          "published": "2026-09-16"
+        }
+      ],
+      "market_link": "직접 연결한 보도는 확인되지 않음.",
+      "assets": [],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "company",
+      "importance": 2,
+      "title": "'SK하이닉스, 인텔과 미국 내 메모리 생산 협의' 보도…인텔 16일 +4.0%, 17일 +7.7%",
+      "what": "로이터는 SK하이닉스가 처음으로 미국 땅에서 메모리를 만드는 방안을 인텔과 협의 중이라고 보도했습니다(모틀리풀이 로이터 인용). SK하이닉스는 같은 날 뉴스룸에서 '구체적인 계획이나 합의는 확정된 바 없다'고 밝혔습니다. 인텔은 16일 4.03% 오른 101.05달러로 마감했습니다(모틀리풀·뉴스핌).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "The Motley Fool",
+          "title": "Stock Market Today, Sept. 16: Intel Jumps on SK Hynix Memory-Chip Manufacturing Talks",
+          "url": "https://www.fool.com/coverage/stock-market-today/2026/09/16/stock-market-today-sept-16-intel-jumps-on-sk-hynix-memory-chip-manufacturing-talks/",
+          "published": "2026-09-16 17:09 ET"
+        },
+        {
+          "outlet": "SK hynix Newsroom",
+          "title": "No plans have been confirmed regarding the reported talks between SK hynix and Intel on memory chip production in the U.S.",
+          "url": "https://news.skhynix.com/en/fact-10/",
+          "published": "2026-09-16"
+        },
+        {
+          "outlet": "뉴스핌",
+          "title": "뉴욕증시, 연준 추가 긴축 시사에 하락…다우 1.21%↓",
+          "url": "https://www.newspim.com/news/view/20260917000030",
+          "published": "2026-09-17 KST"
+        },
+        {
+          "outlet": "머니투데이",
+          "title": "금리인상 충격 하루만에 털었다…\"기업 실적이 상쇄\"[뉴욕마감]",
+          "url": "https://www.mt.co.kr/world/2026/09/18/2026091806093942622",
+          "published": "2026-09-18 06:09 KST"
+        }
+      ],
+      "market_link": "다우가 1.21% 내린 16일에도 인텔은 4.03% 올랐고(모틀리풀·뉴스핌), 다음 날 17일 머니투데이 집계로 인텔 +7.7%, SK하이닉스 미국 상장주 +4.64%, 마이크론 +5.5%였습니다.",
+      "assets": [
+        "INTC",
+        "MU",
+        "SOX"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "oil",
+      "importance": 2,
+      "title": "유가 사흘 연속 하락…사우디 동서 송유관 재가동 계획, WTI 100.30달러로 한 주 마감",
+      "what": "WTI는 16일 3.2% 내린 102.43달러(8/25 이후 가장 큰 하루 낙폭), 17일 101.91달러, 18일 1.6% 내린 100.30달러로 사흘 연속 내렸습니다. 브렌트는 18일 103.87달러로 마감했습니다(DTN·리그존). DTN은 사우디가 며칠 안에 동서 송유관 처리량 일부(하루 200만~250만 배럴)를 되살릴 수 있다는 보도를 전했고, 로이터는 사우디가 호르무즈 밖으로 원유 판매를 늘리고 있다고 전했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "DTN",
+          "title": "Oil Sinks 3% on Saudi Pipeline Restart Plan, Fed Hike",
+          "url": "https://www.dtnpf.com/agriculture/web/ag/news/world-policy/article/2026/09/16/oil-sinks-3-saudi-pipeline-restart",
+          "published": "2026-09-16 14:14 CDT"
+        },
+        {
+          "outlet": "Reuters (Yahoo Finance)",
+          "title": "Oil falls 1% as investors watch Middle East supply disruptions",
+          "url": "https://finance.yahoo.com/energy/articles/oil-prices-extend-losses-easing-065110892.html",
+          "published": "2026-09-17 15:38 ET"
+        },
+        {
+          "outlet": "Rigzone",
+          "title": "Oil Falls as Supply Fears Ease",
+          "url": "https://www.rigzone.com/news/oil_falls_as_supply_fears_ease-18-sep-2026-184657-article",
+          "published": "2026-09-18 16:23 ET"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow, S&P 500, Nasdaq rebound as bond yields slip, oil eases",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-17-dow-sp-500-nasdaq-oil-fed-081248626.html",
+          "published": "2026-09-17"
+        }
+      ],
+      "market_link": "리그존은 TP ICAP 애널리스트의 말을 빌려 얀부 경로 일부 재개와 호르무즈 쪽 판매 확대로 '물리적 공황은 일단 끝난 것 같다'고 전했습니다. 야후 라이브는 17일 채권금리·유가 하락이 증시 반등을 받쳤다고 짚었습니다. 다만 아람코는 유럽 정유사들에 10월 배정 물량이 없다고 통보했습니다(리그존).",
+      "assets": [
+        "WTI",
+        "US10Y",
+        "XLE"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "fx",
+      "importance": 2,
+      "title": "달러인덱스 100 돌파…연준 추가 인상 신호에 주간 +1.1%",
+      "what": "달러인덱스는 16일 0.66% 올라 100.31로 100을 넘었고, 한 주를 100.22로 마쳐 주간 1.11% 올랐습니다(computed). 바차트는 16일 상승을 한 달 반 만의 최고로, 로이터는 주간 1.2% 상승·7주 만의 최고로 전했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Barchart (Yahoo Finance)",
+          "title": "Dollar Soars as Fed Hikes Rates and Signals More to Come",
+          "url": "https://finance.yahoo.com/markets/currencies/articles/dollar-soars-fed-hikes-rates-193939474.html",
+          "published": "2026-09-16 15:39 ET"
+        },
+        {
+          "outlet": "FXStreet",
+          "title": "Fed rate hike bolsters US Dollar Index above 100.00",
+          "url": "https://www.fxstreet.com/news/the-federal-reserve-hikes-into-a-dollar-index-basket-that-also-raised-rates-202609161815",
+          "published": "2026-09-16 19:24 GMT"
+        },
+        {
+          "outlet": "Reuters (Yahoo Finance)",
+          "title": "Dollar advances vs yen as BOJ dissent clouds rate-hike outlook",
+          "url": "https://finance.yahoo.com/markets/currencies/articles/yen-weak-ahead-boj-decision-005910776.html",
+          "published": "2026-09-18 15:12 ET"
+        }
+      ],
+      "market_link": "바차트·FX스트리트·로이터(GBAF 전재)는 인상 자체보다 점도표가 보여 준 추가 인상 신호를 달러 강세 배경으로 꼽았습니다. 로이터는 주간 상승을 연준 인상과 연결했습니다.",
+      "assets": [
+        "DXY",
+        "USDJPY",
+        "USDKRW"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-16",
+      "kind": "company",
+      "importance": 1,
+      "title": "스페이스X(나스닥 상장) 스타십 첫 궤도 시도 날짜 발표에 5% 상승",
+      "what": "올해 6월 나스닥에 상장한 스페이스X(SPCX)는 16일 스타십 첫 궤도 비행 시도를 9월 22일로 잡았다는 소식에 약 5% 올라 151.12달러가 됐습니다(24/7월스트리트·트레이딩키, 야후 라이브도 5% 상승 전함).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "24/7 Wall St.",
+          "title": "SpaceX Rises 5% as Starship's First Orbital Attempt Gets Launch Date",
+          "url": "https://247wallst.com/investing/2026/09/16/spacex-rises-5-as-starships-first-orbital-attempt-gets-launch-date-rocket-lab-and-ast-spacemobile-hold-flat/",
+          "published": "2026-09-16 10:36 ET"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow sinks 600 points, S&P 500 and Nasdaq fall as Fed hikes rates, bond yields rise",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-september-16-dow-sp-500-nasdaq-fed-meeting-decision-080356525.html",
+          "published": "2026-09-16"
+        }
+      ],
+      "market_link": "두 매체 모두 발사 일정 발표를 상승 배경으로 적었습니다. 18일 발사가 28일로 밀렸다는 모틀리풀 장중 기사는 단일 매체라 확인 대기.",
+      "assets": [
+        "SPCX"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-17",
+      "kind": "rates",
+      "importance": 3,
+      "title": "금리 인상 다음 날 반등…나스닥 +1.69%, 반도체 +3.14%, 10년물 4.94%로 하락",
+      "what": "17일 S&P500은 1.14% 오른 7,637.76, 나스닥은 1.69% 오른 26,418.30, 다우는 0.61% 오른 51,778.04로 마감했습니다. 필라델피아 반도체지수는 3.14%, VIX는 12.82% 내린 15.44였습니다. 10년물 금리는 7bp 내린 4.94%, 2년물은 4.67%, WTI는 101.91달러였습니다(computed·아시아경제).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow, S&P 500, Nasdaq rebound as bond yields slip, oil eases",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-17-dow-sp-500-nasdaq-oil-fed-081248626.html",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "아시아경제",
+          "title": "[뉴욕증시]유가·채권금리 ↓…S&P500·나스닥 1%대 상승 마감",
+          "url": "https://view.asiae.co.kr/article/2026091805495468839",
+          "published": "2026-09-18 05:49 KST"
+        },
+        {
+          "outlet": "머니투데이",
+          "title": "금리인상 충격 하루만에 털었다…\"기업 실적이 상쇄\"[뉴욕마감]",
+          "url": "https://www.mt.co.kr/world/2026/09/18/2026091806093942622",
+          "published": "2026-09-18 06:09 KST"
+        },
+        {
+          "outlet": "The Motley Fool",
+          "title": "Stock Market Midday, Sept. 17: Stocks Rebound From Post Fed Sell-off, Generac soars 20%",
+          "url": "https://www.fool.com/coverage/stock-market-today/2026/09/17/stock-market-midday-sept-17-stocks-rebound-from-post-fed-selloff-generac-soars-20/",
+          "published": "2026-09-17 12:50 ET"
+        }
+      ],
+      "market_link": "야후파이낸스·아시아경제·모틀리풀은 모두 채권금리와 유가가 함께 내린 것을 반등의 배경으로 꼽았습니다. 아시아경제는 웰스 얼라이언스 CEO의 말을 빌려 연준이 고질적인 인플레이션을 다루고 있다는 '안도감'으로 풀이했고, 야후는 워시의 매파적 태도가 연준 신뢰를 되살렸다는 해석을 전했습니다. 머니투데이는 UBS 최고투자책임자의 말을 빌려 기업 실적이 이어지면 금리 인상 부담을 상쇄할 수 있다고 전했습니다.",
+      "assets": [
+        "SPX",
+        "IXIC",
+        "DJI",
+        "SOX",
+        "VIX",
+        "US10Y",
+        "US2Y",
+        "WTI"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-17",
+      "kind": "company",
+      "importance": 3,
+      "title": "반도체 되살아난 목요일…마이크론 +5.5%·인텔 +7.7%·AMD +6.4%, 젠슨 황 '내년 칩 판매 2배'",
+      "what": "17일 반도체지수는 3.14% 올랐습니다(computed). 머니투데이·트레이딩키 집계로 인텔 +7.7%, AMD +6.4%, 마이크론 +5.5%, SK하이닉스 미국 상장주 +4.64%였습니다. 젠슨 황 엔비디아 CEO는 17일 스코틀랜드 AI 행사를 앞두고 기자들에게 내년 칩 판매량이 올해의 두 배가 될 것으로 본다고 말했습니다(서울경제 영문판·이투데이). 립부 탄 인텔 CEO는 15일 미 캘리포니아 산타클라라 AI 인프라 포럼에서 메모리 가격이 5~7배 올랐고 부족이 더 심해질 것이라고 말했습니다(서울경제 영문판).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "머니투데이",
+          "title": "금리인상 충격 하루만에 털었다…\"기업 실적이 상쇄\"[뉴욕마감]",
+          "url": "https://www.mt.co.kr/world/2026/09/18/2026091806093942622",
+          "published": "2026-09-18 06:09 KST"
+        },
+        {
+          "outlet": "TradingKey",
+          "title": "Chip Stocks Rebound as Micron Rises Over 5%, AMD Gains Over 6%, Intel Jumps Nearly 8%",
+          "url": "https://www.tradingkey.com/analysis/stocks/us-stocks/262174168-chip-stocks-rebound-mu-rise-5-amd-rise-6-intel-rise-8-tradingkey",
+          "published": "2026-09-18 00:41 (TradingKey 표기)"
+        },
+        {
+          "outlet": "Seoul Economic Daily (EN)",
+          "title": "Nvidia CEO Vows to Double Chip Sales, Lifting Samsung and SK hynix",
+          "url": "https://en.sedaily.com/finance/2026/09/18/nvidia-ceo-vows-to-double-chip-sales-lifting-samsung-and-sk",
+          "published": "2026-09-18 19:24 KST"
+        },
+        {
+          "outlet": "이투데이",
+          "title": "뉴욕증시, 美 국채금리 상승 속 혼조 마감⋯다우 0.18%↓[상보]",
+          "url": "https://www.etoday.co.kr/news/view/2627450",
+          "published": "2026-09-19 KST"
+        },
+        {
+          "outlet": "Seoul Economic Daily (EN)",
+          "title": "Intel CEO Warns Memory Shortage Will Worsen, Prices Up 5 to 7 Times",
+          "url": "https://en.sedaily.com/international/2026/09/16/intel-ceo-warns-memory-shortage-will-get-worse",
+          "published": "2026-09-16 03:59 KST"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow, S&P 500, Nasdaq rebound as bond yields slip, oil eases",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-17-dow-sp-500-nasdaq-oil-fed-081248626.html",
+          "published": "2026-09-17"
+        }
+      ],
+      "market_link": "야후 라이브는 마이크론이 인텔 CEO의 메모리 병목 경고 뒤 5% 넘게 올랐고 엔비디아·AMD도 칩 가격 강세 기대 속에 올랐다고 전했습니다. 트레이딩키는 10년물 금리의 5% 아래 복귀, 유가 안정, 인텔 CEO 발언, SK하이닉스-인텔 협의 보도를 함께 반등 배경으로 꼽았습니다. 서울경제 영문판은 황 CEO 발언 뒤 18일 한국에서 삼성전자 +3.37%, SK하이닉스 +6.42%였다고 전했습니다.",
+      "assets": [
+        "SOX",
+        "MU",
+        "INTC",
+        "AMD",
+        "NVDA"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-17",
+      "kind": "company",
+      "importance": 2,
+      "title": "AMD 주간 +8.5%…월요일 −4.4% 뒤 네비우스 가격 인상 소식에 목요일 +6.3%",
+      "what": "AMD는 14일 약 4.4% 내린 뒤 15일부터 닷새 중 나흘을 올라 주간 8.46% 오른 559.82달러로 마감했습니다(computed). 17일에는 클라우드 업체 네비우스가 10월 1일부터 AMD EPYC 제노아 CPU 요금을 25%, 엔비디아 GPU 요금을 17~21% 올린다고 고객에게 알린 뒤 6.3% 올랐습니다(모틀리풀·코바란·프로액티브인베스터스). 모틀리풀은 메모리 상품 요금도 41% 오른다고 전했습니다. 18일에는 2.7% 올라 559.82달러로 마감했습니다(마켓비트).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "The Motley Fool",
+          "title": "Why AMD Stock Jumped Today",
+          "url": "https://www.fool.com/investing/2026/09/17/why-amd-stock-jumped-63-today/",
+          "published": "2026-09-17 19:15 ET"
+        },
+        {
+          "outlet": "Proactive Investors",
+          "title": "Nebius announces higher rates for Nvidia GPUs and AMD CPUs",
+          "url": "https://www.proactiveinvestors.com/companies/news/1098701/nebius-announces-higher-rates-for-nvidia-gpus-and-amd-cpus-1098701.html",
+          "published": "2026-09-18 00:33 AEST"
+        },
+        {
+          "outlet": "Kobaran",
+          "title": "AMD stock jumps 6% after Nebius signals surging chip demand",
+          "url": "https://www.kobaran.com/amd-stock-jumps-6-after-nebius-signals-surging-chip-demand/",
+          "published": "2026-09-17 20:00 WIB"
+        },
+        {
+          "outlet": "MarketBeat",
+          "title": "Advanced Micro Devices (NASDAQ:AMD) Trading 2.7% Higher - What's Next?",
+          "url": "https://www.marketbeat.com/instant-alerts/price-advanced-micro-devices-nasdaq-amd-trading-27-higher-whats-next-2026-09-18/",
+          "published": "2026-09-18 21:20 ET"
+        }
+      ],
+      "market_link": "모틀리풀은 네비우스의 가격 인상이 AI 연산 수요가 강하다는 신호로 읽혔고 지수 반등도 겹쳤다고 짚었고, 코바란도 같은 소식을 상승 배경으로 적었습니다. 18일 상승에 대해 마켓비트는 AMD가 GPU·CPU 가격을 10% 안팎 올릴 수 있다는 보도와 내년 고대역폭메모리(HBM) 물량 확보 보도를 함께 전했습니다.",
+      "assets": [
+        "AMD",
+        "SOX"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-17",
+      "kind": "data",
+      "importance": 2,
+      "title": "실업수당 19.6만 건(예상 20.8만)…필라델피아 연은 37.8은 예상 웃돌고 주택착공은 부진",
+      "what": "12일로 끝난 주 신규 실업수당 청구는 19.6만 건으로 1만 건 줄었고 예상(20.8만)보다 적었으며, 계속 청구는 173만 건으로 2024년 1월 이후 가장 적었습니다. 9월 필라델피아 연은 제조업지수는 37.8(전월 47.4)로 예상(30.5)을 웃돌았습니다. 8월 주택착공은 연율 127.5만 호로 2.6% 줄어 지난해 10월 이후 가장 적었고, 건축허가는 139.4만 호였습니다(트레이딩이코노믹스·인베스트레이드). 16일 발표된 9월 NAHB 주택시장지수는 32로 예상(34)을 밑돌았습니다(인베스팅라이브, 서브 리서처 확인).",
+      "actual_vs_expected": "신규 실업수당 19.6만 (예상 20.8만) / 전주 20.6만. 계속 청구 173만. 필라델피아 연은 37.8 (예상 30.5 — 트레이딩이코노믹스·인베스트레이드 / 31.3 — 인베스팅닷컴 / 32.1 — 바차트) / 전월 47.4. 주택착공 127.5만 (예상 131만 — 트레이딩이코노믹스 / 130.9만 — 인베스트레이드 / 132만 — 뉴스퀵·바차트) / 7월 130.9만. 건축허가 139.4만 (예상 141만 — 인베스트레이드) / 7월 143.3만.",
+      "sources": [
+        {
+          "outlet": "Trading Economics",
+          "title": "United States Initial Jobless Claims",
+          "url": "https://tradingeconomics.com/united-states/jobless-claims",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "Trading Economics",
+          "title": "United States Philadelphia Fed Manufacturing Index",
+          "url": "https://tradingeconomics.com/united-states/philadelphia-fed-manufacturing-index",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "Trading Economics",
+          "title": "United States Housing Starts",
+          "url": "https://tradingeconomics.com/united-states/housing-starts",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "Investrade",
+          "title": "Market Review: September 17, 2026",
+          "url": "https://investrade.com/market-review-september-17-2026/",
+          "published": "2026-09-17"
+        }
+      ],
+      "market_link": "서브 리서처가 확인한 바차트는 실업수당이 달러를 일부 받쳤다고 적었지만, 이날 금리·달러 하락은 유가 하락 쪽으로 설명했습니다. 뉴스퀵도 금리 하락을 지표보다 '연준 신뢰'로 풀이했습니다. 지표를 증시 반등의 직접 원인으로 든 보도는 확인되지 않았습니다.",
+      "assets": [
+        "US2Y",
+        "US10Y"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-17",
+      "kind": "geopolitics",
+      "importance": 1,
+      "title": "후티 '사우디 아람코 얀부·공군기지 공격' 주장…트럼프 '이란 관련 큰 결정 앞둬'",
+      "what": "예멘 후티 반군 대변인은 16일 사우디 아람코 얀부 시설과 카미스 무샤이트 공군기지를 공격했다고 주장했고, 사우디는 피해를 확인하지 않았습니다(예루살렘포스트·서울경제 영문판). 트럼프 대통령은 17일 이스라엘 채널12 전화 인터뷰에서 '큰 결정이 다가오고 있다'며 이란에 대한 대규모 공격 재개를 저울질한다고 말했고, 다음 주 유엔총회 계기로 걸프 6개국 정상과 만날 계획이라고 밝혔습니다. 호르무즈 해협은 이란의 봉쇄가 이어지고 있습니다(타임스오브이스라엘).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "The Jerusalem Post",
+          "title": "Yemen's Houthis say they attacked Saudi airbase in Khamis Mushait, Aramco facilities in Yanbu",
+          "url": "https://www.jpost.com/middle-east/article-908785",
+          "published": "2026-09-16 15:14 IDT"
+        },
+        {
+          "outlet": "Seoul Economic Daily (EN)",
+          "title": "Houthi Rebels Claim Large-Scale Attack on Saudi Aramco Facility, Air Base",
+          "url": "https://en.sedaily.com/international/2026/09/16/houthis-claim-missile-drone-attacks-on-saudi-aramco-site",
+          "published": "2026-09-16 22:00 KST"
+        },
+        {
+          "outlet": "The Times of Israel",
+          "title": "Trump weighs return to large-scale Iran strikes: 'I have a big decision coming up'",
+          "url": "https://www.timesofisrael.com/trump-weighs-return-to-large-scale-iran-strikes-i-have-a-big-decision-coming-up/",
+          "published": "2026-09-17 23:29 IDT"
+        }
+      ],
+      "market_link": "직접 연결한 보도는 확인되지 않음. 같은 기간 유가는 송유관 재가동 기대 속에 사흘 연속 내렸습니다(computed).",
+      "assets": [
+        "WTI"
+      ],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-16",
+      "session": "2026-09-17",
+      "kind": "earnings",
+      "importance": 1,
+      "title": "레나 3분기 실적 매출 예상 하회·연간 인도 목표 하향…주가 52주 최저권",
+      "what": "주택건설업체 레나는 16일 장 마감 뒤 3분기 조정 주당순이익 1.23달러(1년 전 2.00달러), 매출 약 80억 달러(스톡타이탄 80억, 애드혹뉴스 80.5억), 신규 주문 9% 감소를 발표하고 연간 인도 목표를 8.2만~8.3만 호에서 8만~8.1만 호로 낮췄습니다(스톡타이탄). 애드혹뉴스는 17일 종가 78.99달러, 장중 52주 최저 76.07달러와 함께 매출·EPS가 예상에 못 미쳤다고 전했습니다.",
+      "actual_vs_expected": "조정 EPS 1.23달러·매출 약 80억 달러 — 애드혹뉴스 '예상 하회'(컨센서스 수치는 미확인).",
+      "sources": [
+        {
+          "outlet": "StockTitan",
+          "title": "Lennar Reports Third Quarter 2026 Results",
+          "url": "https://www.stocktitan.net/news/LEN/lennar-reports-third-quarter-2026-q0xey1vxxpxn.html",
+          "published": "2026-09-16 16:30"
+        },
+        {
+          "outlet": "Ad-hoc News",
+          "title": "Lennar Corporation stock falls after Q3 earnings miss and fresh 52-week low",
+          "url": "https://www.ad-hoc-news.de/boerse/news/corporate-news/lennar-corporation-stock-falls-after-q3-earnings-miss-and-fresh-52-week/70125900",
+          "published": "2026-09-18"
+        }
+      ],
+      "market_link": "같은 주 주택착공 부진·NAHB 32와 함께 높은 금리 속 주택 경기 둔화 흐름으로 묶을 수 있으나, 매체가 직접 그렇게 연결한 문장은 확인하지 못함. 17일 종가 방향은 매체마다 엇갈림(스톡타이탄 +1.72% vs 다른 매체 하락).",
+      "assets": [
+        "LEN",
+        "XLY"
+      ],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-17",
+      "kind": "company",
+      "importance": 1,
+      "title": "제너랙, 아마존 데이터센터 발전기 계약 소식에 18~20% 급등",
+      "what": "예비 발전기 업체 제너랙이 아마존 데이터센터용 발전기 계약(야후 라이브 기준 약 80억 달러 규모)을 발표한 뒤 17일 주가가 18%(야후 라이브)~약 20%(모틀리풀 장중) 올랐습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow, S&P 500, Nasdaq rebound as bond yields slip, oil eases",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-september-17-dow-sp-500-nasdaq-oil-fed-081248626.html",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "The Motley Fool",
+          "title": "Stock Market Midday, Sept. 17: Stocks Rebound From Post Fed Sell-off, Generac soars 20%",
+          "url": "https://www.fool.com/coverage/stock-market-today/2026/09/17/stock-market-midday-sept-17-stocks-rebound-from-post-fed-selloff-generac-soars-20/",
+          "published": "2026-09-17 12:50 ET"
+        }
+      ],
+      "market_link": "두 매체 모두 아마존 데이터센터 계약을 상승 배경으로 적었습니다. AI 전력 수요 관련주 흐름의 한 예로 쓸 수 있습니다.",
+      "assets": [
+        "GNRC",
+        "AMZN"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-17",
+      "kind": "policy",
+      "importance": 1,
+      "title": "영란은행 기준금리 3.75% 동결…9명 중 3명은 4% 인상 주장",
+      "what": "영란은행은 17일 기준금리를 3.75%로 동결했고 표결은 6대 3이었습니다. 그린·만·필 위원은 4%로 0.25%p 올리자고 했습니다. 영국 8월 소비자물가는 3.1%였고, 위원회는 필요하면 행동할 준비가 돼 있다고 밝혔습니다(영란은행).",
+      "actual_vs_expected": "동결 3.75% (인베스트레이드: 예상대로). 표결 6-3(3명 인상 소수의견).",
+      "sources": [
+        {
+          "outlet": "Bank of England",
+          "title": "Monetary Policy Summary, September 2026",
+          "url": "https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/2026/september-2026",
+          "published": "2026-09-17"
+        },
+        {
+          "outlet": "Investrade",
+          "title": "Market Review: September 18, 2026",
+          "url": "https://investrade.com/market-review-september-18-2026/",
+          "published": "2026-09-18"
+        }
+      ],
+      "market_link": "직접 연결한 보도는 확인되지 않음. 이번 주 연준(인상)·일본은행(인상)·영란은행(동결, 인상 소수의견 3명)으로 주요 중앙은행이 모두 긴축 쪽 신호를 냈다는 배경 정보로만 씀.",
+      "assets": [],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-18",
+      "session": "2026-09-18",
+      "kind": "policy",
+      "importance": 3,
+      "title": "일본은행, 기준금리 1.25%로 인상(31년 만의 최고)…그런데 엔화는 약세, '레이트 체크' 보도",
+      "what": "일본은행은 18일 정책금리를 1.0%에서 1.25%로 0.25%p 올렸습니다. 31년 만의 최고 수준이고 표결은 7대 2였습니다(FX스트리트·로이터). 우에다 총재는 '추가 인상의 특정 속도를 가정하지 않는다'고 말했습니다(지지통신·닛폰닷컴). 달러·엔은 한때 158.05엔까지 올랐다가 156.725엔 부근으로 내려왔고, 로이터는 일본 당국이 개입 전 단계로 여겨지는 '레이트 체크'를 했다는 닛케이 보도를 전했습니다. 이투데이도 같은 날 레이트 체크 보도를 전했습니다.",
+      "actual_vs_expected": "0.25%p 인상(1.00% → 1.25%), 7-2(아사다·사토 위원 동결 주장 — 서브 리서처 확인).",
+      "sources": [
+        {
+          "outlet": "FXStreet (TradeTheNews)",
+          "title": "BoJ hikes into a weaker yen as Ueda declares policy regime change",
+          "url": "https://www.fxstreet.com/analysis/boj-hikes-into-a-weaker-yen-as-ueda-declares-policy-regime-change-202609181039",
+          "published": "2026-09-18 10:39 GMT"
+        },
+        {
+          "outlet": "Nippon.com (Jiji Press)",
+          "title": "BOJ Gov. Emphasizes Changes in Conditions for Monetary Policy",
+          "url": "https://www.nippon.com/en/news/yjj2026091800788/",
+          "published": "2026-09-18 17:54 JST"
+        },
+        {
+          "outlet": "Reuters (Yahoo Finance)",
+          "title": "Dollar advances vs yen as BOJ dissent clouds rate-hike outlook",
+          "url": "https://finance.yahoo.com/markets/currencies/articles/yen-weak-ahead-boj-decision-005910776.html",
+          "published": "2026-09-18 15:12 ET"
+        },
+        {
+          "outlet": "이투데이",
+          "title": "뉴욕증시, 美 국채금리 상승 속 혼조 마감⋯다우 0.18%↓[상보]",
+          "url": "https://www.etoday.co.kr/news/view/2627450",
+          "published": "2026-09-19 KST"
+        }
+      ],
+      "market_link": "로이터는 반대표 2개와 추가 인상 신호가 약했던 점을 엔화 약세 배경으로 꼽았고(스탠다드차타드 잉글랜더 '인상에 힘이 없어 달러가 오르기 쉬워졌다'), FX스트리트도 같은 흐름을 전했습니다. 로이터는 달러인덱스가 주간 1.2% 올라 7주 만의 최고라고 전했습니다. 이투데이는 레이트 체크 보도가 미 국채금리 상승을 더했다고 적었습니다.",
+      "assets": [
+        "USDJPY",
+        "DXY",
+        "US10Y"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-18",
+      "session": "2026-09-18",
+      "kind": "rates",
+      "importance": 3,
+      "title": "금요일 혼조 마감…10년물 다시 5%, 2년물 2024년 7월 이후 최고, 10월 인상 확률 55% 안팎",
+      "what": "18일 다우는 0.18% 내린 51,682.64, S&P500은 0.17% 오른 7,650.50, 나스닥은 0.39% 오른 26,522.54로 마감했습니다. 반도체지수는 2.78% 올랐습니다(computed). 10년물 금리는 다시 5% 부근(재무부 5.01%)으로 올랐고, 2년물은 장중 4.741%로 2024년 7월 이후 최고였습니다(아시아경제). 금리선물은 10월 FOMC 추가 인상 가능성을 약 55% 반영했습니다(아시아경제·FX스트리트).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "이투데이",
+          "title": "뉴욕증시, 美 국채금리 상승 속 혼조 마감⋯다우 0.18%↓[상보]",
+          "url": "https://www.etoday.co.kr/news/view/2627450",
+          "published": "2026-09-19 KST"
+        },
+        {
+          "outlet": "아시아경제",
+          "title": "뉴욕증시, 美 국채금리 상승에도 반도체주 강세",
+          "url": "https://view.asiae.co.kr/article/2026091909094544559",
+          "published": "2026-09-19 09:09 KST"
+        },
+        {
+          "outlet": "Yahoo Finance (live)",
+          "title": "Stock market today: Dow, S&P 500, Nasdaq slip as bond yields rise",
+          "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-september-18-dow-sp-500-nasdaq-080504071.html",
+          "published": "2026-09-18"
+        },
+        {
+          "outlet": "EBN",
+          "title": "美 증시 혼조 마감…반도체 강세에 나스닥·S&P500 상승",
+          "url": "https://www.ebn.co.kr/news/articleView.html?idxno=1724936",
+          "published": "2026-09-19 KST"
+        },
+        {
+          "outlet": "Investrade",
+          "title": "Market Review: September 18, 2026",
+          "url": "https://investrade.com/market-review-september-18-2026/",
+          "published": "2026-09-18"
+        }
+      ],
+      "market_link": "야후 라이브는 트레이더들이 10월 추가 인상에 베팅을 늘리며 10년물이 5bp 올라 5% 부근이 됐다고 전했고, 이투데이도 유가 강세와 연준 추가 인상 가능성을 금리 상승 배경으로 꼽았습니다. 아시아경제는 장기금리가 5% 부근까지 오르며 주식 고평가 부담이 부각됐지만 AI 투자 기대 속에 반도체주가 강했다고 정리했습니다. EBN 집계로 엔비디아 +1.34%, 브로드컴 +2.97%, 마이크론 +3.92%. EBN·모틀리풀은 다우가 3주 연속 주간 하락했다고 전했습니다.",
+      "assets": [
+        "SPX",
+        "IXIC",
+        "DJI",
+        "SOX",
+        "US10Y",
+        "US2Y"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-18",
+      "session": "2026-09-18",
+      "kind": "fx",
+      "importance": 3,
+      "title": "원·달러 서울 종가 1,383.3원…7거래일 연속 상승, 한미 금리차 1.00%p로 확대",
+      "what": "서울 외환시장 원·달러 종가는 11일 1,345.9원에서 14일 1,347.3원, 15일 1,359.4원, 16일 1,368.6원, 17일 1,382.2원(+13.6원), 18일 1,383.3원으로 올라 한 주 37.4원 뛰었습니다. 18일 종가는 8월 26일(1,384.8원) 이후 최고이고 7거래일 연속 상승입니다(이투데이). 연준 인상으로 한미 기준금리 차는 0.75%p에서 1.00%p(미국 상단 4.00%, 한국 3.00%)로 벌어졌습니다(한국일보·주간한국).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "이투데이",
+          "title": "[환율마감] 매파 연준…원·달러 급등 1380원대 안착 '한달만 최고'",
+          "url": "https://www.etoday.co.kr/news/view/2626900",
+          "published": "2026-09-17 16:15 KST"
+        },
+        {
+          "outlet": "이투데이",
+          "title": "[환율마감] 원·달러 7일째 상승 1380원대 굳히기, BOJ 인상 이긴 달러 강세",
+          "url": "https://www.etoday.co.kr/news/view/2627375",
+          "published": "2026-09-18 16:17 KST"
+        },
+        {
+          "outlet": "글로벌이코노믹",
+          "title": "환율, 美연준의 기준금리 인상 여파에 1380원 돌파...13.6원↑",
+          "url": "https://www.g-enews.com/article/Finance/2026/09/202609171534395161bb91c46fcd_1",
+          "published": "2026-09-17 17:40 KST"
+        },
+        {
+          "outlet": "뉴스핌",
+          "title": "달러/원 환율, 9.2원 오른 1368.6원 기록",
+          "url": "https://www.newspim.com/news/view/20260916001000",
+          "published": "2026-09-16 16:05 KST"
+        },
+        {
+          "outlet": "한국일보",
+          "title": "美기준금리 0.25% 인상…연내 추가 인상 시사",
+          "url": "https://www.hankookilbo.com/news/article/A2026091705360002360",
+          "published": "2026-09-17 KST"
+        }
+      ],
+      "market_link": "이투데이·글로벌이코노믹은 17일 급등을 연준의 매파적 인상과 점도표로 풀이했고(딜러 '당분간 달러 강세 분위기가 이어질 것'), 18일은 이투데이·알파경제가 연준 뒤 달러 강세와 일본은행 인상에도 약해진 엔화를 배경으로 꼽았습니다. 16일은 뉴스1·서울경제가 고유가와 FOMC 경계를 짚었습니다. 외국인은 17일까지 코스피를 7거래일 연속 순매도했다가 18일 8거래일 만에 순매수로 돌아섰습니다(이투데이).",
+      "assets": [
+        "USDKRW",
+        "DXY"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-17",
+      "session": "2026-09-18",
+      "kind": "company",
+      "importance": 2,
+      "title": "마이크론 주간 +4.2%, 1,000달러 위로…메모리 공급 부족 발언·보고서, 실적은 9/30",
+      "what": "마이크론은 14일 5%대 하락 뒤 17일 5.5%, 18일 약 4% 올라 주간 4.16% 오른 1,015.80달러로 마감했습니다(computed·머니투데이·EBN). 립부 탄 인텔 CEO는 15일 미 캘리포니아 산타클라라 AI 인프라 포럼에서 메모리 가격이 5~7배 올랐고 부족이 더 심해질 것이라고 말했습니다(서울경제 영문판). 마이크론은 9월 30일 장 마감 뒤 회계 4분기 실적을 발표합니다(마이크론 보도자료).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "머니투데이",
+          "title": "금리인상 충격 하루만에 털었다…\"기업 실적이 상쇄\"[뉴욕마감]",
+          "url": "https://www.mt.co.kr/world/2026/09/18/2026091806093942622",
+          "published": "2026-09-18 06:09 KST"
+        },
+        {
+          "outlet": "EBN",
+          "title": "美 증시 혼조 마감…반도체 강세에 나스닥·S&P500 상승",
+          "url": "https://www.ebn.co.kr/news/articleView.html?idxno=1724936",
+          "published": "2026-09-19 KST"
+        },
+        {
+          "outlet": "Seoul Economic Daily (EN)",
+          "title": "Intel CEO Warns Memory Shortage Will Worsen, Prices Up 5 to 7 Times",
+          "url": "https://en.sedaily.com/international/2026/09/16/intel-ceo-warns-memory-shortage-will-get-worse",
+          "published": "2026-09-16 03:59 KST"
+        },
+        {
+          "outlet": "StockTitan",
+          "title": "Micron Technology to Report Fiscal Fourth Quarter Results on September 30, 2026",
+          "url": "https://www.stocktitan.net/news/MU/micron-technology-to-report-fiscal-fourth-quarter-results-on-db9s7g1vizzp.html",
+          "published": "2026-08-26"
+        }
+      ],
+      "market_link": "야후 라이브(9/17)는 인텔 CEO의 메모리 병목 경고 뒤 마이크론이 5% 넘게 올랐다고 전했고, 트레이딩키·FX리더스는 18일 1,000달러 돌파를 메모리 수요가 공급보다 앞선다는 증권사 보고서와 연결했습니다(보고서의 의견·목표가는 옮기지 않음).",
+      "assets": [
+        "MU"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-18",
+      "session": "2026-09-18",
+      "kind": "policy",
+      "importance": 2,
+      "title": "캔자스시티 연은 슈미드 '인플레이션에 할 일이 남았다'…인상 지지",
+      "what": "제프 슈미드 캔자스시티 연은 총재는 18일 콜로라도 베일의 은행 모임 연설에서 '연준은 인플레이션에 할 일이 있고 이번 주 조치는 그 방향의 한 걸음'이라고 말했습니다. 에너지를 뺀 물가도 뜨겁고, 최근 물가 흐름은 3%를 웃도는 속도라고 했습니다(야후파이낸스·인베스팅닷컴). 슈미드는 올해 FOMC 투표권이 없습니다(인베스팅닷컴).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Yahoo Finance",
+          "title": "Fed keeps the door open for more rate hikes as Schmid warns there's 'work to do'",
+          "url": "https://finance.yahoo.com/economy/policy/article/fed-keeps-the-door-open-for-more-rate-hikes-as-schmid-warns-theres-work-to-do-182214817.html",
+          "published": "2026-09-18 14:22 ET"
+        },
+        {
+          "outlet": "Investing.com",
+          "title": "Kansas City Fed's Schmid backs rate hike to curb inflation",
+          "url": "https://www.investing.com/news/stock-market-news/kansas-city-feds-schmid-backs-rate-hike-to-curb-inflation-93CH-4907643",
+          "published": "2026-09-18 11:45"
+        }
+      ],
+      "market_link": "야후 라이브는 18일 마감 정리에서 슈미드 발언을 10월 추가 인상 베팅과 10년물 상승 흐름 옆에 함께 실었습니다. 발언이 금리를 움직였다고 직접 쓴 보도는 없습니다.",
+      "assets": [
+        "US2Y"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "d": "2026-09-14",
+      "session": "2026-09-18",
+      "kind": "oil",
+      "importance": 1,
+      "title": "금값 주초 −1.3% 뒤 사흘 반등, 주간 +0.4%",
+      "what": "금 선물은 14일 1.29%, 15일 0.44% 내린 뒤 16일부터 사흘 올라 4,424.9달러로 한 주를 마쳐 주간 0.36% 올랐습니다(computed). 키트코는 14일 금 현물이 1.8% 내린 4,269.90달러였다고 전했고, 인베스팅닷컴은 18일 현물 4,379.59달러(+0.9%)로 소폭 주간 상승이라고 전했습니다.",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "Kitco News",
+          "title": "Gold price fall nearly 2% as oil surge and near-5% Treasury yields bolster Fed rate-hike expectations",
+          "url": "https://www.kitco.com/news/article/2026-09-14/gold-price-fall-nearly-2-oil-surge-and-near-5-treasury-yields-bolster-fed",
+          "published": "2026-09-14 13:10 ET"
+        },
+        {
+          "outlet": "Investing.com",
+          "title": "Gold prices rise, eye weekly gain as oil and yields ease after Fed hike",
+          "url": "https://www.investing.com/news/commodities-news/gold-rises-as-lower-oil-treasury-yields-ease-inflation-pressure-4906609",
+          "published": "2026-09-18"
+        },
+        {
+          "outlet": "FXStreet",
+          "title": "Gold reclaims its footing as Oil retreat blunts Fed shock",
+          "url": "https://www.fxstreet.com/news/gold-reclaims-its-footing-as-oil-retreat-blunts-fed-shock-202609181744",
+          "published": "2026-09-18 17:44 GMT"
+        }
+      ],
+      "market_link": "키트코는 주초 하락을 5%에 다가간 국채금리와 유가 급등이 키운 연준 인상 기대로 풀이했고(인상 확률 약 87%), 인베스팅닷컴·FX스트리트는 주 후반 반등을 유가 하락이 인플레이션 부담을 덜어 준 것과 연결했습니다. FX스트리트는 금이 주중 4,235달러까지 밀려 두 달 만의 최저였다고 전했습니다.",
+      "assets": [
+        "GOLD",
+        "US10Y",
+        "WTI"
+      ],
+      "confidence": "high"
+    },
+    {
+      "d": "2026-09-18",
+      "session": "2026-09-18",
+      "kind": "data",
+      "importance": 1,
+      "title": "8월 산업생산 0.0%(예상 +0.3%)…제조업 −0.3%로 8개월 만에 감소",
+      "what": "연준이 18일 발표한 8월 산업생산은 전월과 같았고(7월 +0.2%), 제조업 생산은 0.3% 줄어 일곱 달 연속 증가를 멈췄습니다. 광업 +0.1%, 유틸리티 +1.8%, 설비가동률 76.3%로 변화가 없었습니다(연준 G.17). 같은 날 8월 경기선행지수는 0.1% 내렸습니다(콘퍼런스보드, 서브 리서처 확인).",
+      "actual_vs_expected": "산업생산 0.0% (예상 +0.3% — 인베스트레이드·인베스팅라이브) / 7월 +0.2%. 설비가동률 76.3% (예상 76.4%) / 전월 76.3%.",
+      "sources": [
+        {
+          "outlet": "Federal Reserve",
+          "title": "G.17 Industrial Production and Capacity Utilization (August 2026)",
+          "url": "https://www.federalreserve.gov/releases/g17/current/default.htm",
+          "published": "2026-09-18"
+        },
+        {
+          "outlet": "Investrade",
+          "title": "Market Review: September 18, 2026",
+          "url": "https://investrade.com/market-review-september-18-2026/",
+          "published": "2026-09-18"
+        }
+      ],
+      "market_link": "직접 연결한 보도는 확인되지 않음. 약한 생산 지표에도 이날 금리는 오히려 올랐습니다(computed 10년물 +7bp, 2년물 +9bp).",
+      "assets": [
+        "US10Y",
+        "US2Y"
+      ],
+      "confidence": "low"
+    },
+    {
+      "d": "2026-09-18",
+      "session": "2026-09-18",
+      "kind": "data",
+      "importance": 1,
+      "title": "분기 선물·옵션 동시 만기(트리플 위칭)와 S&P 지수 정기변경",
+      "what": "18일은 분기 선물·옵션 동시 만기일이었습니다(야후파이낸스 검색 요약·코인센트럴, 코인센트럴은 시타델증권 추정 약 7조 달러가 만기라고 전함). S&P 다우존스 지수는 블룸에너지·에버퓨어·일루미나를 S&P500에 넣고 몰슨쿠어스·트레이드데스크·빌더스퍼스트소스를 빼는 변경을 21일 개장 전 반영한다고 발표했습니다(스톡타이탄·PR뉴스와이어).",
+      "actual_vs_expected": "",
+      "sources": [
+        {
+          "outlet": "CoinCentral",
+          "title": "Triple Witching 2026: $7 Trillion Expires Today and History Says Be Careful",
+          "url": "https://coincentral.com/triple-witching-2026-7-trillion-expires-today-and-history-says-be-careful",
+          "published": "2026-09-18 14:08 UTC"
+        },
+        {
+          "outlet": "StockTitan",
+          "title": "Bloom Energy, Illumina, and Everpure Set to Join S&P 500; Others to Join S&P 100, S&P MidCap 400, and S&P SmallCap 600",
+          "url": "https://www.stocktitan.net/news/P/bloom-energy-illumina-and-everpure-set-to-join-s-p-500-others-to-a0i4hthbnifg.html",
+          "published": "2026-09-04"
+        }
+      ],
+      "market_link": "직접 연결한 보도는 확인되지 않음.",
+      "assets": [
+        "SPX"
+      ],
+      "confidence": "low"
+    }
+  ],
+  "calendar_next": [
+    {
+      "date": "2026-09-21",
+      "event_ko": "8월 시카고 연은 전미활동지수 (08:30 ET = 한국 21:30)",
+      "source": "https://www.eoption.com/weekly-event-calendar-09-21-2026-09-25-2026/"
+    },
+    {
+      "date": "2026-09-21",
+      "event_ko": "S&P500 정기 변경 반영(개장 전): 블룸에너지·에버퓨어·일루미나 편입, 몰슨쿠어스·트레이드데스크·빌더스퍼스트소스 편출",
+      "source": "https://www.stocktitan.net/news/P/bloom-energy-illumina-and-everpure-set-to-join-s-p-500-others-to-a0i4hthbnifg.html"
+    },
+    {
+      "date": "2026-09-22",
+      "event_ko": "9월 리치먼드 연은 제조업지수 (10:00 ET = 한국 23:00), 2년물 국채 입찰 780억 달러 (13:00 ET = 한국 23일 02:00), KB홈 실적(장 마감 후)",
+      "source": "https://www.eoption.com/weekly-event-calendar-09-21-2026-09-25-2026/"
+    },
+    {
+      "date": "2026-09-22",
+      "event_ko": "트럼프 대통령, 유엔총회 계기 뉴욕에서 걸프협력회의 6개국 정상과 회동 예정(이란 관련 논의)",
+      "source": "https://www.timesofisrael.com/trump-weighs-return-to-large-scale-iran-strikes-i-have-a-big-decision-coming-up/"
+    },
+    {
+      "date": "2026-09-23",
+      "event_ko": "9월 S&P글로벌 제조업·서비스업 PMI 예비치 (09:45 ET = 한국 22:45), 5년물 국채 입찰 700억 달러, 제너럴밀스·페이첵스 실적(개장 전)",
+      "source": "https://www.eoption.com/weekly-event-calendar-09-21-2026-09-25-2026/"
+    },
+    {
+      "date": "2026-09-24",
+      "event_ko": "주간 신규 실업수당·2분기 경상수지 (08:30 ET = 한국 21:30), 8월 신규주택판매 (10:00 ET = 한국 23:00), 7년물 국채 입찰 440억 달러, 다든(개장 전)·코스트코(장 마감 후) 실적",
+      "source": "https://www.eoption.com/weekly-event-calendar-09-21-2026-09-25-2026/"
+    },
+    {
+      "date": "2026-09-25",
+      "event_ko": "8월 내구재 주문 (08:30 ET = 한국 21:30), 9월 미시간대 소비자심리 확정치 (10:00 ET = 한국 23:00)",
+      "source": "https://www.census.gov/economic-indicators/calendar-listview.html"
+    },
+    {
+      "date": "2026-09-30",
+      "event_ko": "2분기 GDP 확정치·8월 개인소득·지출(PCE 물가) 동시 발표 (08:30 ET = 한국 21:30)",
+      "source": "https://www.bea.gov/news/schedule"
+    },
+    {
+      "date": "2026-09-30",
+      "event_ko": "마이크론 회계 4분기 실적 (장 마감 후, 14:30 MT = 16:30 ET = 한국 10월 1일 05:30)",
+      "source": "https://www.stocktitan.net/news/MU/micron-technology-to-report-fiscal-fourth-quarter-results-on-db9s7g1vizzp.html"
+    },
+    {
+      "date": "2026-10-27",
+      "event_ko": "다음 FOMC 10/27~28 (경제전망·점도표 없는 회의, 결정은 한국 10월 29일 새벽 3시)",
+      "source": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    }
+  ],
+  "pending": [
+    "헬스케어(XLV) 주간 +1.83%로 11개 업종 중 1위였지만, 배경을 짚은 이번 주 기사를 찾지 못함(검색된 'XLV 강세' 기사는 5~6월 것).",
+    "9/18(금) 반도체지수 +2.78%의 단일 계기 — 아시아경제는 'AI 투자 기대', 24/7월스트리트는 '새 재료 없는 과매도 반등'(서브 리서처), 마이크론은 증권사 보고서와 연결(트레이딩키·FX리더스). 하나로 정리된 보도 없음.",
+    "연준 H.15의 9/18 금리가 조사 시점(9/19 20시 KST)에 아직 게시 전 — computed(재무부 par) 5.01%/4.76%를 쓰되, 시장 호가(인베스트레이드 10년 4.995%, 2년 4.741%)와 다름을 유의.",
+    "사우디 동서 송유관 공격 주체 — 알자지라·헤드포스트는 '이라크 마이산주에서 날아온 드론', 로이터·DTN은 '후티'로 적어 불일치. 대본에선 '드론 공격'까지만.",
+    "일본 당국 '레이트 체크'는 로이터(닛케이 인용)·이투데이 모두 '보도/전해졌다' 수준. 일본 재무성 공식 확인 없음. 가타야마 재무상의 개입 경고가 이번 주 발언인지 확인 못 함.",
+    "스페이스X 스타십 첫 궤도 시도 9/22 → 9/28 연기설은 모틀리풀 장중 기사 1곳뿐 — 다음 주 일정에 넣지 않음.",
+    "이번 주(9/14~18) 트럼프 대통령의 새 관세 발표는 검색으로 찾지 못함(9/8 캐나다 관련 포고문 이후). 연준·AI·이란 발언만 확인.",
+    "이 파일은 2026-09-19 20시(KST) 기준. 일요일 제작 전 주말 사이 이란·후티·트럼프 발언, 사우디 송유관 복구 소식을 한 번 더 확인할 것."
+  ],
+  "story_candidates": [
+    "'월요일 −5.86%, 금요일엔 되찾았다': AI 개발 속도조절론이 나온 뒤 필라델피아 반도체지수는 14일 하루 5.86% 밀렸지만, 이후 4거래일 연속 올라 주간 +0.83%로 전주 종가(11,824)를 넘겨 마쳤습니다. 그 사이 인텔 CEO의 메모리 부족 경고, SK하이닉스-인텔 미국 생산 협의 보도, 젠슨 황의 '내년 칩 판매 2배' 발언, 네비우스의 칩 임대료 인상 소식이 이어졌고, AMD는 주간 +8.46%로 대형주 10개 중 가장 많이 올랐습니다.",
+    "'올렸는데 다음 날 올랐다': 연준이 3년 2개월 만에 기준금리를 0.25%p 올려 3.75~4.00%가 된 16일, 워시 의장 기자회견 도중 다우가 −1.21%로 밀렸고 은행주가 약했습니다. 다음 날 나스닥은 +1.69%, VIX는 −12.82%로 되돌렸는데, 언론은 금리·유가 동반 하락과 '연준이 인플레이션을 다룬다는 안도감'을 함께 꼽았습니다. 다만 점도표는 18명 중 16명이 연내 추가 인상을 봤고, 금요일 10월 인상 확률은 55% 안팎이었습니다.",
+    "'같은 주, 다른 성적표': 나스닥 +0.72%, S&P500 −0.08%, 다우 −1.69%(3주 연속 하락)로 지수가 갈렸습니다. 업종은 헬스케어(+1.83%)·기술(+1.03%)만 올랐고 유틸리티(−3.04%)·금융(−2.43%)·부동산(−2.05%)이 가장 약했습니다. 10년물 금리가 한 주 내내 5% 안팎(19년 만의 최고권), 2년물이 4.76%로 올라선 흐름과 겹칩니다.",
+    "'달러가 강해진 한 주, 원화는': 달러인덱스가 100을 넘어 주간 +1.11%, 엔화는 일본은행이 31년 만의 최고인 1.25%로 금리를 올렸는데도 약해졌습니다(반대 2표). 원·달러는 서울 종가 1,383.3원으로 7거래일 연속 올라 한 주 37.4원 뛰었고, 한미 기준금리 차는 1.00%p로 벌어졌습니다. 유가는 15일 WTI 105.83달러까지 올랐다가 사흘 내려 주간 +0.25%로 제자리였습니다."
+  ],
+  "source_caveats": [
+    "화면 숫자는 computed_us_weekly.json 우선. computed 금리는 미 재무부 par 수익률(소수 둘째 자리) — 매체의 장중·호가 수치(10년물 장중 5.041%, 마감 호가 4.995% 등)와 다를 수 있음.",
+    "모틀리풀 9/16 기사와 일부 검색 요약은 연준 새 범위를 '3.50~3.75%'로 잘못 적음. 연준 성명 원문은 3.75~4.00%(이전 3.50~3.75%).",
+    "데일리안 9/18 속보 제목의 '금리 인하 충격 딛고 반등'은 '인상'의 오기.",
+    "야후 라이브 9/18을 WebFetch로 읽은 요약은 '3대 지수 모두 주간 하락'이었지만 computed상 나스닥 주간 +0.72% → computed 우선.",
+    "야후파이낸스 라이브·기사 페이지를 WebFetch로 읽으면 현재가 위젯 숫자(예: S&P 7,650.50, BAC 57.73달러)가 섞여 나옴 — 날짜별 종가는 기사 본문과 computed로만 대조함.",
+    "원·달러: computed(야후 KRW=X, 런던 기준 1,379.53)와 서울 15:30 종가(1,383.3원)가 다름. 한국 시청자용 화면은 서울 종가를 매체명과 함께 쓰는 것을 권장.",
+    "달러·엔 9/18: computed 156.13 vs 로이터 뉴욕 후장 156.725·트레이딩이코노믹스 156.862 — 산출 시각 차이로 보임.",
+    "금: computed는 GC=F 선물(주간 +0.36%), 기사 대부분은 현물(키트코 9/14 4,269.90달러, 인베스팅닷컴 9/18 4,379.59달러) — 섞어 쓰지 말 것.",
+    "10월 FOMC 추가 인상 확률은 매체·시점마다 다름: 야후 9/16 50.9%, 바차트 9/16 57%, 바차트 9/17 51%→55%(서브 리서처), 아시아경제·FX스트리트 9/18 약 55%, CNBC 검색 요약 58%(원문 403). '55% 안팎'으로.",
+    "컨센서스 차이: 소매판매 0.7~0.9%, 엠파이어 14.75~15.0, 필라델피아 30.5~32.1, 주택착공 130.9만~132만 — actual_vs_expected 괄호에 매체를 밝힘.",
+    "사우디 동서 송유관 공격 주체 불일치(알자지라·헤드포스트 '이라크발 드론' vs 로이터·DTN '후티').",
+    "초이스경제 기사는 WebFetch 요약에 연준 의장이 '파월'로 표기돼 인용문은 쓰지 않고 은행주 등락률만 사용(의장은 케빈 워시). SBS Biz 기사 본문은 이 환경에서 로드되지 않아 출처로 쓰지 않음.",
+    "CNBC·블룸버그·Qz·악시오스·로이터 직접 링크는 403/차단 — 로이터는 야후·비즈니스리코더·데일리매버릭 전재본으로 확인.",
+    "지수 종가 소수점 차이: 트레이딩키 9/14 다우 52,426.25, 인베스트레이드 9/15 다우 52,099·9/18 다우 51,680, 세계일보 9/17 다우 51,778.18 — 모두 computed(52,421.20 / 52,093.11 / 51,682.64 / 51,778.04) 우선.",
+    "잠정주택판매(8월)는 인베스트레이드 −4.7%와 다른 매체 +0.3%가 상충해 제외.",
+    "날짜 주의: 인텔 CEO 메모리 발언 9/15(산타클라라), SK하이닉스-인텔 협의 보도 9/16, 젠슨 황 발언 9/17(스코틀랜드), 네비우스 요금 인상 공지 9/17.",
+    "뉴스 수집 목록(raw/news_us.json·news_macro.json)의 구글뉴스 링크는 원문이 아니어서 sources에 넣지 않음. 한국 기사는 제목 검색으로 원문 URL을 찾아 열었음.",
+    "앤트로픽(Anthropic) CEO 에세이 관련 서술은 기사에 적힌 사실만 옮겼고 평가는 넣지 않음."
+  ]
+}

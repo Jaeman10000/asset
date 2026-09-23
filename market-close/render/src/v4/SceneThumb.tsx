@@ -6,7 +6,7 @@ import type { Props } from "../types";
 import { FONT } from "../tokens";
 
 type TS = {
-  src: string; tag?: string; cut?: number; logoLeft?: boolean; img?: { x: number; y: number; w: number; h: number }; textTop?: number;
+  src: string; shot?: string; tag?: string; cut?: number; logoLeft?: boolean; img?: { x: number; y: number; w: number; h: number }; textTop?: number;
   lines: { t: string; color?: "white" | "yellow" | "red"; size?: number }[];
   mascot?: { src: string; x: number; y: number; h: number; w: number; flip?: boolean; clipBottom?: number };
 };
@@ -17,9 +17,10 @@ export const SceneThumb: React.FC<Props> = (p) => {
   const th = ((p as unknown as { info?: { thumbS?: TS } }).info?.thumbS ?? { src: "", lines: [] }) as TS;
   const cut = th.cut ?? 0.56;                       // 장면이 차지하는 위쪽 비율
   const top = Math.round(1920 * cut);
+  const shot = th.shot ?? th.src;                   // 썸네일 그림만 따로(shot) — 영상 첫 훅(OpenHook)은 src 그대로 써서 i0 과 이어진다
   return (
     <AbsoluteFill style={{ fontFamily: FONT, background: "#05070D" }}>
-      {th.src ? <Img src={staticFile(th.src)} style={th.img ? { position: "absolute", left: th.img.x, top: th.img.y, width: th.img.w, height: th.img.h } : { position: "absolute", left: 0, top: 0, width: 1080, height: 1935, objectFit: "cover", objectPosition: "top" }} /> : null}
+      {shot ? <Img src={staticFile(shot)} style={th.img ? { position: "absolute", left: th.img.x, top: th.img.y, width: th.img.w, height: th.img.h } : { position: "absolute", left: 0, top: 0, width: 1080, height: 1935, objectFit: "cover", objectPosition: "top" }} /> : null}
       {/* 장면 아래를 어둡게 — 글자 자리 */}
       <div style={{ position: "absolute", left: 0, right: 0, top: top - 260, bottom: 0, background: "linear-gradient(180deg, rgba(5,7,13,0) 0%, rgba(5,7,13,0.85) 26%, #05070D 40%, #05070D 100%)" }} />
       {th.tag ? <div style={{ position: "absolute", left: 44, top: 48, fontSize: 52, fontWeight: 900, color: "#0B0E16", background: YEL, padding: "6px 22px", borderRadius: 10, transform: "rotate(-2deg)", boxShadow: "0 8px 22px rgba(0,0,0,0.5)" }}>{th.tag}</div> : null}

@@ -54,6 +54,7 @@ const Bgm: React.FC<{ file: string; volume: number; total: number }> = ({ file, 
 };
 
 import { MascotLayer, type MascotBeat } from "./v4/MascotLayer";
+import { OpenHook } from "./v4/OpenHook";
 
 export const Video: React.FC<Props> = (p) => {
   useFonts();
@@ -90,6 +91,8 @@ export const Video: React.FC<Props> = (p) => {
         );
       })}
       <MascotLayer beats={(p as unknown as { mascot_beats?: MascotBeat[] }).mascot_beats} />
+      {/* 첫 2초 훅 — 대본에 info.thumbS 가 있으면(정보형) 썸네일 화면으로 연다(JJ 9/20 밤) */}
+      <OpenHook p={p} />
     </AbsoluteFill>
   );
 };

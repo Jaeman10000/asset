@@ -1,0 +1,928 @@
+{
+ "made_at": "2026-09-19 밤 KST",
+ "purpose": "누가샀나 '금리 해설' 쇼츠(2026-09-20 일 18시 공개) 자료 조사 — 사실만, 추천 문장 없음",
+ "rules": [
+  "2025~2026 사실은 이번에 연 원문(공식 사이트·기사)이나 기존 검증본(weekly_us/20260920/news_verified.json)으로만",
+  "원인·전망은 2곳 이상 매체가 같이 쓴 것만",
+  "확인 못 한 것은 '미확인'",
+  "말하는 %는 소수 첫째 자리(say_pct)"
+ ],
+ "headline_facts_ko": [
+  "[확인] 미국: 연준 2026-09-16(현지) 0.25%p 인상 → 3.75~4.00%, 12대0. 2023년 7월 이후 첫 인상. 의장은 케빈 워시(파월 아님). 점도표 올해 말 중간값 4.1% — 18명 중 16명이 연내 추가 인상. 다음 회의 10/27~28.",
+  "[확인] 일본: 일본은행 2026-09-18 0.25%p 인상 → 1.25%(7대2), 9/24부터 적용. 6/16에도 1.0%로 인상. 성명 '정책금리를 계속 올리겠다'. 다음 회의 10/29~30.",
+  "[확인] 한국: 기준금리 3.00%(2026-08-27 인상, 7/16에 이어 두 번 연속). 다음 금통위 10/22, 그다음 11/26. [전망, 4곳] '연내 추가 인상 가능성 커져, 10월보다 11월에 무게' — 확정 아님.",
+  "[확인] 한미 금리차 1.00%p(미 상단 4.00 − 한 3.00). 연준 인상 전 0.75%p. 원·달러 9/18 서울 종가 1,383.3원(7거래일 연속 상승)."
+ ],
+ "1_policy_rates": {
+  "fed": {
+   "status": "확인",
+   "decision": "2026-09-16 14:00 ET(한국 9/17 03:00) 연방기금금리 목표 범위 0.25%p 인상, 3.50~3.75% → 3.75~4.00%. 표결 12대0 만장일치.",
+   "statement_quote": "raise the target range for the federal funds rate by 1/4 percentage point to 3-3/4 to 4 percent / Inflation remains elevated.",
+   "first_hike_since": "2023-07-26 결정 이후 첫 인상(연준 금리 변경표: 2023-07-27 발효 5.25~5.50 뒤 2024~2025년은 인하만, 2026-09-17 발효 +25)",
+   "dot_plot": "2026년 말 중간값 4.1%(6월 3.8%), 2027년 4.1%(6월 3.6%), 2028년 3.9%(6월 3.4%), 장기 3.2%(6월 3.1%). 18명 중 16명이 연내 추가 인상(4.375%에 4명, 4.125%에 12명, 3.875%에 2명 — 기존 검증본).",
+   "chair_and_presser": "의장은 케빈 워시(한겨레·브릿지경제·야후). 기자회견 요지: 인플레이션이 '너무 높고 너무 오래' 이어졌고 물가 안정이 지금 가장 우선(야후파이낸스·뉴스핌·한국일보 — 기존 검증본). ※ 요청서의 '파월 발언'은 해당 없음.",
+   "market_after": "발표 뒤 오르던 미 증시가 기자회견 중 하락 전환, 9/16 다우 −1.21%·S&P500 −0.45%(야후·뉴스핌). 달러인덱스 100 돌파(바차트·FX스트리트·로이터). 10월 추가 인상 확률 9/18 기준 약 55%(아시아경제·FX스트리트).",
+   "trump": "트럼프 대통령 '미국 금리는 1% 이하여야'(기즈모도·야후) — 시장 연결 보도 없음, 인용만.",
+   "next_meeting": "2026-10-27~28, 그다음 12-08~09(연준 일정표)",
+   "sources": [
+    {
+     "outlet": "Federal Reserve",
+     "title": "Federal Reserve issues FOMC statement",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm",
+     "date": "2026-09-16",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "Federal Reserve",
+     "title": "Summary of Economic Projections, September 16, 2026",
+     "url": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260916.htm",
+     "date": "2026-09-16",
+     "opened": "이번 조사에서 직접(중간값 4.1/4.1/3.9/3.6/3.2, 6월 3.8/3.6/3.4/3.1)"
+    },
+    {
+     "outlet": "Federal Reserve",
+     "title": "Open Market Operations(금리 변경 이력)",
+     "url": "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",
+     "date": "조회 2026-09-19",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "Federal Reserve",
+     "title": "Meeting calendars and information",
+     "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+     "date": "조회 2026-09-19",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "Yahoo Finance (live)",
+     "title": "Fed meeting live updates: Fed hikes interest rates by 25 basis points as Warsh vows 'timelier return' to 2% inflation",
+     "url": "https://finance.yahoo.com/economy/policy/live/federal-reserve-meeting-live-updates-chairman-kevin-warsh-143452661.html",
+     "date": "2026-09-16",
+     "opened": "기존 검증본(data/weekly_us/20260920/news_verified.json)"
+    },
+    {
+     "outlet": "한국일보",
+     "title": "美기준금리 0.25% 인상…연내 추가 인상 시사",
+     "url": "https://www.hankookilbo.com/news/article/A2026091705360002360",
+     "date": "2026-09-17",
+     "opened": "기존 검증본"
+    },
+    {
+     "outlet": "뉴스핌",
+     "title": "뉴욕증시, 연준 추가 긴축 시사에 하락…다우 1.21%↓",
+     "url": "https://www.newspim.com/news/view/20260917000030",
+     "date": "2026-09-17",
+     "opened": "기존 검증본"
+    },
+    {
+     "outlet": "아시아경제",
+     "title": "뉴욕증시, 美 국채금리 상승에도 반도체주 강세",
+     "url": "https://view.asiae.co.kr/article/2026091909094544559",
+     "date": "2026-09-19",
+     "opened": "기존 검증본(10월 인상 확률 약 55%)"
+    }
+   ]
+  },
+  "boj": {
+   "status": "확인",
+   "decision": "2026-09-18 무담보 콜금리 유도 목표 1.0% → 1.25%(0.25%p), 7대2(아사다·사토 위원 동결 주장). 적용 9/24부터. 회의 9/17~18, 발표 9/18 11:54(일본 시각).",
+   "prior_hike": "2026-06-16 1.0%로 인상(7대1, 아사다 반대). 그 전 금리 수준은 이번에 원문 확인 안 함.",
+   "level_note": "1.25%는 31년 만의 최고(로이터·FX스트리트 — 기존 검증본, 이투데이 9/18 직접)",
+   "guidance": "성명 5항 'will continue to raise the policy interest rate'(계속 올리겠다), 시기·속도는 중동 정세·AI 수요·환율을 보며 판단. 우에다 '추가 인상 속도를 미리 정하지 않는다'(지지통신·닛폰닷컴 — 기존 검증본).",
+   "yen_reaction": "인상에도 엔화 약세: 달러·엔 한때 158.05엔(로이터), 반대 2표 탓에 예상보다 덜 매파적이라는 풀이(로이터·이투데이). computed 9/18 USDJPY 156.13.",
+   "next_meeting": "2026-10-29~30(일본은행 2026 회의 일정표)",
+   "us_japan_gap": "미 상단 4.00 − 일 1.25 = 2.75%p(단순 계산)",
+   "sources": [
+    {
+     "outlet": "Bank of Japan",
+     "title": "Change in the Guideline for Money Market Operations (Sept. 18, 2026)",
+     "url": "https://www.boj.or.jp/en/mopo/mpmdeci/mpr_2026/k260918a.pdf",
+     "date": "2026-09-18",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "Bank of Japan",
+     "title": "Change in the Guideline for Money Market Operations (June 16, 2026)",
+     "url": "https://www.boj.or.jp/en/mopo/mpmdeci/mpr_2026/k260616a.pdf",
+     "date": "2026-06-16",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "Bank of Japan",
+     "title": "Scheduled Dates of Monetary Policy Meetings in 2026",
+     "url": "https://www.boj.or.jp/en/mopo/mpmsche_minu/m_ref/mref250731a.pdf",
+     "date": "2025-07-31",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "이투데이",
+     "title": "[환율마감] 원·달러 7일째 상승 1380원대 굳히기, BOJ 인상 이긴 달러 강세",
+     "url": "https://www.etoday.co.kr/news/view/2627375",
+     "date": "2026-09-18 16:17",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "Reuters (Yahoo Finance)",
+     "title": "Dollar advances vs yen as BOJ dissent clouds rate-hike outlook",
+     "url": "https://finance.yahoo.com/markets/currencies/articles/yen-weak-ahead-boj-decision-005910776.html",
+     "date": "2026-09-18",
+     "opened": "기존 검증본"
+    }
+   ]
+  },
+  "bok": {
+   "status": "확인",
+   "current": "3.00%",
+   "last_decision": "2026-08-27 2.75% → 3.00%(0.25%p). 7/16(2.50→2.75, 3년 6개월 만의 인상)에 이어 두 번 연속. 황건일 위원 동결 소수의견(한겨레 직접 + 한국금융신문 요약: 6대1).",
+   "guidance": "금통위원 6개월 뒤 금리 전망 중간값 3.25%(한겨레·브릿지경제). 8월 의결문에서 '금리 인상 기조를 이어나갈 필요' 문구 삭제 — 속도 조절 시사(브릿지경제).",
+   "people": "총재 신현송(서울신문 사진설명). 9/17 권민수 부총재 '향후 연준의 통화정책 기조가 긴축적일 것으로 예상'(한겨레·브릿지경제).",
+   "next_meetings": "2026-10-22, 2026-11-26(토스뱅크 2026 일정 + 한국금융신문 + 한겨레 '연내 회의는 10월, 11월')",
+   "hike_outlook": {
+    "status": "전망 — 2곳 이상 확인(4곳)",
+    "summary": "연준 인상으로 한은의 연내 추가 인상 가능성이 커졌고, 시점은 10월보다 11월이 유력하다는 시장 전망(한겨레·브릿지경제·JTBC·이투데이). iM증권 김명실 '10월 동결 뒤 11월 3.25% 가능성'(브릿지경제), 키움증권 안예하 '추가 인상은 11월'(한겨레). 배경으로 물가·환율·서울 집값(한겨레·JTBC·브릿지경제), 부담으로 가계부채 2천조 원·취약차주(한겨레).",
+    "caution": "'한국은행이 올린다'는 확정 사실이 아님. 대본엔 '추가 인상 가능성이 거론된다, 시장은 11월에 무게' 수준으로만."
+   },
+   "sources": [
+    {
+     "outlet": "한국은행",
+     "title": "한국은행 기준금리 추이",
+     "url": "https://www.bok.or.kr/portal/singl/baseRate/list.do?dataSeCd=01&menuNo=200643",
+     "date": "조회 2026-09-19",
+     "opened": "이번 조사에서 직접(2026-07-16 2.75, 2026-08-27 3.00, 2023-01-13 3.50)"
+    },
+    {
+     "outlet": "서울신문",
+     "title": "[속보] 한국은행 기준금리 3.00% 결정…'백투백' 인상 현실화",
+     "url": "https://www.seoul.co.kr/news/economy/finance/2026/08/27/20260827500034",
+     "date": "2026-08-27 09:51",
+     "opened": "이번 조사에서 직접"
+    },
+    {
+     "outlet": "한국금융신문",
+     "title": "한은 금통위, 기준금리 연 3%로 연속 인상…성장세 속 물가 우려 선제대응(종합)",
+     "url": "https://www.fntimes.com/html/view.php?ud=202608271107018117179ad43907_18",
+     "date": "2026-08-27",
+     "opened": "WebFetch 요약만(원문 직접 추출 실패) — 6대1, 점도표 3.25%에 10명·3.50%에 6명·3.00%에 5명, 다음 회의 10/22·11/26은 요약 기준"
+    },
+    {
+     "outlet": "한겨레",
+     "title": "한미 금리차 1%p로 확대…한은 연내 추가인상 가능성 커져",
+     "url": "https://m.news.nate.com/view/20260917n37243",
+     "date": "2026-09-17 20:00",
+     "opened": "이번 조사에서 직접(네이트 게재)"
+    },
+    {
+     "outlet": "브릿지경제",
+     "title": "한미 금리차 재확대…한은, 10월 숨 고르고 11월 인상 무게",
+     "url": "https://m.news.nate.com/view/20260917n28267",
+     "date": "2026-09-17 15:50",
+     "opened": "이번 조사에서 직접(네이트 게재)"
+    },
+    {
+     "outlet": "JTBC",
+     "title": "\"단번 금리 인상에 안 그칠 것\" 한·미 금리차 1%p로…10월 금통위 주목",
+     "url": "https://m.news.nate.com/view/20260917n26418",
+     "date": "2026-09-17 15:18",
+     "opened": "이번 조사에서 직접(네이트 게재)"
+    },
+    {
+     "outlet": "이투데이",
+     "title": "美 긴축 전환에 한은도 연내 추가 금리인상 가능성 커진다",
+     "url": "https://www.etoday.co.kr/news/view/2626501",
+     "date": "2026-09-17 07:16",
+     "opened": "WebFetch 요약"
+    },
+    {
+     "outlet": "토스뱅크",
+     "title": "한국은행 기준금리 동결, 2026 금리 발표 일정까지 알아봐요",
+     "url": "https://www.tossbank.com/articles/baserate2601",
+     "date": "2026-01-28",
+     "opened": "이번 조사에서 직접(10/22·11/26)"
+    }
+   ]
+  }
+ },
+ "2_gap_and_fx": {
+  "us_kr_gap": {
+   "now_pctp": 1.0,
+   "calc": "미 상단 4.00 − 한 3.00",
+   "before_fed_hike_pctp": 0.75,
+   "sources": "한국일보(기존 검증본)·한겨레·JTBC·브릿지경제(직접) 모두 1.00%p",
+   "history_ref": "2023-07-26 연준 5.25~5.50% vs 한은 3.50%(2023-01-13부터) → 2.00%p. 연준 성명(https://www.federalreserve.gov/newsevents/pressreleases/monetary20230726a.htm)과 한은 기준금리 추이로 계산(직접 확인)."
+  },
+  "usdkrw": {
+   "seoul_close": {
+    "2026-09-11": 1345.9,
+    "2026-09-14": 1347.3,
+    "2026-09-15": 1359.4,
+    "2026-09-16": 1368.6,
+    "2026-09-17": 1382.2,
+    "2026-09-18": 1383.3
+   },
+   "seoul_source": "이투데이 환율마감 9/17(https://www.etoday.co.kr/news/view/2626900)·9/18(https://www.etoday.co.kr/news/view/2627375, 직접) 외 기존 검증본. 9/18 1,383.3원은 8/26(1,384.8원) 이후 최고, 7거래일 연속 상승(올 1월 10거래일 연속 이후 최장).",
+   "computed_london": {
+    "2026-09-18": 1379.53,
+    "week_pct": 2.33,
+    "file": "data/weekly_us/20260920/computed_us_weekly.json(야후 KRW=X)"
+   },
+   "note": "화면·대본엔 서울 종가 1,383.3원을 쓰고 '서울 외환시장 종가'라고 밝히길 권장. computed(1,379.5원)와 약 4원 차이."
+  },
+  "rates_computed": {
+   "US10Y_2026-09-18": 5.01,
+   "US2Y_2026-09-18": 4.76,
+   "USDJPY_2026-09-18": 156.13,
+   "US10Y_note": "10년물 9/15 장중 5.041%, 2007년 7월 이후 최고(이투데이·서울경제 — 기존 검증본)",
+   "file": "data/weekly_us/20260920/computed_us_weekly.json"
+  }
+ },
+ "3_past_fed_hike_cycles": {
+  "method": "야후 ^KS11·^GSPC·^N225 일간 종가. 시작=첫 인상 결정일 종가, 끝=마지막 인상 결정일 종가(코스피는 미국 발표 전에 마감하므로 '인상 직전 종가'). 코스피 6개 날짜 종가는 네이버 일봉 API와 소수점까지 일치.",
+  "cycles": [
+   {
+    "name": "2004~2006 인상기",
+    "first_hike_decision": "2004-06-30",
+    "last_hike_decision": "2006-06-29",
+    "hikes": 17,
+    "fed_path": "1.00% → 5.25%",
+    "note": "연준 공식 변경표에서 2004-06-30~2006-06-29 인상 17회 확인(0.25%p씩).",
+    "series": {
+     "코스피": {
+      "symbol": "^KS11",
+      "start": {
+       "d": "2004-06-30",
+       "close": 785.79
+      },
+      "end": {
+       "d": "2006-06-29",
+       "close": 1263.02
+      },
+      "chg_pct": 60.73,
+      "say_pct": 60.7,
+      "min_in_period": {
+       "d": "2004-08-02",
+       "close": 719.59,
+       "vs_start_pct": -8.42
+      },
+      "max_in_period": {
+       "d": "2006-05-11",
+       "close": 1464.7,
+       "vs_start_pct": 86.4
+      }
+     },
+     "S&P500": {
+      "symbol": "^GSPC",
+      "start": {
+       "d": "2004-06-30",
+       "close": 1140.84
+      },
+      "end": {
+       "d": "2006-06-29",
+       "close": 1272.87
+      },
+      "chg_pct": 11.57,
+      "say_pct": 11.6,
+      "min_in_period": {
+       "d": "2004-08-12",
+       "close": 1063.23,
+       "vs_start_pct": -6.8
+      },
+      "max_in_period": {
+       "d": "2006-05-05",
+       "close": 1325.76,
+       "vs_start_pct": 16.21
+      }
+     },
+     "닛케이225": {
+      "symbol": "^N225",
+      "start": {
+       "d": "2004-06-30",
+       "close": 11858.87
+      },
+      "end": {
+       "d": "2006-06-29",
+       "close": 15121.15
+      },
+      "chg_pct": 27.51,
+      "say_pct": 27.5,
+      "min_in_period": {
+       "d": "2004-10-25",
+       "close": 10659.15,
+       "vs_start_pct": -10.12
+      },
+      "max_in_period": {
+       "d": "2006-04-07",
+       "close": 17563.37,
+       "vs_start_pct": 48.1
+      }
+     },
+     "원달러(야후 KRW=X, 런던 기준)": {
+      "start": 1155.7,
+      "end": 938.4,
+      "chg_pct": -18.8
+     }
+    }
+   },
+   {
+    "name": "2015~2018 인상기",
+    "first_hike_decision": "2015-12-16",
+    "last_hike_decision": "2018-12-19",
+    "hikes": 9,
+    "fed_path": "0~0.25% → 2.25~2.50%",
+    "note": "연준 공식 변경표(발효일 기준 2015-12-17~2018-12-20) 인상 9회.",
+    "series": {
+     "코스피": {
+      "symbol": "^KS11",
+      "start": {
+       "d": "2015-12-16",
+       "close": 1969.4
+      },
+      "end": {
+       "d": "2018-12-19",
+       "close": 2078.84
+      },
+      "chg_pct": 5.56,
+      "say_pct": 5.6,
+      "min_in_period": {
+       "d": "2016-02-12",
+       "close": 1835.28,
+       "vs_start_pct": -6.81
+      },
+      "max_in_period": {
+       "d": "2018-01-29",
+       "close": 2598.19,
+       "vs_start_pct": 31.93
+      }
+     },
+     "S&P500": {
+      "symbol": "^GSPC",
+      "start": {
+       "d": "2015-12-16",
+       "close": 2073.07
+      },
+      "end": {
+       "d": "2018-12-19",
+       "close": 2506.96
+      },
+      "chg_pct": 20.93,
+      "say_pct": 20.9,
+      "min_in_period": {
+       "d": "2016-02-11",
+       "close": 1829.08,
+       "vs_start_pct": -11.77
+      },
+      "max_in_period": {
+       "d": "2018-09-20",
+       "close": 2930.75,
+       "vs_start_pct": 41.37
+      }
+     },
+     "닛케이225": {
+      "symbol": "^N225",
+      "start": {
+       "d": "2015-12-16",
+       "close": 19049.91
+      },
+      "end": {
+       "d": "2018-12-19",
+       "close": 20987.92
+      },
+      "chg_pct": 10.17,
+      "say_pct": 10.2,
+      "min_in_period": {
+       "d": "2016-06-24",
+       "close": 14952.02,
+       "vs_start_pct": -21.51
+      },
+      "max_in_period": {
+       "d": "2018-10-02",
+       "close": 24270.62,
+       "vs_start_pct": 27.41
+      }
+     },
+     "원달러(야후 KRW=X, 런던 기준)": {
+      "start": 1172.7,
+      "end": 1125.1,
+      "chg_pct": -4.06
+     }
+    }
+   },
+   {
+    "name": "2022~2023 인상기",
+    "first_hike_decision": "2022-03-16",
+    "last_hike_decision": "2023-07-26",
+    "hikes": 11,
+    "fed_path": "0~0.25% → 5.25~5.50%",
+    "note": "연준 공식 변경표(발효일 2022-03-17~2023-07-27) 인상 11회. 같은 기간 한국은행도 1.25%(2022-01-14)→3.50%(2023-01-13)로 올림(한은 기준금리 추이).",
+    "series": {
+     "코스피": {
+      "symbol": "^KS11",
+      "start": {
+       "d": "2022-03-16",
+       "close": 2659.23
+      },
+      "end": {
+       "d": "2023-07-26",
+       "close": 2592.36
+      },
+      "chg_pct": -2.51,
+      "say_pct": -2.5,
+      "min_in_period": {
+       "d": "2022-09-30",
+       "close": 2155.49,
+       "vs_start_pct": -18.94
+      },
+      "max_in_period": {
+       "d": "2022-04-05",
+       "close": 2759.2,
+       "vs_start_pct": 3.76
+      }
+     },
+     "S&P500": {
+      "symbol": "^GSPC",
+      "start": {
+       "d": "2022-03-16",
+       "close": 4357.86
+      },
+      "end": {
+       "d": "2023-07-26",
+       "close": 4566.75
+      },
+      "chg_pct": 4.79,
+      "say_pct": 4.8,
+      "min_in_period": {
+       "d": "2022-10-12",
+       "close": 3577.03,
+       "vs_start_pct": -17.92
+      },
+      "max_in_period": {
+       "d": "2022-03-29",
+       "close": 4631.6,
+       "vs_start_pct": 6.28
+      }
+     },
+     "닛케이225": {
+      "symbol": "^N225",
+      "start": {
+       "d": "2022-03-16",
+       "close": 25762.01
+      },
+      "end": {
+       "d": "2023-07-26",
+       "close": 32668.34
+      },
+      "chg_pct": 26.81,
+      "say_pct": 26.8,
+      "min_in_period": {
+       "d": "2023-01-04",
+       "close": 25716.86,
+       "vs_start_pct": -0.18
+      },
+      "max_in_period": {
+       "d": "2023-07-03",
+       "close": 33753.33,
+       "vs_start_pct": 31.02
+      }
+     },
+     "원달러(야후 KRW=X, 런던 기준)": {
+      "start": 1241.7,
+      "end": 1274.1,
+      "chg_pct": 2.61,
+      "max_in_period": {
+       "d": "2022-10-25",
+       "close": 1444.0
+      }
+     }
+    }
+   }
+  ],
+  "first_hike_reaction": {
+   "2004-06-30": {
+    "코스피": {
+     "decision_day": {
+      "d": "2004-06-30",
+      "chg_pct": 0.91
+     },
+     "next_day": {
+      "d": "2004-07-01",
+      "chg_pct": -0.99
+     }
+    },
+    "S&P500": {
+     "decision_day": {
+      "d": "2004-06-30",
+      "chg_pct": 0.41
+     },
+     "next_day": {
+      "d": "2004-07-01",
+      "chg_pct": -1.04
+     }
+    }
+   },
+   "2015-12-16": {
+    "코스피": {
+     "decision_day": {
+      "d": "2015-12-16",
+      "chg_pct": 1.88
+     },
+     "next_day": {
+      "d": "2015-12-17",
+      "chg_pct": 0.43
+     }
+    },
+    "S&P500": {
+     "decision_day": {
+      "d": "2015-12-16",
+      "chg_pct": 1.45
+     },
+     "next_day": {
+      "d": "2015-12-17",
+      "chg_pct": -1.5
+     }
+    }
+   },
+   "2022-03-16": {
+    "코스피": {
+     "decision_day": {
+      "d": "2022-03-16",
+      "chg_pct": 1.44
+     },
+     "next_day": {
+      "d": "2022-03-17",
+      "chg_pct": 1.33
+     }
+    },
+    "S&P500": {
+     "decision_day": {
+      "d": "2022-03-16",
+      "chg_pct": 2.24
+     },
+     "next_day": {
+      "d": "2022-03-17",
+      "chg_pct": 1.23
+     }
+    }
+   },
+   "2026-09-16": {
+    "코스피": {
+     "decision_day": {
+      "d": "2026-09-16",
+      "chg_pct": 1.37
+     },
+     "next_day": {
+      "d": "2026-09-17",
+      "chg_pct": -0.04
+     }
+    },
+    "S&P500": {
+     "decision_day": {
+      "d": "2026-09-16",
+      "chg_pct": -0.45
+     },
+     "next_day": {
+      "d": "2026-09-17",
+      "chg_pct": 1.14
+     }
+    }
+   }
+  },
+  "reading": "사실만: 세 번 중 두 번(2004·2015)은 인상기 동안 코스피가 올랐고(+60.7%·+5.6%), 2022년엔 −2.5%(중간 최저 −18.9%, 2022-09-30). 인상기 전체로 코스피가 내린 건 2022년 한 번. 첫 인상 다음 날 코스피는 −1.0%·+0.4%·+1.3%·(2026) −0.04%.",
+  "caution": "2004~2006은 원화 강세기(원달러 −18.8%)와 겹침. 인상기 동안 왜 올랐는지·내렸는지의 원인은 이번에 매체로 확인하지 않음(미확인) — 대본은 숫자만."
+ },
+ "4_2024_08_05": {
+  "kospi": {
+   "prev_close": 2676.19,
+   "close": 2441.55,
+   "chg_pct": -8.77,
+   "say_pct": -8.8,
+   "points": -234.64,
+   "next_day_pct": 3.3,
+   "circuit_breaker": "코스피·코스닥 서킷브레이커(이투데이·인베스트조선)",
+   "kosdaq": "691.28(−11.30%, 이투데이)",
+   "rank": "2001년 이후 4번째, 2008년 금융위기 이후 최대 낙폭(비즈니스워치)"
+  },
+  "nikkei": {
+   "prev_close": 35909.7,
+   "close": 31458.42,
+   "chg_pct": -12.4,
+   "say_pct": -12.4,
+   "next_day_pct": 10.23,
+   "note": "1987년 10월 블랙먼데이 이후 두 번째 하락률(인베스트조선)"
+  },
+  "sp500_same_day_pct": -3.0,
+  "foreign_kospi": "외국인 코스피 현물 약 1조4,700억 원 순매도(인베스트조선 '오후' 집계), 이데일리 장중 1조4,648억 — 최종 확정치 미확인",
+  "causes_2plus": [
+   "엔 캐리 트레이드 청산 — 인베스트조선·이투데이(유진투자증권)·비즈니스워치·CNBC·BIS",
+   "미국 경기침체 우려(8/2 발표 7월 고용지표 부진, 실업률 4.3%) — 인베스트조선·이투데이·비즈니스워치·CNBC·BIS('미국 지표에 대한 첫 반응을 레버리지 청산이 키웠다')",
+   "일본은행 7/31 인상(0.1%→0.25%)과 엔화 강세가 엔 캐리 매력을 떨어뜨림 — 비즈니스워치·CNBC('more hawkish Bank of Japan')"
+  ],
+  "sources": [
+   {
+    "outlet": "이투데이",
+    "title": "'코스피 8%대 폭락, 반대매매·트레이딩 청산 겹쳤을 가능성…정상적 조정 아냐'",
+    "url": "https://www.etoday.co.kr/news/view/2387723",
+    "date": "2024-08-06 08:36"
+   },
+   {
+    "outlet": "인베스트조선",
+    "title": "韓증시 '최악의 날'…코스피 2400선 깨지며 기관들도 '패닉'",
+    "url": "https://www.investchosun.com/site/data/html_dir/2024/08/05/2024080580196.html",
+    "date": "2024-08-05",
+    "note": "기사 속 2441.31(−8.78%)은 잠정치 — 확정 종가 2441.55(−8.77%, 이투데이·비즈니스워치·네이버·야후)"
+   },
+   {
+    "outlet": "이데일리",
+    "title": "서킷브레이커도 못 막은 코스피, 10%대 추락…2400선도 붕괴",
+    "url": "https://edaily.co.kr/News/Read?mediaCodeNo=257&newsId=02587926638984368",
+    "date": "2024-08-05 15:01"
+   },
+   {
+    "outlet": "비즈니스워치",
+    "title": "증시 폭락 '캐리한' '엔 캐리 트레이드'…끝일까 시작일까",
+    "url": "http://news.bizwatch.co.kr/article/market/2024/08/07/0045",
+    "date": "2024-08-08"
+   },
+   {
+    "outlet": "CNBC",
+    "title": "Investors are unwinding the biggest 'carry trade' the world has ever seen, SocGen strategist says",
+    "url": "https://www.cnbc.com/2024/08/05/carry-trades-a-major-unwinding-is-underway-amid-a-stock-sell-off.html",
+    "date": "2024-08-05"
+   },
+   {
+    "outlet": "BIS",
+    "title": "BIS Bulletin No 90: The market turbulence and carry trade unwind of August 2024",
+    "url": "https://www.bis.org/publ/bisbull90.htm",
+    "date": "2024-08-27"
+   },
+   {
+    "outlet": "머니투데이(2026 참고)",
+    "title": "\"코스피 10% 폭락\" 2년 전 악몽 생각나...엔캐리 청산 재현 우려",
+    "url": "https://www.mt.co.kr/stock/2026/08/05/2026080515001117727",
+    "date": "2026-08-05",
+    "note": "올해 8월에도 엔캐리 청산 재현 우려 보도 — 1곳뿐이라 참고만"
+   }
+  ]
+ },
+ "5_foreign_flows_kospi_10d": {
+  "unit": "억원(순매수 +, 순매도 −)",
+  "basis": "foreign_krx_naver_eok = 거래소 집계(네이버 금융) — 그 날짜가 들어 있는 가장 늦은 raw/krx_investors.json(읽기만). 9/17은 당일 잠정치(9/18 파일 없음). 9/18은 네이버 모바일 API. foreign_kiwoom_eok = 키움 전 종목 합산(대량매매 제외, 각 날짜 computed_kr.json).",
+  "table": [
+   {
+    "date": "20260907",
+    "kospi_close": 6995.39,
+    "kospi_chg_pct": 4.61,
+    "foreign_krx_naver_eok": 25532,
+    "indiv_krx_naver_eok": -68374,
+    "inst_krx_naver_eok": 26491,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": 25870
+   },
+   {
+    "date": "20260908",
+    "kospi_close": 6954.52,
+    "kospi_chg_pct": -0.58,
+    "foreign_krx_naver_eok": 6316,
+    "indiv_krx_naver_eok": -30329,
+    "inst_krx_naver_eok": 6427,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": 6616
+   },
+   {
+    "date": "20260909",
+    "kospi_close": 7051.64,
+    "kospi_chg_pct": 1.4,
+    "foreign_krx_naver_eok": -4348,
+    "indiv_krx_naver_eok": -22879,
+    "inst_krx_naver_eok": 9422,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -4272
+   },
+   {
+    "date": "20260910",
+    "kospi_close": 7033.92,
+    "kospi_chg_pct": -0.25,
+    "foreign_krx_naver_eok": -26217,
+    "indiv_krx_naver_eok": 3802,
+    "inst_krx_naver_eok": 5744,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -24921
+   },
+   {
+    "date": "20260911",
+    "kospi_close": 6909.91,
+    "kospi_chg_pct": -1.76,
+    "foreign_krx_naver_eok": -22984,
+    "indiv_krx_naver_eok": 18675,
+    "inst_krx_naver_eok": -12184,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -23041
+   },
+   {
+    "date": "20260914",
+    "kospi_close": 6684.37,
+    "kospi_chg_pct": -3.26,
+    "foreign_krx_naver_eok": -33363,
+    "indiv_krx_naver_eok": 30351,
+    "inst_krx_naver_eok": -11869,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -32996
+   },
+   {
+    "date": "20260915",
+    "kospi_close": 6627.26,
+    "kospi_chg_pct": -0.85,
+    "foreign_krx_naver_eok": -15458,
+    "indiv_krx_naver_eok": 8596,
+    "inst_krx_naver_eok": -9585,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -15736
+   },
+   {
+    "date": "20260916",
+    "kospi_close": 6717.97,
+    "kospi_chg_pct": 1.37,
+    "foreign_krx_naver_eok": -16726,
+    "indiv_krx_naver_eok": -12061,
+    "inst_krx_naver_eok": 12251,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -16809
+   },
+   {
+    "date": "20260917",
+    "kospi_close": 6715.41,
+    "kospi_chg_pct": -0.04,
+    "foreign_krx_naver_eok": -22770,
+    "indiv_krx_naver_eok": 4136,
+    "inst_krx_naver_eok": 1588,
+    "krx_naver_file": "data/20260917/raw/krx_investors.json",
+    "foreign_kiwoom_eok": -22804
+   },
+   {
+    "date": "20260918",
+    "kospi_close": 6894.23,
+    "kospi_chg_pct": 2.66,
+    "foreign_krx_naver_eok": 4486,
+    "indiv_krx_naver_eok": -36359,
+    "inst_krx_naver_eok": 15322,
+    "krx_naver_file": "m.stock.naver.com/api/index/KOSPI/trend (2026-09-19 밤 조회, bizdate 20260918)",
+    "foreign_kiwoom_eok": 4362,
+    "note": "9/18 외국인: 네이버 +4,486억 · 키움 합산 +4,362억 · 이투데이 환율마감 기사 +4,362억(8거래일 만에 매수 전환). 이투데이 증시 기사 사이드 요약엔 +9,701억(개인 −4조3,652억·기관 +1조7,173억)으로 나와 집계 기준이 다름 — 어느 기준인지 미확인. 화면엔 기준을 밝히고 한 가지만."
+   }
+  ],
+  "summary": {
+   "sell_streak": "9/9~9/17 7거래일 연속 순매도, 9/18 8거래일 만에 순매수(이투데이 9/17·9/18 기사와 일치)",
+   "sell_7d_sum_krx_naver_eok": -141866,
+   "sell_7d_sum_kiwoom_eok": -140579,
+   "say": "7거래일 동안 약 14.2조 원 순매도(거래소 집계 기준)"
+  }
+ },
+ "6_sector_etf_2022_cycle": {
+  "method": "야후 일간 종가, 2022-03-16 → 2023-07-26(연준 첫 인상~마지막 인상 결정일). price_chg_pct=종가 기준, adj_chg_pct=분배금 반영(야후 adjclose).",
+  "items": [
+   {
+    "name": "KODEX 은행",
+    "symbol": "091170.KS",
+    "start": {
+     "d": "2022-03-16",
+     "close": 7800.0
+    },
+    "end": {
+     "d": "2023-07-26",
+     "close": 5925.0
+    },
+    "price_chg_pct": -24.04,
+    "say_pct": -24.0,
+    "adj_chg_pct": -19.43,
+    "min": {
+     "d": "2022-09-30",
+     "close": 5390.0,
+     "vs_start_pct": -30.9
+    },
+    "max": {
+     "d": "2022-03-31",
+     "close": 8185.0,
+     "vs_start_pct": 4.94
+    }
+   },
+   {
+    "name": "KODEX 2차전지산업",
+    "symbol": "305720.KS",
+    "start": {
+     "d": "2022-03-16",
+     "close": 16970.0
+    },
+    "end": {
+     "d": "2023-07-26",
+     "close": 35325.0
+    },
+    "price_chg_pct": 108.16,
+    "say_pct": 108.2,
+    "adj_chg_pct": 109.16,
+    "min": {
+     "d": "2022-07-04",
+     "close": 16510.0,
+     "vs_start_pct": -2.71
+    },
+    "max": {
+     "d": "2023-07-26",
+     "close": 35325.0,
+     "vs_start_pct": 108.16
+    }
+   },
+   {
+    "name": "KODEX 반도체",
+    "symbol": "091160.KS",
+    "start": {
+     "d": "2022-03-16",
+     "close": 34620.0
+    },
+    "end": {
+     "d": "2023-07-26",
+     "close": 32440.0
+    },
+    "price_chg_pct": -6.3,
+    "say_pct": -6.3,
+    "adj_chg_pct": -4.83,
+    "min": {
+     "d": "2023-01-02",
+     "close": 21870.0,
+     "vs_start_pct": -36.83
+    },
+    "max": {
+     "d": "2022-03-30",
+     "close": 37150.0,
+     "vs_start_pct": 7.31
+    }
+   },
+   {
+    "name": "코스피(비교)",
+    "symbol": "^KS11",
+    "start": {
+     "d": "2022-03-16",
+     "close": 2659.23
+    },
+    "end": {
+     "d": "2023-07-26",
+     "close": 2592.36
+    },
+    "price_chg_pct": -2.51,
+    "say_pct": -2.5,
+    "adj_chg_pct": -2.51,
+    "min": {
+     "d": "2022-09-30",
+     "close": 2155.49,
+     "vs_start_pct": -18.94
+    },
+    "max": {
+     "d": "2022-04-05",
+     "close": 2759.2,
+     "vs_start_pct": 3.76
+    }
+   }
+  ],
+  "reading": "사실만: 같은 인상기에 KODEX 은행 -24.0%, KODEX 2차전지산업 +108.2%, KODEX 반도체 -6.3%, 코스피 -2.5%. 인상기라고 업종이 한 방향으로 움직이지 않았다.",
+  "caution": "업종별 원인(예: 2023년 2차전지 급등 이유)은 이번에 매체로 확인하지 않음 — 미확인. 종목·업종 추천 문장 금지."
+ },
+ "7_extra_2026_context": {
+  "note": "요청 밖 참고. 코스피 종가는 야후·네이버 일치.",
+  "kospi_peak_2026": {
+   "d": "2026-06-22",
+   "close": 9114.55
+  },
+  "kospi_2026-09-18": 6894.23,
+  "policy_days_kospi": [
+   {
+    "event": "일본은행 인상(1.0%)",
+    "d": "2026-06-16",
+    "kospi_chg_pct": 2.11
+   },
+   {
+    "event": "한국은행 인상(2.75%)",
+    "d": "2026-07-16",
+    "kospi_chg_pct": -6.37,
+    "cause": "세계일보·뉴시스·매일경제 3곳 모두 미국 반도체주 약세(마이크론 −8.02%)·반도체 업황 우려를 먼저 꼽음. 금리 인상은 세계일보·뉴시스가 '함께 영향'으로, 매일경제 인용 대신증권 이경민은 '예상에 부합해 영향 제한적'. → '금리 올린 날 6% 급락'을 인과로 쓰지 말 것.",
+    "sources": [
+     "https://news.nate.com/view/20260716n27419 (세계일보)",
+     "https://m.news.nate.com/view/20260716n27483 (뉴시스)",
+     "https://m.news.nate.com/view/20260716n25044 (매일경제)"
+    ]
+   },
+   {
+    "event": "한국은행 인상(3.00%)",
+    "d": "2026-08-27",
+    "kospi_chg_pct": 1.53
+   },
+   {
+    "event": "연준 인상 다음 날",
+    "d": "2026-09-17",
+    "kospi_chg_pct": -0.04
+   },
+   {
+    "event": "일본은행 인상(1.25%) 당일",
+    "d": "2026-09-18",
+    "kospi_chg_pct": 2.66,
+    "cause": "반도체 강세·외국인 8거래일 만의 순매수(이투데이·뉴스1 제목) — 금리와 직접 연결한 보도 없음"
+   }
+  ],
+  "from_peak_pct": -24.36
+ }
+}

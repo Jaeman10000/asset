@@ -12,6 +12,7 @@ import { BoldThumb } from "./v4/BoldThumb";
 import { MascotSheet } from "./v4/Mascot";
 import { SceneThumb } from "./v4/SceneThumb";
 import { ChannelBanner } from "./v4/ChannelBanner";
+import { ChannelProfile } from "./v4/ChannelProfile";
 
 const P = sample as unknown as Props;
 const PU = sampleUS as unknown as Props;
@@ -51,6 +52,7 @@ export const Root: React.FC = () => (
     {/* 정보 영상 썸네일 — 어두운 바탕·초대형 글자·빨간 질문 띠·SVG 그림(JJ 9/19 밤, 사진·로고 없음) */}
     <Still id="BoldThumb" component={BoldThumb as never} width={1080} height={1920} defaultProps={P} />
     <Still id="ChannelBanner" component={ChannelBanner as never} width={2560} height={1440} defaultProps={{}} />
+    <Still id="ChannelProfile" component={ChannelProfile as never} width={900} height={900} defaultProps={{}} />
     <Still id="SceneThumb" component={SceneThumb as never} width={1080} height={1920} defaultProps={{}} />
     <Still id="MascotSheet" component={MascotSheet as never} width={1920} height={1080} defaultProps={{ pick: "kid" }} />
   </>

@@ -230,4 +230,4 @@ const route = (id: string): React.FC<SC> => (props) => {
   return X ? <X {...props} /> : null;
 };
 export const INFO_COMP: Record<string, React.FC<SC>> = Object.fromEntries(
-  [...Array.from({ length: 10 }, (_, i) => `i${i}`), "iz"].map((id) => [id, route(id)]));
+  [...Array.from({ length: 20 }, (_, i) => `i${i}`), "iz"].map((id) => [id, route(id)]));

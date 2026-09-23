@@ -1,0 +1,150 @@
+{
+ "date": "20260921",
+ "made_at": "2026-09-21T19:13+09:00",
+ "cands": [
+  {
+   "topic": "지수 큰 선",
+   "query": "코스피 7000",
+   "score": 106,
+   "outlets": 56,
+   "impact_titles": 25,
+   "titles": [
+    "09:40 mstoday.co.kr · 반도체가 끌어올린 코스피…7000선 돌파 후 상승폭 축소",
+    "11:59 스트레이트뉴스 · 코스피, 장중 7000선 돌파",
+    "13:13 v.daum.net · 코스피 장 중 7000선 또 다시 돌파…기관 1.2조 '사자'·개인 2.5조 '팔자'",
+    "13:49 아주경제 · [食전食후]삼성전자 5% 급등에 코스피 7000선 돌파…기관 1.3조 순매수",
+    "14:39 뉴스핌 · 코스피, 반도체 수출 호조에 장중 7000선 돌파",
+    "15:32 뉴시스 · [속보]코스피, 7000선 탈환…1.65% 오른 7007.72 마감",
+    "15:38 v.daum.net · [마감시황] 반도체 수출 역대 최대에 코스피 7000선 회복…삼성전자 5%",
+    "15:45 시사저널 · [속보] 코스피, 7000선 탈환…7007.72 마감"
+   ],
+   "links": [
+    "https://news.google.com/rss/articles/CBMibEFVX3lxTE9TZG5JcXpUVEhIQ2VWcG9nY2FCYTJtam8tZUl4bGM2djlOMWJDQWVBLUM2ZVBYdFUtNXBhOGJRczhWVE9aRzlQZmtqUkNQbngxMGVBR0dHRUJEMjFzZHFjMTNaV0JqVTduamNZWg?oc=5",
+    "https://news.google.com/rss/articles/CBMid0FVX3lxTFB2TGVBbW01YlB4TUZYVUVNZjZjcjhyc0wybjF1TUxKLWEzWHBwVmFjV0JVdS11eXZKVGtlS0ZoN0V4LTNMbzRuYkhOaWM0ZWNBVnpIRWdTS3pLWGNkM2ZxLU80ZjdpY0ozcWdvSlFSbHdRMHNDUFcw0gF3QVVfeXFMUHZMZUFtbTViUHhNRlhVRU1mNmNyOHJzTDJuMXVNTEotYTNYcHBWYWNXQlV1LXV5dkpUa2VLRmg3RXgtM0xvNG5iSE5pYzRlY0FWekhFZ1NLektYY2QzZnEtTzRmN2ljSjNxZ29KUVJsd1Ewc0NQVzA?oc=5",
+    "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBObHlBS1RVRWZDRjBoU3pkdF9acUFfZERKR0FDeWt0R1dhOWJmdkRFZTBxdG4wamVIaG5COTNrMmQxS1RJdS1odnBIV1dMbmc?oc=5",
+    "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5ZYnFiUXlvQ2c1QW5yOFF5elItdzY5dU9aak42N0NMaFZHVG5IdWhSeWc1WlhkMjdHWWhPT3l3XzNGLUo5OVRXWjdlTjIxVlJBeDdESElib2ZKQdIBWEFVX3lxTE9DT3AwTnNVY2FUYXFkclFvd01FOGFIc1Q1MkFMcE9fb1VoLTkxcXJ6ejVWQVdvYnVfbmZ1R3NhRFYzanhkOFFjU0xXd1NHRDRnaEhKU2tLTVk?oc=5"
+   ],
+   "why": "56개 매체, 바뀌는/정해진 일 제목 25건"
+  },
+  {
+   "topic": "증권사·앱",
+   "query": "MTS 장애",
+   "score": 74,
+   "outlets": 28,
+   "impact_titles": 23,
+   "titles": [
+    "09:30 이투데이 · 신한투자증권 '신한SOL증권' MTS, 접속장애 발생",
+    "09:36 NSP통신 · 신한투자증권, MTS 장애…개장 직후 접속 지연",
+    "09:47 뉴스1 · 신한투자증권 MTS·HTS 접속 지연…거래 장애 등 이용자 불편",
+    "09:51 연합인포맥스 · 신한투자증권, SOL증권 MTS·HTS 채널 장애",
+    "09:52 seoulfn.com · 신한투자증권, 개장 직후 MTS 장애 발생···\"원인 확인 중\"",
+    "09:56 서울경제 · 신한證, MTS 장애 발생…정규장서 매매 먹통",
+    "10:08 뉴데일리 · 신한투자증권, SOL증권 MTS·HTS 접속 장애 … \"현재는 정상화\"",
+    "10:16 핀포인트뉴스 · 신한투자증권, 온라인 채널(MTS·HTS) “전 채널 정상화”...한때 접속 장애"
+   ],
+   "links": [
+    "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9VMEVBRFFlWjQ1SmtFQk92ZVR6YkUwckNiSlJwVTZIdVU3Ynd4YUZaNS01eWJtU1hEUklNZkRIQUZlNDlEa251MnZYQjJGY3ZhVGhGeg?oc=5",
+    "https://news.google.com/rss/articles/CBMiYEFVX3lxTE43OXZqN1JiM0JWelY4UGVnS3JCb3RhSDJMZE1VclJoSk5jR1BHUHJjMk9Va01xOEpPZEhIVkNuNnp5bGdyamotX0Z2M19FdHZyZnd0WVhTcDRjWWxqTExaMw?oc=5",
+    "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBaYi1qdW5wR3VnbnFJQXZZVzN2azhOenVRQW83NW1UYkhDVG5KQmR6XzdYVTJ3OWdUdG5meWJQeEpxWFp5c0diU3FKSGlXSGxfNEpqRDU4REJHVl9NbkRN0gFkQVVfeXFMT0pEY1VHVldEeVNtOTR4R1g4RDRQZWhPeHhZWk9PeGlVR1ZqT2ZtX0RrZmRDYlAtV0ZMUmYtVkxnWVoyN1haNElETEpYWV9FX29iV2FGNWFuc0hSTHpRTUxGRFM4TA?oc=5",
+    "https://news.google.com/rss/articles/CBMicEFVX3lxTE1jUVVLd3FGcXMyWmxTd0lDMTl1N2RjYzUyS1FoRTRxcGxuY1ZXZjYxbVd2LUw4RUcwcklmM2hiVGlxanBORjR3X3oycFdOUmlQQ1hpTjlTRlUyVmJLV3BlR0FsZ3l2N29kMlZ1NUY2UDfSAXRBVV95cUxON0xaOE5VeEJ3NVVBNk5iUENrQTlQdWtDdXU2bWpsaUt0N2g2d2JqN3daYmsyUjdkOGRwdm5tRzlXaXhRQktxOElQTlpYODZlZjdTaTIwMnJCckdNV2VmZ1ZyUVVXekQwWE5PVTNEQ1g0aDRkUg?oc=5"
+   ],
+   "why": "28개 매체, 바뀌는/정해진 일 제목 23건"
+  },
+  {
+   "topic": "거래시간·휴장",
+   "query": "주식 거래시간",
+   "score": 62,
+   "outlets": 22,
+   "impact_titles": 20,
+   "titles": [
+    "09:00 미래경제 · KRX 애프터마켓 첫 주 거래대금 5.7조…거래시간 연장 효과 나타나나",
+    "09:22 yna.co.kr · [게시판] 대신증권, 국내 주식 거래시간 확대에 MTS 개편",
+    "09:39 한국정경신문 · 대신증권, 길어진 거래시간 맞춰 MTS 개편..프리·애프터마켓 편의성 개선",
+    "09:47 글로벌이코노믹 · 대신증권, 거래시간 확대 맞춰 MTS 개편…투자 편의성 강화",
+    "09:51 서울경제TV · 대신증권, 거래시간 확대에 MTS '사이보스·크레온' 개편",
+    "09:51 thefairnews.co.kr · \"거래시간 확대 대응\"…대신증권, MTS 개편해 편의성 강화",
+    "10:15 SBS Biz · 대신증권, 거래시간 확대 맞춰 MTS 개편…편의성 강화",
+    "10:32 브릿지경제 · 대신증권, 거래시간 확대 맞춰 MTS 개편…시장별 시세 한눈에"
+   ],
+   "links": [
+    "https://news.google.com/rss/articles/CBMibEFVX3lxTFBTd1F6QjdBd1RtRFlZd3FqUzBFa0VHS2VtRFJTdFFPcjlsN2lMYkFLSk1OUXlQdV9XTFFVNEY4QkVlQnRNT1BZYm01emRodGhCdWNoOU5MUU56VkhQZ1ZVOUlxWVBhSlBtbTBFUA?oc=5",
+    "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9Gb05UOHVta3V2cURydjNaZk9pQ00wQkRHYjF6LWhuaTNheDh1aHFkZWZEU09nU1g0Q3o1dW9PdGpocS1MZWdkNWloUjRFajVwYWVULXFNd3p6cHfSAWBBVV95cUxOTS03eFlJeEJVWXd1U21Ua2tPbmNpRFJubXpCc3RhUE91ckFsM1Y0UHd1V2xvSmVYYXc0SlJrMnZqQVBHb3ZhbzJ3SS1icTVhRjNPSVkydHRnODhOcFFja3o?oc=5",
+    "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBCU1l1dXJJVzA2MzZJdVAxVzBXSDYxMU5JZFVTV0NpazFQUDM5VXhodEFRX3Q3ZVBpLXdfdUZLd2h6UFRQd0Jpdkt2MnhjODV3b1E?oc=5",
+    "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQVHZLV0duZ2dZNWg2c2JwSXRPTlMxWjBxY21jdWdHZ0VhQ3RNOGNNSXB6QWNjZ2R2X0J2LXJNdmdEb2l2RXcxYlItSUJOeHlaREJ1UHBwZl9SdTkwOVhRbHk1TjNSUHlFd0JqRTNjd2NpZVRNMnBneG9DNEoyR0VlN0xMbVVrUXlk?oc=5"
+   ],
+   "why": "22개 매체, 바뀌는/정해진 일 제목 20건"
+  },
+  {
+   "topic": "거래시간·휴장",
+   "query": "애프터마켓",
+   "score": 59,
+   "outlets": 37,
+   "impact_titles": 11,
+   "titles": [
+    "09:21 아시아경제 · 대신증권, 애프터마켓 특징주 제공…MTS 화면 개편",
+    "10:28 디지털데일리 · “프리마켓부터 애프터마켓까지 한눈에”…대신증권, MTS 거래화면 개편",
+    "10:40 비즈워치 · 대신증권, 길어진 증시 맞춰 MTS 개편…애프터마켓 특징주도 제공",
+    "11:18 전자신문 · 대신증권, MTS UI·UX 개편…애프터마켓 정보도 제공",
+    "11:49 뉴스웍스 · [증권톡톡] 대신증권 애프터마켓 거래 MTS 화면 개편·KB증권 MTS '깨비오-커뮤니티' 서비스 오픈·유진투자증권 비토스와 토큰증권-스테이블코인 MOU",
+    "12:32 잡포스트 · 대신증권, 길어진 증시 맞춰 MTS 개편…프리·정규·애프터마켓 한눈에",
+    "13:15 Korea IT Times · 대신증권, 국내주식 MTS 전면 개편…프리마켓부터 애프터마켓까지 한 화면에",
+    "14:32 머니투데이 · 대신증권, MTS 화면 개편…애프터마켓서도 빠르게 특징주 확인 - 머니투데이"
+   ],
+   "links": [
+    "https://news.google.com/rss/articles/CBMiYkFVX3lxTE9RYmxUV3JVdm1aZ0llZ0pHU1VtQ0VHd2tQSms0M1VDM3FWS09OenIxT2JfRnZ2bUpnbmdUMDlVblVGOF8tZlVHbHBpX0E0eHM0eERoek8yWUlsM1NBVlhleThB?oc=5",
+    "https://news.google.com/rss/articles/CBMiZEFVX3lxTFAzOGdGMXpQbTQ2Z2Z1N0c3TVVmUUtpVU1xNGVNNUFoQTBaQ09lbC1KZDR3eFlMcVV3bjk2WDAtTFA2U09pZDZIVDJBd1JybnB0S05DcXlsei10aUxvZXFWN01ZMFM?oc=5",
+    "https://news.google.com/rss/articles/CBMiakFVX3lxTE51Mk9hMGluYXAtY2pYblV3OWNYdktPR3RPa2l4Sy1nLXNLdV9uRWUtcFV5UlJFTTI3emNMbWhlZF9ZUnNqelBhUWwtMmREbzg0SW8teG5rcWItNU1XbXlFb1I3dFJUNzNrSnc?oc=5",
+    "https://news.google.com/rss/articles/CBMiTkFVX3lxTE0yZFhNc09nRnJOYTV4YnBqN0hKdGxLbW1vZVgzS21WQzhQU0lUcWtSM1RlNzR2ajBNSFB3SllIUHNJWDBDaVdiOEdrdHQ2QQ?oc=5"
+   ],
+   "why": "37개 매체, 바뀌는/정해진 일 제목 11건"
+  },
+  {
+   "topic": "공매도·신용",
+   "query": "빚투",
+   "score": 33,
+   "outlets": 21,
+   "impact_titles": 6,
+   "titles": [
+    "08:33 아주경제 · 미성년자 미수거래 막는다…금리 인상 흐름 속 빚투 관리도 강화 예고",
+    "08:37 sisaworld.kr · 금융당국, 미성년자 미수거래 전면 금지 추진…빚투·레버리지 리스크도 동시 관리",
+    "09:11 파이낸스투데이 · 미성년자 '빚투' 원천 봉쇄… 금융당국, 미수거래 제도적 금지 추진",
+    "10:57 SBS Biz · 미성년자 주식 빚투 막힌다…미수거래 금지 명문화",
+    "11:44 폴리뉴스 Polinews · 금융당국, 미성년자 '미수거래' 원천 차단…금리 인상기 '빚투' 관리 강화",
+    "17:08 비즈중앙 · 미성년자 ‘빚투’ 원천 차단…미수거래 금지 명문화 추진",
+    "07:01 데일리안 · 떠나는 현금·늘어나는 빚투…개미 자금 '양극화'",
+    "08:14 한국경제 · [밤 사이 해외 뉴스 영상] 빚투 열풍에 결국…한국 증시, '글로벌 위험 요소' 낙인"
+   ],
+   "links": [
+    "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1PenNHazNGbXJzWWd5TFlWeFo0b1BoR3VnVjBMeEsxd0FFS1JxcXdYMU9WSngxb0I4QlRxTG15RXZxbVY0SVdVdVp4RWJqRXpSZmJyNUJkb03SAVhBVV95cUxNT3pzR2szRm1yc1lneUxZVnhaNG9QaEd1Z1YwTHhLMXdBRUtScXF3WDFPVkp4MW9COEJUcUxteUV2cW1WNElXVXVaeEViakV6UmZicjVCZG9N?oc=5",
+    "https://news.google.com/rss/articles/CBMiakFVX3lxTE9zLXp6U3lhWFItdWttM3dXSzh6RHdxd2NiNGIxZTdsNlJmZUR5OE9IczI0UzVLRGdLS1E5Q01YX3E4QTFONkxKOXpTSXBfYWduYU9YOVZBa0xMaUdHcjdCUVFsVjFlOWpSYVE?oc=5",
+    "https://news.google.com/rss/articles/CBMibEFVX3lxTE5BTUVxdFZTU2QtdS1zQlYxb0tYMXNqWDA1ZU5FdVFIbzZlRHlUTGMwWGp2SDhPNTFHR3hCZVViQ2NrNHVIc1ZjZklQekU2UUFiUGtxU0NDNUFoOGNnSXNEZVBWaWpjbzg1bWNIWg?oc=5",
+    "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9DMVRQel9nVVMyTW0zVVp6dTdCMmo4dXJybEM0Mk1rSmxPbFlXVHo1eW82XzVZMmRhdHZCNnFJVDMxY2IxdWkxRFh0c1JlMHRaeDdR0gFYQVVfeXFMUHJvZ1o5aGdZLVdWUzNkbnRXM1M5aXhLRDh1ekJCZ2ZjeGhRQXdkYU1CUFhOQkQtLUFtRXNVYlRmTzM3RjRKMGFlSjcwTTJxSXBXX2twMFA1dA?oc=5"
+   ],
+   "why": "21개 매체, 바뀌는/정해진 일 제목 6건"
+  },
+  {
+   "topic": "공모주·상장",
+   "query": "상장 첫날",
+   "score": 24,
+   "outlets": 22,
+   "impact_titles": 1,
+   "titles": [
+    "09:57 뉴데일리 · 희망가보다 27% 낮게 공모가 확정한 '네오사피엔스', 상장 첫날 168% 폭등",
+    "06:00 서울경제 · 새내기주 줄상장…네오사피엔스·와이즈플래닛, 코스닥 데뷔 [이번주 증시 캘린더]",
+    "07:00 edaily.co.kr · 'AI 음성 생성' 네오사피엔스, 코스닥 입성[오늘 상장]",
+    "07:12 헤럴드경제 · “‘1엔=8.8원’짜리 스테이블코인이 37.6원에 거래”…업비트 상장 첫날 JPYC에 무슨 일이 [크립토360]",
+    "09:01 이투데이 · [특징주] 네오사피엔스, 상장 첫날 공모가 대비 150% 상승 출발",
+    "09:12 한국경제 · 네오사피엔스, 코스닥 상장 첫날 200%대 급등",
+    "09:13 v.daum.net · [특징주] 네오사피엔스, 코스닥 상장 첫날 195%대↑",
+    "09:17 gukjenews.com · 네오사피엔스, 상장 첫날 190% 급등...코스닥 입문 성공"
+   ],
+   "links": [
+    "https://news.google.com/rss/articles/CBMigAFBVV95cUxNcXdjd3pZVEszRDZjRi1YeHlMWkxVN1ZLVGRXa3Z6R0VBYThwdHBEc1V0WWljQmNpQXY5bEw3MHlVTGNSQzNoVDF4b283RDB0eTU3NGczZ1JESGRHWDZaYXQ5WnExWHI4MTZIaTJmMm5hbUZ4NWh6TFd4YThkdU0tZNIBgAFBVV95cUxNcXdjd3pZVEszRDZjRi1YeHlMWkxVN1ZLVGRXa3Z6R0VBYThwdHBEc1V0WWljQmNpQXY5bEw3MHlVTGNSQzNoVDF4b283RDB0eTU3NGczZ1JESGRHWDZaYXQ5WnExWHI4MTZIaTJmMm5hbUZ4NWh6TFd4YThkdU0tZA?oc=5",
+    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1yeU9VQlQycjhobUdpNFU2WlFTZGFlcXN2eHF4QU9xY3l5WlNnMW9oRDFyN1E1SXZVSUU0YWYtQmVkbWxlOGRSMGZmdVVMYzZ2Sm9MX0RR?oc=5",
+    "https://news.google.com/rss/articles/CBMigAFBVV95cUxQTFl0NXdxNDBmZWwxUDFpdjNYajlLY181amFEM0d3WVVrOW8tS0lHbkZtY1RNVXdPQkhyU3RDV1dHbzJmcGQtLXVxOUZYVkdkNXJuNHdIOWxDMERnMG0waWkxMXMtNGsxZ05ONnVFdkxKMzNZNlBXazdyYk5fZk5IWQ?oc=5",
+    "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBORnl1TkhYdHl2OEkyd2ZNTGhxSWdaUUJlS2JoVjEzN04yS0xtaTUyLVFBYjBmLUNpNTg2QWR0S25fQjMzTExsTXVjdFdIcHJENnViT0tn?oc=5"
+   ],
+   "why": "22개 매체, 바뀌는/정해진 일 제목 1건"
+  }
+ ]
+}

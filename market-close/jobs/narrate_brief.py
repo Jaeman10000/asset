@@ -1472,9 +1472,14 @@ def _s4(x: dict, pk: Picker) -> tuple[list, dict, str]:
     day = f"{int(d[4:6])}월 {int(d[6:8])}일"
     doc = f"키움 종목별 투자자 표 · {int(d[4:6])}/{int(d[6:8])} 마감 기준"
     pairs: list[tuple[str, str]] = []
-    pairs.append(("open", pk(["종목마다 누가 사고 팔았는지 직접 확인해 봤습니다.", "종목으로 확인해 보면 이렇습니다.", "두 종목을 하나씩 확인해 보면 이렇습니다.", "종목별로 누가 샀는지 직접 확인해 봤습니다.", "종목 하나하나 누가 샀는지 직접 확인해 봤습니다.",
-                              "종목마다 외국인, 기관, 개인이 얼마나 샀는지 직접 확인해 봤습니다."])))
     stocks, th, full = _pick_stocks(x)
+    # 여는 말에 개수를 박은 후보("두 종목…")는 실제로 둘일 때만 쓴다 — v7 뒤 _pick_stocks 가 셋을 돌려주는 날이 있는데
+    # 9/22 편이 하필 그 후보를 뽑아 "두 종목"이라 해 놓고 셋을 말했다(네 갈래 검토, JJ "개수는 원자료로 다시 센다").
+    opens = ["종목마다 누가 사고 팔았는지 직접 확인해 봤습니다.", "종목으로 확인해 보면 이렇습니다.", "종목별로 누가 샀는지 직접 확인해 봤습니다.",
+             "종목 하나하나 누가 샀는지 직접 확인해 봤습니다.", "종목마다 외국인, 기관, 개인이 얼마나 샀는지 직접 확인해 봤습니다."]
+    if len(stocks) == 2:
+        opens.insert(2, "두 종목을 하나씩 확인해 보면 이렇습니다.")
+    pairs.append(("open", pk(opens)))
     calc, kind = None, "K0"
     rows_out = []
     if not stocks:
@@ -2113,16 +2118,23 @@ def _s6(x: dict, c: dict, cont: dict, brand: str, pk: Picker, attempt: int, comp
     word = _word(x["amount"] if x["amount"] else -1)
     nd = na.next_trading_day(d)
     nxt = _day_word(d, nd.strftime("%Y%m%d"), past=False)
+    # '무엇을 보나' 뒤에는 **왜 그게 중요하고 어떤 값이면 의미가 있는지**(why)를 반드시 붙인다.
+    # JJ 2026-09-22: "그냥 뭘 봐야할지만 딱 말하지말고 그 이유와 어떤 기준으로 봐야하는지도 알려줘야해."
+    # 나열만 하면 시청자가 내일 무엇을 근거로 판단할지 모른다 — 검사기(qa_script S6_CRITERION)가 없으면 실패시킨다.
     if P in ("외국인", "기관"):
         n = (st + 1) if st >= 1 else 2
         next_q = f"{P} {word}가 {dko(n)} 이어지는지"
-        w1 = {"q": next_q, "threshold": f"{n}거래일째", "spoken": next_q}
+        w1 = {"q": next_q, "threshold": f"{n}거래일째", "spoken": next_q,
+              "why": (f"오늘까지 {dko(st)}라, 하루 더 이어져야 흐름으로 굳어진 것으로 봅니다." if st >= 2
+                      else "오늘 하루 만에 방향을 바꾼 자리라, 이틀 연속이라야 방향이 바뀐 것으로 봅니다.")}
     else:
         frg = x["vals"].get("외국인")
         stf = abs(((x["streak"].get("foreign") or {}).get("streak")) or 0)
         wf = "순매도" if (frg or 0) < 0 else "순매수"
         next_q = f"외국인 {wf}가 {dko(stf + 1)} 이어지는지" if stf else f"외국인 {wf}가 이어지는지"
-        w1 = {"q": next_q, "threshold": f"{stf + 1}거래일째" if stf else "같은 부호", "spoken": next_q}
+        w1 = {"q": next_q, "threshold": f"{stf + 1}거래일째" if stf else "같은 부호", "spoken": next_q,
+              "why": (f"오늘까지 {dko(stf)}라, 하루 더 이어져야 흐름으로 굳어진 것으로 봅니다." if stf >= 2
+                      else "오늘 방향을 바꾼 자리라, 이틀 연속이라야 방향이 바뀐 것으로 봅니다.")}
     watch = [w1]
     in_th = x["in_th"]
     oth, ob = x["oth"], cont.get("others_buy_days") or 0
@@ -2132,11 +2144,13 @@ def _s6(x: dict, c: dict, cont: dict, brand: str, pk: Picker, attempt: int, comp
         ins = [t for t in (x.get("in_ths") or []) if t != in_th and (_num((x["themes"].get(t) or {}).get("net")) or 0) >= 100]
         if ins and max(int((x["themes"].get(ins[0]) or {}).get("streak") or 0), 1) == stk:
             q2 = f"{tname(in_th)}·{tname(ins[0])} 순매수가 {dko(stk + 1)} 이어지는지"     # 9/17 조선·방산 같은 날 첫 유입
-        w2 = {"q": q2, "threshold": dko(stk + 1), "spoken": q2}   # 장부 문장 그대로 말한다 — 짧고, 겹침 검사 예외(BRIEF_FIX_1 §B)
+        w2 = {"q": q2, "threshold": dko(stk + 1), "spoken": q2,   # 장부 문장 그대로 말한다 — 짧고, 겹침 검사 예외(BRIEF_FIX_1 §B)
+              "why": f"오늘 {hwon(abs(_num(x.get('in_t')) or 0))}이 들어온 자리라, 내일도 들어와야 이어지는 것으로 봅니다."}
     elif oth >= 3000 and ob >= 1:
         obw, _cap = _ob_word(cont, d, ob)
         thr = int(oth // 1000 * 1000)
-        w2 = {"q": f"기타법인 순매수가 {obj(hwon(thr))} 지키는지", "threshold": hwon(thr), "spoken": f"기타법인 순매수가 {obj(hwon(thr))} 지키는지", "note": f"{obw} 지켜온 선입니다."}
+        w2 = {"q": f"기타법인 순매수가 {obj(hwon(thr))} 지키는지", "threshold": hwon(thr), "spoken": f"기타법인 순매수가 {obj(hwon(thr))} 지키는지", "note": f"{obw} 지켜온 선입니다.",
+              "why": f"{hwon(thr)}을 밑돌면 받쳐 주던 힘이 빠진 것으로 봅니다."}
     else:
         w2 = None
     if w2:
@@ -2155,8 +2169,12 @@ def _s6(x: dict, c: dict, cont: dict, brand: str, pk: Picker, attempt: int, comp
     if False and promise_days >= 2:          # v7(JJ 2026-09-19): 시리즈 문장은 구독자가 생길 때까지 쉰다
         pairs.append(("watch_same", f"{nxt}도 우리는 같은 것을 봅니다."))
     pairs.append(("watch:0", plain(f"{w1['spoken']}.").replace("이어지는지.", "이어질 것인지.")))
+    if w1.get("why"):
+        pairs.append(("watch:0_why", w1["why"]))       # 왜·어떤 기준이면 의미가 있나(JJ 2026-09-22)
     if w2:
         pairs.append(("watch:1", plain(f"{w2['spoken']}.").replace("이어지는지.", "이어질 것인지.")))
+        if w2.get("why"):
+            pairs.append(("watch:1_why", w2["why"]))
         if w2.get("note"):
             pairs.append(("note", w2["note"]))
     if ev:

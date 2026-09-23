@@ -123,6 +123,27 @@ def prev_trading_day(d: str) -> str:
 _DATE_RE = r"(\d{1,2}월\s*\d{1,2}일|\d{1,2}/\d{1,2})"
 
 
+def tag_tail(title: str, tag: str) -> str:
+    """정보형 제목 — **날짜를 붙이지 않는다**(JJ 2026-09-21).
+    "정보성 영상은 날짜를 앞으로 안 보여줘도 될 것 같아. 그러면 유기적으로 업로드 날짜 변경할 때 그냥 바꾸면 되니까."
+    국장 마감·주간 브리핑은 그대로 date_tail 을 쓴다(날짜 항상 붙임)."""
+    import re
+    t = (title or "").strip()
+    t = re.sub(r"^\s*" + _DATE_RE + r"\s*", "", t).strip()
+    t = re.sub(r"\s*#\d{2,4}(?=\s|$)", "", t).strip()
+    m = re.search(r"^(.*?)\s*\|\s*([^|]*)$", t)
+    if m:                                   # 이미 '| 9/30 환율' 이면 날짜만 떼고 꼬리표는 살린다
+        head, last = m.group(1).strip(), re.sub(_DATE_RE, "", m.group(2)).strip(" ·-")
+        return (f"{head} | {last}" if last else head)[:100]
+    return (f"{t} | {tag}" if tag else t)[:100]
+
+
+def strip_date(s: str) -> str:
+    """썸네일 태그·배지에서 날짜만 떼어 낸다 — '9/25 로봇 해설' → '로봇 해설'."""
+    import re
+    return re.sub(_DATE_RE, "", s or "").strip(" ·-") or (s or "").strip()
+
+
 def date_tail(title: str, tail: str) -> str:
     import re
     t = (title or "").strip()

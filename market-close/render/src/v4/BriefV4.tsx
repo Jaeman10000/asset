@@ -492,6 +492,9 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
   const b0 = stepAt("b") ?? stepAt("B") ?? say(h.b) ?? say("돈이 올린") ?? Math.min(vCap, a0 + 3);
   const vAt = verdicts.map((v, k) => stepAt(`verdict:${k}`) ?? sayAfter(v.theme, b0) ?? b0 + 3 + k * 3);
   const v0 = stepAt("verdict") ?? (vAt.length ? Math.min(...vAt) : sayAfter("쪽입니다", b0) ?? b0 + 3);
+  // 그 장면의 핵심 숫자(예: 삼성전기 외국인·기관 3,200억)는 props 에 들어와 있는데 그리는 코드가 없어
+  // 9/22 편에서 화면에 끝까지 안 나왔다(네 갈래 검토). 말하는 문장(support 단계)에 맞춰 띄운다.
+  const su0 = h.support ? stepAt("support") ?? say(h.support.value) ?? 1e9 : 1e9;
   const c0 = stepAt("condition") ?? say("뒤집") ?? (vAt.length ? Math.max(...vAt) : v0) + 3;
   const cb = h.callback ?? null;
   const k0 = cb ? stepAt("callback") ?? sayAfter(cb.a, b0) ?? c0 + 3 : 1e9;
@@ -502,7 +505,9 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
     { k: "a", text: h.a, sub: h.a_sub ?? "큰손 돈은 작다", at: a0 }, { k: "b", text: h.b, sub: h.b_sub ?? "외국인·기관이 같이 산다", at: b0 }];
   const cbAnswer = cb ? (cb.text || cb.b || "") : "";
   const cbSize = Math.max(26, Math.min(40, Math.floor(600 / Math.max(1, cbAnswer.length))));
-  const NT = 266, NH = 184, NG = 12, ABT = NT + 2 * (NH + NG), ABH = 232, CT = ABT + ABH + 20, KT = CT + 200, LT = KT + 78;
+  // 받침 숫자 카드는 A/B 칸 **아래**에 놓는다 — 위로 올리면 A/B 두 칸을 그대로 덮는다(2026-09-23 내가 덮어 놓고 못 봤다).
+  const NT = 266, NH = 184, NG = 12, ABT = NT + 2 * (NH + NG), ABH = 232, SUT = ABT + ABH + 20, SUH = 110;
+  const CT = SUT + (h.support ? SUH : 0), KT = CT + 200, LT = KT + 78;
   // 간밤 미국 금리 결정(JJ 2026-09-17) — 뉴스 카드가 뜨기 전 금리 문장 동안 빈 화면이 되지 않게 같은 자리에 카드 하나
   const mc = h.macro ?? null;
   const m0 = mc ? (stepAt("lead") ?? stepAt("macro") ?? stepAt("macro_2") ?? 0) : 1e9;
@@ -570,6 +575,14 @@ export const S5B: React.FC<SC> = ({ p, cues }) => {
           );
         })}
       </div>
+      {h.support && t >= su0 ? (
+        <div style={{ position: "absolute", left: 64, right: 64, top: SUT }}>
+          <Card color={GREEN} style={{ ...pop(su0), padding: "14px 28px", display: "flex", alignItems: "center", gap: 20 }}>
+            <span style={{ fontSize: 32, fontWeight: 800, color: SUBC, whiteSpace: "nowrap" }}>{h.support.label}</span>
+            <span style={{ fontSize: 56, fontWeight: 900, color: GREEN, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{h.support.value}</span>
+          </Card>
+        </div>
+      ) : null}
       {h.condition && t >= c0 ? (
         <div style={{ position: "absolute", left: 64, right: 64, top: CT }}>
           <Card color={YEL} style={{ ...pop(c0), padding: "18px 30px" }}>

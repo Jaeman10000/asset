@@ -1,4 +1,4 @@
-/** 유튜브 채널 배너 (2560×1440, 모든 기기 안전 영역 가운데 1546×423) — 주사위 탐정 + 누가샀나 (JJ 9/20) */
+/** 유튜브 채널 배너 (2560×1440, 모든 기기 안전 영역 가운데 1546×423) — 주사위 탐정 v3 정장 + 누가샀나 (JJ 9/20, 캐릭터 9/21 교체) */
 import React from "react";
 import { AbsoluteFill, Img, staticFile } from "remotion";
 import { FONT } from "../tokens";
@@ -22,12 +22,12 @@ export const ChannelBanner: React.FC = () => (
     <Bars x={2100} flip />
     {/* 탐정 — 안전 영역 왼쪽, 발은 안전 영역 아래 끝 */}
     <div style={{ position: "absolute", left: SX + 50, top: SY + 4, height: SH - 4, filter: "drop-shadow(0 18px 30px rgba(0,0,0,0.6))" }}>
-      <Img src={staticFile("mascot/thumbs_found.png")} style={{ height: SH - 4 }} />
+      <Img src={staticFile("mascot/v3/thumbs_found.png")} style={{ height: SH - 4 }} />
     </div>
     <div style={{ position: "absolute", left: SX + 420, top: SY + 18, width: SW - 440 }}>
       <div style={{ fontSize: 190, fontWeight: 900, color: "#FFFFFF", lineHeight: 1, letterSpacing: "-0.04em", WebkitTextStroke: "14px #000", paintOrder: "stroke fill" }}>누가샀나<span style={{ color: RED }}>.</span></div>
       <div style={{ fontSize: 70, fontWeight: 900, color: YEL, marginTop: 26, letterSpacing: "-0.03em", WebkitTextStroke: "8px #000", paintOrder: "stroke fill" }}>오늘 주식, 누가 샀을까?</div>
-      <div style={{ fontSize: 40, fontWeight: 800, color: "#CFD6E4", marginTop: 26 }}>평일 저녁 5시 국장 마감 · 토 주간 결산 · 일 미장 주간</div>
+      <div style={{ fontSize: 40, fontWeight: 800, color: "#CFD6E4", marginTop: 26 }}>아침 7시 30분 정보 · 평일 저녁 5시 국장 마감 · 토 결산 · 일 미장</div>
     </div>
   </AbsoluteFill>
 );

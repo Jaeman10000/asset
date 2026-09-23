@@ -138,6 +138,12 @@ def main(d: str, draw: bool = True) -> Path | None:
         if not s:
             log(d, "thumb", "훅 숫자가 없어 썸네일을 건너뛴다")
             return None
+        # 국장 마감 썸네일에는 날짜를 **항상** 붙인다 — JJ 2026-09-21
+        # "국장 수급 영상과 주간브리핑 영상에는 날짜는 항상 붙이고 정보성 영상은 날짜를 앞으로 안 보여줘도 될것같아."
+        # 9/16~9/21 내내 badge 없이 나갔다(아무도 안 넣어서). 여기서 한 번에 채운다.
+        for cand in (s.get("cands") or {}).values():
+            if isinstance(cand, dict) and not cand.get("badge") and len(d) >= 8 and d[:8].isdigit():
+                cand["badge"] = f"{int(d[4:6])}/{int(d[6:8])} 국장 마감"
         p = DATA / d / "thumbs.json"
         save_json(p, s)
         lines = " / ".join(x["t"] for x in s["cands"]["A"]["lines"])

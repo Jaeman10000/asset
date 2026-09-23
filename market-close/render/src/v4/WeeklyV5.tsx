@@ -60,7 +60,9 @@ const Card: React.FC<{ color: string; children: React.ReactNode; style?: React.C
 const Shell: React.FC<{ p: Props; cues?: Cue[]; bg?: string; hideSub?: boolean; children: React.ReactNode }> = ({ p, cues, bg = "city_neutral", hideSub, children }) => {
   const { t } = useT();
   const w = wk(p);
-  const c = !hideSub && cues ? cues.find((x) => t >= x.start && t < x.end + 0.5) : undefined;
+  // 겹치면 나중 것 — 0.5초 꼬리 때문에 find 가 앞 자막을 집으면 화면보다 늦는다(JJ 2026-09-21)
+  const _on = !hideSub && cues ? cues.filter((x) => t >= x.start && t < x.end + 0.5) : [];
+  const c = _on.length ? _on[_on.length - 1] : undefined;
   return (
     <AbsoluteFill style={{ background: "#05070D", fontFamily: FONT, color: "#FFFFFF", fontVariantNumeric: "tabular-nums" }}>
       <AbsoluteFill><Img src={staticFile(`bg/${bg}.jpg`)} style={{ width: "100%", height: "100%", objectFit: "cover" }} /><AbsoluteFill style={{ background: "rgba(3,5,10,0.55)" }} /></AbsoluteFill>

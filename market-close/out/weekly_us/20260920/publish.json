@@ -1,0 +1,35 @@
+{
+ "date": "20260920",
+ "edition": "weekly_us",
+ "format": "미국 주간 결산",
+ "youtube": {
+  "id": "-6cD8isX-uQ",
+  "url": "https://youtube.com/shorts/-6cD8isX-uQ",
+  "status": "public (12:00 공개 확인)",
+  "scheduled_at": "2026-09-20 12:00",
+  "title": "미국 금리 올렸는데…AI 반도체는 왜 다시 올랐을까? | 9/14–9/18 미장 주간",
+  "thumb": "thumb_S.jpg",
+  "uploaded": "2026-09-19 밤 세션(JJ '이것만 수정하고 이제 예약으로 올려놓자')",
+  "thumb_history": [
+   "thumb_A.jpg (노란 상자+3줄, 9/19 밤 예약 때)",
+   "thumb_S.jpg (Gemini 장면+주사위 탐정+우리 글자, 9/20 01:05 교체 — JJ)"
+  ],
+  "reuploaded": "2026-09-20 01:5x — 주사위 탐정 출연판으로 다시 올림(JJ '해. 세 편 다 캐릭터 넣어서 다시 만들어' → '올려')",
+  "replaced": {
+   "old_id": "r68W0urpjBY",
+   "old_status": "비공개(예약 취소, 삭제 안 함)"
+  }
+ },
+ "threads": {
+  "status": "posted",
+  "url": "https://www.threads.com/@bearpicks_official/post/DdflFEltGEg",
+  "posted_at": "2026-09-20 12:1x",
+  "account": "@bearpicks_official",
+  "text_file": "threads.txt",
+  "text": "미국이 금리를 올렸는데 돈은 AI 칩으로 몰렸더라.\n월요일엔 반도체가 하루에 5.9%나 빠졌거든.\n근데 목요일에 젠슨 황이 내년엔 칩 두 배 판다고 하니까 이틀 만에 다 메웠어.\n\n대신 금리에 민감한 쪽은 빠졌어. 유틸리티, 은행 같은 데.\n\n나는 월요일에 외국인이 삼성전자·SK하이닉스를 다시 사는지부터 볼 거야.\n미국 AI 칩으로 간 돈이 한국까지 오는지 궁금해서.\n너넨 이 돈, 한국 반도체까지 올 거라고 봐?",
+  "topic_tag": "미장 (본문 #미장 → 스레드 주제 태그로 붙음)",
+  "image": "thumb_S.jpg",
+  "reply": "영상으로 정리해 뒀어 → https://youtube.com/shorts/-6cD8isX-uQ",
+  "note": "9/20 특례 — JJ 확인 문안 그대로 게시. 12:00 예약 공개 재생 확인 뒤 올림."
+ }
+}

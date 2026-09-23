@@ -1,0 +1,32 @@
+{
+ "date": "20260920",
+ "edition": "info",
+ "format": "금리 해설",
+ "youtube": {
+  "id": "o3zgNuMvnZM",
+  "url": "https://youtube.com/shorts/o3zgNuMvnZM",
+  "status": "scheduled",
+  "scheduled_at": "2026-09-20 18:00",
+  "title": "미국·일본 금리 인상…코스피는 버틸 수 있을까? | 9/20 금리 해설",
+  "thumb": "thumb_S.jpg",
+  "uploaded": "2026-09-19 밤 세션(JJ '이것만 수정하고 이제 예약으로 올려놓자')",
+  "thumb_history": [
+   "thumb_B.jpg (BoldThumb, 9/19 밤 예약 때)",
+   "thumb_S.jpg (Gemini 장면+주사위 탐정+우리 글자, 9/20 00:59 교체 — JJ '금리 영상 썸네일 이걸로 바꿔')"
+  ],
+  "reuploaded": "2026-09-20 01:5x — 주사위 탐정 출연판으로 다시 올림(JJ '해. 세 편 다 캐릭터 넣어서 다시 만들어' → '올려')",
+  "replaced": {
+   "old_id": "Vbfskev1x2Q",
+   "old_status": "비공개(예약 취소, 삭제 안 함)"
+  }
+ },
+ "threads": {
+  "status": "posted",
+  "text_file": "threads.txt",
+  "reply": "영상으로 정리해 뒀어 → https://youtube.com/shorts/o3zgNuMvnZM",
+  "url": "https://www.threads.com/@bearpicks_official/post/DdgOS60tLgJ",
+  "posted_at": "2026-09-20 18:08",
+  "image": "thumb_S.jpg",
+  "reply_status": "posted (첫 답글)"
+ }
+}

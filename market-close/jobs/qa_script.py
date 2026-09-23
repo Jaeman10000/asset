@@ -43,7 +43,9 @@ LIMIT = {"day": 172, "kr": 172, "us": 172}  # 초 상한 = 쇼츠 한계 180초 
 # 180초를 넘기면 쇼츠가 아니라 일반 영상으로 분류돼 쇼츠 피드에서 빠진다 — 우리 조회수의 96~97%가 거기서 온다.
 # 그 아래로는 길이를 재지 않는다(JJ 2026-09-14): "2분 넘어도 3분이 되도 상관없다. 짧아서 끝까지 본다고 좋은 영상이 아니다."
 FLOOR = {"day": 75, "kr": 90, "us": 90}     # 초 하한 — 이만큼도 안 되면 할 말이 없었다는 뜻이다
-CLOSE_MAX = {"day": 480, "kr": 340, "us": 340}   # 평일 312 = 시청자 질문·좋아요 두 줄이 들어간 20260914 규격   # 마무리 두 장면(s5+s6) 자수 상한. 평일 285 = 20260911 확정본 278 + 여유
+CLOSE_MAX = {"day": 480, "kr": 420, "us": 340}   # 마무리 두 장면(s5+s6) 자수 상한.
+# kr 340 → 420 (JJ 2026-09-22): s6 관측값마다 '왜·어떤 기준이면 의미가 있나'를 붙이면서 늘렸다.
+# 9/22 실측 s5 229 + s6 103 = 332 으로 340 코앞이라, 이유 문장(관측값당 ~35자)이 들어갈 자리가 없었다.
 # 매 편 똑같이 들어가는 고정문 — 뼈대 중복 검사에서 뺀다(빼지 않으면 매일 '겹침'으로 잡힌다)
 FIXED = ("그 답이 궁금하면 구독해 두세요.", "누가샀나였습니다.", "국장 마감은 매일 오후 5시에 올라옵니다.",
          "국장 마감은 매일 저녁 5시에 올라옵니다.", "국장 마감은 내일부터 매일 저녁 5시에 올라옵니다.",
@@ -96,6 +98,9 @@ S4_OPEN = re.compile(r"직접 열어\s?봤습니다|열어\s?보면|여기 이 �
 S4_CALC = re.compile(r"(?:\d|" + _HNUM + r")\s?배(?!경|당|달|우|추|송|터|급|제|치|후)"       # 29배, 다섯 배
                      r"|\d+분의\s?\d+|며칠치|\d+\s?(?:거래|영업)?일치|\d[\d,.]*\s?%")
 S6_THRESH = re.compile(r"(?:\d[\d,.]*|" + _HNUM + r")\s?(?:거래|영업)?(?:천|백)?(?:일째|억|조|%|선)" + r"|" + _DAYWORD + r"째")
+# S6 기준 표현 — "…라야/…어야 …으로 봅니다", "…넘는지", "…밑돌면" 처럼 **어떤 값이면 의미가 있는지**를 말했는가.
+# 관측값 나열만 하고 기준이 없으면 시청자가 내일 무엇을 근거로 판단할지 모른다(JJ 2026-09-22).
+S6_CRITERION = re.compile(r"(?:라|어|여|져|와|아|해|돼|추|켜)야|되어야|넘는지|넘으면|밑돌면|지키는지|돌아서면")
 SCREEN_DIR = re.compile(r"보세요|여기 이 칸|왼쪽|오른쪽|위 칸|아래 칸|막대|여기 진행률")
 # 브리핑(평일편)은 반대로 **화면을 말로 설명하면 실패**한다(JJ 2026-09-16: "오른쪽 도장입니다를 왜 말로 설명해? 이미 화면에 보여주는데").
 # 화면은 말에 맞춰 켜진다 — 말은 사람이 시장을 설명하듯 한다. 따옴표 안(뉴스 제목)은 세지 않는다('신용카드'·'디스플레이 화면' 같은 기사 낱말).
@@ -349,7 +354,7 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None,
     # ⑧⑨ S5: 판정 문장 + 뒤집히는 조건, 질문으로 끝내지 않는다
     if sents.get("s5"):
         if not S5_VERDICT.search(txt["s5"]):
-            fail("s5", "판정 문장 없음('오늘은 ___ 쪽입니다')", sents["s5"][-1])
+            fail("s5", "판정 문장 없음 — 뉴스가 올린 값인지 돈이 올린 값인지 한 문장으로(예: '뉴스가 아니라 돈이 값을 올렸습니다')", sents["s5"][-1])
         if not S5_FLIP.search(txt["s5"]):
             fail("s5", "뒤집히는 조건 없음", sents["s5"][-1])
         if is_question(sents["s5"][-1]):
@@ -360,6 +365,11 @@ def check_hunter(scenes: list[dict], comp: dict, recs: list[dict] | None = None,
         body = [x for x in sents["s6"] if not _is_sig(x)]
         if not any(S6_THRESH.search(x) for x in body):
             fail("s6", "임계값 숫자 없음(N일째|N억|N조|N%|N선)", body[0] if body else sents["s6"][0])
+        # ⑩-1 '왜·어떤 기준으로 보나' — 무엇을 볼지만 나열하면 시청자가 판단 근거를 모른다.
+        # JJ 2026-09-22: "그냥 뭘 봐야할지만 딱 말하지말고 그 이유와 어떤 기준으로 봐야하는지도 알려줘야해."
+        if body and not any(S6_CRITERION.search(x) for x in body):
+            fail("s6", "기준 문장 없음 — 무엇을 볼지만 말했다. 관측값마다 '오늘 N이라 …라야/…어야 …으로 봅니다'로 "
+                       "왜 그게 중요하고 어떤 값이면 의미가 있는지 붙인다", body[-1])
 
     # ⑪ 전체: 금지어 · 추천 표현 · 마지막 문장 질문 금지
     reco_hits: dict[str, set[str]] = {}
@@ -441,6 +451,18 @@ def _first_with(sents: list[str], pred, default: str = "") -> str:
     return next((x for x in sents if pred(x)), default)
 
 
+def _said_recent(comp: dict, needle: str, n: int = 3) -> bool:
+    """최근 n편 대사에 이 말이 있었나 — script_memory.editions() 를 쓴다(없으면 조용히 False)."""
+    try:
+        import script_memory as _sm
+        d = str(comp.get("date") or "")
+        if not d:
+            return False
+        return any(needle in sc["tts"] for e in _sm.editions(before=d)[-n:] for sc in e["scenes"])
+    except Exception:
+        return False
+
+
 def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, warn: list[str] | None = None) -> list[str]:
     """브리핑 포맷 대본 검사(설계 docs/BRIEF_FORMAT_DESIGN.md §3). 빈 목록이면 통과.
 
@@ -461,6 +483,80 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
     H = _hunter_comp(comp)
     d = str((comp or {}).get("date") or "")
 
+    # ── 화면 단계(steps)가 문장과 1:1 인가 ──────────────────────────────────────────
+    # 화면은 steps[i] 로 켜진다(HunterV4.useSteps.at → steps.indexOf(이름) → 그 문장의 시각).
+    # 그래서 **이름이 겹치면** indexOf 가 앞엣것만 찾아 뒤 문장에서 화면이 안 바뀌고(9/22 s3a 'promise2_2' 두 번 → 8초 정지),
+    # **steps 가 문장보다 적으면** 뒤 단계가 앞 문장으로 당겨진다(9/22 s6 5개 vs 7문장 → 'sig'(끝 화면)가 13초 먼저 떠서
+    # 마지막 세 문장이 자막도 없이 끝 화면 위에 소리만 나갔다 — JJ "대사와 영상이 후반에 아예 안 맞는다").
+    # 손으로 script_edit.json 을 쓰거나 computed_kr.json 을 직접 고칠 때 반드시 어긴다. 그래서 검사기가 본다.
+    # s4 가 "두 종목"이라 해 놓고 셋을 말하는 사고(9/22) — 개수를 말했으면 표의 종목 수와 같아야 한다
+    _CNT = {"한": 1, "두": 2, "세": 3, "네": 4, "다섯": 5}
+    s4n = len(((H.get("s4") or {}).get("stocks")) or [])
+    for x in sents.get("s4") or []:
+        m = re.search(r"(한|두|세|네|다섯)\s?종목", x)
+        if m and s4n and _CNT[m.group(1)] != s4n:
+            fail("s4", f"'{m.group(1)} 종목'이라 했는데 표에는 {s4n}종목 — 개수는 원자료로 다시 센다", x)
+
+    # 그 슬롯의 렌더러가 **모르는 단계 이름**을 붙이면 그 문장은 화면이 없다(타이머로 엉뚱하게 뜨거나 아예 안 뜬다).
+    # 목록은 render/src/v4 의 S0H·S1H·S2H·S3aB·S3bB·S3cB·S4B·S5B·S6H 에서 뽑은 것이다(2026-09-23).
+    # 이름을 새로 쓰려면 컴포넌트에 먼저 넣는다. 'q' 는 마지막 문장이 물음표면 자동 전환이라 어디서나 허용.
+    KNOWN_STEPS = {
+        "s0": {"a", "b", "card"},
+        "s1": {"q"},
+        "s2": {"naive", "bar", "admit", "reveal", "top", "turn"},
+        "s3a": {"kosdaq", "bar", "index", "verdict", "promise", "stamp", "turn"},
+        "s3b": {"row", "split", "streak", "leaders", "turn", "support", "rest"},
+        "s3c": {"move", "row", "t1", "t2", "names", "more", "ratio"},
+        "s4": {"doc", "open", "row", "driver", "calc"},
+        "s5": {"news", "a", "A", "b", "B", "verdict", "support", "condition", "limit", "callback", "lead",
+               "macro", "macro_1", "macro_2", "macro_link"},
+        "s6": {"intro", "lead", "watch", "event", "after", "sig"},
+    }
+    # render/src/v4/HunterV4.tsx 의 STEP_ALIAS 와 **같은 표**다. 한쪽만 고치면 다시 어긋난다.
+    STEP_ALIAS = {
+        "s2": {"open": "naive", "size": "bar:0", "week": "bar:0", "inst_streak": "bar:1"},
+        "s3a": {"promise2": "stamp", "promise3": "stamp", "weekend": "verdict", "result": "stamp"},
+        "s3b": {"head": "row:0", "move": "row:0", "num": "split", "sum": "split", "again": "streak", "y": "streak",
+                "others": "rest", "others2": "rest", "turn_why": "turn", "meaning": "turn"},
+        "s3c": {"head": "move", "num": "row:0", "issue": "names", "streak": "names", "turn": "ratio", "meaning": "ratio"},
+        "s4": {"driver": "driver:0", "bigpair": "calc", "cell": "row:1", "cell2": "row:2"},
+        "s5": {"issue:0": "news:0", "issue:1": "news:1", "news_x": "news:1", "mover": "news:1",
+               "verdict_why": "support", "flow": "support", "macro_3": "macro_link", "meaning": "condition"},
+        "s6": {"watch_same": "intro", "watch:0_why": "watch:0_2", "watch:1_why": "watch:1_2",
+               "watch2": "watch:1", "note": "event", "bond": "event"},
+    }
+    for s in scenes:
+        st = s.get("steps")
+        sid = str(s.get("id") or "")
+        if not isinstance(st, list) or sid not in KNOWN_STEPS:
+            continue
+        # 2026-09-23 실측: 최근 10편에 렌더러가 모르는 이름이 34종 있었다(s3b.head·s5.flow·s6.note …).
+        # 이 문장들은 타이머·정규식 폴백으로 뜨거나 아예 안 뜬다 — JJ가 계속 말하는 "화면이 멈춘다"의 큰 몫이다.
+        # 생성기 이름을 렌더러에 맞추는 일이 끝날 때까지는 **경고**다(실패로 막으면 오늘 제작이 멈춘다).
+        alias = STEP_ALIAS.get(sid, {})
+        for i, nm_raw in enumerate(st):
+            raw_s = str(nm_raw)
+            tail = re.search(r"(_\d+)$", raw_s)
+            nm = alias.get(raw_s) or ((alias[raw_s[: tail.start()]] + tail.group(1)) if tail and raw_s[: tail.start()] in alias else raw_s)
+            base = re.sub(r"_\d+$", "", nm).split(":")[0]
+            if i and base != "q" and base not in KNOWN_STEPS[sid]:
+                msg = f"[{sid}] 화면 단계 '{nm_raw}' 을(를) 렌더러가 모른다 — 그 문장엔 새 화면이 없다(쓸 수 있는 이름: {', '.join(sorted(KNOWN_STEPS[sid]))})"
+                (warn.append(msg) if warn is not None else print(msg, file=sys.stderr))
+
+    import script_memory as _sm2
+    for s in scenes:
+        st = s.get("steps")
+        if not isinstance(st, list) or not st:
+            continue
+        sid = str(s.get("id") or "?")
+        dup = [n for i, n in enumerate(st) if n in st[:i]]
+        if dup:
+            fail(sid, f"화면 단계 이름이 겹친다({'·'.join(dict.fromkeys(dup))}) — 겹치면 뒤 문장에서 화면이 안 바뀐다", st[0])
+        n_sent = len(_sm2.sentences(s.get("tts") or ""))
+        if n_sent != len(st):
+            fail(sid, f"문장 {n_sent}개인데 화면 단계 {len(st)}개 — 1:1 이어야 한다(적으면 끝 화면이 먼저 뜬다)",
+                 (_sm2.sentences(s.get("tts") or "") or [""])[min(len(st), max(0, n_sent - 1))])
+
     # s2 코스피 수급 나열 — 외국인 → 기관 → 개인 넷 다 숫자로, 네 번째 막대 기타법인
     if sents.get("s2"):
         missing = [p for p in BRIEF_PARTIES if p not in txt["s2"]]
@@ -474,6 +570,17 @@ def check_brief(scenes: list[dict], comp: dict, recs: list[dict] | None = None, 
         small = isinstance(v, (int, float)) and abs(v) < BRIEF_OTHERS_MIN
         if "기타법인" not in txt["s2"] and not small:
             fail("s2", f"기타법인 없음 — 네 번째 막대를 말해야 한다(|순매수| {BRIEF_OTHERS_MIN:,}억 미만이면 생략 가능)", sents["s2"][-1])
+        # 기타법인은 **이름만 부르고 넘어간다** — JJ 2026-09-21
+        # "도대체 몇 일째 기타법인 쪽을 위주로 쳐할껀데? 매일 똑같이 기타법인을 주로 말하면 우리 영상을 누가 보겠냐?"
+        # 9/15~9/19 다섯 편 내리 나갔다. 검사기는 '이름'만 요구하지 설명을 요구하지 않는다.
+        oth = [x for x in sents["s2"] if ("기타법인" in x or "자사주" in x) and not _is_sig(x)]
+        if len(oth) > 1:
+            fail("s2", f"기타법인·자사주 문장 {len(oth)}개 — 한 문장으로 줄인다(이름과 금액만, 주로 다루지 않는다)", oth[1])
+        if oth and len(oth[0].strip()) > 45:
+            fail("s2", f"기타법인 문장이 길다({len(oth[0].strip())}자 > 45) — 이름과 금액만", oth[0])
+        for w in ("98%", "자기 주식", "종료", "진행률", "매입 기간"):
+            if w in txt["s2"] and _said_recent(comp, w, 3):
+                fail("s2", f"기타법인 설명 '{w}' 이 최근 3편에도 나갔다 — 새 숫자 없이 같은 설명을 되풀이하지 않는다", oth[0] if oth else sents["s2"][-1])
 
     # s3a 코스닥 수급 + 지수 둘
     if sents.get("s3a"):

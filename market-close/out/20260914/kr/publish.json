@@ -1,0 +1,20 @@
+{
+ "date": "20260914",
+ "edition": "kr",
+ "results": {
+  "threads": {
+   "ok": false,
+   "error": "Threads 미연결 — python auth.py threads",
+   "at": "2026-09-14T16:30:01"
+  },
+  "youtube": {
+   "ok": true,
+   "id": "JqRMOqF7l54",
+   "url": "https://youtube.com/shorts/JqRMOqF7l54",
+   "privacy": "public",
+   "thumb": "thumb_B.jpg",
+   "via": "chrome(수동 업로드)",
+   "at": "2026-09-14 16:55"
+  }
+ }
+}

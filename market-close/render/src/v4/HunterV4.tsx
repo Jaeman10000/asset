@@ -86,11 +86,41 @@ const hunterOf = (p: Props): Hunter => ((p as unknown as { hunter?: Hunter }).hu
 /** 글씨만 떠 있는 화면(질문 화면·오늘의 질문)의 최대 길이(초). JJ 2026-09-16: "3초 이상 글씨로만 보여주는 건 절대 안 돼." */
 export const TEXT_ONLY_MAX = 3;
 
+/** 생성기(narrate_brief)가 쓰는 단계 이름 → 이 슬롯 렌더러가 아는 이름.
+ *  2026-09-23 실측: 최근 10편에 렌더러가 모르는 이름이 34종 있었고, 그 문장들은 화면이 타이머 폴백으로 뜨거나 아예 안 떴다
+ *  (JJ "화면이 멈춘다"). 생성기를 일일이 고치는 대신 **여기 한 곳에서 번역**한다 — 이름이 겹치면 _2·_3 을 붙여
+ *  "앞 화면을 유지한다"는 뜻으로 만든다(indexOf 가 앞엣것을 찾으므로 첫 문장에서 카드가 뜬다). */
+const STEP_ALIAS: Record<string, Record<string, string>> = {
+  s2: { open: "naive", size: "bar:0", week: "bar:0", inst_streak: "bar:1" },
+  s3a: { promise2: "stamp", promise3: "stamp", weekend: "verdict", result: "stamp" },
+  s3b: { head: "row:0", move: "row:0", num: "split", sum: "split", again: "streak", y: "streak",
+         others: "rest", others2: "rest", turn_why: "turn", meaning: "turn" },
+  s3c: { head: "move", num: "row:0", issue: "names", streak: "names", turn: "ratio", meaning: "ratio" },
+  s4: { driver: "driver:0", bigpair: "calc", cell: "row:1", cell2: "row:2" },
+  s5: { "issue:0": "news:0", "issue:1": "news:1", news_x: "news:1", mover: "news:1",
+        verdict_why: "support", flow: "support", macro_3: "macro_link", meaning: "condition" },
+  s6: { watch_same: "intro", "watch:0_why": "watch:0_2", "watch:1_why": "watch:1_2",
+        watch2: "watch:1", note: "event", bond: "event" },
+};
+const mapSteps = (id: string, raw?: string[]) => {
+  if (!raw) return raw;
+  const a = STEP_ALIAS[id] ?? {};
+  const seen = new Set<string>();
+  return raw.map((n) => {
+    // '이름_2'(같은 단계의 둘째 문장)도 별칭을 찾는다 — 꼬리를 떼고 찾은 뒤 다시 붙인다
+    const m = /^(.*?)(_\d+)$/.exec(n);
+    let v = a[n] ?? (m && a[m[1]] ? a[m[1]] + m[2] : n);
+    if (seen.has(v)) { let k = 2; while (seen.has(`${v}_${k}`)) k += 1; v = `${v}_${k}`; }
+    seen.add(v);
+    return v;
+  });
+};
+
 export const useSteps = (p: Props, id: string, cues?: Cue[]) => {
   const { t, fps } = useT();
   const sc = p.scenes.find((s) => s.id === id);
   const endSec = sc ? (sc.frames ?? Math.round((sc.sec ?? sc.min) * fps)) / fps : Number.POSITIVE_INFINITY;
-  const steps = sc?.steps;
+  const steps = mapSteps(id, sc?.steps);
   // 단계 시각은 문장 경계(bounds, tts.py 가 문장마다 1개 저장)로 잡는다. cues 는 자막용이라 55자 넘는 문장을 ', ' 에서 쪼개므로
   // steps[i] 와 cues[i] 가 어긋날 수 있다(tts_typecast.cues_from_words · tts.make_cues). bounds 가 steps 와 개수가 맞을 때만 쓴다.
   const bounds = sc?.bounds;
@@ -763,11 +793,14 @@ export const S5H: React.FC<SC> = ({ p, cues }) => {
 /* ───────── s6: 내일 관측값 + 시그니처 — 체크 줄(☐→☑) → 이벤트 시각 → 애프터마켓 → 로고 '저녁 5시'(S6V4 와 같은 블록) ───────── */
 export const S6H: React.FC<SC> = ({ p, cues }) => {
   const h = hunterOf(p).s6;
-  const { t, list, at, say } = useSteps(p, "s6", cues);
+  const { t, list, at, say, steps: sc6Steps } = useSteps(p, "s6", cues);
   const pop = usePop();
   const w = h?.watch ?? [];
   const i0 = at(["intro", "lead"], 0, 0);
   const wAt = w.map((_, k) => at([`watch:${k}`, k === 0 ? "watch" : `watch${k + 1}`], k + 1, i0 + 1 + k * 1.6));
+  // 기준 칩은 **이유 문장(watch:k_2)** 에서 뜬다 — "왜 보는지·어떤 값이면 의미가 있는지"를 말하는 그 문장이다(JJ 2026-09-22).
+  // 항목과 같이 띄우면 이유를 말하는 5초 동안 화면이 멈춘다. 이유 문장이 없는 편은 항목과 같이 뜬다(옛 편 그대로).
+  const thAt = w.map((_, k) => { const s = sc6Steps ? sc6Steps.indexOf(`watch:${k}_2`) : -1; return s >= 0 && list[s] ? list[s].start : wAt[k]; });
   const e0 = at("event", w.length + 1, (wAt.length ? wAt[wAt.length - 1] : i0) + 3);
   const a0 = at("after", -1, say("애프터마켓") ?? 1e9);
   const last = list.length ? list[list.length - 1].start : 0.1;
@@ -807,7 +840,7 @@ export const S6H: React.FC<SC> = ({ p, cues }) => {
                   fontSize: 34, fontWeight: 900, lineHeight: 1, color: on && kk > 0.5 ? "#0B0E16" : on ? GREEN : GREY }}>{k + 1}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 48, fontWeight: 800, lineHeight: 1.25, color: on ? "#FFFFFF" : SUBC, wordBreak: "keep-all", textShadow: SH }}>{x.q}</div>
-                  {x.threshold ? <div style={{ marginTop: 10 }}><span style={{ display: "inline-block", fontSize: 30, fontWeight: 900, color: "#0B0E16", background: on ? YEL : GREY, padding: "4px 16px", borderRadius: 10 }}>기준 · {x.threshold}</span></div> : null}
+                  {x.threshold && t >= thAt[k] ? <div style={{ marginTop: 10, ...pop(thAt[k], 10) }}><span style={{ display: "inline-block", fontSize: 30, fontWeight: 900, color: "#0B0E16", background: YEL, padding: "4px 16px", borderRadius: 10 }}>기준 · {x.threshold}</span></div> : null}
                 </div>
               </div>
             );

@@ -1,0 +1,15 @@
+{
+ "date": "20260924",
+ "edition": "info",
+ "youtube": {
+  "id": "4-moIh-TiFs",
+  "scheduled": "2026-09-24T09:00+09:00",
+  "thumb": "thumb_S.jpg",
+  "title": "나는 빚 안 썼는데, 남의 빚에 내 주식이 왜 밀릴까? | 9/24 빚투 해설",
+  "paid_promotion": false,
+  "state": "예약됨(비공개)",
+  "verified_at": "2026-09-21T19:40+09:00",
+  "verified_by": "스튜디오 목록 '공개 상태' 툴팁 — 동영상 id 는 행 링크 href 에서 읽음"
+ },
+ "note": "2026-09-21 19:40 스튜디오(authuser=1, 채널 콘텐츠 > Shorts)에서 직접 확인한 값. 그 전 기록은 9/22 id 한 글자(euANV5tGJus)·9/23 id 통째(7F19OtGHtV, 10자)가 틀렸고 예약 시각도 21:00 으로 남아 있었다 — 낡은 publish.json 을 믿고 보고하면 또 틀린다. 제목은 스튜디오에 올라간 그대로(날짜가 붙어 있다 — 대본 파일 title 과 다르다)."
+}

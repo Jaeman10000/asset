@@ -5,7 +5,8 @@
 import React from "react";
 import { AbsoluteFill, Img, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
 
-export type MascotBeat = { t: number; dur: number; pose: string; x: number; y: number; h: number; flip?: boolean };
+export type MascotBeat = { t: number; dur: number; pose: string; x: number; y: number; h: number; flip?: boolean; clip?: number };
+// clip = 보이는 높이(아래를 잘라 상반신만 — 가운데 크게 띄울 때 쓴다, JJ 2026-09-20)
 
 const Pop: React.FC<{ b: MascotBeat; frames: number }> = ({ b, frames }) => {
   const f = useCurrentFrame();
@@ -15,9 +16,11 @@ const Pop: React.FC<{ b: MascotBeat; frames: number }> = ({ b, frames }) => {
   const y = (1 - inn) * 140 + out * 90;
   const op = Math.min(1, f / 4) * (1 - out);
   const bob = Math.sin((f / fps) * Math.PI * 1.6) * 4;          // 숨 쉬듯 살짝
+  const clip = b.clip ?? b.h;
   return (
-    <div style={{ position: "absolute", left: b.x, top: b.y, height: b.h, opacity: op,
+    <div style={{ position: "absolute", left: b.x, top: b.y, height: clip, overflow: "hidden", opacity: op,
       transform: `translateY(${y + bob}px) scale(${0.9 + 0.1 * inn})${b.flip ? " scaleX(-1)" : ""}`, transformOrigin: "50% 100%",
+      WebkitMaskImage: clip < b.h ? "linear-gradient(to bottom, #000 calc(100% - 90px), transparent)" : undefined,
       filter: "drop-shadow(0 16px 22px rgba(0,0,0,0.45))" }}>
       <Img src={staticFile(`mascot/${b.pose}.png`)} style={{ height: b.h }} />
     </div>
