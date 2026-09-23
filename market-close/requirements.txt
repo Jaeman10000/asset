@@ -1,0 +1,10 @@
+# market-close 작업(jobs/)이 쓰는 것 — backend/requirements.txt 위에 더 깐다 (2026-09-24 맥미니 이전 때 import 전수로 뽑음)
+# 설치: uv pip install --python ../backend/.venv/bin/python -r ../backend/requirements.txt -r requirements.txt
+pillow
+yt-dlp
+edge-tts
+mutagen
+numpy
+psutil
+pykrx
+requests

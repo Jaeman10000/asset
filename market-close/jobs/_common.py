@@ -179,6 +179,9 @@ def ffmpeg_path() -> Path | None:
     for pat in ("compositor-*/ffmpeg.exe", "compositor-*/ffmpeg"):
         for p in sorted(base.glob(pat)):
             if p.is_file():
+                if sys.platform == "darwin":
+                    # 맥 빌드는 옆의 libav*.dylib 를 '@rpath' 없이 찾는다 — 폴더를 알려 줘야 뜬다(자식 프로세스가 물려받는다)
+                    os.environ["DYLD_LIBRARY_PATH"] = str(p.parent)
                 return p
     import shutil as _sh
     w = _sh.which("ffmpeg")
@@ -217,7 +220,6 @@ def venv_bin(name: str) -> Path | None:
 
 def scratch_dir(sub: str = "") -> Path:
     """임시 작업 폴더 — 세션 스크래치가 있으면 그걸, 없으면 OS 임시 폴더."""
-    import os as _os
     import tempfile as _tf
     base = _os.environ.get("CLAUDE_SCRATCHPAD") or _tf.gettempdir()
     p = Path(base) / "nugasatna" / sub if sub else Path(base) / "nugasatna"
