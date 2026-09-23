@@ -1342,7 +1342,12 @@ def _s3c(x: dict, pk: Picker) -> tuple[list, dict]:
         got_side, gkey = ("기관", "inst") if i_tot > f_tot else ("외국인", "foreign")
         sell_side, skey = ("외국인", "foreign") if got_side == "기관" else ("기관", "inst")
         all_neg = len(themes) >= 5 and all((_num(themes[t].get(skey)) or 0) < 0 for t in themes)
-        why = f"{subj(sell_side)} 모든 업종에서 팔았기 때문입니다." if all_neg else f"{sell_side} 매도가 더 컸기 때문입니다."
+        # 2026-09-24: "모든 업종에서 팔았기 때문입니다" 가 두 가지로 걸렸다.
+        #  ① **과장** — 우리가 보는 업종 몇 개를 '모든 업종'이라 말했다(시장 전체가 아니다).
+        #  ② **인과 단정** — '때문입니다'. 수급에 인과를 붙이지 않는다(CLAUDE.md, JJ 2026-09-20).
+        # 센 숫자로 바꾼다 — 몇 개 업종에서 그랬는지 말하면 시청자가 검산할 수 있다.
+        why = (f"{subj(sell_side)} {len(themes)}개 업종 모두에서 팔았습니다." if all_neg
+               else f"{sell_side} 매도가 더 컸습니다.")
         pairs.append(("head", pk([f"외국인과 기관을 합쳐 보면 돈이 들어온 곳이 없었습니다. {why}", f"외국인과 기관을 더하면 들어온 곳이 없었습니다. {why}",
                                   f"외국인과 기관 돈을 합치면 들어온 곳이 없었습니다. {why}"])))
         top0 = x["outs"][0] if x["outs"] else None            # 유출 1위는 s3b 에서 이미 말했다 — 되풀이하지 않는다
